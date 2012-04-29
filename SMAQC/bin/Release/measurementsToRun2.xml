@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<measurements>
+	<measurement name="C_2A"/>
+	<measurement name="MS1_3A"/>
+	<measurement name="MS1_3B"/>
+	<measurement name="DS_3A"/>
+	<measurement name="DS_3B"/>
+	<measurement name="IS_1A"/>
+	<measurement name="IS_1B"/>
+</measurements>
