@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<measurements>
+	<!--THE IP OF YOUR DB SERVER-->
+  	<dbhost value="localhost"/>
+
+	<!--THE USERNAME TO ACCESS DB SERVER-->
+  	<dbuser value="root"/>
+
+	<!--THE PASSWORD TO ACCESS DB SERVER-->
+  	<dbpass value="password"/>
+
+	<!--THE DBNAME TO ACCESS DB SERVER-->
+  	<dbname value="SMAQC_DB"/>
+
+	<!--DBTYPE [MySQL, SQLite (if SQLite, can blank above fields or put anything) ]-->
+  	<dbtype value="SQLite"/>
+</measurements>

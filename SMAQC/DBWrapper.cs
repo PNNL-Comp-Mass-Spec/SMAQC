@@ -21,13 +21,10 @@ namespace SMAQC
         IDataReader reader;
 
         //CONSTRUCTOR
-        public DBWrapper(string host, string user, string pass, string db, string dbtype)
+        public DBWrapper(string host, string user, string pass, string db, string dbtype, string dbFolderPath)
         {
-            //GET APP PATH DIR [BY REMOVING SMAQC.exe FROM PATH] [NEEDED FOR SQLite SO WE SAVE IN CORRECT LOCATION]
-            string appDirectoryPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-
             //GET PATH TO DB [NEEDED FOR SQLite SO WE SAVE IN CORRECT LOCATION]
-            string dbPath = appDirectoryPath + @"\SMAQC.s3db";
+			string dbPath = System.IO.Path.Combine(dbFolderPath, "SMAQC.s3db");
 
             if (dbtype.Equals("MySQL", StringComparison.OrdinalIgnoreCase))
             {

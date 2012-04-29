@@ -329,13 +329,8 @@ namespace SMAQC
         //IS THIS A VALID FILE TO REFORMAT [CHECKS ValidFilesToReFormat LIST]
         private int is_valid_file_to_reformat(String filename, String dataset)
         {
-            //STEP # 1 STRIP FULL PATHNAME FROM FILENAME AND STORE AS filename
-            int pathprefix = filename.LastIndexOf(@"\");
-            filename = filename.Substring(pathprefix + 1);
-
-            //STEP # 2 REMOVE ENDING .TXT AS IT MATCHES XT
-            int index = filename.LastIndexOf(".txt");       //FIND LAST INDEX OF .TXT
-            filename = filename.Substring(0, index);    //REMOVE .TXT AND REPLACE FILENAME WITH NEW NAME
+            //STEP # 1 GET FILENAME WITHOUT EXTENSION
+			filename = System.IO.Path.GetFileNameWithoutExtension(filename);
 
             //STEP # 3 NOW DO ACTUAL REMOVING OF DATA PREFIX
             filename = filename.Substring(dataset.Length + 1);                  //RETURNS ScanStats, ScanStatsEx, ...

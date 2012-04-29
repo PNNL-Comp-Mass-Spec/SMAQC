@@ -45,30 +45,34 @@ namespace SMAQC
             String path_to_scan_files;
             String measurementsFile;
             Random random = new Random();                                                           //TEMP RANDOM ID
-            String outputfile;                                                                      //FILE TO SAVE OUTPUT TO [IF SPECIFIED]
+            String outputfile = "";                                                                      //FILE TO SAVE OUTPUT TO [IF SPECIFIED]
             int r_id = random.Next();                                                               //GET THE RANDOM ID [.Next() REQUIRED FOR THIS]
             String instrument_id = "";                                                              //INIT TO -1 BY DEFAULT
+			String dbFolderPath = "";
 
             //IF NO ARGUMENTS PASSED | INCORRECT AMOUNT
             //-i 3 -d "C:\Users\xion\Documents\Visual Studio 2010\Projects\SMAQC\SMAQC" -m measurementsToRun.xml -o outputfile.txt == 8
             //-i 3 -d "C:\Users\xion\Documents\Visual Studio 2010\Projects\SMAQC\SMAQC" -m measurementsToRun.xml == 6
-            if (args.Length != 6 && args.Length != 8)
+            if (args.Length != 6 && args.Length != 8 && args.Length != 10)
             {
                 Console.WriteLine("Usage: SMAQC.exe [Required Options] [Optional]\n");
                 Console.WriteLine("[Required Options]");
 
                 Console.WriteLine("\t-i [instrument_id]");
-                Console.WriteLine("\t\tInstrument id of device");
+                Console.WriteLine("\t\tInstrument id of device (integer)");
                 
                 Console.WriteLine("\t-d [path]");
-                Console.WriteLine("\t\tFull path to datasets with quotes");
+                Console.WriteLine("\t\tPath to folder with dataset(s); use quotes if spaces");
                 
                 Console.WriteLine("\t-m [measurements file]");
-                Console.WriteLine("\t\tA measurementsToRun.xml file containing measurements to be run");
+                Console.WriteLine("\t\tPath to XML file containing measurements to be run; use quotes if spaces");
 
                 Console.WriteLine("\n[Optional]");
                 Console.WriteLine("\t-o filename.txt");
-                Console.WriteLine("\t\tA filename to save scan results to");
+                Console.WriteLine("\t\tPath to file to save scan results to; use quotes if spaces");
+
+				Console.WriteLine("\t-db [path]");
+				Console.WriteLine("\t\tPath to folder where SQLite database should be created (default is same folder as .Exe)");
 
                 Environment.Exit(1);
             }
@@ -78,11 +82,50 @@ namespace SMAQC
             path_to_scan_files = args[3];
             measurementsFile = args[5];
 
-            if (path_to_scan_files.Equals(""))
-            {
-                Console.WriteLine("You cannot enter a NULL path!");
+			if (string.IsNullOrEmpty(instrument_id))
+			{
+                Console.WriteLine("Instrument_ID parameter is empty; unable to continue");
                 Environment.Exit(1);
             }
+
+			if (string.IsNullOrEmpty(path_to_scan_files))
+			{
+				Console.WriteLine("Path to datasets is empty; unable to continue");
+				Environment.Exit(1);
+			}
+
+			if (string.IsNullOrEmpty(measurementsFile))
+			{
+				Console.WriteLine("Measurements file path is empty; unable to continue");
+				Environment.Exit(1);
+			}
+
+			if (args.Length >= 8)
+            {
+                //OUTPUT FILENAME
+                outputfile = args[7];
+            }
+
+			if (args.Length >= 10)
+            {
+                //OUTPUT FILENAME
+                dbFolderPath = args[9];
+			}
+			else 
+			{
+				System.IO.FileInfo diAppFile = new System.IO.FileInfo(GetAppPath());
+				dbFolderPath = diAppFile.DirectoryName;
+			}
+
+            //CREATE APPLICATION LOG
+			Console.WriteLine();
+			Console.WriteLine("Instrument ID: ".PadRight(20) + instrument_id);
+			Console.WriteLine("Path to datasets: ".PadRight(20) + path_to_scan_files);
+			Console.WriteLine("Measurements file: ".PadRight(20) + measurementsFile);
+			if (!string.IsNullOrEmpty(outputfile))
+				Console.WriteLine("Text results file: ".PadRight(20) + outputfile);
+			Console.WriteLine("SQLite DB folder: ".PadRight(20) + dbFolderPath);
+			Console.WriteLine();
 
             //CREATE APPLICATION LOG
             m_SystemLogManager.createApplicationLog();
@@ -102,7 +145,7 @@ namespace SMAQC
             //CREATE CONNECTIONS
             DBWrapper = new DBWrapper(configtable["dbhost"].ToString(), configtable["dbuser"].ToString(),
                                 configtable["dbpass"].ToString(), configtable["dbname"].ToString(),
-                                configtable["dbtype"].ToString());
+                                configtable["dbtype"].ToString(), dbFolderPath);
             //DB OBJECT
             m_Aggregate = new Aggregate(path_to_scan_files);                                                        //AGGREGATE OBJECT
             m_Measurement = new Measurement(r_id, ref DBWrapper);                                                   //MEASUREMENT LIST OBJECT
@@ -166,11 +209,8 @@ namespace SMAQC
                 DBWrapper.clearTempTables(r_id);
 
                 //IF OPTIONAL OUTPUTFILE IS PASSED WE WRITE TO FILE
-                if (args.Length == 8)
+                if (!string.IsNullOrEmpty(outputfile))
                 {
-                    //OUTPUT FILENAME
-                    outputfile = args[7];
-
                     //WRITE TO FILE
                     m_OutputFileManager.SaveData(DataPrefix[i], outputfile, Convert.ToInt32(configtable["scan_id"]), i);
 
@@ -180,7 +220,7 @@ namespace SMAQC
                 else
                 {
                     //DONE SO PRINT END MSG
-                    m_SystemLogManager.addApplicationLog("Scan result saved (Scan ID="+ configtable["scan_id"] + ")!");
+                    m_SystemLogManager.addApplicationLog("Scan result saved to SQLite DB (Scan ID="+ configtable["scan_id"] + ")!");
                 }
 
                 resultstable.Clear();
@@ -291,6 +331,7 @@ namespace SMAQC
             //DECLARE VARIABLES
             String[] xml_variables = { "dbhost", "dbuser", "dbpass", "dbname", "dbtype" };
             String attribute = "value";
+			String configFilePath = System.IO.Path.Combine(appDirectoryPath, "config.xml");
             FileStream configFile = null;
 
             //OPEN XML DOC + INIT PARSER
@@ -298,11 +339,11 @@ namespace SMAQC
 
             try
             {
-                configFile = File.Open(appDirectoryPath + @"\config.xml", FileMode.Open);
+                configFile = File.Open(configFilePath, FileMode.Open);
             }
             catch (FileNotFoundException ex)
             {
-                Console.WriteLine("Error:: Could not open config.xml!");
+				Console.WriteLine("Error:: Could not open config file (" + configFilePath + "): " + ex.Message);
                 Environment.Exit(1);
             }
 
@@ -331,25 +372,26 @@ namespace SMAQC
 
         //THIS FUNCTION READS OUR MEASUREMENTS FILE ... THEN ADDS TO A DICTIONARY TO SO KNOW EACH MEASUREMENT THAT IS BEING RUN
         //USED FOR BUILDING SQL QUERIES TO SAVE RESULTS
-        static void loadMeasurements(string measurementsFile)
+        static void loadMeasurements(string measurementsFilePath)
         {
             //DECLARE VARIABLES
-            FileStream configFile = null;
+            FileStream measurementsFile = null;
+			System.IO.FileInfo fiMeasurementsFile = new System.IO.FileInfo(measurementsFilePath);
 
             //OPEN XML DOC + INIT PARSER
             List<String> measurements = new List<String>();
 
             try
             {
-                configFile = File.Open(measurementsFile, FileMode.Open);
+				measurementsFile = File.Open(fiMeasurementsFile.FullName, FileMode.Open);
             }
-            catch (FileNotFoundException ex)
-            {
-                Console.WriteLine("Error:: Could not open measurementsToRun.xml!");
-                Environment.Exit(1);
-            }
+			catch (FileNotFoundException ex)
+			{
+				Console.WriteLine("Error:: Could not open measurements file (" + measurementsFilePath + "): " + ex.Message);
+				Environment.Exit(1);
+			}
 
-            XmlTextReader parser = new XmlTextReader(configFile);
+            XmlTextReader parser = new XmlTextReader(measurementsFile);
 
             //LOOP THROUGH ENTIRE XML FILE
             while (parser.ReadToFollowing("measurement"))

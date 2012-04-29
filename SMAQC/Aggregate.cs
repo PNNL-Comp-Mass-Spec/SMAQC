@@ -77,11 +77,10 @@ namespace SMAQC
                 if (is_valid_import_file(filePaths[i]))
                 {
                     //STRIP FULL PATHNAME FROM FILENAME AND STORE AS filename
-                    int pathprefix = filePaths[i].LastIndexOf(@"\");
-                    string filename = filePaths[i].Substring(pathprefix + 1);
+					string filename = System.IO.Path.GetFileName(filePaths[i]);
 
                     //FIND THE DATASET BY CHECKING FOR _ BEFORE ScanStats.txt [ScanStats.txt will be used to detect each dataset]
-                    int dataprefix = filename.LastIndexOf("_ScanStats.txt");
+                    int dataprefix = filename.ToLower().LastIndexOf("_ScanStats.txt".ToLower());
 
                     //IF FOUND A UNIQUE DATA SET [USING ScanStats.txt TO FIND EACH ONE SINCE IT IS SIMPLE]
                     if (dataprefix > 0)
@@ -110,7 +109,6 @@ namespace SMAQC
         {
             //DECLARE VARIABLES
             List<String> FileArray = new List<String>();
-            int index = 0;
             string[] filePaths = null;                      //SET TO NULL AS IN TRY BLOCK OR WILL NOT COMPILE
 
             try
@@ -145,24 +143,16 @@ namespace SMAQC
         //THIS FUNCTION VERIFIES IF A FILENAME IS IN OUR DATASET LIST
         public Boolean is_valid_dataset_file(string dataset, string filename)
         {
-            //DECLALRE VARIABLES
-            int index = 0;                              //SET DEFAULT VALUE
+            //DECLARE VARIABLES
 
             //Console.WriteLine("DS={0}", dataset);
 
-            //STRIP FULL PATHNAME FROM FILENAME AND STORE AS filename
-            index = filename.LastIndexOf(@"\");
-            filename = filename.Substring(index + 1);
+			//GET FILENAME WITHOUT EXTENSION
+			filename = System.IO.Path.GetFileNameWithoutExtension(filename);
 
-            //REMOVE ENDING .TXT AS IT MATCHES XT
-            index = filename.LastIndexOf(".txt");       //FIND LAST INDEX OF .TXT
-            filename = filename.Substring(0, index);    //REMOVE .TXT AND REPLACE FILENAME WITH NEW NAME
-
-            //NOW CHECK FOR DATASET NAME FROM FILENAME [IF < 0 ... NOT EXIST IN FILENAME ... WRONG DATA SET]
-            index = filename.LastIndexOf(dataset);                              //FIND INDEX OF DATASET [>=0 == TRUE ... <0 == FALSE]
-
+            //NOW CHECK FOR DATASET NAME IN FILENAME
             //IF FOUND A VALID FILE IN A CERTAIN DATASET
-            if (index >= 0)
+			if (filename.ToLower().Contains(dataset.ToLower()))
             {
                 //REPLACE THE FILENAME [FOR PRINTING REASONS]
                 //filename = filename.Substring(dataset.Length + 1);                  //RETURNS ScanStats, ScanStatsEx, ...
@@ -180,18 +170,13 @@ namespace SMAQC
             //DECLALRE VARIABLES
             int index = 0;                              //SET DEFAULT VALUE
 
-            //STRIP FULL PATHNAME FROM FILENAME AND STORE AS filename
-            index = filename.LastIndexOf(@"\");
-            filename = filename.Substring(index + 1);
-
-            //REMOVE ENDING .TXT AS IT MATCHES XT
-            index = filename.LastIndexOf(".txt");       //FIND LAST INDEX OF .TXT
-            filename = filename.Substring(0, index);    //REMOVE .TXT AND REPLACE FILENAME WITH NEW NAME
+            //GET FILENAME WITHOUT EXTENSION
+			filename = System.IO.Path.GetFileNameWithoutExtension(filename);
 
             //IF WE ARE PROCESSING A DATASET
             if (known_dataset == 1)
             {
-                index = filename.LastIndexOf(dataset);
+                index = filename.ToLower().LastIndexOf(dataset.ToLower());
 
                 //IF INVALID!
                 if (index < 0)
