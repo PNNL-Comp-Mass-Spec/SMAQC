@@ -4295,7 +4295,7 @@ namespace SMAQC
             return Convert.ToString(round_me);
         }
 
-        //P_1A
+        //P_1A: Median Hyperscore
         public String P_1A()
         {
             //SET DB QUERY
@@ -4353,7 +4353,7 @@ namespace SMAQC
             return Convert.ToString(round_me);
         }
 
-        //P_1B
+		//P_1B: Median Peptide_Expectation_Value_Log(e)
         public String P_1B()
         {
             //SET DB QUERY
