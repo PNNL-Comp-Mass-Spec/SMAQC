@@ -225,18 +225,16 @@ namespace SMAQC
                 for (int i = 0; i < parts.Length; i++)
                 {
                     //IF NOT AN ALLOWED FIELD IGNORE
-                    if (ListFieldID[i] == -1)
+                    if (ListFieldID[i] > -1)
                     {
-                        continue;
-                    }
+						if (line_temp.Length > 0)
+							line_temp += "\t";
 
-                    //APPEND TO LINE_TEMP
-                    line_temp += parts[i];
+						//APPEND TO LINE_TEMP
+						line_temp += parts[i];
 
-                    if (i < parts.Length - 1)
-                    {
-                        line_temp += "\t";
                     }
+				
                 }
 
                 //WRITE LINE

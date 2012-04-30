@@ -28,8 +28,8 @@ namespace SMAQC
         private static string appDirectoryPath = System.IO.Path.GetDirectoryName(GetAppPath());         //GET PATH TO SMAQC.exe [USEFUL IF NOT RUNNING IN SAME DIRECTORY]
 
         //DECLARE VERSION, BUILD DATE, VALID FILE TABLES AND MEASUREMENT FIELDS
-        private static String SMAQC_VERSION = "1.04";
-        private static String SMAQC_BUILD_DATE = "April 14, 2012";
+        private static String SMAQC_VERSION = "1.05";
+        private static String SMAQC_BUILD_DATE = "April 29, 2012";
         private static String[] valid_file_tables = { "_scanstats", "_scanstatsex", "_sicstats", "_xt", 
                                                        "_xt_resulttoseqmap", "_xt_seqtoproteinmap" };   //VALID FILE / TABLES
         private static String[] fields = { "instrument_id", "random_id", "scan_date", "C_1A", "C_1B", 
@@ -154,7 +154,7 @@ namespace SMAQC
             m_OutputFileManager = new OutputFileManager(ref DBWrapper, SMAQC_VERSION, SMAQC_BUILD_DATE, fields);    //OUTPUTFILE MANAGER OBJECT
 
             //FETCH FILE LISTING OF VALID FILES WE NEED TO PARSE
-            m_SystemLogManager.addApplicationLog("Searching for Text Files!...");
+            m_SystemLogManager.addApplicationLog("Searching for Text Files...");
 
             //DETECT DATA SETS [SCAN + FIND OUT HOW MANY + WHICH ARE THEIR FILE PREFIXES [QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45 == Example]
             List<String> DataPrefix = m_Aggregate.DetectDatasets("*.txt");              //RETURN LIST OF DATA PREFIXES
@@ -164,7 +164,7 @@ namespace SMAQC
             if (DataPrefix.Count == 0)
             {
                 m_SystemLogManager.addApplicationLog("Unable to find any datasets in {0}" + path_to_scan_files);
-                m_SystemLogManager.addApplicationLog("Exiting!...");
+                m_SystemLogManager.addApplicationLog("Exiting...");
             }
 
             //DETERMINE RESULT_ID [USED FOR SCAN_ID]
@@ -183,7 +183,7 @@ namespace SMAQC
                 {
                     //NOT ALL FILES HAVE BEEN FOUND! ... EXIT AS CANNOT RUN METRICS WITH INCOMPLETE DATASET
                     m_SystemLogManager.addApplicationLog("The 6 required data files not found in " + path_to_scan_files);
-                    m_SystemLogManager.addApplicationLog("Exiting!...");
+                    m_SystemLogManager.addApplicationLog("Exiting...");
 
                     //SAVE APPLICATION LOG
                     m_SystemLogManager.saveApplicationLogFile();
@@ -192,17 +192,17 @@ namespace SMAQC
                 }
 
                 //LOOP THROUGH EACH FILE IN FileList, CREATE TEMP FILE, REWRITE TO USE ',' AND BULK INSERT INTO DB
-                m_SystemLogManager.addApplicationLog("Parsing and Inserting Data into DB Temp Tables!...");
+                m_SystemLogManager.addApplicationLog("Parsing and Inserting Data into DB Temp Tables");
                 m_Filter.LoadFilesAndInsertIntoDB(FileList, valid_file_tables, DataPrefix[i]);
 
                 //AT THIS POINT OUR DB IS FULL OF ALL DATA FROM OUR TEXT FILES
-                m_SystemLogManager.addApplicationLog("Now running Measurements on " + DataPrefix[i] + "!");
+                m_SystemLogManager.addApplicationLog("Now running Measurements on " + DataPrefix[i]);
 
                 //RUN MEASUREMENT ENGINE
 				resultstable = m_MeasurementEngine.run();
 
                 //ADD TO SCAN RESULTS
-                m_SystemLogManager.addApplicationLog("Saving Scan Results!...");
+                m_SystemLogManager.addApplicationLog("Saving Scan Results");
                 add_scan_results(instrument_id, r_id, result_id);
 
                 //CLEAR TEMP TABLES
@@ -220,7 +220,7 @@ namespace SMAQC
                 else
                 {
                     //DONE SO PRINT END MSG
-                    m_SystemLogManager.addApplicationLog("Scan result saved to SQLite DB (Scan ID="+ configtable["scan_id"] + ")!");
+                    m_SystemLogManager.addApplicationLog("Scan result saved to SQLite DB (Scan ID="+ configtable["scan_id"] + ")");
                 }
 
                 resultstable.Clear();
@@ -418,7 +418,7 @@ namespace SMAQC
             }
             catch (FileNotFoundException ex)
             {
-                Console.WriteLine("Could not find {0}!", ex.Message);
+                Console.WriteLine("Could not find file {0}!", ex.Message);
                 Environment.Exit(1);
             }
             XmlTextReader parser = new XmlTextReader(configFile);
