@@ -264,7 +264,7 @@ namespace SMAQC
             char[] delimiters = new char[] { ',' };
 
             //DO SPLIT OPERATION
-            string[] parts = line.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+            string[] parts = line.Split(delimiters, StringSplitOptions.None);
 
             for (int i = 0; i < parts.Length; i++)
             {
@@ -286,7 +286,7 @@ namespace SMAQC
             }
 
             //DO SPLIT OPERATION
-            string[] parts = line.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+            string[] parts = line.Split(delimiters, StringSplitOptions.None);
 
             return parts;
         }

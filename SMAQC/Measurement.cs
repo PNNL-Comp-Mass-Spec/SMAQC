@@ -4423,31 +4423,23 @@ namespace SMAQC
             {
                 ResultID_to_Unique_Seq_ID_Table.Add(measurementhash["Result_ID"], measurementhash["Unique_Seq_ID"]);
             }
-            //BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE
-            String[] fields_n1 = { "Unique_Seq_ID", "Cleavage_State" };
-            Hashtable SequenceID_to_CleavageState_Table = new Hashtable();
-            List<string> TempStorageList = new List<string>();    //STORE HASH VALUES KEYS TO ENSURE UNIQUE
-            foreach (string val in ResultID_to_Unique_Seq_ID_Table.Values)
-            {
-                //IF WE HAVE THIS ITEM ... SKIP
-                if (TempStorageList.Contains(val))
-                {
-                    continue;
-                }
-                else
-                {
-                    //ADD
-                    TempStorageList.Add(val);
-                }
-                DBInterface.setQuery("SELECT Unique_Seq_ID,Cleavage_State FROM `temp_xt_seqtoproteinmap` WHERE temp_xt_seqtoproteinmap.random_id=" + r_id + " AND Unique_Seq_ID=" + val + " LIMIT 1");
-                DBInterface.initReader();
 
-                while ((DBInterface.readLines(fields_n1, ref measurementhash)) && (measurementhash.Count > 0))
-                {
-                    SequenceID_to_CleavageState_Table.Add(measurementhash["Unique_Seq_ID"], Convert.ToInt32(measurementhash["Cleavage_State"]));
-                }
-            }
-            TempStorageList.Clear();
+			// BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE            
+			// Populate a dictionary object via a single query to the database
+			DBInterface.setQuery("SELECT Unique_Seq_ID, MAX(Cleavage_State) AS Cleavage_State FROM `temp_xt_seqtoproteinmap` WHERE temp_xt_seqtoproteinmap.random_id=" + r_id + " GROUP BY Unique_Seq_ID;");
+			String[] fields_n1 = { "Unique_Seq_ID", "Cleavage_State" };
+			int intSeqID;
+			DBInterface.initReader();
+			System.Collections.Generic.Dictionary<int, int> Seq_ID_to_Cleavage_State_Table = new System.Collections.Generic.Dictionary<int, int>();
+			while ((DBInterface.readLines(fields_n1, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				if (Int32.TryParse(measurementhash["Unique_Seq_ID"].ToString(), out intSeqID))
+				{
+					if (!Seq_ID_to_Cleavage_State_Table.ContainsKey(intSeqID))
+						Seq_ID_to_Cleavage_State_Table.Add(intSeqID, Convert.ToInt32(measurementhash["Cleavage_State"]));
+				}
+
+			}
 
             //SET DB QUERY
             DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log, Charge, temp_xt.Result_ID, Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State "
@@ -4478,8 +4470,10 @@ namespace SMAQC
             while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
             {
                 //USED AS WE CANNOT TRUST CLEAVAGE STATE RETURNED FROM DIRECT QUERY DUE TO SQLITE BUG IN NEWER DLLS
-                String temp_unique_seq_id = Convert.ToString(ResultID_to_Unique_Seq_ID_Table[measurementhash["Result_ID"]]); //CONVERT RESULT_ID TO UNIQUE_SEQUENCE_ID
-                int cleavage_state = Convert.ToInt32(SequenceID_to_CleavageState_Table[temp_unique_seq_id]); //CONVERT UNIQUE_SEQUENCE_ID TO CLEAVAGE_STATE
+                int temp_unique_seq_id = Convert.ToInt32(ResultID_to_Unique_Seq_ID_Table[measurementhash["Result_ID"]]); //CONVERT RESULT_ID TO UNIQUE_SEQUENCE_ID
+
+				int cleavage_state = 0;
+				Seq_ID_to_Cleavage_State_Table.TryGetValue(temp_unique_seq_id, out cleavage_state);   //CONVERT UNIQUE_SEQUENCE_ID TO CLEAVAGE_STATE
 
                 //FOR cleavage_state_1_count [COLUMN H]
                 if (cleavage_state == 1)
@@ -4560,31 +4554,23 @@ namespace SMAQC
             {
                 ResultID_to_Unique_Seq_ID_Table.Add(measurementhash["Result_ID"], measurementhash["Unique_Seq_ID"]);
             }
-            //BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE
-            String[] fields_n1 = { "Unique_Seq_ID", "Cleavage_State" };
-            Hashtable SequenceID_to_CleavageState_Table = new Hashtable();
-            List<string> TempStorageList = new List<string>();    //STORE HASH VALUES KEYS TO ENSURE UNIQUE
-            foreach (string val in ResultID_to_Unique_Seq_ID_Table.Values)
-            {
-                //IF WE HAVE THIS ITEM ... SKIP
-                if (TempStorageList.Contains(val))
-                {
-                    continue;
-                }
-                else
-                {
-                    //ADD
-                    TempStorageList.Add(val);
-                }
-                DBInterface.setQuery("SELECT Unique_Seq_ID,Cleavage_State FROM `temp_xt_seqtoproteinmap` WHERE temp_xt_seqtoproteinmap.random_id=" + r_id + " AND Unique_Seq_ID="+val+" LIMIT 1");
-                DBInterface.initReader();
-                
-                while ((DBInterface.readLines(fields_n1, ref measurementhash)) && (measurementhash.Count > 0))
-                {
-                    SequenceID_to_CleavageState_Table.Add(measurementhash["Unique_Seq_ID"], Convert.ToInt32(measurementhash["Cleavage_State"]));
-                }
-            }
-            TempStorageList.Clear();
+
+			// BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE            
+			// Populate a dictionary object via a single query to the database
+			DBInterface.setQuery("SELECT Unique_Seq_ID, MAX(Cleavage_State) AS Cleavage_State FROM `temp_xt_seqtoproteinmap` WHERE temp_xt_seqtoproteinmap.random_id=" + r_id + " GROUP BY Unique_Seq_ID;");
+			String[] fields_n1 = { "Unique_Seq_ID", "Cleavage_State" };
+			int intSeqID;
+			DBInterface.initReader();
+			System.Collections.Generic.Dictionary<int, int> Seq_ID_to_Cleavage_State_Table = new System.Collections.Generic.Dictionary<int, int>();
+			while ((DBInterface.readLines(fields_n1, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				if (Int32.TryParse(measurementhash["Unique_Seq_ID"].ToString(), out intSeqID))
+				{
+					if (!Seq_ID_to_Cleavage_State_Table.ContainsKey(intSeqID))
+						Seq_ID_to_Cleavage_State_Table.Add(intSeqID, Convert.ToInt32(measurementhash["Cleavage_State"]));
+				}
+
+			}
 
             //SET DB QUERY
             DBInterface.setQuery("SELECT temp_xt.Result_ID, temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_xt.Charge, temp_xt.Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State, temp_xt_seqtoproteinmap.Unique_Seq_ID "
@@ -4614,8 +4600,10 @@ namespace SMAQC
             while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
             {
                 //USED AS WE CANNOT TRUST CLEAVAGE STATE RETURNED FROM DIRECT QUERY DUE TO SQLITE BUG IN NEWER DLLS
-                String temp_unique_seq_id = Convert.ToString(ResultID_to_Unique_Seq_ID_Table[measurementhash["Result_ID"]]); //CONVERT RESULT_ID TO UNIQUE_SEQUENCE_ID
-                int cleavage_state = Convert.ToInt32(SequenceID_to_CleavageState_Table[temp_unique_seq_id]); //CONVERT UNIQUE_SEQUENCE_ID TO CLEAVAGE_STATE
+                int temp_unique_seq_id = Convert.ToInt32(ResultID_to_Unique_Seq_ID_Table[measurementhash["Result_ID"]]); //CONVERT RESULT_ID TO UNIQUE_SEQUENCE_ID
+
+				int cleavage_state = 0;
+				Seq_ID_to_Cleavage_State_Table.TryGetValue(temp_unique_seq_id, out cleavage_state);   //CONVERT UNIQUE_SEQUENCE_ID TO CLEAVAGE_STATE
 
                 //IS FIRST LINE?
                 if (is_first_line)
@@ -4668,31 +4656,23 @@ namespace SMAQC
             {
                 ResultID_to_Unique_Seq_ID_Table.Add(measurementhash["Result_ID"], measurementhash["Unique_Seq_ID"]);
             }
-            //BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE
-            String[] fields_n1 = { "Unique_Seq_ID", "Cleavage_State" };
-            Hashtable SequenceID_to_CleavageState_Table = new Hashtable();
-            List<string> TempStorageList = new List<string>();    //STORE HASH VALUES KEYS TO ENSURE UNIQUE
-            foreach (string val in ResultID_to_Unique_Seq_ID_Table.Values)
-            {
-                //IF WE HAVE THIS ITEM ... SKIP
-                if (TempStorageList.Contains(val))
-                {
-                    continue;
-                }
-                else
-                {
-                    //ADD
-                    TempStorageList.Add(val);
-                }
-                DBInterface.setQuery("SELECT Unique_Seq_ID,Cleavage_State FROM `temp_xt_seqtoproteinmap` WHERE temp_xt_seqtoproteinmap.random_id=" + r_id + " AND Unique_Seq_ID=" + val + " LIMIT 1");
-                DBInterface.initReader();
 
-                while ((DBInterface.readLines(fields_n1, ref measurementhash)) && (measurementhash.Count > 0))
-                {
-                    SequenceID_to_CleavageState_Table.Add(measurementhash["Unique_Seq_ID"], Convert.ToInt32(measurementhash["Cleavage_State"]));
-                }
-            }
-            TempStorageList.Clear();
+			// BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE            
+			// Populate a dictionary object via a single query to the database
+			DBInterface.setQuery("SELECT Unique_Seq_ID, MAX(Cleavage_State) AS Cleavage_State FROM `temp_xt_seqtoproteinmap` WHERE temp_xt_seqtoproteinmap.random_id=" + r_id + " GROUP BY Unique_Seq_ID;");
+			String[] fields_n1 = { "Unique_Seq_ID", "Cleavage_State" };
+			int intSeqID;
+			DBInterface.initReader();
+			System.Collections.Generic.Dictionary<int, int> Seq_ID_to_Cleavage_State_Table = new System.Collections.Generic.Dictionary<int, int>();
+			while ((DBInterface.readLines(fields_n1, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				if (Int32.TryParse(measurementhash["Unique_Seq_ID"].ToString(), out intSeqID))
+				{
+					if (!Seq_ID_to_Cleavage_State_Table.ContainsKey(intSeqID))
+						Seq_ID_to_Cleavage_State_Table.Add(intSeqID, Convert.ToInt32(measurementhash["Cleavage_State"]));
+				}
+				
+			}
 
             //SET DB QUERY
             DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log, Charge, temp_xt.Result_ID, Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State, temp_xt_seqtoproteinmap.Unique_Seq_ID "
@@ -4723,8 +4703,10 @@ namespace SMAQC
             while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
             {
                 //USED AS WE CANNOT TRUST CLEAVAGE STATE RETURNED FROM DIRECT QUERY DUE TO SQLITE BUG IN NEWER DLLS
-                String temp_unique_seq_id = Convert.ToString(ResultID_to_Unique_Seq_ID_Table[measurementhash["Result_ID"]]); //CONVERT RESULT_ID TO UNIQUE_SEQUENCE_ID
-                int cleavage_state = Convert.ToInt32(SequenceID_to_CleavageState_Table[temp_unique_seq_id]); //CONVERT UNIQUE_SEQUENCE_ID TO CLEAVAGE_STATE
+                int temp_unique_seq_id = Convert.ToInt32(ResultID_to_Unique_Seq_ID_Table[measurementhash["Result_ID"]]); //CONVERT RESULT_ID TO UNIQUE_SEQUENCE_ID
+
+				int cleavage_state = 0;
+				Seq_ID_to_Cleavage_State_Table.TryGetValue(temp_unique_seq_id, out cleavage_state);   //CONVERT UNIQUE_SEQUENCE_ID TO CLEAVAGE_STATE
 
                 //FOR cleavage_state_1_count [COLUMN H]
                 if (cleavage_state == 1)
@@ -4806,31 +4788,23 @@ namespace SMAQC
             {
                 ResultID_to_Unique_Seq_ID_Table.Add(measurementhash["Result_ID"], measurementhash["Unique_Seq_ID"]);
             }
-            //BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE
-            String[] fields_n1 = { "Unique_Seq_ID", "Cleavage_State" };
-            Hashtable SequenceID_to_CleavageState_Table = new Hashtable();
-            List<string> TempStorageList = new List<string>();    //STORE HASH VALUES KEYS TO ENSURE UNIQUE
-            foreach (string val in ResultID_to_Unique_Seq_ID_Table.Values)
-            {
-                //IF WE HAVE THIS ITEM ... SKIP
-                if (TempStorageList.Contains(val))
-                {
-                    continue;
-                }
-                else
-                {
-                    //ADD
-                    TempStorageList.Add(val);
-                }
-                DBInterface.setQuery("SELECT Unique_Seq_ID,Cleavage_State FROM `temp_xt_seqtoproteinmap` WHERE temp_xt_seqtoproteinmap.random_id=" + r_id + " AND Unique_Seq_ID=" + val + " LIMIT 1");
-                DBInterface.initReader();
 
-                while ((DBInterface.readLines(fields_n1, ref measurementhash)) && (measurementhash.Count > 0))
-                {
-                    SequenceID_to_CleavageState_Table.Add(measurementhash["Unique_Seq_ID"], Convert.ToInt32(measurementhash["Cleavage_State"]));
-                }
-            }
-            TempStorageList.Clear();
+			// BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE            
+			// Populate a dictionary object via a single query to the database
+			DBInterface.setQuery("SELECT Unique_Seq_ID, MAX(Cleavage_State) AS Cleavage_State FROM `temp_xt_seqtoproteinmap` WHERE temp_xt_seqtoproteinmap.random_id=" + r_id + " GROUP BY Unique_Seq_ID;");
+			String[] fields_n1 = { "Unique_Seq_ID", "Cleavage_State" };
+			int intSeqID;
+			DBInterface.initReader();
+			System.Collections.Generic.Dictionary<int, int> Seq_ID_to_Cleavage_State_Table = new System.Collections.Generic.Dictionary<int, int>();
+			while ((DBInterface.readLines(fields_n1, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				if (Int32.TryParse(measurementhash["Unique_Seq_ID"].ToString(), out intSeqID))
+				{
+					if (!Seq_ID_to_Cleavage_State_Table.ContainsKey(intSeqID))
+						Seq_ID_to_Cleavage_State_Table.Add(intSeqID, Convert.ToInt32(measurementhash["Cleavage_State"]));
+				}
+
+			}
 
             //SET DB QUERY
             DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log, Charge, temp_xt.Result_ID, Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State "
@@ -4861,8 +4835,10 @@ namespace SMAQC
             while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
             {
                 //USED AS WE CANNOT TRUST CLEAVAGE STATE RETURNED FROM DIRECT QUERY DUE TO SQLITE BUG IN NEWER DLLS
-                String temp_unique_seq_id = Convert.ToString(ResultID_to_Unique_Seq_ID_Table[measurementhash["Result_ID"]]); //CONVERT RESULT_ID TO UNIQUE_SEQUENCE_ID
-                int cleavage_state = Convert.ToInt32(SequenceID_to_CleavageState_Table[temp_unique_seq_id]); //CONVERT UNIQUE_SEQUENCE_ID TO CLEAVAGE_STATE
+                int temp_unique_seq_id = Convert.ToInt32(ResultID_to_Unique_Seq_ID_Table[measurementhash["Result_ID"]]); //CONVERT RESULT_ID TO UNIQUE_SEQUENCE_ID
+
+				int cleavage_state = 0;
+				Seq_ID_to_Cleavage_State_Table.TryGetValue(temp_unique_seq_id, out cleavage_state);   //CONVERT UNIQUE_SEQUENCE_ID TO CLEAVAGE_STATE
 
                 //FOR cleavage_state_1_count [COLUMN H]
                 if (cleavage_state == 1)

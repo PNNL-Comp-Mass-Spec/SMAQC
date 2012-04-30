@@ -13,6 +13,8 @@ namespace SMAQC
         private List<String> ValidFilesToReFormat = new List<String>();                     //LIST OF FILES THAT ARE VALID TO REFORMAT
         private String[,] FieldList = new String[10, 30];                                   //LIST OF FIELDS
 
+		private string mTempFilePath = "";
+
         //CONSTRUCTOR
         public DataFileFormatter()
         {
@@ -126,8 +128,19 @@ namespace SMAQC
         ~DataFileFormatter()
         {
             //ENSURE TEMP FILE DOES NOT STILL EXIST
-            ensure_temp_file_removed("DFF.txt");
+			if (!String.IsNullOrEmpty(mTempFilePath) && System.IO.File.Exists(mTempFilePath))
+				ensure_temp_file_removed(mTempFilePath);
         }
+
+		// TempFilePath property
+		public string TempFilePath
+		{
+			get
+			{
+				return mTempFilePath;
+			}
+		}
+
 
         //THIS FUNCTION CHECKS EACH FILE TO SEE IF IT SHOULD BE RE-FORMATED AND THEN TAKES CARE OF IT
         //RETURNS FALSE == NO REBUILD || TRUE == REBUILD
@@ -146,11 +159,11 @@ namespace SMAQC
                 //PAD HASH TABLE WITH POINTER TO CORRECT VALUES
                 int numOfColumns = padHashTable(filename, ref ListFieldID, ValidFilesToReFormat_id);
 
-                //ENSURE TEMP FILE REMOVED
-                ensure_temp_file_removed("DFF.txt");
+                // OBTAIN A TEMP FILE PATH
+				mTempFilePath = System.IO.Path.GetTempFileName();
 
                 //CALL INTERNAL REBUILD FUNCTION
-                rebuildFile(filename, "DFF.txt", numOfColumns, ListFieldID);
+				rebuildFile(filename, mTempFilePath, numOfColumns, ListFieldID);
 
                 return true;
             }
@@ -182,7 +195,7 @@ namespace SMAQC
                 char[] delimiters = new char[] { '\t' };
 
                 //DO SPLIT OPERATION
-                string[] parts = line.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+                string[] parts = line.Split(delimiters, StringSplitOptions.None);
 
                 //IF COLUMN AND DATA MISMATCH
                 if (parts.Length != numOfColumns)
@@ -259,7 +272,7 @@ namespace SMAQC
             char[] delimiters = new char[] { '\t' };
 
             //DO SPLIT OPERATION
-            string[] parts = line.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+            string[] parts = line.Split(delimiters, StringSplitOptions.None);
 
             //CLEAN FIELDS TO ENSURE CONSISTENCY
             parts = FieldCleaner(parts);
@@ -317,12 +330,12 @@ namespace SMAQC
         }
 
         //ENSURE FILE HAS BEEN DELETED
-        private void ensure_temp_file_removed(string filename)
+        private void ensure_temp_file_removed(string filePath)
         {
             //ENSURE TEMP FILE DOES NOT STILL EXIST
-            if (File.Exists(filename))
+			if (File.Exists(filePath))
             {
-                File.Delete(filename);
+				File.Delete(filePath);
             }
         }
 
@@ -394,8 +407,7 @@ namespace SMAQC
             //DECLARE VARIABLES
             int first_index = 0;
             int last_index = 0;
-            int index = 0;
-
+            
             //LOOP THROUGH EACH FIELD
             for (int i = 0; i < field_array.Length; i++)
             {
@@ -404,7 +416,7 @@ namespace SMAQC
                 last_index = field_array[i].IndexOf(")");
 
                 //IF THERE IS A (...)
-                if (first_index > 0 && last_index > 0)
+				if (first_index > 0 && last_index > first_index)
                 {
                     field_array[i] = field_array[i].Remove(first_index, last_index - first_index + 1);
                 }

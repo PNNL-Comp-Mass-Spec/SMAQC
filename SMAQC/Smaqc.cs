@@ -149,7 +149,7 @@ namespace SMAQC
             //DB OBJECT
             m_Aggregate = new Aggregate(path_to_scan_files);                                                        //AGGREGATE OBJECT
             m_Measurement = new Measurement(r_id, ref DBWrapper);                                                   //MEASUREMENT LIST OBJECT
-            m_MeasurementEngine = new MeasurementEngine(measurements_list, ref m_Measurement);                      //MEASUREMENT ENGINE OBJECT
+			m_MeasurementEngine = new MeasurementEngine(measurements_list, ref m_Measurement, ref m_SystemLogManager);                      //MEASUREMENT ENGINE OBJECT
             m_Filter = new Filter(ref DBWrapper, instrument_id, r_id);                                              //FILTER OBJECT
             m_OutputFileManager = new OutputFileManager(ref DBWrapper, SMAQC_VERSION, SMAQC_BUILD_DATE, fields);    //OUTPUTFILE MANAGER OBJECT
 
@@ -199,7 +199,7 @@ namespace SMAQC
                 m_SystemLogManager.addApplicationLog("Now running Measurements on " + DataPrefix[i] + "!");
 
                 //RUN MEASUREMENT ENGINE
-                resultstable = m_MeasurementEngine.run();
+				resultstable = m_MeasurementEngine.run();
 
                 //ADD TO SCAN RESULTS
                 m_SystemLogManager.addApplicationLog("Saving Scan Results!...");

@@ -51,8 +51,8 @@ namespace SMAQC
             string query_info = "";
             Boolean bug_flag = false;
 
-            //OPEN TEMP FILE
-            System.IO.StreamWriter fileX = new System.IO.StreamWriter(temp_file);
+            //OPEN TEMP srInFile
+            System.IO.StreamWriter swOutFile = new System.IO.StreamWriter(temp_file);
 
             //Console.WriteLine("WRITE TO: {0} ... LOAD FROM: {1}", temp_file, file_to_load);
 
@@ -62,8 +62,8 @@ namespace SMAQC
                 //bug_flag = true;
             }
 
-            StreamReader file = new StreamReader(file_to_load);
-            while ((line = file.ReadLine()) != null)
+            StreamReader srInFile = new StreamReader(file_to_load);
+            while ((line = srInFile.ReadLine()) != null)
             {
                 //NEW LINE SO CLEAR QUERY_INFO
                 query_info = "";
@@ -83,7 +83,7 @@ namespace SMAQC
                 char[] delimiters = new char[] { '\t' };
 
                 //DO SPLIT OPERATION
-                string[] parts = line.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+                string[] parts = line.Split(delimiters, StringSplitOptions.None);
 
                 //ADD INSTRUMENT ID + RANDOM ID
                 if (line_num != 0)
@@ -126,16 +126,16 @@ namespace SMAQC
                     }
                 }
 
-                //WRITE RECORD LINE TO FILE
-                fileX.Write(query_info);
+                //WRITE RECORD LINE TO srInFile
+                swOutFile.Write(query_info);
 
                 //INCREMENT OUR LINE #
                 line_num++;
             }
 
-            //FILE NO LONGER USED ... CLOSE
-            fileX.Close();
-            file.Close();
+            //CLOSE THE FILE HANDLES
+            swOutFile.Close();
+            srInFile.Close();
         }
 
         //THIS FUNCTION:
@@ -149,9 +149,9 @@ namespace SMAQC
             for (int i = 0; i < FileList.Count; i++)
             {
                 //STORES THE FULL PATH TO FILE + TEMP FILE NAME
-                String file_info = FileList[i];                     //FILENAME WE WANT TO LOAD INTO DB
-                String temp_file = "temp.txt";                      //WRITE TO THIS FILE [TEMP FILE]
-                String query_table = "temp";                        //USED AS PREFIX PORTION OF TABLE
+                String file_info = FileList[i];							//FILENAME WE WANT TO LOAD INTO DB
+				String temp_file = System.IO.Path.GetTempFileName();	//WRITE TO THIS FILE [TEMP FILE]
+                String query_table = "temp";							//USED AS PREFIX PORTION OF TABLE
 
                 //DETERMINE IF WE HAVE A TABLE TO INSERT INTO DEPENDING ON OUR INPUT FILENAME
                 int j = return_file_table_position(file_info, valid_file_tables);
@@ -161,11 +161,11 @@ namespace SMAQC
                 {
                     //YES
 
-                    //REBUILD [SAVE TO DFF.txt BY DEFAULT]
+					//REBUILD [SAVE TO DFF.TempFilePath BY DEFAULT]
                     //DFF.handleRebuild(FileList[i]);
 
                     //SET FILE_INFO TO OUR REBUILT FILE NOW
-                    file_info = "DFF.txt";
+					file_info = DFF.TempFilePath;
                 }
 
                 //PARSE + FORMAT FILE CORRECTLY FOR MYSQL BULK INSERT QUERIES
