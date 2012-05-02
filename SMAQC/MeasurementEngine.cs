@@ -38,6 +38,7 @@ namespace SMAQC
 			System.DateTime dtStartTime;
 			double percentComplete;
 			int iMeasurementsStarted = 0;
+			string sResult;
 
             foreach (string element in m_Measurements_list)
             {
@@ -48,13 +49,18 @@ namespace SMAQC
 
 				try
                 {
-                    resultstable.Add(element, factory.buildMeasurement(element));
+					sResult = factory.buildMeasurement(element);
+					if (string.IsNullOrEmpty(sResult))
+						sResult = "Null";
+
+                    resultstable.Add(element, sResult);
 					m_SystemLogManager.addApplicationLog((element + ":").PadRight(7) + " complete in " + System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0.00") + " seconds; " + percentComplete.ToString("0") + "% complete");
                 }
                 catch (Exception ex)
                 {
                     //THIS HAPPENS WHEN A MEASUREMENT FAILS ... STORE AS NULL!
                     resultstable.Add(element, "Null");
+					Console.WriteLine();
 					m_SystemLogManager.addApplicationLog(element + " failed: " + ex.Message);
                 }
             }

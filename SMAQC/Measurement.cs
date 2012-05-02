@@ -170,9 +170,6 @@ namespace SMAQC
 			//INIT READER
 			DBInterface.initReader();
 
-			//CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-			measurementhash.Clear();
-
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
 			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
 			{
@@ -195,9 +192,6 @@ namespace SMAQC
 					//SINCE VALID ROW ... INC [ONLY IF COLUMN C == 1]
 					valid_rows++;
 				}
-
-				//CLEAR HASH TABLE
-				measurementhash.Clear();
 			}
 
 			//CALCULATE SOLUTION
@@ -245,9 +239,6 @@ namespace SMAQC
             //INIT READER
             DBInterface.initReader();
 
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
             //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
             while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
             {
@@ -270,9 +261,6 @@ namespace SMAQC
 
                 //ADD RUNNING SUM TO LIST
                 RunningSumList.Add(running_sum);
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //CALCULATE METRIC BY LOOPING THROUGH RUNNING SUM LIST
@@ -387,9 +375,6 @@ namespace SMAQC
             //INIT READER
             DBInterface.initReader();
 
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
             //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
             while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
             {
@@ -405,9 +390,6 @@ namespace SMAQC
 
                 //ADD RUNNING SUM TO LIST
                 RunningSumList.Add(running_sum);
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
 			string answerText = string.Empty;
@@ -482,9 +464,6 @@ namespace SMAQC
             //INIT READER
             DBInterface.initReader();
 
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
             //FETCH COLUMNS Q,R NOW
 
             //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
@@ -525,9 +504,6 @@ namespace SMAQC
                 prv_Charge = Convert.ToString(measurementhash["Charge"]);
                 prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
                 prev_Best_Evalue = Best_Evalue;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
@@ -551,9 +527,6 @@ namespace SMAQC
                 fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
                 fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
                 optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //SET DB QUERY
@@ -575,9 +548,6 @@ namespace SMAQC
 
                 //INCREMENT I POSITION
                 i++;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //NOW START THE ACTUAL MEASUREMENT CALCULATION
@@ -678,9 +648,6 @@ namespace SMAQC
             //INIT READER
             DBInterface.initReader();
 
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
             //FETCH COLUMNS Q,R NOW
 
             //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
@@ -721,9 +688,6 @@ namespace SMAQC
                 prv_Charge = Convert.ToString(measurementhash["Charge"]);
                 prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
                 prev_Best_Evalue = Best_Evalue;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
@@ -747,9 +711,6 @@ namespace SMAQC
                 fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
                 fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
                 optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //SET DB QUERY
@@ -771,9 +732,6 @@ namespace SMAQC
 
                 //INCREMENT I POSITION
                 i++;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //NOW START THE ACTUAL MEASUREMENT CALCULATION
@@ -885,9 +843,6 @@ namespace SMAQC
             //INIT READER
             DBInterface.initReader();
 
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
             //FETCH COLUMNS Q,R NOW
 
             //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
@@ -928,9 +883,6 @@ namespace SMAQC
                 prv_Charge = Convert.ToString(measurementhash["Charge"]);
                 prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
                 prev_Best_Evalue = Best_Evalue;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
@@ -954,9 +906,6 @@ namespace SMAQC
                 fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
                 fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
                 optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //SET DB QUERY
@@ -978,9 +927,6 @@ namespace SMAQC
 
                 //INCREMENT I POSITION
                 i++;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //NOW START THE ACTUAL MEASUREMENT CALCULATION
@@ -1092,9 +1038,6 @@ namespace SMAQC
             //INIT READER
             DBInterface.initReader();
 
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
             //FETCH COLUMNS Q,R NOW
 
             //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
@@ -1135,9 +1078,6 @@ namespace SMAQC
                 prv_Charge = Convert.ToString(measurementhash["Charge"]);
                 prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
                 prev_Best_Evalue = Best_Evalue;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
@@ -1161,9 +1101,6 @@ namespace SMAQC
                 fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
                 fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
                 optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //SET DB QUERY
@@ -1185,9 +1122,6 @@ namespace SMAQC
 
                 //INCREMENT I POSITION
                 i++;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //NOW START THE ACTUAL MEASUREMENT CALCULATION
@@ -1299,9 +1233,6 @@ namespace SMAQC
             //INIT READER
             DBInterface.initReader();
 
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
             //FETCH COLUMNS Q,R NOW
 
             //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
@@ -1342,9 +1273,6 @@ namespace SMAQC
                 prv_Charge = Convert.ToString(measurementhash["Charge"]);
                 prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
                 prev_Best_Evalue = Best_Evalue;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
@@ -1368,9 +1296,6 @@ namespace SMAQC
                 fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
                 fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
                 optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //SET DB QUERY
@@ -1392,9 +1317,6 @@ namespace SMAQC
 
                 //INCREMENT I POSITION
                 i++;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //NOW START THE ACTUAL MEASUREMENT CALCULATION
@@ -1507,10 +1429,7 @@ namespace SMAQC
 
             //INIT READER
             DBInterface.initReader();
-
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
+            
             //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
             while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
             {
@@ -1521,9 +1440,6 @@ namespace SMAQC
 
                 //INCREMENT i
                 i++;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //BUILD RUNNING COUNT TABLE
@@ -1750,9 +1666,6 @@ namespace SMAQC
             //INIT READER
             DBInterface.initReader();
 
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
             //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
             while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
             {
@@ -1763,9 +1676,6 @@ namespace SMAQC
 
                 //INCREMENT i
                 i++;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //BUILD RUNNING COUNT TABLE
@@ -2001,9 +1911,6 @@ namespace SMAQC
 			//INIT READER
 			DBInterface.initReader();
 
-			//CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-			measurementhash.Clear();
-
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
 			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
 			{
@@ -2015,11 +1922,8 @@ namespace SMAQC
 				{
 					intScanCount++;
 				}
-
-				//CLEAR HASH TABLE
-				measurementhash.Clear();
 			}
-
+			
 			return intScanCount;
 		}
 
@@ -2048,9 +1952,6 @@ namespace SMAQC
             //INIT READER
             DBInterface.initReader();
 
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
             //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
             while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
             {
@@ -2064,9 +1965,6 @@ namespace SMAQC
                     MZ_List.Add(temp_mz);
                     
                 }
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //REMOVE DUPLICATES IN OUR TEMP DICT
@@ -2200,9 +2098,6 @@ namespace SMAQC
 			//INIT READER
 			DBInterface.initReader();
 
-			//CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-			measurementhash.Clear();
-
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
 			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
 			{
@@ -2235,11 +2130,8 @@ namespace SMAQC
 							break;
 					}
 				}
-
-				//CLEAR HASH TABLE
-				measurementhash.Clear();
 			}
-
+			
 		}
 
         /// <summary>
@@ -2266,9 +2158,6 @@ namespace SMAQC
             //INIT READER
             DBInterface.initReader();
 
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
             //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
             while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
             {
@@ -2278,9 +2167,6 @@ namespace SMAQC
                     //ADD TO FILTER LIST
                     Filter.Add(Convert.ToDouble(measurementhash["Ion_Injection_Time"]));
                 }
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
 			if (Filter.Count > 0)
@@ -2402,9 +2288,6 @@ namespace SMAQC
 
 			//INIT READER
 			DBInterface.initReader();
-
-			//CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-			measurementhash.Clear();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
 			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
@@ -2549,11 +2432,8 @@ namespace SMAQC
 					temp_list_mpi.Add(Convert.ToDouble(measurementhash["PeakMaxIntensity"]));                   //ADD MPI
 					temp_list_running_sum.Add(max_running_sum);                                                 //ADD CURRENT RUNNING SUM
 				}
-
-				//CLEAR HASH TABLE
-				measurementhash.Clear();
 			}
-
+			
 			if (max_running_sum > 0)
 			{
 				//LOOP THROUGH OUR TEMP LIST
@@ -2617,10 +2497,7 @@ namespace SMAQC
             //INIT READER
             DBInterface.initReader();
 
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
             while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
             {
                 //STORE RESULT_ID, SCAN [ALLOWS FOR US TO HAVE DUPLICATES WITHOUT CRASHING]
@@ -2649,9 +2526,6 @@ namespace SMAQC
                     //SET FILTER TO 1
                     Filter_Result.Add(Convert.ToInt32(measurementhash["Result_ID"]), 0);
                 }
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //USE LINQ TO SORT VALUES IN ASC ORDER
@@ -2753,10 +2627,7 @@ namespace SMAQC
             //INIT READER
             DBInterface.initReader();
 
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
             while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
             {
                 //STORE RESULT_ID, SCAN [ALLOWS FOR US TO HAVE DUPLICATES WITHOUT CRASHING]
@@ -2785,9 +2656,6 @@ namespace SMAQC
                     //SET FILTER TO 1
                     Filter_Result.Add(Convert.ToInt32(measurementhash["Result_ID"]), 0);
                 }
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //USE LINQ TO SORT VALUES IN ASC ORDER
@@ -2912,9 +2780,6 @@ namespace SMAQC
 			//INIT READER
 			DBInterface.initReader();
 
-			//CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-			measurementhash.Clear();
-
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
 			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
 			{
@@ -3001,10 +2866,8 @@ namespace SMAQC
 
 				//INC line_num
 				line_num++;
-
-				//CLEAR HASH TABLE
-				measurementhash.Clear();
 			}
+			
 		}
 
         /// <summary>
@@ -3020,7 +2883,7 @@ namespace SMAQC
                 + "ORDER BY temp_xt.Scan;");
 
             //DECLARE VARIABLES
-            double fixed_constant = 1.00727649;                                                 //REQUIRED BY MEASUREMENT
+            double massHydrogen = 1.00727649;                                                 //REQUIRED BY MEASUREMENT
             List<double> FilteredArray = new List<double>();                                    //STORE FILTERED VALUES [COLUMN G]
             List<double> AbsFilteredArray = new List<double>();                                 //STORE FILTERED VALUES [COLUMN H]
             List<double> PPMList = new List<double>();                                          //STORE FILTERED VALUES [COLUMN I]
@@ -3040,7 +2903,7 @@ namespace SMAQC
             while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
             {
                 //CALC THEORETICAL VALUE [COLUMN F]
-                double theo = ((Convert.ToDouble(measurementhash["Peptide_MH"]) - fixed_constant) + (fixed_constant * Convert.ToDouble(measurementhash["Charge"]))) / (Convert.ToDouble(measurementhash["Charge"]));
+                double theo = ((Convert.ToDouble(measurementhash["Peptide_MH"]) - massHydrogen) + (massHydrogen * Convert.ToDouble(measurementhash["Charge"]))) / (Convert.ToDouble(measurementhash["Charge"]));
 
                 //IF LOG(E) <= -2 ... CALC FILTERED AND ABS FILTERED
                 if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
@@ -3106,7 +2969,7 @@ namespace SMAQC
                 + "ORDER BY temp_xt.Scan;");
 
             //DECLARE VARIABLES
-            double fixed_constant = 1.00727649;                                                 //REQUIRED BY MEASUREMENT
+            double massHydrogen = 1.00727649;                                                 //REQUIRED BY MEASUREMENT
             List<double> FilteredArray = new List<double>();                                    //STORE FILTERED VALUES [COLUMN G]
             List<double> AbsFilteredArray = new List<double>();                                 //STORE FILTERED VALUES [COLUMN H]
             List<double> PPMList = new List<double>();                                          //STORE FILTERED VALUES [COLUMN I]
@@ -3126,7 +2989,7 @@ namespace SMAQC
             while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
             {
                 //CALC THEORETICAL VALUE [COLUMN F]
-                double theo = ((Convert.ToDouble(measurementhash["Peptide_MH"]) - fixed_constant) + (fixed_constant * Convert.ToDouble(measurementhash["Charge"]))) / (Convert.ToDouble(measurementhash["Charge"]));
+                double theo = ((Convert.ToDouble(measurementhash["Peptide_MH"]) - massHydrogen) + (massHydrogen * Convert.ToDouble(measurementhash["Charge"]))) / (Convert.ToDouble(measurementhash["Charge"]));
 
                 //IF LOG(E) <= -2 ... CALC FILTERED AND ABS FILTERED
                 if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
@@ -3178,7 +3041,7 @@ namespace SMAQC
                 + "ORDER BY temp_xt.Scan;");
 
             //DECLARE VARIABLES
-            double fixed_constant = 1.00727649;                                                 //REQUIRED BY MEASUREMENT
+            double massHydrogen = 1.00727649;                                                 //REQUIRED BY MEASUREMENT
             List<double> FilteredArray = new List<double>();                                    //STORE FILTERED VALUES [COLUMN G]
             List<double> AbsFilteredArray = new List<double>();                                 //STORE FILTERED VALUES [COLUMN H]
             List<double> PPMList = new List<double>();                                          //STORE FILTERED VALUES [COLUMN I]
@@ -3198,7 +3061,7 @@ namespace SMAQC
             while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
             {
                 //CALC THEORETICAL VALUE [COLUMN F]
-                double theo = ((Convert.ToDouble(measurementhash["Peptide_MH"]) - fixed_constant) + (fixed_constant * Convert.ToDouble(measurementhash["Charge"]))) / (Convert.ToDouble(measurementhash["Charge"]));
+                double theo = ((Convert.ToDouble(measurementhash["Peptide_MH"]) - massHydrogen) + (massHydrogen * Convert.ToDouble(measurementhash["Charge"]))) / (Convert.ToDouble(measurementhash["Charge"]));
 
                 //IF LOG(E) <= -2 ... CALC FILTERED AND ABS FILTERED
                 if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
@@ -3264,7 +3127,7 @@ namespace SMAQC
                 + "ORDER BY temp_xt.Scan;");
 
             //DECLARE VARIABLES
-            double fixed_constant = 1.00727649;                                                 //REQUIRED BY MEASUREMENT
+            double massHydrogen = 1.00727649;                                                 //REQUIRED BY MEASUREMENT
             List<double> FilteredArray = new List<double>();                                    //STORE FILTERED VALUES [COLUMN G]
             List<double> AbsFilteredArray = new List<double>();                                 //STORE FILTERED VALUES [COLUMN H]
             List<double> PPMList = new List<double>();                                          //STORE FILTERED VALUES [COLUMN I]
@@ -3287,7 +3150,7 @@ namespace SMAQC
             while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
             {
                 //CALC THEORETICAL VALUE [COLUMN F]
-                double theo = ((Convert.ToDouble(measurementhash["Peptide_MH"]) - fixed_constant) + (fixed_constant * Convert.ToDouble(measurementhash["Charge"]))) / (Convert.ToDouble(measurementhash["Charge"]));
+                double theo = ((Convert.ToDouble(measurementhash["Peptide_MH"]) - massHydrogen) + (massHydrogen * Convert.ToDouble(measurementhash["Charge"]))) / (Convert.ToDouble(measurementhash["Charge"]));
 
                 //IF LOG(E) <= -2 ... CALC FILTERED AND ABS FILTERED
                 if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
@@ -3694,9 +3557,6 @@ namespace SMAQC
 
                 //INC
                 scan_count++;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT
@@ -3838,9 +3698,6 @@ namespace SMAQC
 
                 //INC
                 scan_count++;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT
@@ -3981,10 +3838,7 @@ namespace SMAQC
                 }
 
                 //INC
-                scan_count++;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
+                scan_count++;;
             }
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT
@@ -4126,9 +3980,6 @@ namespace SMAQC
 
                 //INC
                 scan_count++;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT
@@ -4178,9 +4029,6 @@ namespace SMAQC
             {
                 //CALCULATE COLUMN B + ADD TO LIST
                 Peptide_Hyperscore_List.Add(Convert.ToDouble(measurementhash["Peptide_Hyperscore"]));
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //NOW CALCULATE MEDIAN
@@ -4239,9 +4087,6 @@ namespace SMAQC
             {
                 //CALCULATE COLUMN C + ADD TO LIST
                 Peptide_Expectation_List.Add(Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]));
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //NOW CALCULATE MEDIAN
@@ -4382,9 +4227,6 @@ namespace SMAQC
 
                 //UPDATE PREVIOUS VALUES FOR NEXT LOOP
                 prv_peptide_sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //SET ANSWER
@@ -4478,9 +4320,6 @@ namespace SMAQC
                 prv_prv_peptide_sequence = prv_peptide_sequence;
                 prv_peptide_sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
                 prv_cleavage_state = cleavage_state;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //CLEAR HASH TABLE
@@ -4598,9 +4437,6 @@ namespace SMAQC
 
                 //UPDATE PREVIOUS VALUES FOR NEXT LOOP
                 prv_peptide_sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //SET ANSWER
@@ -4722,8 +4558,6 @@ namespace SMAQC
                 //UPDATE PREVIOUS VALUES FOR NEXT LOOP
                 prv_peptide_sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
 
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //SET ANSWER

@@ -214,8 +214,6 @@ namespace SMAQC
                     //RUN QUERY
                     cmd.ExecuteNonQuery();
 
-					// Add an index
-
                     //SET QUERY TEXT
                     cmd.CommandText = "CREATE TABLE [temp_xt_seqtoproteinmap] ("
                         + "[instrument_id] INTEGER NOT NULL,"
@@ -231,10 +229,37 @@ namespace SMAQC
                     //RUN QUERY
                     cmd.ExecuteNonQuery();
 
+					// CREATE INDICES ON THE TABLES
+					RunSql(cmd, "CREATE UNIQUE INDEX pk_temp_ScanStats on temp_scanstats(random_id, ScanNumber)");
+
+					RunSql(cmd, "CREATE UNIQUE INDEX pk_temp_ScanStatsEx on temp_scanstatsex(random_id, ScanNumber)");
+
+					RunSql(cmd, "CREATE UNIQUE INDEX pk_temp_SicStats on temp_sicstats(random_id, ParentIonIndex)");
+
+					RunSql(cmd, "CREATE INDEX IX_temp_SicStats_FragScan on temp_sicstats(FragScanNumber)");
+
+					RunSql(cmd, "CREATE INDEX IX_temp_SicStats_PeakApexScan on temp_sicstats(OptimalPeakApexScanNumber)");
+
+					RunSql(cmd, "CREATE INDEX ix_temp_xt_Scan on temp_xt(Scan)");
+
+					RunSql(cmd, "CREATE INDEX ix_temp_xt_LogEValue on temp_xt(Peptide_Expectation_Value_Log)");
+
+					RunSql(cmd, "CREATE INDEX ix_temp_xt_resulttoseqmap_ResultID on temp_xt_resulttoseqmap(Result_ID)");
+
+					RunSql(cmd, "CREATE INDEX ix_temp_xt_resulttoseqmap_SeqID on temp_xt_resulttoseqmap(Unique_Seq_ID)");
+
+					RunSql(cmd, "CREATE INDEX ix_temp_xt_seqtoproteinmap_SeqID on temp_xt_seqtoproteinmap(Unique_Seq_ID)");
+
                     //CLOSE DB
                     conn.Close();
                 }
             }
         }
+
+		protected void RunSql(SQLiteCommand cmd, string sql)
+		{
+			cmd.CommandText = sql;
+			cmd.ExecuteNonQuery();
+		}
     }
 }
