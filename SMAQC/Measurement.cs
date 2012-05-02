@@ -234,7 +234,8 @@ namespace SMAQC
             List<double> XScanTimeList = new List<double>();                                    //STORES SCAN TIMES [USED TO HELP FIND MS_2A/B]
             List<int> XScanNumberList = new List<int>();                                        //STORE SCAN NUMBER LIST [USED TO HELP FIND MS_2A/B]
             List<int> XAllScanNumberList = new List<int>();                                     //STORE SCAN NUMBER LIST [USED TO HELP FIND MS_2A/B]
-            List<int> XQuartile_Scan = new List<int>();                                         //STORE ALL QUARTILE SCANS [USED TO HELP FIND MS_2A/B]
+            List<int> XQuartile_Scan = new List<int>();                                         //STORE ALL INTERQUARTILE SCANS, i.e. scans between the 25% and 75% quartile peptide ID passing filters [USED TO HELP FIND MS_2A/B]
+
             int prev_scan_time_within_range = 0;                                                //STORE PREV SCAN TIME TRUE/FALSE WITHIN RANGE [0=FALSE;1=TRUE] [USED TO HELP FIND MS_2A/B]
             int i = 0;                                                                          //COUNTER
 
@@ -278,15 +279,17 @@ namespace SMAQC
             for (i = 0; i < RunningSumList.Count; i++)
             {
                 //CALC RUNNING SUM
-                decimal drsum = Convert.ToDecimal((double)RunningSumList[i]/running_sum);
-                double rsum = Convert.ToDouble(drsum);
+                double drsum = 0;
+				if (running_sum > 0)
+					drsum = (double)RunningSumList[i] / running_sum;
+
                 int current_scan_time_within_range = 0;                                 //FOR MS_2A/B ... WE ARE WITHIN RANGE IF == 1 ELSE = 0
                 int save_prev_scan_time_within_range = prev_scan_time_within_range;     //FOR MS_2A/B ... SAVED SINCE OVERWRITTEN
 
                 //IF WITHIN 25% to 75%
-                if ((rsum >= .25) && (rsum <= .75))
+				if ((drsum >= .25) && (drsum <= .75))
                 {
-                    //ADD TO SCOAN RANGE LIST
+                    //ADD TO SCAN RANGE LIST
                     ScanRangeList.Add(ScanTimeList[i]);
 
                     //SET WITHIN RANGE [FOR MS_2A/B]
@@ -323,12 +326,15 @@ namespace SMAQC
                 //IF FOUND
                 if (xmin == XScanTimeList[i])
                 {
-                    //ADD TO GLOBAL HASH TABLE FOR USE WITH MS_2A/B
-					AddUpdateResultsStorage("C_2A_FIRST_PEPTIDE", XScanNumberList[i]);
+                    // ADD TO GLOBAL HASH TABLE FOR USE WITH MS_2A/B
+					// SCAN_FIRST_FILTER_PASSING_PEPTIDE is the scan number of the first filter-passing peptide
+					AddUpdateResultsStorage("SCAN_FIRST_FILTER_PASSING_PEPTIDE", XScanNumberList[i]);
                 }
             }
-            //FIND MAX FOR END_TIME_REGION
-			AddUpdateResultsStorage("C_2A_END_TIME_REGION", XQuartile_Scan.Max());
+
+            // CACHE THE SCAN NUMBERS AT THE START AND END OF THE INTEQUARTILE REGION
+			AddUpdateResultsStorage("C_2A_REGION_SCAN_START", XQuartile_Scan.Min());
+			AddUpdateResultsStorage("C_2A_REGION_SCAN_END", XQuartile_Scan.Max());
 
             //SORT IN LOW -> HIGH ORDER + DECLARE MIN / MAX
             ScanRangeList.Sort();
@@ -1959,44 +1965,8 @@ namespace SMAQC
         /// <returns></returns>
         public String DS_2A()
         {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT ScanNumber, ScanType "
-                + "FROM `temp_scanstats` "
-                + "WHERE temp_scanstats.random_id=" + r_id + " "
-                + "ORDER BY ScanNumber;");
-
-            //DECLARE VARIABLES
-            int START_RANGE = 5363;                                                                 //FUNCTION START RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
-            int END_RANGE = 9889;                                                                   //FUNCTION END RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
-            int result = 0;                                                                         //RUNNING COUNT / MEASUREMENT RESULT COUNTER
-
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "ScanNumber", "ScanType" };
-
-            //INIT READER
-            DBInterface.initReader();
-
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //IF IS WITHIN RANGE
-                if (Convert.ToInt32(measurementhash["ScanNumber"]) >= START_RANGE && Convert.ToInt32(measurementhash["ScanNumber"]) <= END_RANGE)
-                {
-                    //IF WITHIN THE RANGE && SCAN TYPE == 1 ADD COUNT
-                    if (Convert.ToInt32(measurementhash["ScanType"]) == 1)
-                    {
-                        result++;
-                    }
-                }
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
-            }
-
-            return Convert.ToString(result);
+			int msLevel = 1;
+			return DS_2_Shared(msLevel).ToString();
         }
 
         /// <summary>
@@ -2005,95 +1975,53 @@ namespace SMAQC
         /// <returns></returns>
         public String DS_2B()
         {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log "
-                + "FROM `temp_xt` "
-                + "WHERE temp_xt.random_id=" + r_id + " "
-                + "ORDER BY Scan;");
+			int msLevel = 2;
+			return DS_2_Shared(msLevel).ToString();
+        }
 
-            //DECLARE VARIABLES
-            double START_RANGE = 0.25;                                                              //FUNCTION START RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
-            double END_RANGE = 0.75;                                                                //FUNCTION END RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
-            int prv_running_count = 0;                                                              //INIT PREV RUNNING COUNT TO 0 [REQUIRED FOR COMPARISON]
-            int running_sum = 0;                                                                    //STORE RUNNING SUM 
-            Hashtable RunningCountTable = new Hashtable();                                          //STORE RUNNING COUNT'S IN A HASH TABLE FOR LATER ACCES
-            Boolean FILTER = false;                                                                 //CURRENT FILTER STATUS
-            int result = 0;                                                                         //STORE MEASUREMENT RESULT
-            int i = 0;                                                                              //TEMP COUNTER
+		protected int DS_2_Shared(int msLevel)
+		{
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT ScanNumber, ScanType "
+				+ "FROM `temp_scanstats` "
+				+ "WHERE temp_scanstats.random_id=" + r_id + " "
+				+ "ORDER BY ScanNumber;");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log" };
+			//DECLARE VARIABLES
+			int valC2ARegionScanStart = GetStoredValueInt("C_2A_REGION_SCAN_START", 0);
+			int valC2ARegionScanEnd = GetStoredValueInt("C_2A_REGION_SCAN_END", 0);
+			
+			int intScanCount = 0;
+			int scanNumber;
+			int scanType;
 
-            //INIT READER
-            DBInterface.initReader();
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "ScanNumber", "ScanType" };
 
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
+			//INIT READER
+			DBInterface.initReader();
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //RESET FILTER STATUS
-                FILTER = false;
+			//CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
+			measurementhash.Clear();
 
-                //IF PEPTIDE EXP VALUE LOG < -2 SET FILTER TO TRUE
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) < -2)
-                {
-                    FILTER = true;
-                }
-
-                //IF FILTER == TRUE
-                if (FILTER == true)
-                {
-                    //SET TO PREV + 1
-                    running_sum = prv_running_count + 1;
-                }
-                else
-                {
-                    //RUNNING SUM STAYS THE SAME SO NO CHANGES
-                }
-
-                //ADD TO HASH TABLE
-                RunningCountTable.Add(i, running_sum);
-
-                //Console.WriteLine("A -> SCAN_ID={0} && RUNNING_COUNT={1}", measurementhash["Scan"], running_sum);
-                //Console.ReadLine();
-
-                //SET PREV COUNT
-                prv_running_count = running_sum;
-
-                //INCREMENT i
-                i++;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
-            }
-
-            //NOW THAT WE HAVE DETERMINED THE RUNNING SUM ... FIND COLUMNS E,F,G
-
-            //RESET PREV RUNNING COUNT
-            prv_running_count = 0;
-
-			if (running_sum > 0)
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
 			{
-				//LOOP THROUGH OUR TABLE COUNT
-				for (i = 0; i < RunningCountTable.Count; i++)
-				{
-					double running_percent = Convert.ToDouble(RunningCountTable[i]) / Convert.ToDouble(running_sum);
+				scanNumber = Convert.ToInt32(measurementhash["ScanNumber"]);
+				scanType = Convert.ToInt32(measurementhash["ScanType"]);
 
-					if (running_percent >= START_RANGE && running_percent <= END_RANGE)
-					{
-						//INCREMENT RESULT
-						result++;
-					}
+				//IF IS WITHIN RANGE
+				if (scanType == msLevel && scanNumber >= valC2ARegionScanStart && scanNumber <= valC2ARegionScanEnd)
+				{
+					intScanCount++;
 				}
+
+				//CLEAR HASH TABLE
+				measurementhash.Clear();
 			}
 
-            //CLEAR HASH TABLES
-            RunningCountTable.Clear();
-
-            return Convert.ToString(result);
-        }
+			return intScanCount;
+		}
 
         /// <summary>
 		/// IS-2: Median precursor m/z for all peptides
@@ -2496,22 +2424,14 @@ namespace SMAQC
 
 			int max_scannumber = List_ScanNumber.Max();
 
-			int valC2AFirstPeptide = GetStoredValueInt("C_2A_FIRST_PEPTIDE", 0);
-			int valC2AEndTimeRegion = GetStoredValueInt("C_2A_END_TIME_REGION", 0);
+			int valScanFirstPeptide = GetStoredValueInt("SCAN_FIRST_FILTER_PASSING_PEPTIDE", 0);
+			int valC2ARegionScanEnd = GetStoredValueInt("C_2A_REGION_SCAN_END", 0);
 
 			//LOOP THROUGH ALL
 			for (i = 0; i < List_ScanNumber.Count; i++)
-			{
-				//SCAN TYPE == 1 && List_ScanNumber[i]<=(max_scannumber*0.75)
-				if ((List_ScanType[i] == 1) && (List_ScanNumber[i] <= (max_scannumber * 0.75)))
-				{
-					//ADD TO FILTER LISTS
-					List_BPSTNR.Add(List_BasePeakSignalToNoiseRatio[i]);
-					List_TII.Add(List_TotalIonIntensity[i]);
-				}
-
-				//SCAN TYPE == 1 && List_ScanNumber[i]>=STORAGE["C_2A_FIRST_PEPTIDE"] && List_ScanNumber[i]<=STORAGE["C_2A_END_TIME_REGION"]
-				if ((List_ScanType[i] == 1) && (List_ScanNumber[i] >= valC2AFirstPeptide) && (List_ScanNumber[i] <= valC2AEndTimeRegion))
+			{				
+				//SCAN TYPE == 1 && List_ScanNumber[i]>=STORAGE["SCAN_FIRST_FILTER_PASSING_PEPTIDE"] && List_ScanNumber[i]<=STORAGE["C_2A_REGION_SCAN_END"]
+				if ((List_ScanType[i] == 1) && (List_ScanNumber[i] >= valScanFirstPeptide) && (List_ScanNumber[i] <= valC2ARegionScanEnd))
 				{
 					//ADD TO FILTER LISTS
 					List_BPSTNR_C_2A.Add(List_BasePeakSignalToNoiseRatio[i]);
