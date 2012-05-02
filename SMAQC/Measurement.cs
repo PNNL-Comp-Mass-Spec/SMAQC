@@ -206,6 +206,7 @@ namespace SMAQC
 
         /// <summary>
 		/// C-2A: Time period over which 50% of peptides are identified
+		/// We also cache various scan numbers associated with filter-passing peptides
         /// </summary>
         /// <returns></returns>
         public String C_2A()
@@ -221,17 +222,11 @@ namespace SMAQC
                 + "AND t1.random_id=" + r_id + " "
                 + "ORDER BY Scan;");
 
-            int running_sum = 0;                                                                //RUNNING SUM FOR COLUMN H
-            List<double> ScanTimeList = new List<double>();                                     //STORES SCAN TIMES
-            List<int> RunningSumList = new List<int>();                                         //STORES RUNNING SUM LISTS
-            List<double> ScanRangeList = new List<double>();                                    //STORE SCAN TIME VALUES HERE THAT ARE WITHIN RANGE
-            List<double> XScanTimeList = new List<double>();                                    //STORES SCAN TIMES [USED TO HELP FIND MS_2A/B]
-            List<int> XScanNumberList = new List<int>();                                        //STORE SCAN NUMBER LIST [USED TO HELP FIND MS_2A/B]
-            List<int> XAllScanNumberList = new List<int>();                                     //STORE SCAN NUMBER LIST [USED TO HELP FIND MS_2A/B]
-            List<int> XQuartile_Scan = new List<int>();                                         //STORE ALL INTERQUARTILE SCANS, i.e. scans between the 25% and 75% quartile peptide ID passing filters [USED TO HELP FIND MS_2A/B]
+			// This list stores scan numbers and elution times for filter-passing peptides; duplicate scans are not allowed
+			SortedList<int, double> lstFilterPassingPeptides = new SortedList<int, double>();
 
-            int prev_scan_time_within_range = 0;                                                //STORE PREV SCAN TIME TRUE/FALSE WITHIN RANGE [0=FALSE;1=TRUE] [USED TO HELP FIND MS_2A/B]
-            int i = 0;                                                                          //COUNTER
+			int scanNumber;
+			double scanTime;
 
             //DECLARE FIELDS TO READ FROM
             String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "ScanNumber", "ScanTime1" };
@@ -242,104 +237,74 @@ namespace SMAQC
             //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
             while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
             {
-                //IF LOG(E) <= -2 ... CALCULATE DIFFERENCE [COLUMN D]
                 if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
                 {
-                    //FOUND MATCH SO INCREMENT RUNNING SUM
-                    running_sum++;
+                    // FILTER-PASSING PEPTIDE; Append to the dictionary
+					if (int.TryParse(measurementhash["ScanNumber"].ToString(), out scanNumber))
+					{
+						if (double.TryParse(measurementhash["ScanTime1"].ToString(), out scanTime))
+						{
 
-                    //ADD TO LIST [USED TO HELP FIND MS_2A/B]
-                    XScanNumberList.Add(Convert.ToInt32(measurementhash["ScanNumber"]));
-                    XScanTimeList.Add((double)Convert.ToDouble(measurementhash["ScanTime1"]));
-                }
+							if (!lstFilterPassingPeptides.ContainsKey(scanNumber)) 
+							{
+								lstFilterPassingPeptides.Add(scanNumber, scanTime);
+							}
+						}
+					}
 
-                //ADD SCAN TIME TO LIST
-                ScanTimeList.Add((double)Convert.ToDouble(measurementhash["ScanTime1"]));
-
-                //ADD ALL SCAN NUMBERS TO LIST [FOR MS_2A/B]
-                XAllScanNumberList.Add(Convert.ToInt32(measurementhash["ScanNumber"]));
-
-                //ADD RUNNING SUM TO LIST
-                RunningSumList.Add(running_sum);
-            }
-
-            //CALCULATE METRIC BY LOOPING THROUGH RUNNING SUM LIST
-            for (i = 0; i < RunningSumList.Count; i++)
-            {
-                //CALC RUNNING SUM
-                double drsum = 0;
-				if (running_sum > 0)
-					drsum = (double)RunningSumList[i] / running_sum;
-
-                int current_scan_time_within_range = 0;                                 //FOR MS_2A/B ... WE ARE WITHIN RANGE IF == 1 ELSE = 0
-                int save_prev_scan_time_within_range = prev_scan_time_within_range;     //FOR MS_2A/B ... SAVED SINCE OVERWRITTEN
-
-                //IF WITHIN 25% to 75%
-				if ((drsum >= .25) && (drsum <= .75))
-                {
-                    //ADD TO SCAN RANGE LIST
-                    ScanRangeList.Add(ScanTimeList[i]);
-
-                    //SET WITHIN RANGE [FOR MS_2A/B]
-                    current_scan_time_within_range = 1;
-
-                    //UPDATE [FOR MS_2A/B]
-                    prev_scan_time_within_range = 1;
-                }
-                else
-                {
-                    //UPDATE [FOR MS_2A/B] SET TO FALSE
-                    prev_scan_time_within_range = 0;
-                }
-
-                //IF PREV WAS FALSE AND CURRENT SCAN TIME IS A NUMBER [FOR MS_2A/B]
-                if (current_scan_time_within_range == 1 && save_prev_scan_time_within_range == 0 && i > 0)
-                {
-                    //GO WITH CURRENT SCAN NUMBER [FOR MS_2A/B]
-                    XQuartile_Scan.Add(XAllScanNumberList[i]);
-                }
-                else if (prev_scan_time_within_range == 0 && save_prev_scan_time_within_range == 1 && i > 0)
-                {
-                    //GO WITH PREVIOUS SCAN NUMBER [FOR MS_2A/B]
-                    XQuartile_Scan.Add(XAllScanNumberList[i - 1]);
                 }
             }
 
-            //NOW CALCULATE RESULT [FOR MS_2A/B]
-            double xmin = XScanTimeList.Min();
+			int index25th = -1;
+			int index75th = -1;
 
-            //LOOP THROUGH EACH VALUE SEARCHING FOR MIN [FOR MS_2A/B]
-            for (i = 0; i < XScanTimeList.Count; i++)
-            {
-                //IF FOUND
-                if (xmin == XScanTimeList[i])
-                {
-                    // ADD TO GLOBAL HASH TABLE FOR USE WITH MS_2A/B
-					// SCAN_FIRST_FILTER_PASSING_PEPTIDE is the scan number of the first filter-passing peptide
-					AddUpdateResultsStorage("SCAN_FIRST_FILTER_PASSING_PEPTIDE", XScanNumberList[i]);
-                }
-            }
+			int C2AScanStart = 0;
+			int C2AScanEnd = 0;
+
+			double C2AScanTimeStart = 0;
+			double C2AScanTimeEnd = 0;
+			
+			if (lstFilterPassingPeptides.Count > 0)
+			{
+
+				//DETERMINE THE SCAN NUMBERS AT WHICH THE 25TH AND 75TH PERCENTILES ARE LOCATED
+				index25th = (int)(lstFilterPassingPeptides.Count * 0.25);
+				index75th = (int)(lstFilterPassingPeptides.Count * 0.75);
+
+				if (index25th >= lstFilterPassingPeptides.Count)
+					index25th = lstFilterPassingPeptides.Count - 1;
+
+				if (index75th >= lstFilterPassingPeptides.Count)
+					index75th = lstFilterPassingPeptides.Count - 1;
+
+				if (index75th < index25th)
+					index75th = index25th;
+			}
+
+			if (index25th >= 0 && index25th < lstFilterPassingPeptides.Count && index75th < lstFilterPassingPeptides.Count)
+			{
+				C2AScanStart = lstFilterPassingPeptides.Keys[index25th];
+				C2AScanEnd = lstFilterPassingPeptides.Keys[index75th];
+
+				C2AScanTimeStart = lstFilterPassingPeptides.Values[index25th];
+				C2AScanTimeEnd = lstFilterPassingPeptides.Values[index75th];
+			}
+
+			if (lstFilterPassingPeptides.Count > 0)
+			{
+				// ADD TO GLOBAL HASH TABLE FOR USE WITH MS_2A/B
+				// SCAN_FIRST_FILTER_PASSING_PEPTIDE is the scan number of the first filter-passing peptide
+				AddUpdateResultsStorage("SCAN_FIRST_FILTER_PASSING_PEPTIDE", lstFilterPassingPeptides.Keys.Min());
+			}
 
             // CACHE THE SCAN NUMBERS AT THE START AND END OF THE INTEQUARTILE REGION
-			AddUpdateResultsStorage("C_2A_REGION_SCAN_START", XQuartile_Scan.Min());
-			AddUpdateResultsStorage("C_2A_REGION_SCAN_END", XQuartile_Scan.Max());
-
-            //SORT IN LOW -> HIGH ORDER + DECLARE MIN / MAX
-            ScanRangeList.Sort();
-            double min = ScanRangeList[0];
-            double max = ScanRangeList[ScanRangeList.Count-1];  //-1 AS START FROM 0
-            double answer = max - min;
+			AddUpdateResultsStorage("C_2A_REGION_SCAN_START", C2AScanStart);
+			AddUpdateResultsStorage("C_2A_REGION_SCAN_END", C2AScanEnd);
+          
+			double answer = C2AScanTimeEnd - C2AScanTimeStart;
 
             //STORE IN GLOBAL HASH TABLE FOR C_2B
 			AddUpdateResultsStorage("C_2A_ANSWER", answer);
-
-            //CLEAR HASH TABLES
-            ScanTimeList.Clear();
-            RunningSumList.Clear();
-            ScanRangeList.Clear();
-            XScanTimeList.Clear();
-            XAllScanNumberList.Clear();
-            XScanNumberList.Clear();
 
             return Convert.ToString(answer);
         }
