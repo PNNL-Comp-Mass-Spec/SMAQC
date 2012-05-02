@@ -2183,64 +2183,14 @@ namespace SMAQC
         /// <returns></returns>
         public String IS_3A()
         {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log,Charge "
-                + "FROM `temp_xt` "
-                + "WHERE temp_xt.random_id=" + r_id + " "
-                + "Order by Scan;");
+			//DECLARE VARIABLES
+			int count_ones = 0;                                                             //TOTAL # OF 1's
+			int count_twos = 0;                                                             //TOTAL # OF 2's
+			int count_threes = 0;                                                           //TOTAL # OF 3's
+			int count_fours = 0;                                                            //TOTAL # OF 4's
+			decimal result = 0.00M;                                                         //RESULT OF MEASUREMENT
 
-            //DECLARE VARIABLES
-            int count_ones = 0;                                                             //TOTAL # OF 1's
-            int count_twos = 0;                                                             //TOTAL # OF 2's
-            int count_threes = 0;                                                           //TOTAL # OF 3's
-            int count_fours = 0;                                                            //TOTAL # OF 4's
-            decimal result = 0.00M;                                                         //RESULT OF MEASUREMENT
-
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge" };
-
-            //INIT READER
-            DBInterface.initReader();
-
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //IF PEPTIDE EXP VALUE LOG <= -2 SET FILTER TO TRUE
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //CONVERT CHARGE TO INT FOR SWITCH()
-                    int charge = Convert.ToInt32(measurementhash["Charge"]);
-
-                    //ADD TO CORRECT COUNT
-                    switch (charge)
-                    {
-                        case 1:
-                            count_ones++;
-                            break;
-
-                        case 2:
-                            count_twos++;
-                            break;
-
-                        case 3:
-                            count_threes++;
-                            break;
-
-                        case 4:
-                            count_fours++;
-                            break;
-
-                        default:
-                            break;
-                    }
-                }
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
-            }
+			IS3_Shared(out count_ones, out count_twos, out count_threes, out count_fours);
 
             //CALC MEASUREMENT
 			if (count_twos > 0)
@@ -2258,64 +2208,14 @@ namespace SMAQC
         /// <returns></returns>
         public String IS_3B()
         {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log,Charge "
-                + "FROM `temp_xt` "
-                + "WHERE temp_xt.random_id=" + r_id + " "
-                + "Order by Scan;");
+			//DECLARE VARIABLES
+			int count_ones = 0;                                                             //TOTAL # OF 1's
+			int count_twos = 0;                                                             //TOTAL # OF 2's
+			int count_threes = 0;                                                           //TOTAL # OF 3's
+			int count_fours = 0;                                                            //TOTAL # OF 4's
+			decimal result = 0.00M;                                                         //RESULT OF MEASUREMENT
 
-            //DECLARE VARIABLES
-            int count_ones = 0;                                                             //TOTAL # OF 1's
-            int count_twos = 0;                                                             //TOTAL # OF 2's
-            int count_threes = 0;                                                           //TOTAL # OF 3's
-            int count_fours = 0;                                                            //TOTAL # OF 4's
-            decimal result = 0.00M;                                                         //RESULT OF MEASUREMENT
-
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge" };
-
-            //INIT READER
-            DBInterface.initReader();
-
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //IF PEPTIDE EXP VALUE LOG <= -2 SET FILTER TO TRUE
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //CONVERT CHARGE TO INT FOR SWITCH()
-                    int charge = Convert.ToInt32(measurementhash["Charge"]);
-
-                    //ADD TO CORRECT COUNT
-                    switch (charge)
-                    {
-                        case 1:
-                            count_ones++;
-                            break;
-
-                        case 2:
-                            count_twos++;
-                            break;
-
-                        case 3:
-                            count_threes++;
-                            break;
-
-                        case 4:
-                            count_fours++;
-                            break;
-
-                        default:
-                            break;
-                    }
-                }
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
-            }
+			IS3_Shared(out count_ones, out count_twos, out count_threes, out count_fours);
 
             //CALC MEASUREMENT
 			if (count_twos > 0)
@@ -2333,12 +2233,6 @@ namespace SMAQC
         /// <returns></returns>
         public String IS_3C()
         {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log,Charge "
-                + "FROM `temp_xt` "
-                + "WHERE temp_xt.random_id=" + r_id + " "
-                + "Order by Scan;");
-
             //DECLARE VARIABLES
             int count_ones = 0;                                                             //TOTAL # OF 1's
             int count_twos = 0;                                                             //TOTAL # OF 2's
@@ -2346,51 +2240,7 @@ namespace SMAQC
             int count_fours = 0;                                                            //TOTAL # OF 4's
             decimal result = 0.00M;                                                         //RESULT OF MEASUREMENT
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge" };
-
-            //INIT READER
-            DBInterface.initReader();
-
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //IF PEPTIDE EXP VALUE LOG <= -2 SET FILTER TO TRUE
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //CONVERT CHARGE TO INT FOR SWITCH()
-                    int charge = Convert.ToInt32(measurementhash["Charge"]);
-
-                    //ADD TO CORRECT COUNT
-                    switch (charge)
-                    {
-                        case 1:
-                            count_ones++;
-                            break;
-
-                        case 2:
-                            count_twos++;
-                            break;
-
-                        case 3:
-                            count_threes++;
-                            break;
-
-                        case 4:
-                            count_fours++;
-                            break;
-
-                        default:
-                            break;
-                    }
-                }
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
-            }
+			IS3_Shared(out count_ones, out count_twos, out count_threes, out count_fours);
 
             //CALC MEASUREMENT
 			if (count_twos > 0)
@@ -2401,6 +2251,68 @@ namespace SMAQC
 
             return Convert.ToString(result);
         }
+
+		protected void IS3_Shared(out int count_ones, out int count_twos, out int count_threes, out int count_fours)
+		{
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log,Charge "
+				+ "FROM `temp_xt` "
+				+ "WHERE temp_xt.random_id=" + r_id + " "
+				+ "Order by Scan;");
+
+			//DECLARE VARIABLES
+			count_ones = 0;                                                             //TOTAL # OF 1's
+			count_twos = 0;                                                             //TOTAL # OF 2's
+			count_threes = 0;                                                           //TOTAL # OF 3's
+			count_fours = 0;                                                            //TOTAL # OF 4's
+
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge" };
+
+			//INIT READER
+			DBInterface.initReader();
+
+			//CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
+			measurementhash.Clear();
+
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//IF PEPTIDE EXP VALUE LOG <= -2 SET FILTER TO TRUE
+				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				{
+					//CONVERT CHARGE TO INT FOR SWITCH()
+					int charge = Convert.ToInt32(measurementhash["Charge"]);
+
+					//ADD TO CORRECT COUNT
+					switch (charge)
+					{
+						case 1:
+							count_ones++;
+							break;
+
+						case 2:
+							count_twos++;
+							break;
+
+						case 3:
+							count_threes++;
+							break;
+
+						case 4:
+							count_fours++;
+							break;
+
+						default:
+							break;
+					}
+				}
+
+				//CLEAR HASH TABLE
+				measurementhash.Clear();
+			}
+
+		}
 
         /// <summary>
 		/// MS1_1: Median MS1 ion injection time

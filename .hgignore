@@ -13,3 +13,5 @@ obj/*
 [Bb]in/[Rr]elease/*.exe
 **vshost.exe.manifest
 */DS?/*
+SMAQC/bin/Debug/SMAQC-log*
+SMAQC/bin/Job*
