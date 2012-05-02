@@ -105,9 +105,9 @@ namespace SMAQC
                         + "[BasePeakIntensity] FLOAT NOT NULL,"
                         + "[BasePeakMZ] FLOAT NOT NULL,"
                         + "[BasePeakSignalToNoiseRatio] FLOAT NOT NULL,"
-                        + "[IonCount] FLOAT NOT NULL,"
-                        + "[IonCountRaw] INTEGER NOT NULL,"
-                        + "[ScanTypeName] VARCHAR NOT NULL"
+                        + "[IonCount] FLOAT NULL,"
+                        + "[IonCountRaw] INTEGER NULL,"
+                        + "[ScanTypeName] VARCHAR NULL"
                         + ")";
 
                     //RUN QUERY
@@ -119,11 +119,11 @@ namespace SMAQC
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Dataset] INTEGER NOT NULL,"
                         + "[ScanNumber] INTEGER NOT NULL,"
-                        + "[Ion_Injection_Time] FLOAT NOT NULL,"
+                        + "[Ion_Injection_Time] FLOAT NULL,"
                         + "[Scan_Segment] VARCHAR NULL,"
                         + "[Scan_Event] INTEGER NOT NULL,"
                         + "[Master_Index] INTEGER NOT NULL,"
-                        + "[Elapsed_Scan_Time] FLOAT NOT NULL,"
+                        + "[Elapsed_Scan_Time] FLOAT NULL,"
                         + "[Charge_State] FLOAT NULL,"
                         + "[Monoisotopic_MZ] FLOAT NULL,"
                         + "[MS2_Isolation_Width] FLOAT NULL,"
@@ -135,9 +135,9 @@ namespace SMAQC
                         + "[Conversion_Parameter_D] FLOAT NULL,"
                         + "[Conversion_Parameter_E] FLOAT NULL,"
                         + "[Collision_Mode] VARCHAR DEFAULT NULL,"
-                        + "[Scan_Filter_Text] VARCHAR NOT NULL,"
-                        + "[Source_Voltage] FLOAT NOT NULL,"
-                        + "[Source_Current] FLOAT NOT NULL"
+                        + "[Scan_Filter_Text] VARCHAR NULL,"
+                        + "[Source_Voltage] FLOAT NULL,"
+                        + "[Source_Current] FLOAT NULL"
                         + ")";
 
                     //RUN QUERY
@@ -213,6 +213,8 @@ namespace SMAQC
 
                     //RUN QUERY
                     cmd.ExecuteNonQuery();
+
+					// Add an index
 
                     //SET QUERY TEXT
                     cmd.CommandText = "CREATE TABLE [temp_xt_seqtoproteinmap] ("

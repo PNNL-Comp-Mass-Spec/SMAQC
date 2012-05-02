@@ -17,8 +17,24 @@ namespace SMAQC
         //DECLARE VARIABLES
         DBInterface dbConn = null;
         public String[] db_tables = { "temp_scanstats", "temp_scanstatsex", "temp_sicstats", "temp_xt", "temp_xt_resulttoseqmap", "temp_xt_seqtoproteinmap" };
-        //MySqlDataReader reader;                                 //READ POINTER
+		private bool mShowQueryText;
+	
+#if (!MySqlMissing)
+		//MySqlDataReader reader;                                 //READ POINTER
         IDataReader reader;
+#endif
+
+		public bool ShowQueryText
+		{
+			get
+			{
+				return mShowQueryText;
+			}
+			set
+			{
+				mShowQueryText = value;
+			}
+		}
 
         //CONSTRUCTOR
         public DBWrapper(string host, string user, string pass, string db, string dbtype, string dbFolderPath)
@@ -81,6 +97,12 @@ namespace SMAQC
             try
             {
                 dbConn.setQuery(myquery);
+
+				if (mShowQueryText)
+				{
+					Console.WriteLine();
+					Console.WriteLine(myquery);
+				}
             }
             catch (System.NullReferenceException ex)
             {

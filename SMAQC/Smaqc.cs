@@ -146,6 +146,9 @@ namespace SMAQC
             DBWrapper = new DBWrapper(configtable["dbhost"].ToString(), configtable["dbuser"].ToString(),
                                 configtable["dbpass"].ToString(), configtable["dbname"].ToString(),
                                 configtable["dbtype"].ToString(), dbFolderPath);
+
+			DBWrapper.ShowQueryText = true;
+
             //DB OBJECT
             m_Aggregate = new Aggregate(path_to_scan_files);                                                        //AGGREGATE OBJECT
             m_Measurement = new Measurement(r_id, ref DBWrapper);                                                   //MEASUREMENT LIST OBJECT

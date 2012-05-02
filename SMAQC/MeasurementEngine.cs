@@ -51,11 +51,11 @@ namespace SMAQC
                     resultstable.Add(element, factory.buildMeasurement(element));
 					m_SystemLogManager.addApplicationLog((element + ":").PadRight(7) + " complete in " + System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0.00") + " seconds; " + percentComplete.ToString("0") + "% complete");
                 }
-                catch
+                catch (Exception ex)
                 {
                     //THIS HAPPENS WHEN A MEASUREMENT FAILS ... STORE AS NULL!
                     resultstable.Add(element, "Null");
-					m_SystemLogManager.addApplicationLog(element + ": failed");
+					m_SystemLogManager.addApplicationLog(element + " failed: " + ex.Message);
                 }
             }
 
