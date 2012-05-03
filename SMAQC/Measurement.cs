@@ -187,7 +187,7 @@ namespace SMAQC
 
 			int difference_sum = 0;                                                             //FOR COLUMN J
 			int valid_rows = 0;                                                                 //FOR COLUMN K
-			decimal answer = 0.00M;                                                             //SOLUTION
+			double answer;
 
 			//DECLARE FIELDS TO READ FROM
 			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "FragScanNumber", "OptimalPeakApexScanNumber", "ScanTime1", "ScanTime2" };
@@ -222,8 +222,8 @@ namespace SMAQC
 			//CALCULATE SOLUTION
 			if (valid_rows > 0)
 			{
-				answer = Math.Round(Convert.ToDecimal((double)difference_sum / valid_rows), 6);
-				return Convert.ToString(answer);
+				answer = (double)difference_sum / valid_rows;
+				return answer.ToString("0.000000");
 			}
 			else
 				return string.Empty;
@@ -549,14 +549,6 @@ namespace SMAQC
 				resultText = median.ToString("0.00");
 			}
 
-            //CLEAR HASH TABLES
-            bestscan.Clear();
-            fragscannumber.Clear();
-            fwhminscans.Clear();
-            optimalpeakapexscannumber.Clear();
-            scantime.Clear();
-            result.Clear();
-
             //RETURN RESULT
 			return resultText;
         }
@@ -724,14 +716,6 @@ namespace SMAQC
 				*/
 			}
 
-            //CLEAR HASH TABLES
-            bestscan.Clear();
-            fragscannumber.Clear();
-            fwhminscans.Clear();
-            optimalpeakapexscannumber.Clear();
-            scantime.Clear();
-            result.Clear();
-
             //RETURN RESULT
 			return resultText;
         }
@@ -898,14 +882,6 @@ namespace SMAQC
 				 * Console.WriteLine("MEDIAN={0} -- {1} [POS={2}]", result[pos], result[pos + 1], pos); == HELPFUL FOR DEBUGGING
 				*/				
 			}
-
-            //CLEAR HASH TABLES
-            bestscan.Clear();
-            fragscannumber.Clear();
-            fwhminscans.Clear();
-            optimalpeakapexscannumber.Clear();
-            scantime.Clear();
-            result.Clear();
 
             //RETURN RESULT
 			return resultText;
@@ -1076,14 +1052,6 @@ namespace SMAQC
 				*/								
 			}
 
-            //CLEAR HASH TABLES
-            bestscan.Clear();
-            fragscannumber.Clear();
-            fwhminscans.Clear();
-            optimalpeakapexscannumber.Clear();
-            scantime.Clear();
-            result.Clear();
-
             //RETURN RESULT
             return resultText;
         }
@@ -1251,14 +1219,6 @@ namespace SMAQC
 				*/
 				
 			}
-
-            //CLEAR HASH TABLES
-            bestscan.Clear();
-            fragscannumber.Clear();
-            fwhminscans.Clear();
-            optimalpeakapexscannumber.Clear();
-            scantime.Clear();
-            result.Clear();
 
             //RETURN RESULT
 			return resultText;
@@ -1488,15 +1448,7 @@ namespace SMAQC
                 result = Convert.ToDecimal(Convert.ToDouble(num_of_1_peptides) / Convert.ToDouble(num_of_2_peptides));
             }
 
-            result = Math.Round(result, 6);
-
-            //CLEAR HASH TABLES
-            Peptide_Exp_Value_Log.Clear();
-            Peptide_Sequence.Clear();
-            Scan.Clear();
-            RunningCountTable.Clear();
-
-            return Convert.ToString(result);
+			return result.ToString("0.000000");
         }
 
         /// <summary>
@@ -1723,17 +1675,9 @@ namespace SMAQC
             {
                 result = Convert.ToDecimal(Convert.ToDouble(num_of_2_peptides) / Convert.ToDouble(num_of_3_peptides));
             }
-            result = Math.Round(result, 6);
 
-            //CLEAR HASH TABLES
-            Peptide_Exp_Value_Log.Clear();
-            Peptide_Sequence.Clear();
-            Scan.Clear();
-            RunningCountTable.Clear();
+			return result.ToString("0.000000");
 
-            return Convert.ToString(result);
-
- 
         }
 
         /// <summary>
@@ -2331,17 +2275,7 @@ namespace SMAQC
 			median = ComputeMedian(result_PMIPII_Filtered);
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 3RD DIGIT
-            decimal round_me = Convert.ToDecimal(median);
-            round_me = Math.Round(round_me, 3);                        //ROUND MEDIAN
-
-            //CLEAR HASH TABLE
-            Lookup_Table.Clear();
-            Filter_Result.Clear();
-            Lookup_Table_KV.Clear();
-            result_PMIPII_Filtered.Clear();
-            result_VBPMIPII_Filtered.Clear();
-
-            return Convert.ToString(round_me);
+			return median.ToString("0.000");
         }
 
         /// <summary>
@@ -2444,17 +2378,7 @@ namespace SMAQC
 			median = ComputeMedian(result_VBPMIPII_Filtered);
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 3RD DIGIT
-            decimal round_me = Convert.ToDecimal(median);
-            round_me = Math.Round(round_me, 3);                        //ROUND MEDIAN
-
-            //CLEAR HASH TABLE
-            Lookup_Table.Clear();
-            Filter_Result.Clear();
-            Lookup_Table_KV.Clear();
-            result_PMIPII_Filtered.Clear();
-            result_VBPMIPII_Filtered.Clear();
-
-            return Convert.ToString(round_me);
+			return median.ToString("0.000");
         }
 
         /// <summary>
@@ -2730,9 +2654,6 @@ namespace SMAQC
 
 			//INIT READER
 			DBInterface.initReader();
-
-			//CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-			measurementhash.Clear();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
 			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
@@ -3610,9 +3531,6 @@ namespace SMAQC
             //SET ANSWER
             int answer = cleavage_state_2_count;
 
-            //CLEAR HASH TABLE
-            //Console.WriteLine("P_2A:: {0}", answer);
-
             return Convert.ToString(answer);
         }
 
@@ -3699,9 +3617,6 @@ namespace SMAQC
                 prv_peptide_sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
                 prv_cleavage_state = cleavage_state;
             }
-
-            //CLEAR HASH TABLE
-            //Console.WriteLine("P_2B:: {0}", count_with_different_charges);
 
             return Convert.ToString(count_with_different_charges);
         }
@@ -3819,9 +3734,6 @@ namespace SMAQC
 
             //SET ANSWER
             int answer = unique_cleavage_state_2_count;
-
-            //CLEAR HASH TABLE
-            //Console.WriteLine("P_2C:: {0}", answer);
 
             return Convert.ToString(answer);
         }
