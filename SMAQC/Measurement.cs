@@ -411,7 +411,7 @@ namespace SMAQC
             Hashtable optimalpeakapexscannumber = new Hashtable();          //STORE OPTIMAL PEAK APEX SCAN NUMBERS
             Hashtable scantime = new Hashtable();                           //STORE TIME
             List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
-            int i;                                                          //TEMP POSITION VARIABLE
+			int i;                                                          //TEMP POSITION VARIABLE
             int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
             String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
             String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
@@ -503,16 +503,16 @@ namespace SMAQC
             DBInterface.initReader();
 
             //FETCH COLUMNS H-I
-            i = 1;
+			i = 1;
             //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
             while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
             {
                 //ADD TO SCANTIME HASH TABLE
                 scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
 
-                //INCREMENT I POSITION
-                i++;
-            }
+				//INCREMENT I POSITION
+				i++;
+			}
 
             //NOW START THE ACTUAL MEASUREMENT CALCULATION
 
@@ -574,7 +574,7 @@ namespace SMAQC
             Hashtable optimalpeakapexscannumber = new Hashtable();          //STORE OPTIMAL PEAK APEX SCAN NUMBERS
             Hashtable scantime = new Hashtable();                           //STORE TIME
             List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
-            int i;                                                          //TEMP POSITION VARIABLE
+			int i;                                                          //TEMP POSITION VARIABLE
             int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
             String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
             String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
@@ -668,16 +668,16 @@ namespace SMAQC
             DBInterface.initReader();
 
             //FETCH COLUMNS H-I
-            i = 1;
+			i = 1;
             //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
             while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
             {
                 //ADD TO SCANTIME HASH TABLE
                 scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
 
-                //INCREMENT I POSITION
-                i++;
-            }
+				//INCREMENT I POSITION
+				i++;
+			}
 
             //NOW START THE ACTUAL MEASUREMENT CALCULATION
 
@@ -749,7 +749,7 @@ namespace SMAQC
             Hashtable optimalpeakapexscannumber = new Hashtable();          //STORE OPTIMAL PEAK APEX SCAN NUMBERS
             Hashtable scantime = new Hashtable();                           //STORE TIME
             List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
-            int i;                                                          //TEMP POSITION VARIABLE
+			int i;                                                          //TEMP POSITION VARIABLE
             int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
             String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
             String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
@@ -843,16 +843,16 @@ namespace SMAQC
             DBInterface.initReader();
 
             //FETCH COLUMNS H-I
-            i = 1;
+			i = 1;
             //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
             while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
             {
                 //ADD TO SCANTIME HASH TABLE
                 scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
 
-                //INCREMENT I POSITION
-                i++;
-            }
+				//INCREMENT I POSITION
+				i++;
+			}
 
             //NOW START THE ACTUAL MEASUREMENT CALCULATION
 
@@ -1018,16 +1018,16 @@ namespace SMAQC
             DBInterface.initReader();
 
             //FETCH COLUMNS H-I
-            i = 1;
+			i = 1;
             //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
             while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
             {
                 //ADD TO SCANTIME HASH TABLE
                 scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
 
-                //INCREMENT I POSITION
-                i++;
-            }
+				//INCREMENT I POSITION
+				i++;
+			}
 
             //NOW START THE ACTUAL MEASUREMENT CALCULATION
 
@@ -2077,7 +2077,6 @@ namespace SMAQC
 			List<int> List_ScanType = new List<int>();                          //ScanType List
 			List<double> List_BasePeakSignalToNoiseRatio = new List<double>();  //BPSTNR List
 			List<double> List_TotalIonIntensity = new List<double>();           //TII List
-			int i = 0;                                                          //COUNTER
 
 			//DECLARE FIELDS TO READ FROM
 			String[] fields = { "ScanNumber", "ScanType", "BasePeakSignalToNoiseRatio", "TotalIonIntensity" };
@@ -2093,12 +2092,6 @@ namespace SMAQC
 				List_ScanType.Add(Convert.ToInt32(measurementhash["ScanType"]));
 				List_BasePeakSignalToNoiseRatio.Add(Convert.ToDouble(measurementhash["BasePeakSignalToNoiseRatio"]));
 				List_TotalIonIntensity.Add(Convert.ToDouble(measurementhash["TotalIonIntensity"]));
-
-				//CLEAR HASH TABLE
-				measurementhash.Clear();
-
-				//INC
-				i++;
 			}
 
 			int max_scannumber = List_ScanNumber.Max();
@@ -2107,7 +2100,7 @@ namespace SMAQC
 			int scanEndC2A = GetStoredValueInt("C_2A_REGION_SCAN_END", 0);
 
 			//LOOP THROUGH ALL
-			for (i = 0; i < List_ScanNumber.Count; i++)
+			for (int i = 0; i < List_ScanNumber.Count; i++)
 			{				
 				//SCAN TYPE == 1 && List_ScanNumber[i]>=STORAGE["SCAN_FIRST_FILTER_PASSING_PEPTIDE"] && List_ScanNumber[i]<=STORAGE["C_2A_REGION_SCAN_END"]
 				if ((List_ScanType[i] == 1) && (List_ScanNumber[i] >= scanFirstPeptide) && (List_ScanNumber[i] <= scanEndC2A))
@@ -2615,56 +2608,15 @@ namespace SMAQC
         /// <returns></returns>
         public String MS1_5A()
         {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_xt.Scan,temp_xt.Peptide_Expectation_Value_Log,temp_xt.Peptide_MH,temp_xt.Charge, temp_sicstats.MZ "
-                + "FROM `temp_xt`,`temp_sicstats` "
-                + "WHERE temp_sicstats.FragScanNumber=temp_xt.Scan AND temp_sicstats.random_id=" + r_id + " AND temp_xt.random_id=" + r_id + " "
-                + "ORDER BY temp_xt.Scan;");
+			//DECLARE VARIABLES
+			List<double> FilteredArray;                                    //STORE FILTERED VALUES [COLUMN G]
+			List<double> AbsFilteredArray;                                 //STORE FILTERED VALUES [COLUMN H]
+			List<double> PPMList;                                          //STORE FILTERED VALUES [COLUMN I]
 
-            //DECLARE VARIABLES
-            double massHydrogen = 1.00727649;                                                 //REQUIRED BY MEASUREMENT
-            List<double> FilteredArray = new List<double>();                                    //STORE FILTERED VALUES [COLUMN G]
-            List<double> AbsFilteredArray = new List<double>();                                 //STORE FILTERED VALUES [COLUMN H]
-            List<double> PPMList = new List<double>();                                          //STORE FILTERED VALUES [COLUMN I]
-            double median = 0.00;                                                               //INIT MEDIAN
-            int i = 0;
-
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Peptide_MH", "Charge", "MZ" };
-
-            //INIT READER
-            DBInterface.initReader();
-
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //CALC THEORETICAL VALUE [COLUMN F]
-                double theo = ((Convert.ToDouble(measurementhash["Peptide_MH"]) - massHydrogen) + (massHydrogen * Convert.ToDouble(measurementhash["Charge"]))) / (Convert.ToDouble(measurementhash["Charge"]));
-
-                //IF LOG(E) <= -2 ... CALC FILTERED AND ABS FILTERED
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //CALC FILTERED ARRAY
-                    FilteredArray.Add(Convert.ToDouble(measurementhash["MZ"]) - theo);
-
-                    //NOW TAKE THE ABS VALUE OF OUR FILTERED ARRAY
-                    AbsFilteredArray.Add(Math.Abs(FilteredArray.Last()));
-
-                    //ADD TO PPM LIST
-                    PPMList.Add(FilteredArray.Last() / (theo / 1000000));
-                }
-
-                //INC
-                i++;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
-            }
+			MS1_5_Shared(out FilteredArray, out AbsFilteredArray, out PPMList);
 
             //NOW CALCULATE MEDIAN
+			double median;
 			median = ComputeMedian(FilteredArray);
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
@@ -2677,70 +2629,19 @@ namespace SMAQC
         /// <returns></returns>
         public String MS1_5B()
         {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_xt.Scan,temp_xt.Peptide_Expectation_Value_Log,temp_xt.Peptide_MH,temp_xt.Charge, temp_sicstats.MZ "
-                + "FROM `temp_xt`,`temp_sicstats` "
-                + "WHERE temp_sicstats.FragScanNumber=temp_xt.Scan AND temp_sicstats.random_id=" + r_id + " AND temp_xt.random_id=" + r_id + " "
-                + "ORDER BY temp_xt.Scan;");
+			//DECLARE VARIABLES
+			List<double> FilteredArray;                                    //STORE FILTERED VALUES [COLUMN G]
+			List<double> AbsFilteredArray;                                 //STORE FILTERED VALUES [COLUMN H]
+			List<double> PPMList;                                          //STORE FILTERED VALUES [COLUMN I]
 
-            //DECLARE VARIABLES
-            double massHydrogen = 1.00727649;                                                 //REQUIRED BY MEASUREMENT
-            List<double> FilteredArray = new List<double>();                                    //STORE FILTERED VALUES [COLUMN G]
-            List<double> AbsFilteredArray = new List<double>();                                 //STORE FILTERED VALUES [COLUMN H]
-            List<double> PPMList = new List<double>();                                          //STORE FILTERED VALUES [COLUMN I]
-            double average = 0.00;                                                              //INIT AVERAGE
-            int i = 0;
-
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Peptide_MH", "Charge", "MZ" };
-
-            //INIT READER
-            DBInterface.initReader();
-
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-            int t = 0;
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //CALC THEORETICAL VALUE [COLUMN F]
-                double theo = ((Convert.ToDouble(measurementhash["Peptide_MH"]) - massHydrogen) + (massHydrogen * Convert.ToDouble(measurementhash["Charge"]))) / (Convert.ToDouble(measurementhash["Charge"]));
-
-                //IF LOG(E) <= -2 ... CALC FILTERED AND ABS FILTERED
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //CALC FILTERED ARRAY
-                    FilteredArray.Add(Convert.ToDouble(measurementhash["MZ"]) - theo);
-
-                    //NOW TAKE THE ABS VALUE OF OUR FILTERED ARRAY
-                    AbsFilteredArray.Add(Math.Abs(FilteredArray.Last()));
-                    t++;
-                    //ADD TO PPM LIST
-                    PPMList.Add(FilteredArray.Last() / (theo / 1000000));
-                }
-
-                //INC
-                i++;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
-            }
+			MS1_5_Shared(out FilteredArray, out AbsFilteredArray, out PPMList);
 
             //CALCULATE AVERAGE
-            average = AbsFilteredArray.Average();
+			double average;
+			average = AbsFilteredArray.Average();
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
-            decimal round_me = Convert.ToDecimal(average);
-            round_me = Math.Round(round_me, 6);                        //ROUND MEDIAN
-
-            //CLEAR HASH TABLE
-            FilteredArray.Clear();
-            AbsFilteredArray.Clear();
-            PPMList.Clear();
-
-            //Console.WriteLine("MS1_5B={0}", round_me);
-
-            return Convert.ToString(round_me);
+			return average.ToString("0.000000");
         }
 
         /// <summary>
@@ -2749,56 +2650,15 @@ namespace SMAQC
         /// <returns></returns>
         public String MS1_5C()
         {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_xt.Scan,temp_xt.Peptide_Expectation_Value_Log,temp_xt.Peptide_MH,temp_xt.Charge, temp_sicstats.MZ "
-                + "FROM `temp_xt`,`temp_sicstats` "
-                + "WHERE temp_sicstats.FragScanNumber=temp_xt.Scan AND temp_sicstats.random_id=" + r_id + " AND temp_xt.random_id=" + r_id + " "
-                + "ORDER BY temp_xt.Scan;");
+			//DECLARE VARIABLES
+			List<double> FilteredArray;                                    //STORE FILTERED VALUES [COLUMN G]
+			List<double> AbsFilteredArray;                                 //STORE FILTERED VALUES [COLUMN H]
+			List<double> PPMList;                                          //STORE FILTERED VALUES [COLUMN I]
 
-            //DECLARE VARIABLES
-            double massHydrogen = 1.00727649;                                                 //REQUIRED BY MEASUREMENT
-            List<double> FilteredArray = new List<double>();                                    //STORE FILTERED VALUES [COLUMN G]
-            List<double> AbsFilteredArray = new List<double>();                                 //STORE FILTERED VALUES [COLUMN H]
-            List<double> PPMList = new List<double>();                                          //STORE FILTERED VALUES [COLUMN I]
-            double median = 0.00;                                                               //INIT MEDIAN
-            int i = 0;
-
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Peptide_MH", "Charge", "MZ" };
-
-            //INIT READER
-            DBInterface.initReader();
-
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //CALC THEORETICAL VALUE [COLUMN F]
-                double theo = ((Convert.ToDouble(measurementhash["Peptide_MH"]) - massHydrogen) + (massHydrogen * Convert.ToDouble(measurementhash["Charge"]))) / (Convert.ToDouble(measurementhash["Charge"]));
-
-                //IF LOG(E) <= -2 ... CALC FILTERED AND ABS FILTERED
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //CALC FILTERED ARRAY
-                    FilteredArray.Add(Convert.ToDouble(measurementhash["MZ"]) - theo);
-
-                    //NOW TAKE THE ABS VALUE OF OUR FILTERED ARRAY
-                    AbsFilteredArray.Add(Math.Abs(FilteredArray.Last()));
-
-                    //ADD TO PPM LIST
-                    PPMList.Add(FilteredArray.Last() / (theo / 1000000));
-                }
-
-                //INC
-                i++;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
-            }
+			MS1_5_Shared(out FilteredArray, out AbsFilteredArray, out PPMList);
 
             //NOW CALCULATE MEDIAN
+			double median;
 			median = ComputeMedian(PPMList);
 
 			return median.ToString("0.000000");
@@ -2810,62 +2670,22 @@ namespace SMAQC
         /// <returns></returns>
         public String MS1_5D()
         {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_xt.Scan,temp_xt.Peptide_Expectation_Value_Log,temp_xt.Peptide_MH,temp_xt.Charge, temp_sicstats.MZ "
-                + "FROM `temp_xt`,`temp_sicstats` "
-                + "WHERE temp_sicstats.FragScanNumber=temp_xt.Scan AND temp_sicstats.random_id=" + r_id + " AND temp_xt.random_id=" + r_id + " "
-                + "ORDER BY temp_xt.Scan;");
+			//DECLARE VARIABLES
+			List<double> FilteredArray;                                    //STORE FILTERED VALUES [COLUMN G]
+			List<double> AbsFilteredArray;                                 //STORE FILTERED VALUES [COLUMN H]
+			List<double> PPMList;                                          //STORE FILTERED VALUES [COLUMN I]
 
-            //DECLARE VARIABLES
-            double massHydrogen = 1.00727649;                                                 //REQUIRED BY MEASUREMENT
-            List<double> FilteredArray = new List<double>();                                    //STORE FILTERED VALUES [COLUMN G]
-            List<double> AbsFilteredArray = new List<double>();                                 //STORE FILTERED VALUES [COLUMN H]
-            List<double> PPMList = new List<double>();                                          //STORE FILTERED VALUES [COLUMN I]
-            List<double> PPMErrorsList = new List<double>();                                    //STORE ERRORS FROM PPMList [COLUMN M]
-            double median = 0.00;                                                               //INIT MEDIAN
-            int INTER_QUARTILE_START = 0;                                                       //REQUIRED FOR MEASUREMENT
-            int INTER_QUARTILE_END = 0;                                                         //REQUIRED FOR MEASUREMENT
-            int i = 0;
-
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Peptide_MH", "Charge", "MZ" };
-
-            //INIT READER
-            DBInterface.initReader();
-
-            //CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
-            measurementhash.Clear();
-
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //CALC THEORETICAL VALUE [COLUMN F]
-                double theo = ((Convert.ToDouble(measurementhash["Peptide_MH"]) - massHydrogen) + (massHydrogen * Convert.ToDouble(measurementhash["Charge"]))) / (Convert.ToDouble(measurementhash["Charge"]));
-
-                //IF LOG(E) <= -2 ... CALC FILTERED AND ABS FILTERED
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //CALC FILTERED ARRAY
-                    FilteredArray.Add(Convert.ToDouble(measurementhash["MZ"]) - theo);
-
-                    //NOW TAKE THE ABS VALUE OF OUR FILTERED ARRAY
-                    AbsFilteredArray.Add(Math.Abs(FilteredArray.Last()));
-
-                    //ADD TO PPM LIST
-                    PPMList.Add(FilteredArray.Last() / (theo / 1000000));
-                }
-
-                //INC
-                i++;
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
-            }
+			MS1_5_Shared(out FilteredArray, out AbsFilteredArray, out PPMList);
 
             //NOW FILTER PPM PASSED VALUES [COLUMN K] + START COUNT
             PPMList.Sort();
-            int count = 0;
-            
+
+			List<double> PPMErrorsList = new List<double>();                                    //STORE ERRORS FROM PPMList [COLUMN M]
+			double median = 0.00;                                                               //INIT MEDIAN
+			int INTER_QUARTILE_START = 0;                                                       //REQUIRED FOR MEASUREMENT
+			int INTER_QUARTILE_END = 0;                                                         //REQUIRED FOR MEASUREMENT
+			int count = 0;
+
             //CALCULATE INTER_QUARTILE_START AND INTER_QUARTILE_END
             INTER_QUARTILE_START = Convert.ToInt32(Math.Round(0.25 * Convert.ToDouble(PPMList.Count)));
             INTER_QUARTILE_END = Convert.ToInt32(Math.Round(0.75 * Convert.ToDouble(PPMList.Count)));
@@ -2890,6 +2710,52 @@ namespace SMAQC
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT
 			return median.ToString("0.0000");
         }
+		
+		protected void MS1_5_Shared(out List<double> FilteredArray, out List<double> AbsFilteredArray, out List<double> PPMList)
+		{
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT temp_xt.Scan,temp_xt.Peptide_Expectation_Value_Log,temp_xt.Peptide_MH,temp_xt.Charge, temp_sicstats.MZ "
+				+ "FROM `temp_xt`,`temp_sicstats` "
+				+ "WHERE temp_sicstats.FragScanNumber=temp_xt.Scan AND temp_sicstats.random_id=" + r_id + " AND temp_xt.random_id=" + r_id + " "
+				+ "ORDER BY temp_xt.Scan;");
+
+			//DECLARE VARIABLES
+			double massHydrogen = 1.00727649;                                      //REQUIRED BY MEASUREMENT
+			FilteredArray = new List<double>();                                    //STORE FILTERED VALUES [COLUMN G]
+			AbsFilteredArray = new List<double>();                                 //STORE FILTERED VALUES [COLUMN H]
+			PPMList = new List<double>();                                          //STORE FILTERED VALUES [COLUMN I]
+
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Peptide_MH", "Charge", "MZ" };
+
+			//INIT READER
+			DBInterface.initReader();
+
+			//CLEAR HASH TABLE [SHOULD NOT BE NEEDED ... BUT JUST IN CASE]
+			measurementhash.Clear();
+
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//CALC THEORETICAL VALUE [COLUMN F]
+				double theo = ((Convert.ToDouble(measurementhash["Peptide_MH"]) - massHydrogen) + (massHydrogen * Convert.ToDouble(measurementhash["Charge"]))) / (Convert.ToDouble(measurementhash["Charge"]));
+
+				//IF LOG(E) <= -2 ... CALC FILTERED AND ABS FILTERED
+				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				{
+					//CALC FILTERED ARRAY
+					FilteredArray.Add(Convert.ToDouble(measurementhash["MZ"]) - theo);
+
+					//NOW TAKE THE ABS VALUE OF OUR FILTERED ARRAY
+					AbsFilteredArray.Add(Math.Abs(FilteredArray.Last()));
+
+					//ADD TO PPM LIST
+					PPMList.Add(FilteredArray.Last() / (theo / 1000000));
+				}
+
+			}
+
+		}
 
         /// <summary>
 		/// MS2_1: Median MS2 ion injection time
@@ -2922,9 +2788,6 @@ namespace SMAQC
                     //ADD TO FILTERED LIST
                     FilterList.Add(Convert.ToDouble(measurementhash["Ion_Injection_Time"]));
                 }
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //NOW CALCULATE MEDIAN
@@ -2967,9 +2830,6 @@ namespace SMAQC
                     //ADD TO FILTERED LIST
                     FilterList.Add(Convert.ToDouble(measurementhash["BasePeakSignalToNoiseRatio"]));
                 }
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //LOOP THROUGH FILTERED LIST
@@ -3024,9 +2884,6 @@ namespace SMAQC
                     //ADD TO FILTERED LIST
                     FilterList.Add(Convert.ToDouble(measurementhash["IonCountRaw"]));
                 }
-
-                //CLEAR HASH TABLE
-                measurementhash.Clear();
             }
 
             //NOW CALCULATE MEDIAN
