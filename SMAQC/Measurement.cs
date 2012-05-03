@@ -7,28 +7,28 @@ using System.IO;
 
 namespace SMAQC
 {
-    class Measurement
-    {
-        //DECLARE VARIABLES
-        private DBWrapper DBInterface;                                                      //CREATE DB INTERFACE OBJECT
-        private Hashtable measurementhash = new Hashtable();                                        //HASH TABLE FOR MEASUREMENTS
-        private int r_id;                                                                           //RANDOM ID FOR TEMP TABLES
+	class Measurement
+	{
+		//DECLARE VARIABLES
+		private DBWrapper DBInterface;                                                      //CREATE DB INTERFACE OBJECT
+		private Hashtable measurementhash = new Hashtable();                                        //HASH TABLE FOR MEASUREMENTS
+		private int r_id;                                                                           //RANDOM ID FOR TEMP TABLES
 		private Dictionary<string, double> mResultsStorage = new Dictionary<string, double>();		//SOME MEASUREMENTS HAVE DATA REQUIRED BY OTHERS ... WILL BE STORED HERE
-                  
-        //CONSTRUCTOR
-        public Measurement(int r_id, ref DBWrapper DBInterface)
-        {
-            //CREATE CONNECTIONS
-            this.r_id = r_id;                                                                       //SET RANDOM ID
-            this.DBInterface = DBInterface;                                                         //SET DB OBJECT
-        }
 
-        //DESTRUCTOR
-        ~Measurement()
-        {
-            //CLEAR HASHTABLE AND DICTIONARY
+		//CONSTRUCTOR
+		public Measurement(int r_id, ref DBWrapper DBInterface)
+		{
+			//CREATE CONNECTIONS
+			this.r_id = r_id;                                                                       //SET RANDOM ID
+			this.DBInterface = DBInterface;                                                         //SET DB OBJECT
+		}
+
+		//DESTRUCTOR
+		~Measurement()
+		{
+			//CLEAR HASHTABLE AND DICTIONARY
 			clearStorage();
-        }
+		}
 
 		/// <summary>
 		/// Add (or update) entryName in mResultsStorage
@@ -43,13 +43,13 @@ namespace SMAQC
 				mResultsStorage.Add(entryName, value);
 		}
 
-        //THIS CALLS OUR HASH TABLE CLEARER. WHICH WE NEED BETWEEN DATASETS AS IT IS NO LONGER NEEDED
-        public void clearStorage()
-        {
-            //CLEAR HASHTABLE STORAGE
-            measurementhash.Clear();
-            mResultsStorage.Clear();
-        }
+		//THIS CALLS OUR HASH TABLE CLEARER. WHICH WE NEED BETWEEN DATASETS AS IT IS NO LONGER NEEDED
+		public void clearStorage()
+		{
+			//CLEAR HASHTABLE STORAGE
+			measurementhash.Clear();
+			mResultsStorage.Clear();
+		}
 
 		protected double ComputeMedian(List<double> values)
 		{
@@ -144,26 +144,26 @@ namespace SMAQC
 			return Seq_ID_to_Cleavage_State_Table;
 		}
 
-        /// <summary>
-        /// C-1A: Fraction of peptides identified more than 4 minutes earlier than the chromatographic peak apex
-        /// </summary>
-        /// <returns></returns>
-        public String C_1A()
-        {
+		/// <summary>
+		/// C-1A: Fraction of peptides identified more than 4 minutes earlier than the chromatographic peak apex
+		/// </summary>
+		/// <returns></returns>
+		public String C_1A()
+		{
 			bool countTailingPeptides = false;
 			return C_1_Shared(countTailingPeptides);
 
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// C-1B: Fraction of peptides identified more than 4 minutes later than the chromatographic peak apex
-        /// </summary>
-        /// <returns></returns>
-        public String C_1B()
-        {
+		/// </summary>
+		/// <returns></returns>
+		public String C_1B()
+		{
 			bool countTailingPeptides = true;
 			return C_1_Shared(countTailingPeptides);
-        }
+		}
 
 		/// <summary>
 		/// Counts the number of peptides identified more than 4 minutes earlier or more than 4 minutes later than the chromatographic peak apex
@@ -229,23 +229,23 @@ namespace SMAQC
 				return string.Empty;
 		}
 
-        /// <summary>
+		/// <summary>
 		/// C-2A: Time period over which 50% of peptides are identified
 		/// We also cache various scan numbers associated with filter-passing peptides
-        /// </summary>
-        /// <returns></returns>
-        public String C_2A()
-        {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.`Peptide_Expectation_Value_Log`, t1.FragScanNumber as ScanNumber,"
-                + "temp_scanstats.ScanTime as ScanTime1 "
-                + "FROM temp_xt, temp_scanstats, temp_sicstats as t1 "
-                + "WHERE temp_xt.Scan = t1.FragScanNumber "
-                + "AND temp_xt.Scan = temp_scanstats.ScanNumber "
-                + "AND temp_xt.random_id=" + r_id + " "
-                + "AND temp_scanstats.random_id=" + r_id + " "
-                + "AND t1.random_id=" + r_id + " "
-                + "ORDER BY Scan;");
+		/// </summary>
+		/// <returns></returns>
+		public String C_2A()
+		{
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.`Peptide_Expectation_Value_Log`, t1.FragScanNumber as ScanNumber,"
+				+ "temp_scanstats.ScanTime as ScanTime1 "
+				+ "FROM temp_xt, temp_scanstats, temp_sicstats as t1 "
+				+ "WHERE temp_xt.Scan = t1.FragScanNumber "
+				+ "AND temp_xt.Scan = temp_scanstats.ScanNumber "
+				+ "AND temp_xt.random_id=" + r_id + " "
+				+ "AND temp_scanstats.random_id=" + r_id + " "
+				+ "AND t1.random_id=" + r_id + " "
+				+ "ORDER BY Scan;");
 
 			// This list stores scan numbers and elution times for filter-passing peptides; duplicate scans are not allowed
 			SortedList<int, double> lstFilterPassingPeptides = new SortedList<int, double>();
@@ -253,32 +253,32 @@ namespace SMAQC
 			int scanNumber;
 			double scanTime;
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "ScanNumber", "ScanTime1" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "ScanNumber", "ScanTime1" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    // FILTER-PASSING PEPTIDE; Append to the dictionary
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				{
+					// FILTER-PASSING PEPTIDE; Append to the dictionary
 					if (int.TryParse(measurementhash["ScanNumber"].ToString(), out scanNumber))
 					{
 						if (double.TryParse(measurementhash["ScanTime1"].ToString(), out scanTime))
 						{
 
-							if (!lstFilterPassingPeptides.ContainsKey(scanNumber)) 
+							if (!lstFilterPassingPeptides.ContainsKey(scanNumber))
 							{
 								lstFilterPassingPeptides.Add(scanNumber, scanTime);
 							}
 						}
 					}
 
-                }
-            }
+				}
+			}
 
 			int index25th = -1;
 			int index75th = -1;
@@ -288,7 +288,7 @@ namespace SMAQC
 
 			double C2AScanTimeStart = 0;
 			double C2AScanTimeEnd = 0;
-			
+
 			if (lstFilterPassingPeptides.Count > 0)
 			{
 
@@ -322,35 +322,35 @@ namespace SMAQC
 				AddUpdateResultsStorage("SCAN_FIRST_FILTER_PASSING_PEPTIDE", lstFilterPassingPeptides.Keys.Min());
 			}
 
-            // CACHE THE SCAN NUMBERS AT THE START AND END OF THE INTEQUARTILE REGION
+			// CACHE THE SCAN NUMBERS AT THE START AND END OF THE INTEQUARTILE REGION
 			AddUpdateResultsStorage("C_2A_REGION_SCAN_START", C2AScanStart);
 			AddUpdateResultsStorage("C_2A_REGION_SCAN_END", C2AScanEnd);
-          
+
 			double answer = C2AScanTimeEnd - C2AScanTimeStart;
 
-            //STORE IN GLOBAL HASH TABLE FOR C_2B
+			//STORE IN GLOBAL HASH TABLE FOR C_2B
 			AddUpdateResultsStorage("C_2A_TIME_MINUTES", answer);
 
-            return Convert.ToString(answer);
-        }
+			return Convert.ToString(answer);
+		}
 
 
-        /// <summary>
+		/// <summary>
 		/// C-2B: Rate of peptide identification during C-2A
-        /// </summary>
-        /// <returns></returns>
-        public String C_2B()
-        {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.`Peptide_Expectation_Value_Log`, t1.FragScanNumber as ScanNumber,"
-                + "temp_scanstats.ScanTime as ScanTime1 "
-                + "FROM temp_xt, temp_scanstats, temp_sicstats as t1 "
-                + "WHERE temp_xt.Scan = t1.FragScanNumber "
-                + "AND temp_xt.Scan = temp_scanstats.ScanNumber "
-                + "AND temp_xt.random_id=" + r_id + " "
-                + "AND temp_scanstats.random_id=" + r_id + " "
-                + "AND t1.random_id=" + r_id + " "
-                + "ORDER BY Scan;");
+		/// </summary>
+		/// <returns></returns>
+		public String C_2B()
+		{
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.`Peptide_Expectation_Value_Log`, t1.FragScanNumber as ScanNumber,"
+				+ "temp_scanstats.ScanTime as ScanTime1 "
+				+ "FROM temp_xt, temp_scanstats, temp_sicstats as t1 "
+				+ "WHERE temp_xt.Scan = t1.FragScanNumber "
+				+ "AND temp_xt.Scan = temp_scanstats.ScanNumber "
+				+ "AND temp_xt.random_id=" + r_id + " "
+				+ "AND temp_scanstats.random_id=" + r_id + " "
+				+ "AND t1.random_id=" + r_id + " "
+				+ "ORDER BY Scan;");
 
 			// This list keeps track of the scan numbers already processed so that we can avoid double-counting a scan number
 			SortedSet<int> lstScansWithFilterPassingIDs = new SortedSet<int>();
@@ -389,154 +389,154 @@ namespace SMAQC
 			if (timeMinutesC2A > 0)
 			{
 				double answer = lstScansWithFilterPassingIDs.Count / timeMinutesC2A;
-			
+
 				//WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
 				answerText = answer.ToString("0.000000");
-				
+
 			}
 
 			return answerText;
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// C-3A: Median peak width for all peptides
-        /// </summary>
-        /// <returns></returns>
-        public String C_3A()
-        {
-            //DECLARE HASH TABLES
-            List<int> bestscan = new List<int>();                           //STORE Best Scan Results
-            Hashtable fragscannumber = new Hashtable();                     //STORE FRAG SCAN NUMBERS
-            Hashtable fwhminscans = new Hashtable();                        //STORE FWHMIN SCANS
-            Hashtable optimalpeakapexscannumber = new Hashtable();          //STORE OPTIMAL PEAK APEX SCAN NUMBERS
-            Hashtable scantime = new Hashtable();                           //STORE TIME
-            List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
+		/// </summary>
+		/// <returns></returns>
+		public String C_3A()
+		{
+			//DECLARE HASH TABLES
+			List<int> bestscan = new List<int>();                           //STORE Best Scan Results
+			Hashtable fragscannumber = new Hashtable();                     //STORE FRAG SCAN NUMBERS
+			Hashtable fwhminscans = new Hashtable();                        //STORE FWHMIN SCANS
+			Hashtable optimalpeakapexscannumber = new Hashtable();          //STORE OPTIMAL PEAK APEX SCAN NUMBERS
+			Hashtable scantime = new Hashtable();                           //STORE TIME
+			List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
 			int i;                                                          //TEMP POSITION VARIABLE
-            int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
-            String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
-            String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
-            String prev_Best_Evalue = "";                                   //INIT PREV BEST EVALUE TO BLANK [REQUIRED FOR COMPARISON]
-            double median = 0.00;                                           //INIT MEDIAN
+			int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
+			String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
+			String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
+			String prev_Best_Evalue = "";                                   //INIT PREV BEST EVALUE TO BLANK [REQUIRED FOR COMPARISON]
+			double median = 0.00;                                           //INIT MEDIAN
 
-            //SET DB QUERY [REQUIRED TO SORT BY PEPTIDE SEQUENCE]
-            DBInterface.setQuery("SELECT Scan, Charge, Peptide_Expectation_Value_Log,Peptide_Sequence FROM `temp_xt` "
-            + "WHERE temp_xt.random_id=" + r_id + " ORDER BY Peptide_Sequence,Charge,Scan,Scan");
+			//SET DB QUERY [REQUIRED TO SORT BY PEPTIDE SEQUENCE]
+			DBInterface.setQuery("SELECT Scan, Charge, Peptide_Expectation_Value_Log,Peptide_Sequence FROM `temp_xt` "
+			+ "WHERE temp_xt.random_id=" + r_id + " ORDER BY Peptide_Sequence,Charge,Scan,Scan");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields1 = { "Scan", "Charge", "Peptide_Expectation_Value_Log", "Peptide_Sequence" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields1 = { "Scan", "Charge", "Peptide_Expectation_Value_Log", "Peptide_Sequence" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //FETCH COLUMNS Q,R NOW
+			//FETCH COLUMNS Q,R NOW
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields1, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //FIND COLUMN Q
-                String Best_Evalue = "";
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields1, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//FIND COLUMN Q
+				String Best_Evalue = "";
 
-                //IF PREVIOUS PEPTIDE SEQUENCES == EACH OTHER && PREVIOUS CHARGES == EACH OTHER
-                if (prv_Peptide_Sequence.Equals(Convert.ToString(measurementhash["Peptide_Sequence"])) && prv_Charge.Equals(Convert.ToString(measurementhash["Charge"])))
-                {
+				//IF PREVIOUS PEPTIDE SEQUENCES == EACH OTHER && PREVIOUS CHARGES == EACH OTHER
+				if (prv_Peptide_Sequence.Equals(Convert.ToString(measurementhash["Peptide_Sequence"])) && prv_Charge.Equals(Convert.ToString(measurementhash["Charge"])))
+				{
 
-                    //TAKE MIN [EITHER PREVIOUS BEST EVALUE OR CURRENT PEPTIDE EXPECTATION VALUE
-                    if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) > Convert.ToDouble(prev_Best_Evalue))
-                    {
-                        Best_Evalue = prev_Best_Evalue;
-                    }
-                    else
-                    {
-                        Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-                    }
-                }
-                else
-                {
-                    Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-                }
+					//TAKE MIN [EITHER PREVIOUS BEST EVALUE OR CURRENT PEPTIDE EXPECTATION VALUE
+					if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) > Convert.ToDouble(prev_Best_Evalue))
+					{
+						Best_Evalue = prev_Best_Evalue;
+					}
+					else
+					{
+						Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
+					}
+				}
+				else
+				{
+					Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
+				}
 
-                //NOW FIND COLUMN R IF COLUMN U IS == TRUE
-                if (Best_Evalue.Equals(Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"])))
-                {
-                    //WE ARE NOW == TRUE FOR THIS COLUMN ... AS TRUE WE ADD THIS TO OUR HASH TABLE/WHATEVER
+				//NOW FIND COLUMN R IF COLUMN U IS == TRUE
+				if (Best_Evalue.Equals(Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"])))
+				{
+					//WE ARE NOW == TRUE FOR THIS COLUMN ... AS TRUE WE ADD THIS TO OUR HASH TABLE/WHATEVER
 
-                    //[ADD HERE]
-                    bestscan.Add(Convert.ToInt32(measurementhash["Scan"]));
-                }
+					//[ADD HERE]
+					bestscan.Add(Convert.ToInt32(measurementhash["Scan"]));
+				}
 
-                //UPDATE PREVIOUS VALUES FOR NEXT LOOP
-                prv_Charge = Convert.ToString(measurementhash["Charge"]);
-                prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
-                prev_Best_Evalue = Best_Evalue;
-            }
+				//UPDATE PREVIOUS VALUES FOR NEXT LOOP
+				prv_Charge = Convert.ToString(measurementhash["Charge"]);
+				prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
+				prev_Best_Evalue = Best_Evalue;
+			}
 
-            //NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
-            bestscan.Sort();
+			//NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
+			bestscan.Sort();
 
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM `temp_sicstats` WHERE temp_sicstats.random_id=" + r_id + "");
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM `temp_sicstats` WHERE temp_sicstats.random_id=" + r_id + "");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //FETCH COLUMNS D-F
+			//FETCH COLUMNS D-F
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields2, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //ADD VALUES TO OUR TEMP HASH TABLES
-                fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
-                fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
-                optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
-            }
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields2, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//ADD VALUES TO OUR TEMP HASH TABLES
+				fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
+				fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
+				optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
+			}
 
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM `temp_scanstats` WHERE temp_scanstats.random_id=" + r_id + "");
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM `temp_scanstats` WHERE temp_scanstats.random_id=" + r_id + "");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields3 = { "ScanNumber", "ScanTime" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields3 = { "ScanNumber", "ScanTime" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //FETCH COLUMNS H-I
+			//FETCH COLUMNS H-I
 			i = 1;
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //ADD TO SCANTIME HASH TABLE
-                scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//ADD TO SCANTIME HASH TABLE
+				scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
 
 				//INCREMENT I POSITION
 				i++;
 			}
 
-            //NOW START THE ACTUAL MEASUREMENT CALCULATION
+			//NOW START THE ACTUAL MEASUREMENT CALCULATION
 
-            //LOOP THROUGH BESTSCAN
-            for (i = 0; i < bestscan.Count; i++)
-            {
-                //FIND INDEX + OPTIMAL PEAK APEX SCAN +- FWHMIN FOR EACH RESULT [COLUMNS: M,O]
-                String index = Convert.ToString(bestscan[i]);
-                int OptimalPeakApexScanMinusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) - Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
-                int OptimalPeakApexScanPlusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) + Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
+			//LOOP THROUGH BESTSCAN
+			for (i = 0; i < bestscan.Count; i++)
+			{
+				//FIND INDEX + OPTIMAL PEAK APEX SCAN +- FWHMIN FOR EACH RESULT [COLUMNS: M,O]
+				String index = Convert.ToString(bestscan[i]);
+				int OptimalPeakApexScanMinusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) - Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
+				int OptimalPeakApexScanPlusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) + Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
 
-                //FIND OTHER COLUMNS [N,P, Q,R,T]
-                double start_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanMinusFWHMIN)]);
-                double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
-                double end_minus_start = end_time - start_time;
-                double end_minus_start_in_secs = end_minus_start * 60;
-                double running_percent = Convert.ToDouble(running_sum) / Convert.ToDouble(bestscan.Count);
+				//FIND OTHER COLUMNS [N,P, Q,R,T]
+				double start_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanMinusFWHMIN)]);
+				double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
+				double end_minus_start = end_time - start_time;
+				double end_minus_start_in_secs = end_minus_start * 60;
+				double running_percent = Convert.ToDouble(running_sum) / Convert.ToDouble(bestscan.Count);
 
-                //ADD end_minus_start_in_secs TO OUR LIST [COLUMN R]
-                result.Add(end_minus_start_in_secs);
+				//ADD end_minus_start_in_secs TO OUR LIST [COLUMN R]
+				result.Add(end_minus_start_in_secs);
 
-                //INCREMENT RUNNING SUM [COLUMN S]
-                running_sum++;
-            }
+				//INCREMENT RUNNING SUM [COLUMN S]
+				running_sum++;
+			}
 
 			string resultText = string.Empty;
 
@@ -549,155 +549,155 @@ namespace SMAQC
 				resultText = median.ToString("0.00");
 			}
 
-            //RETURN RESULT
+			//RETURN RESULT
 			return resultText;
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// C-3B: Median peak width during middle 50% of separation
-        /// </summary>
-        /// <returns></returns>
-        public String C_3B()
-        {
-            //DECLARE HASH TABLES
-            List<int> bestscan = new List<int>();                           //STORE Best Scan Results
-            Hashtable fragscannumber = new Hashtable();                     //STORE FRAG SCAN NUMBERS
-            Hashtable fwhminscans = new Hashtable();                        //STORE FWHMIN SCANS
-            Hashtable optimalpeakapexscannumber = new Hashtable();          //STORE OPTIMAL PEAK APEX SCAN NUMBERS
-            Hashtable scantime = new Hashtable();                           //STORE TIME
-            List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
+		/// </summary>
+		/// <returns></returns>
+		public String C_3B()
+		{
+			//DECLARE HASH TABLES
+			List<int> bestscan = new List<int>();                           //STORE Best Scan Results
+			Hashtable fragscannumber = new Hashtable();                     //STORE FRAG SCAN NUMBERS
+			Hashtable fwhminscans = new Hashtable();                        //STORE FWHMIN SCANS
+			Hashtable optimalpeakapexscannumber = new Hashtable();          //STORE OPTIMAL PEAK APEX SCAN NUMBERS
+			Hashtable scantime = new Hashtable();                           //STORE TIME
+			List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
 			int i;                                                          //TEMP POSITION VARIABLE
-            int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
-            String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
-            String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
-            String prev_Best_Evalue = "";                                   //INIT PREV BEST EVALUE TO BLANK [REQUIRED FOR COMPARISON]
-            double median = 0.00;                                           //INIT MEDIAN
-            double START_RANGE = 0.25;                                      //FUNCTION START RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
-            double END_RANGE = 0.75;                                        //FUNCTION END RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
+			int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
+			String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
+			String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
+			String prev_Best_Evalue = "";                                   //INIT PREV BEST EVALUE TO BLANK [REQUIRED FOR COMPARISON]
+			double median = 0.00;                                           //INIT MEDIAN
+			double START_RANGE = 0.25;                                      //FUNCTION START RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
+			double END_RANGE = 0.75;                                        //FUNCTION END RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
 
-            //SET DB QUERY [REQUIRED TO SORT BY PEPTIDE SEQUENCE]
-            DBInterface.setQuery("SELECT Scan, Charge, Peptide_Expectation_Value_Log,Peptide_Sequence FROM `temp_xt` "
-            + "WHERE temp_xt.random_id=" + r_id + " ORDER BY Peptide_Sequence,Charge,Scan,Scan");
+			//SET DB QUERY [REQUIRED TO SORT BY PEPTIDE SEQUENCE]
+			DBInterface.setQuery("SELECT Scan, Charge, Peptide_Expectation_Value_Log,Peptide_Sequence FROM `temp_xt` "
+			+ "WHERE temp_xt.random_id=" + r_id + " ORDER BY Peptide_Sequence,Charge,Scan,Scan");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields1 = { "Scan", "Charge", "Peptide_Expectation_Value_Log", "Peptide_Sequence" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields1 = { "Scan", "Charge", "Peptide_Expectation_Value_Log", "Peptide_Sequence" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //FETCH COLUMNS Q,R NOW
+			//FETCH COLUMNS Q,R NOW
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields1, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //FIND COLUMN Q
-                String Best_Evalue = "";
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields1, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//FIND COLUMN Q
+				String Best_Evalue = "";
 
-                //IF PREVIOUS PEPTIDE SEQUENCES == EACH OTHER && PREVIOUS CHARGES == EACH OTHER
-                if (prv_Peptide_Sequence.Equals(Convert.ToString(measurementhash["Peptide_Sequence"])) && prv_Charge.Equals(Convert.ToString(measurementhash["Charge"])))
-                {
+				//IF PREVIOUS PEPTIDE SEQUENCES == EACH OTHER && PREVIOUS CHARGES == EACH OTHER
+				if (prv_Peptide_Sequence.Equals(Convert.ToString(measurementhash["Peptide_Sequence"])) && prv_Charge.Equals(Convert.ToString(measurementhash["Charge"])))
+				{
 
-                    //TAKE MIN [EITHER PREVIOUS BEST EVALUE OR CURRENT PEPTIDE EXPECTATION VALUE
-                    if ( Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) > Convert.ToDouble(prev_Best_Evalue))
-                    {
-                        Best_Evalue = prev_Best_Evalue;
-                    }
-                    else
-                    {
-                        Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-                    }
-                }
-                else
-                {
-                    Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-                }
+					//TAKE MIN [EITHER PREVIOUS BEST EVALUE OR CURRENT PEPTIDE EXPECTATION VALUE
+					if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) > Convert.ToDouble(prev_Best_Evalue))
+					{
+						Best_Evalue = prev_Best_Evalue;
+					}
+					else
+					{
+						Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
+					}
+				}
+				else
+				{
+					Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
+				}
 
-                //NOW FIND COLUMN R IF COLUMN U IS == TRUE
-                if (Best_Evalue.Equals( Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]) ))
-                {
-                    //WE ARE NOW == TRUE FOR THIS COLUMN ... AS TRUE WE ADD THIS TO OUR HASH TABLE/WHATEVER
+				//NOW FIND COLUMN R IF COLUMN U IS == TRUE
+				if (Best_Evalue.Equals(Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"])))
+				{
+					//WE ARE NOW == TRUE FOR THIS COLUMN ... AS TRUE WE ADD THIS TO OUR HASH TABLE/WHATEVER
 
-                    //[ADD HERE]
-                    bestscan.Add(Convert.ToInt32(measurementhash["Scan"]));
-                }
+					//[ADD HERE]
+					bestscan.Add(Convert.ToInt32(measurementhash["Scan"]));
+				}
 
-                //UPDATE PREVIOUS VALUES FOR NEXT LOOP
-                prv_Charge = Convert.ToString(measurementhash["Charge"]);
-                prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
-                prev_Best_Evalue = Best_Evalue;
-            }
+				//UPDATE PREVIOUS VALUES FOR NEXT LOOP
+				prv_Charge = Convert.ToString(measurementhash["Charge"]);
+				prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
+				prev_Best_Evalue = Best_Evalue;
+			}
 
-            //NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
-            bestscan.Sort();
+			//NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
+			bestscan.Sort();
 
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM `temp_sicstats` WHERE temp_sicstats.random_id=" + r_id + "");
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM `temp_sicstats` WHERE temp_sicstats.random_id=" + r_id + "");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //FETCH COLUMNS D-F
+			//FETCH COLUMNS D-F
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields2, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //ADD VALUES TO OUR TEMP HASH TABLES
-                fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
-                fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
-                optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
-            }
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields2, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//ADD VALUES TO OUR TEMP HASH TABLES
+				fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
+				fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
+				optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
+			}
 
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM `temp_scanstats` WHERE temp_scanstats.random_id=" + r_id + "");
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM `temp_scanstats` WHERE temp_scanstats.random_id=" + r_id + "");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields3 = { "ScanNumber", "ScanTime" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields3 = { "ScanNumber", "ScanTime" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //FETCH COLUMNS H-I
+			//FETCH COLUMNS H-I
 			i = 1;
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //ADD TO SCANTIME HASH TABLE
-                scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//ADD TO SCANTIME HASH TABLE
+				scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
 
 				//INCREMENT I POSITION
 				i++;
 			}
 
-            //NOW START THE ACTUAL MEASUREMENT CALCULATION
+			//NOW START THE ACTUAL MEASUREMENT CALCULATION
 
-            //LOOP THROUGH BESTSCAN
-            for (i = 0; i < bestscan.Count; i++)
-            {
-                //FIND INDEX + OPTIMAL PEAK APEX SCAN +- FWHMIN FOR EACH RESULT [COLUMNS: M,O]
-                String index = Convert.ToString(bestscan[i]);
-                int OptimalPeakApexScanMinusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) - Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) /2 ));
-                int OptimalPeakApexScanPlusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) + Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
+			//LOOP THROUGH BESTSCAN
+			for (i = 0; i < bestscan.Count; i++)
+			{
+				//FIND INDEX + OPTIMAL PEAK APEX SCAN +- FWHMIN FOR EACH RESULT [COLUMNS: M,O]
+				String index = Convert.ToString(bestscan[i]);
+				int OptimalPeakApexScanMinusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) - Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
+				int OptimalPeakApexScanPlusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) + Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
 
-                //FIND OTHER COLUMNS [N,P, Q,R,T]
-                double start_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanMinusFWHMIN)]);
-                double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
-                double end_minus_start = end_time - start_time;
-                double end_minus_start_in_secs = end_minus_start * 60;
-                double running_percent = Convert.ToDouble(running_sum) / Convert.ToDouble(bestscan.Count);
+				//FIND OTHER COLUMNS [N,P, Q,R,T]
+				double start_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanMinusFWHMIN)]);
+				double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
+				double end_minus_start = end_time - start_time;
+				double end_minus_start_in_secs = end_minus_start * 60;
+				double running_percent = Convert.ToDouble(running_sum) / Convert.ToDouble(bestscan.Count);
 
-                //CHECK FOR VALID RANGE DATA THEN ADD TO OUR RESULTS
-                if (running_percent >= START_RANGE && running_percent <= END_RANGE)
-                {
-                    //WE ARE WITHING OUR VALID RANGE ... SO ADD end_minus_start_in_secs TO OUR LIST [COLUMN U]
-                    result.Add(end_minus_start_in_secs);
-                }
+				//CHECK FOR VALID RANGE DATA THEN ADD TO OUR RESULTS
+				if (running_percent >= START_RANGE && running_percent <= END_RANGE)
+				{
+					//WE ARE WITHING OUR VALID RANGE ... SO ADD end_minus_start_in_secs TO OUR LIST [COLUMN U]
+					result.Add(end_minus_start_in_secs);
+				}
 
-                //INCREMENT RUNNING SUM [COLUMN S]
-                running_sum++;
-            }
+				//INCREMENT RUNNING SUM [COLUMN S]
+				running_sum++;
+			}
 
 			string resultText = string.Empty;
 
@@ -716,155 +716,155 @@ namespace SMAQC
 				*/
 			}
 
-            //RETURN RESULT
+			//RETURN RESULT
 			return resultText;
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// C-4A: Median peak width during first 10% of separation
-        /// </summary>
-        /// <returns></returns>
-        public String C_4A()
-        {
-            //DECLARE HASH TABLES
-            List<int> bestscan = new List<int>();                           //STORE Best Scan Results
-            Hashtable fragscannumber = new Hashtable();                     //STORE FRAG SCAN NUMBERS
-            Hashtable fwhminscans = new Hashtable();                        //STORE FWHMIN SCANS
-            Hashtable optimalpeakapexscannumber = new Hashtable();          //STORE OPTIMAL PEAK APEX SCAN NUMBERS
-            Hashtable scantime = new Hashtable();                           //STORE TIME
-            List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
+		/// </summary>
+		/// <returns></returns>
+		public String C_4A()
+		{
+			//DECLARE HASH TABLES
+			List<int> bestscan = new List<int>();                           //STORE Best Scan Results
+			Hashtable fragscannumber = new Hashtable();                     //STORE FRAG SCAN NUMBERS
+			Hashtable fwhminscans = new Hashtable();                        //STORE FWHMIN SCANS
+			Hashtable optimalpeakapexscannumber = new Hashtable();          //STORE OPTIMAL PEAK APEX SCAN NUMBERS
+			Hashtable scantime = new Hashtable();                           //STORE TIME
+			List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
 			int i;                                                          //TEMP POSITION VARIABLE
-            int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
-            String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
-            String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
-            String prev_Best_Evalue = "";                                   //INIT PREV BEST EVALUE TO BLANK [REQUIRED FOR COMPARISON]
-            double median = 0.00;                                           //INIT MEDIAN
-            double START_RANGE = 0.00;                                      //FUNCTION START RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
-            double END_RANGE = 0.10;                                        //FUNCTION END RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
+			int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
+			String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
+			String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
+			String prev_Best_Evalue = "";                                   //INIT PREV BEST EVALUE TO BLANK [REQUIRED FOR COMPARISON]
+			double median = 0.00;                                           //INIT MEDIAN
+			double START_RANGE = 0.00;                                      //FUNCTION START RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
+			double END_RANGE = 0.10;                                        //FUNCTION END RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
 
-            //SET DB QUERY [REQUIRED TO SORT BY PEPTIDE SEQUENCE]
-            DBInterface.setQuery("SELECT Scan, Charge, Peptide_Expectation_Value_Log,Peptide_Sequence FROM `temp_xt` "
-            + "WHERE temp_xt.random_id=" + r_id + " ORDER BY Peptide_Sequence,Charge,Scan,Scan");
+			//SET DB QUERY [REQUIRED TO SORT BY PEPTIDE SEQUENCE]
+			DBInterface.setQuery("SELECT Scan, Charge, Peptide_Expectation_Value_Log,Peptide_Sequence FROM `temp_xt` "
+			+ "WHERE temp_xt.random_id=" + r_id + " ORDER BY Peptide_Sequence,Charge,Scan,Scan");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields1 = { "Scan", "Charge", "Peptide_Expectation_Value_Log", "Peptide_Sequence" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields1 = { "Scan", "Charge", "Peptide_Expectation_Value_Log", "Peptide_Sequence" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //FETCH COLUMNS Q,R NOW
+			//FETCH COLUMNS Q,R NOW
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields1, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //FIND COLUMN Q
-                String Best_Evalue = "";
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields1, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//FIND COLUMN Q
+				String Best_Evalue = "";
 
-                //IF PREVIOUS PEPTIDE SEQUENCES == EACH OTHER && PREVIOUS CHARGES == EACH OTHER
-                if (prv_Peptide_Sequence.Equals(Convert.ToString(measurementhash["Peptide_Sequence"])) && prv_Charge.Equals(Convert.ToString(measurementhash["Charge"])))
-                {
+				//IF PREVIOUS PEPTIDE SEQUENCES == EACH OTHER && PREVIOUS CHARGES == EACH OTHER
+				if (prv_Peptide_Sequence.Equals(Convert.ToString(measurementhash["Peptide_Sequence"])) && prv_Charge.Equals(Convert.ToString(measurementhash["Charge"])))
+				{
 
-                    //TAKE MIN [EITHER PREVIOUS BEST EVALUE OR CURRENT PEPTIDE EXPECTATION VALUE
-                    if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) > Convert.ToDouble(prev_Best_Evalue))
-                    {
-                        Best_Evalue = prev_Best_Evalue;
-                    }
-                    else
-                    {
-                        Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-                    }
-                }
-                else
-                {
-                    Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-                }
+					//TAKE MIN [EITHER PREVIOUS BEST EVALUE OR CURRENT PEPTIDE EXPECTATION VALUE
+					if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) > Convert.ToDouble(prev_Best_Evalue))
+					{
+						Best_Evalue = prev_Best_Evalue;
+					}
+					else
+					{
+						Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
+					}
+				}
+				else
+				{
+					Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
+				}
 
-                //NOW FIND COLUMN R IF COLUMN U IS == TRUE
-                if (Best_Evalue.Equals(Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"])))
-                {
-                    //WE ARE NOW == TRUE FOR THIS COLUMN ... AS TRUE WE ADD THIS TO OUR HASH TABLE/WHATEVER
+				//NOW FIND COLUMN R IF COLUMN U IS == TRUE
+				if (Best_Evalue.Equals(Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"])))
+				{
+					//WE ARE NOW == TRUE FOR THIS COLUMN ... AS TRUE WE ADD THIS TO OUR HASH TABLE/WHATEVER
 
-                    //[ADD HERE]
-                    bestscan.Add(Convert.ToInt32(measurementhash["Scan"]));
-                }
+					//[ADD HERE]
+					bestscan.Add(Convert.ToInt32(measurementhash["Scan"]));
+				}
 
-                //UPDATE PREVIOUS VALUES FOR NEXT LOOP
-                prv_Charge = Convert.ToString(measurementhash["Charge"]);
-                prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
-                prev_Best_Evalue = Best_Evalue;
-            }
+				//UPDATE PREVIOUS VALUES FOR NEXT LOOP
+				prv_Charge = Convert.ToString(measurementhash["Charge"]);
+				prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
+				prev_Best_Evalue = Best_Evalue;
+			}
 
-            //NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
-            bestscan.Sort();
+			//NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
+			bestscan.Sort();
 
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM `temp_sicstats` WHERE temp_sicstats.random_id=" + r_id + "");
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM `temp_sicstats` WHERE temp_sicstats.random_id=" + r_id + "");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //FETCH COLUMNS D-F
+			//FETCH COLUMNS D-F
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields2, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //ADD VALUES TO OUR TEMP HASH TABLES
-                fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
-                fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
-                optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
-            }
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields2, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//ADD VALUES TO OUR TEMP HASH TABLES
+				fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
+				fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
+				optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
+			}
 
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM `temp_scanstats` WHERE temp_scanstats.random_id=" + r_id + "");
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM `temp_scanstats` WHERE temp_scanstats.random_id=" + r_id + "");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields3 = { "ScanNumber", "ScanTime" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields3 = { "ScanNumber", "ScanTime" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //FETCH COLUMNS H-I
+			//FETCH COLUMNS H-I
 			i = 1;
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //ADD TO SCANTIME HASH TABLE
-                scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//ADD TO SCANTIME HASH TABLE
+				scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
 
 				//INCREMENT I POSITION
 				i++;
 			}
 
-            //NOW START THE ACTUAL MEASUREMENT CALCULATION
+			//NOW START THE ACTUAL MEASUREMENT CALCULATION
 
-            //LOOP THROUGH BESTSCAN
-            for (i = 0; i < bestscan.Count; i++)
-            {
-                //FIND INDEX + OPTIMAL PEAK APEX SCAN +- FWHMIN FOR EACH RESULT [COLUMNS: M,O]
-                String index = Convert.ToString(bestscan[i]);
-                int OptimalPeakApexScanMinusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) - Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
-                int OptimalPeakApexScanPlusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) + Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
+			//LOOP THROUGH BESTSCAN
+			for (i = 0; i < bestscan.Count; i++)
+			{
+				//FIND INDEX + OPTIMAL PEAK APEX SCAN +- FWHMIN FOR EACH RESULT [COLUMNS: M,O]
+				String index = Convert.ToString(bestscan[i]);
+				int OptimalPeakApexScanMinusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) - Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
+				int OptimalPeakApexScanPlusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) + Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
 
-                //FIND OTHER COLUMNS [N,P, Q,R,T]
-                double start_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanMinusFWHMIN)]);
-                double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
-                double end_minus_start = end_time - start_time;
-                double end_minus_start_in_secs = end_minus_start * 60;
-                double running_percent = Convert.ToDouble(running_sum) / Convert.ToDouble(bestscan.Count);
+				//FIND OTHER COLUMNS [N,P, Q,R,T]
+				double start_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanMinusFWHMIN)]);
+				double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
+				double end_minus_start = end_time - start_time;
+				double end_minus_start_in_secs = end_minus_start * 60;
+				double running_percent = Convert.ToDouble(running_sum) / Convert.ToDouble(bestscan.Count);
 
-                //CHECK FOR VALID RANGE DATA THEN ADD TO OUR RESULTS
-                if (running_percent >= START_RANGE && running_percent <= END_RANGE)
-                {
-                    //WE ARE WITHING OUR VALID RANGE ... SO ADD end_minus_start_in_secs TO OUR LIST
-                    result.Add(end_minus_start_in_secs);
-                }
+				//CHECK FOR VALID RANGE DATA THEN ADD TO OUR RESULTS
+				if (running_percent >= START_RANGE && running_percent <= END_RANGE)
+				{
+					//WE ARE WITHING OUR VALID RANGE ... SO ADD end_minus_start_in_secs TO OUR LIST
+					result.Add(end_minus_start_in_secs);
+				}
 
-                //INCREMENT RUNNING SUM [COLUMN S]
-                running_sum++;
-            }
+				//INCREMENT RUNNING SUM [COLUMN S]
+				running_sum++;
+			}
 
 			string resultText = string.Empty;
 
@@ -880,158 +880,158 @@ namespace SMAQC
 				/*
 				 * result.Count == # OF U COLUMN VALID RESULTS
 				 * Console.WriteLine("MEDIAN={0} -- {1} [POS={2}]", result[pos], result[pos + 1], pos); == HELPFUL FOR DEBUGGING
-				*/				
+				*/
 			}
 
-            //RETURN RESULT
+			//RETURN RESULT
 			return resultText;
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// C-4B: Median peak width during last 10% of separation
-        /// </summary>
-        /// <returns></returns>
-        public String C_4B()
-        {
-            //DECLARE HASH TABLES
-            List<int> bestscan = new List<int>();                           //STORE Best Scan Results
-            Hashtable fragscannumber = new Hashtable();                     //STORE FRAG SCAN NUMBERS
-            Hashtable fwhminscans = new Hashtable();                        //STORE FWHMIN SCANS
-            Hashtable optimalpeakapexscannumber = new Hashtable();          //STORE OPTIMAL PEAK APEX SCAN NUMBERS
-            Hashtable scantime = new Hashtable();                           //STORE TIME
-            List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
-            int i;                                                          //TEMP POSITION VARIABLE
-            int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
-            String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
-            String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
-            String prev_Best_Evalue = "";                                   //INIT PREV BEST EVALUE TO BLANK [REQUIRED FOR COMPARISON]
-            double median = 0.00;                                           //INIT MEDIAN
-            double START_RANGE = 0.90;                                      //FUNCTION START RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
-            double END_RANGE = 1.00;                                        //FUNCTION END RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
+		/// </summary>
+		/// <returns></returns>
+		public String C_4B()
+		{
+			//DECLARE HASH TABLES
+			List<int> bestscan = new List<int>();                           //STORE Best Scan Results
+			Hashtable fragscannumber = new Hashtable();                     //STORE FRAG SCAN NUMBERS
+			Hashtable fwhminscans = new Hashtable();                        //STORE FWHMIN SCANS
+			Hashtable optimalpeakapexscannumber = new Hashtable();          //STORE OPTIMAL PEAK APEX SCAN NUMBERS
+			Hashtable scantime = new Hashtable();                           //STORE TIME
+			List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
+			int i;                                                          //TEMP POSITION VARIABLE
+			int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
+			String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
+			String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
+			String prev_Best_Evalue = "";                                   //INIT PREV BEST EVALUE TO BLANK [REQUIRED FOR COMPARISON]
+			double median = 0.00;                                           //INIT MEDIAN
+			double START_RANGE = 0.90;                                      //FUNCTION START RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
+			double END_RANGE = 1.00;                                        //FUNCTION END RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
 
-            //SET DB QUERY [REQUIRED TO SORT BY PEPTIDE SEQUENCE]
-            DBInterface.setQuery("SELECT Scan, Charge, Peptide_Expectation_Value_Log,Peptide_Sequence FROM `temp_xt` "
-            + "WHERE temp_xt.random_id=" + r_id + " ORDER BY Peptide_Sequence,Charge,Scan,Scan");
+			//SET DB QUERY [REQUIRED TO SORT BY PEPTIDE SEQUENCE]
+			DBInterface.setQuery("SELECT Scan, Charge, Peptide_Expectation_Value_Log,Peptide_Sequence FROM `temp_xt` "
+			+ "WHERE temp_xt.random_id=" + r_id + " ORDER BY Peptide_Sequence,Charge,Scan,Scan");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields1 = { "Scan", "Charge", "Peptide_Expectation_Value_Log", "Peptide_Sequence" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields1 = { "Scan", "Charge", "Peptide_Expectation_Value_Log", "Peptide_Sequence" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //FETCH COLUMNS Q,R NOW
+			//FETCH COLUMNS Q,R NOW
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields1, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //FIND COLUMN Q
-                String Best_Evalue = "";
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields1, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//FIND COLUMN Q
+				String Best_Evalue = "";
 
-                //IF PREVIOUS PEPTIDE SEQUENCES == EACH OTHER && PREVIOUS CHARGES == EACH OTHER
-                if (prv_Peptide_Sequence.Equals(Convert.ToString(measurementhash["Peptide_Sequence"])) && prv_Charge.Equals(Convert.ToString(measurementhash["Charge"])))
-                {
+				//IF PREVIOUS PEPTIDE SEQUENCES == EACH OTHER && PREVIOUS CHARGES == EACH OTHER
+				if (prv_Peptide_Sequence.Equals(Convert.ToString(measurementhash["Peptide_Sequence"])) && prv_Charge.Equals(Convert.ToString(measurementhash["Charge"])))
+				{
 
-                    //TAKE MIN [EITHER PREVIOUS BEST EVALUE OR CURRENT PEPTIDE EXPECTATION VALUE
-                    if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) > Convert.ToDouble(prev_Best_Evalue))
-                    {
-                        Best_Evalue = prev_Best_Evalue;
-                    }
-                    else
-                    {
-                        Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-                    }
-                }
-                else
-                {
-                    Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-                }
+					//TAKE MIN [EITHER PREVIOUS BEST EVALUE OR CURRENT PEPTIDE EXPECTATION VALUE
+					if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) > Convert.ToDouble(prev_Best_Evalue))
+					{
+						Best_Evalue = prev_Best_Evalue;
+					}
+					else
+					{
+						Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
+					}
+				}
+				else
+				{
+					Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
+				}
 
-                //NOW FIND COLUMN R IF COLUMN U IS == TRUE
-                if (Best_Evalue.Equals(Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"])))
-                {
-                    //WE ARE NOW == TRUE FOR THIS COLUMN ... AS TRUE WE ADD THIS TO OUR HASH TABLE/WHATEVER
+				//NOW FIND COLUMN R IF COLUMN U IS == TRUE
+				if (Best_Evalue.Equals(Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"])))
+				{
+					//WE ARE NOW == TRUE FOR THIS COLUMN ... AS TRUE WE ADD THIS TO OUR HASH TABLE/WHATEVER
 
-                    //[ADD HERE]
-                    bestscan.Add(Convert.ToInt32(measurementhash["Scan"]));
-                }
+					//[ADD HERE]
+					bestscan.Add(Convert.ToInt32(measurementhash["Scan"]));
+				}
 
-                //UPDATE PREVIOUS VALUES FOR NEXT LOOP
-                prv_Charge = Convert.ToString(measurementhash["Charge"]);
-                prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
-                prev_Best_Evalue = Best_Evalue;
-            }
+				//UPDATE PREVIOUS VALUES FOR NEXT LOOP
+				prv_Charge = Convert.ToString(measurementhash["Charge"]);
+				prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
+				prev_Best_Evalue = Best_Evalue;
+			}
 
-            //NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
-            bestscan.Sort();
+			//NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
+			bestscan.Sort();
 
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM `temp_sicstats` WHERE temp_sicstats.random_id=" + r_id + "");
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM `temp_sicstats` WHERE temp_sicstats.random_id=" + r_id + "");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //FETCH COLUMNS D-F
+			//FETCH COLUMNS D-F
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields2, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //ADD VALUES TO OUR TEMP HASH TABLES
-                fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
-                fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
-                optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
-            }
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields2, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//ADD VALUES TO OUR TEMP HASH TABLES
+				fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
+				fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
+				optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
+			}
 
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM `temp_scanstats` WHERE temp_scanstats.random_id=" + r_id + "");
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM `temp_scanstats` WHERE temp_scanstats.random_id=" + r_id + "");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields3 = { "ScanNumber", "ScanTime" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields3 = { "ScanNumber", "ScanTime" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //FETCH COLUMNS H-I
+			//FETCH COLUMNS H-I
 			i = 1;
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //ADD TO SCANTIME HASH TABLE
-                scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//ADD TO SCANTIME HASH TABLE
+				scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
 
 				//INCREMENT I POSITION
 				i++;
 			}
 
-            //NOW START THE ACTUAL MEASUREMENT CALCULATION
+			//NOW START THE ACTUAL MEASUREMENT CALCULATION
 
-            //LOOP THROUGH BESTSCAN
-            for (i = 0; i < bestscan.Count; i++)
-            {
-                //FIND INDEX + OPTIMAL PEAK APEX SCAN +- FWHMIN FOR EACH RESULT [COLUMNS: M,O]
-                String index = Convert.ToString(bestscan[i]);
-                int OptimalPeakApexScanMinusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) - Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
-                int OptimalPeakApexScanPlusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) + Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
+			//LOOP THROUGH BESTSCAN
+			for (i = 0; i < bestscan.Count; i++)
+			{
+				//FIND INDEX + OPTIMAL PEAK APEX SCAN +- FWHMIN FOR EACH RESULT [COLUMNS: M,O]
+				String index = Convert.ToString(bestscan[i]);
+				int OptimalPeakApexScanMinusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) - Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
+				int OptimalPeakApexScanPlusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) + Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
 
-                //FIND OTHER COLUMNS [N,P, Q,R,T]
-                double start_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanMinusFWHMIN)]);
-                double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
-                double end_minus_start = end_time - start_time;
-                double end_minus_start_in_secs = end_minus_start * 60;
-                double running_percent = Convert.ToDouble(running_sum) / Convert.ToDouble(bestscan.Count);
+				//FIND OTHER COLUMNS [N,P, Q,R,T]
+				double start_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanMinusFWHMIN)]);
+				double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
+				double end_minus_start = end_time - start_time;
+				double end_minus_start_in_secs = end_minus_start * 60;
+				double running_percent = Convert.ToDouble(running_sum) / Convert.ToDouble(bestscan.Count);
 
-                //CHECK FOR VALID RANGE DATA THEN ADD TO OUR RESULTS
-                if (running_percent >= START_RANGE && running_percent <= END_RANGE)
-                {
-                    //WE ARE WITHING OUR VALID RANGE ... SO ADD end_minus_start_in_secs TO OUR LIST
-                    result.Add(end_minus_start_in_secs);
-                }
+				//CHECK FOR VALID RANGE DATA THEN ADD TO OUR RESULTS
+				if (running_percent >= START_RANGE && running_percent <= END_RANGE)
+				{
+					//WE ARE WITHING OUR VALID RANGE ... SO ADD end_minus_start_in_secs TO OUR LIST
+					result.Add(end_minus_start_in_secs);
+				}
 
-                //INCREMENT RUNNING SUM [COLUMN S]
-                running_sum++;
-            }
+				//INCREMENT RUNNING SUM [COLUMN S]
+				running_sum++;
+			}
 
 			string resultText = string.Empty;
 
@@ -1049,158 +1049,158 @@ namespace SMAQC
 				/*
 				 * result.Count == # OF U COLUMN VALID RESULTS
 				 * Console.WriteLine("MEDIAN={0} -- {1} [POS={2}]", result[pos], result[pos + 1], pos); == HELPFUL FOR DEBUGGING
-				*/								
+				*/
 			}
 
-            //RETURN RESULT
-            return resultText;
-        }
+			//RETURN RESULT
+			return resultText;
+		}
 
-        /// <summary>
+		/// <summary>
 		/// C-4C: Median peak width during middle 10% of separation
-        /// </summary>
-        /// <returns></returns>
-        public String C_4C()
-        {
-            //DECLARE HASH TABLES
-            List<int> bestscan = new List<int>();                           //STORE Best Scan Results
-            Hashtable fragscannumber = new Hashtable();                     //STORE FRAG SCAN NUMBERS
-            Hashtable fwhminscans = new Hashtable();                        //STORE FWHMIN SCANS
-            Hashtable optimalpeakapexscannumber = new Hashtable();          //STORE OPTIMAL PEAK APEX SCAN NUMBERS
-            Hashtable scantime = new Hashtable();                           //STORE TIME
-            List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
-            int i;                                                          //TEMP POSITION VARIABLE
-            int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
-            String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
-            String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
-            String prev_Best_Evalue = "";                                   //INIT PREV BEST EVALUE TO BLANK [REQUIRED FOR COMPARISON]
-            double median = 0.00;                                           //INIT MEDIAN
-            double START_RANGE = 0.45;                                      //FUNCTION START RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
-            double END_RANGE = 0.55;                                        //FUNCTION END RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
+		/// </summary>
+		/// <returns></returns>
+		public String C_4C()
+		{
+			//DECLARE HASH TABLES
+			List<int> bestscan = new List<int>();                           //STORE Best Scan Results
+			Hashtable fragscannumber = new Hashtable();                     //STORE FRAG SCAN NUMBERS
+			Hashtable fwhminscans = new Hashtable();                        //STORE FWHMIN SCANS
+			Hashtable optimalpeakapexscannumber = new Hashtable();          //STORE OPTIMAL PEAK APEX SCAN NUMBERS
+			Hashtable scantime = new Hashtable();                           //STORE TIME
+			List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
+			int i;                                                          //TEMP POSITION VARIABLE
+			int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
+			String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
+			String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
+			String prev_Best_Evalue = "";                                   //INIT PREV BEST EVALUE TO BLANK [REQUIRED FOR COMPARISON]
+			double median = 0.00;                                           //INIT MEDIAN
+			double START_RANGE = 0.45;                                      //FUNCTION START RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
+			double END_RANGE = 0.55;                                        //FUNCTION END RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
 
-            //SET DB QUERY [REQUIRED TO SORT BY PEPTIDE SEQUENCE]
-            DBInterface.setQuery("SELECT Scan, Charge, Peptide_Expectation_Value_Log,Peptide_Sequence FROM `temp_xt` "
-            + "WHERE temp_xt.random_id=" + r_id + " ORDER BY Peptide_Sequence,Charge,Scan,Scan");
+			//SET DB QUERY [REQUIRED TO SORT BY PEPTIDE SEQUENCE]
+			DBInterface.setQuery("SELECT Scan, Charge, Peptide_Expectation_Value_Log,Peptide_Sequence FROM `temp_xt` "
+			+ "WHERE temp_xt.random_id=" + r_id + " ORDER BY Peptide_Sequence,Charge,Scan,Scan");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields1 = { "Scan", "Charge", "Peptide_Expectation_Value_Log", "Peptide_Sequence" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields1 = { "Scan", "Charge", "Peptide_Expectation_Value_Log", "Peptide_Sequence" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //FETCH COLUMNS Q,R NOW
+			//FETCH COLUMNS Q,R NOW
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields1, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //FIND COLUMN Q
-                String Best_Evalue = "";
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields1, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//FIND COLUMN Q
+				String Best_Evalue = "";
 
-                //IF PREVIOUS PEPTIDE SEQUENCES == EACH OTHER && PREVIOUS CHARGES == EACH OTHER
-                if (prv_Peptide_Sequence.Equals(Convert.ToString(measurementhash["Peptide_Sequence"])) && prv_Charge.Equals(Convert.ToString(measurementhash["Charge"])))
-                {
+				//IF PREVIOUS PEPTIDE SEQUENCES == EACH OTHER && PREVIOUS CHARGES == EACH OTHER
+				if (prv_Peptide_Sequence.Equals(Convert.ToString(measurementhash["Peptide_Sequence"])) && prv_Charge.Equals(Convert.ToString(measurementhash["Charge"])))
+				{
 
-                    //TAKE MIN [EITHER PREVIOUS BEST EVALUE OR CURRENT PEPTIDE EXPECTATION VALUE
-                    if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) > Convert.ToDouble(prev_Best_Evalue))
-                    {
-                        Best_Evalue = prev_Best_Evalue;
-                    }
-                    else
-                    {
-                        Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-                    }
-                }
-                else
-                {
-                    Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-                }
+					//TAKE MIN [EITHER PREVIOUS BEST EVALUE OR CURRENT PEPTIDE EXPECTATION VALUE
+					if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) > Convert.ToDouble(prev_Best_Evalue))
+					{
+						Best_Evalue = prev_Best_Evalue;
+					}
+					else
+					{
+						Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
+					}
+				}
+				else
+				{
+					Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
+				}
 
-                //NOW FIND COLUMN R IF COLUMN U IS == TRUE
-                if (Best_Evalue.Equals(Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"])))
-                {
-                    //WE ARE NOW == TRUE FOR THIS COLUMN ... AS TRUE WE ADD THIS TO OUR HASH TABLE/WHATEVER
+				//NOW FIND COLUMN R IF COLUMN U IS == TRUE
+				if (Best_Evalue.Equals(Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"])))
+				{
+					//WE ARE NOW == TRUE FOR THIS COLUMN ... AS TRUE WE ADD THIS TO OUR HASH TABLE/WHATEVER
 
-                    //[ADD HERE]
-                    bestscan.Add(Convert.ToInt32(measurementhash["Scan"]));
-                }
+					//[ADD HERE]
+					bestscan.Add(Convert.ToInt32(measurementhash["Scan"]));
+				}
 
-                //UPDATE PREVIOUS VALUES FOR NEXT LOOP
-                prv_Charge = Convert.ToString(measurementhash["Charge"]);
-                prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
-                prev_Best_Evalue = Best_Evalue;
-            }
+				//UPDATE PREVIOUS VALUES FOR NEXT LOOP
+				prv_Charge = Convert.ToString(measurementhash["Charge"]);
+				prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
+				prev_Best_Evalue = Best_Evalue;
+			}
 
-            //NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
-            bestscan.Sort();
+			//NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
+			bestscan.Sort();
 
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM `temp_sicstats` WHERE temp_sicstats.random_id=" + r_id + "");
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM `temp_sicstats` WHERE temp_sicstats.random_id=" + r_id + "");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //FETCH COLUMNS D-F
+			//FETCH COLUMNS D-F
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields2, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //ADD VALUES TO OUR TEMP HASH TABLES
-                fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
-                fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
-                optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
-            }
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields2, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//ADD VALUES TO OUR TEMP HASH TABLES
+				fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
+				fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
+				optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
+			}
 
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM `temp_scanstats` WHERE temp_scanstats.random_id=" + r_id + "");
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM `temp_scanstats` WHERE temp_scanstats.random_id=" + r_id + "");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields3 = { "ScanNumber", "ScanTime" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields3 = { "ScanNumber", "ScanTime" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //FETCH COLUMNS H-I
-            i = 1;
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //ADD TO SCANTIME HASH TABLE
-                scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
+			//FETCH COLUMNS H-I
+			i = 1;
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//ADD TO SCANTIME HASH TABLE
+				scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
 
-                //INCREMENT I POSITION
-                i++;
-            }
+				//INCREMENT I POSITION
+				i++;
+			}
 
-            //NOW START THE ACTUAL MEASUREMENT CALCULATION
+			//NOW START THE ACTUAL MEASUREMENT CALCULATION
 
-            //LOOP THROUGH BESTSCAN
-            for (i = 0; i < bestscan.Count; i++)
-            {
-                //FIND INDEX + OPTIMAL PEAK APEX SCAN +- FWHMIN FOR EACH RESULT [COLUMNS: M,O]
-                String index = Convert.ToString(bestscan[i]);
-                int OptimalPeakApexScanMinusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) - Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
-                int OptimalPeakApexScanPlusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) + Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
+			//LOOP THROUGH BESTSCAN
+			for (i = 0; i < bestscan.Count; i++)
+			{
+				//FIND INDEX + OPTIMAL PEAK APEX SCAN +- FWHMIN FOR EACH RESULT [COLUMNS: M,O]
+				String index = Convert.ToString(bestscan[i]);
+				int OptimalPeakApexScanMinusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) - Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
+				int OptimalPeakApexScanPlusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) + Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
 
-                //FIND OTHER COLUMNS [N,P, Q,R,T]
-                double start_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanMinusFWHMIN)]);
-                double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
-                double end_minus_start = end_time - start_time;
-                double end_minus_start_in_secs = end_minus_start * 60;
-                double running_percent = Convert.ToDouble(running_sum) / Convert.ToDouble(bestscan.Count);
+				//FIND OTHER COLUMNS [N,P, Q,R,T]
+				double start_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanMinusFWHMIN)]);
+				double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
+				double end_minus_start = end_time - start_time;
+				double end_minus_start_in_secs = end_minus_start * 60;
+				double running_percent = Convert.ToDouble(running_sum) / Convert.ToDouble(bestscan.Count);
 
-                //CHECK FOR VALID RANGE DATA THEN ADD TO OUR RESULTS
-                if (running_percent >= START_RANGE && running_percent <= END_RANGE)
-                {
-                    //WE ARE WITHING OUR VALID RANGE ... SO ADD end_minus_start_in_secs TO OUR LIST
-                    result.Add(end_minus_start_in_secs);
-                }
+				//CHECK FOR VALID RANGE DATA THEN ADD TO OUR RESULTS
+				if (running_percent >= START_RANGE && running_percent <= END_RANGE)
+				{
+					//WE ARE WITHING OUR VALID RANGE ... SO ADD end_minus_start_in_secs TO OUR LIST
+					result.Add(end_minus_start_in_secs);
+				}
 
-                //INCREMENT RUNNING SUM [COLUMN S]
-                running_sum++;
-            }
+				//INCREMENT RUNNING SUM [COLUMN S]
+				running_sum++;
+			}
 
 			string resultText = string.Empty;
 
@@ -1217,488 +1217,488 @@ namespace SMAQC
 				 * result.Count == # OF U COLUMN VALID RESULTS
 				 * Console.WriteLine("MEDIAN={0} -- {1} [POS={2}]", result[pos], result[pos + 1], pos); == HELPFUL FOR DEBUGGING
 				*/
-				
+
 			}
 
-            //RETURN RESULT
+			//RETURN RESULT
 			return resultText;
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// DS-1A: Count of peptides with one spectrum / count of peptides with two spectra
-        /// </summary>
-        /// <returns></returns>
-        public String DS_1A()
-        {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT Peptide_Expectation_Value_Log,Peptide_Sequence,Scan "
-                + "FROM `temp_xt` "
-                + "WHERE temp_xt.random_id=" + r_id + " "
-                + "ORDER BY Peptide_Sequence,Scan;");
+		/// </summary>
+		/// <returns></returns>
+		public String DS_1A()
+		{
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT Peptide_Expectation_Value_Log,Peptide_Sequence,Scan "
+				+ "FROM `temp_xt` "
+				+ "WHERE temp_xt.random_id=" + r_id + " "
+				+ "ORDER BY Peptide_Sequence,Scan;");
 
-            int running_count = 0;                                                                  //RUNNING COUNT FOR COLUMN F
-            int num_of_1_peptides = 0;	                                                            //RUNNING COUNT FOR COLUMN J
-            int num_of_2_peptides = 0;                                                              //RUNNING COUNT FOR COLUMN K
-            int num_of_3_peptides = 0;                                                              //RUNNING COUNT FOR COLUMN L
-            decimal result = 0.00M;                                                                 //SOLUTION
-            Boolean FILTER;                                                                         //FILTER STATUS FOR COLUMN E
-            int i = 0;	                                                                            //TEMP POSITION
-            Hashtable Peptide_Exp_Value_Log = new Hashtable();                                      //STORE Peptide_Expectation_Value_Log NUMBERS
-            Hashtable Peptide_Sequence = new Hashtable();                                           //STORE Peptide Sequence NUMBERS
-            Hashtable Scan = new Hashtable();                                                       //STORE SCAN NUMBERS
-            Hashtable RunningCountTable = new Hashtable();                                          //STORE RUNNING COUNT'S IN A HASH TABLE FOR LATER ACCES
-            String prv_Peptide_Sequence = "";                                                       //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
-            int prv_running_count = 0;                                                              //INIT PREV RUNNING COUNT TO 0 [REQUIRED FOR COMPARISON]
-            String prv_highest_filtered_log = "";                                                   //INIT PREV HIGHEST FILTERED LOG TO BLANK [REQUIRED FOR COMPARISON]
-            int prv_peptide_count = 1;                                                              //INIT PREV PEPTIDE_COUNT TO BE 1
+			int running_count = 0;                                                                  //RUNNING COUNT FOR COLUMN F
+			int num_of_1_peptides = 0;	                                                            //RUNNING COUNT FOR COLUMN J
+			int num_of_2_peptides = 0;                                                              //RUNNING COUNT FOR COLUMN K
+			int num_of_3_peptides = 0;                                                              //RUNNING COUNT FOR COLUMN L
+			decimal result = 0.00M;                                                                 //SOLUTION
+			Boolean FILTER;                                                                         //FILTER STATUS FOR COLUMN E
+			int i = 0;	                                                                            //TEMP POSITION
+			Hashtable Peptide_Exp_Value_Log = new Hashtable();                                      //STORE Peptide_Expectation_Value_Log NUMBERS
+			Hashtable Peptide_Sequence = new Hashtable();                                           //STORE Peptide Sequence NUMBERS
+			Hashtable Scan = new Hashtable();                                                       //STORE SCAN NUMBERS
+			Hashtable RunningCountTable = new Hashtable();                                          //STORE RUNNING COUNT'S IN A HASH TABLE FOR LATER ACCES
+			String prv_Peptide_Sequence = "";                                                       //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
+			int prv_running_count = 0;                                                              //INIT PREV RUNNING COUNT TO 0 [REQUIRED FOR COMPARISON]
+			String prv_highest_filtered_log = "";                                                   //INIT PREV HIGHEST FILTERED LOG TO BLANK [REQUIRED FOR COMPARISON]
+			int prv_peptide_count = 1;                                                              //INIT PREV PEPTIDE_COUNT TO BE 1
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Peptide_Expectation_Value_Log", "Peptide_Sequence", "Scan" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Peptide_Expectation_Value_Log", "Peptide_Sequence", "Scan" };
 
-            //INIT READER
-            DBInterface.initReader();
-            
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //ADD TO HASH TABLES
-                Peptide_Exp_Value_Log.Add(i, measurementhash["Peptide_Expectation_Value_Log"]);
-                Peptide_Sequence.Add(i, measurementhash["Peptide_Sequence"]);
-                Scan.Add(i, measurementhash["Scan"]);
+			//INIT READER
+			DBInterface.initReader();
 
-                //INCREMENT i
-                i++;
-            }
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//ADD TO HASH TABLES
+				Peptide_Exp_Value_Log.Add(i, measurementhash["Peptide_Expectation_Value_Log"]);
+				Peptide_Sequence.Add(i, measurementhash["Peptide_Sequence"]);
+				Scan.Add(i, measurementhash["Scan"]);
 
-            //BUILD RUNNING COUNT TABLE
-            for (i = 0; i < Peptide_Exp_Value_Log.Count; i++)
-            {
-                //RESET FILTER STATUS
-                FILTER = false;
+				//INCREMENT i
+				i++;
+			}
 
-                //CALCULATE COLUMN E [TRUE/FALSE]
-                if (Convert.ToDouble(Peptide_Exp_Value_Log[i]) < -2)
-                {
-                    //Console.WriteLine("A");
-                    FILTER = true;
-                }
+			//BUILD RUNNING COUNT TABLE
+			for (i = 0; i < Peptide_Exp_Value_Log.Count; i++)
+			{
+				//RESET FILTER STATUS
+				FILTER = false;
 
-                //CALCULATE RUNNING COUNT + ADD TO RUNNING COUNT TABLE
-                if (prv_Peptide_Sequence.Equals(Convert.ToString(Peptide_Sequence[i])))
-                {
-                    //PREVIOUS RUNNING COUNT IS USED
-                    RunningCountTable.Add(i, running_count);
-                }
-                else
-                {
-                    //IF FILTER == FALSE
-                    if (FILTER == false)
-                    {
-                        running_count++;//INCREMENT BY ONE
+				//CALCULATE COLUMN E [TRUE/FALSE]
+				if (Convert.ToDouble(Peptide_Exp_Value_Log[i]) < -2)
+				{
+					//Console.WriteLine("A");
+					FILTER = true;
+				}
 
-                        //ADD CURRENT RUNNING COUNT
-                        RunningCountTable.Add(i, running_count);
-                    }
-                    else
-                    {
-                        //ADD CURRENT RUNNING COUNT
-                        RunningCountTable.Add(i, running_count);
-                    }
-                }
+				//CALCULATE RUNNING COUNT + ADD TO RUNNING COUNT TABLE
+				if (prv_Peptide_Sequence.Equals(Convert.ToString(Peptide_Sequence[i])))
+				{
+					//PREVIOUS RUNNING COUNT IS USED
+					RunningCountTable.Add(i, running_count);
+				}
+				else
+				{
+					//IF FILTER == FALSE
+					if (FILTER == false)
+					{
+						running_count++;//INCREMENT BY ONE
 
-                //UPDATE PREVIOUS RESULT VARIABLES
-                prv_Peptide_Sequence = Convert.ToString(Peptide_Sequence[i]);
-            }
+						//ADD CURRENT RUNNING COUNT
+						RunningCountTable.Add(i, running_count);
+					}
+					else
+					{
+						//ADD CURRENT RUNNING COUNT
+						RunningCountTable.Add(i, running_count);
+					}
+				}
 
-            //RESETS PREV PEPTIDE SEQUENCE
-            prv_Peptide_Sequence = "";
+				//UPDATE PREVIOUS RESULT VARIABLES
+				prv_Peptide_Sequence = Convert.ToString(Peptide_Sequence[i]);
+			}
 
-            //CALCULATE EVERYTHING ELSE
-            for (i = 0; i < Peptide_Exp_Value_Log.Count; i++)
-            {
-                //RESET FILTER STATUS
-                FILTER = false;
-                String highest_filtered_log = "";
-                String filtered_log = "";
-                int current_peptide_count = 0;
+			//RESETS PREV PEPTIDE SEQUENCE
+			prv_Peptide_Sequence = "";
 
-                //CALCULATE COLUMN E [TRUE/FALSE]
-                if (Convert.ToDouble(Peptide_Exp_Value_Log[i]) < -2)
-                {
-                    FILTER = true;
-                }
+			//CALCULATE EVERYTHING ELSE
+			for (i = 0; i < Peptide_Exp_Value_Log.Count; i++)
+			{
+				//RESET FILTER STATUS
+				FILTER = false;
+				String highest_filtered_log = "";
+				String filtered_log = "";
+				int current_peptide_count = 0;
 
-                //CALCULATE HIGHEST FILTERED LOG
-                if (FILTER == true)
-                {
-                    //Console.WriteLine("TRUE");
-                    if (prv_highest_filtered_log.Equals(""))
-                    {
-                        //GO WITH CURRENT RESULT
-                        highest_filtered_log = Convert.ToString(Peptide_Exp_Value_Log[i]);
-                    }
-                    else if (Convert.ToDouble(prv_highest_filtered_log) > Convert.ToDouble(Peptide_Exp_Value_Log[i]) )
-                    {
-                        //GO WITH LOWER
-                        highest_filtered_log = Convert.ToString(Peptide_Exp_Value_Log[i]);
-                    }
-                    else
-                    {
-                        //GO WITH HIGHER
-                        highest_filtered_log = Convert.ToString(prv_highest_filtered_log);
-                    }
-                }
-                else
-                {
-                    //IF PREV RUNNING COUNT == CURRENT RUNNING COUNT
-                    if (prv_running_count == Convert.ToInt32(RunningCountTable[i]))
-                    {
-                        //Console.WriteLine("D");
-                        //GO WITH PREVIOUS HIGHEST FILTERED LOG
-                        highest_filtered_log = Convert.ToString(prv_highest_filtered_log);
-                    }
-                    else
-                    {
-                        //Console.WriteLine("E");
-                        //SET TO BLANK
-                        highest_filtered_log = "";
-                    }
+				//CALCULATE COLUMN E [TRUE/FALSE]
+				if (Convert.ToDouble(Peptide_Exp_Value_Log[i]) < -2)
+				{
+					FILTER = true;
+				}
 
-                }
+				//CALCULATE HIGHEST FILTERED LOG
+				if (FILTER == true)
+				{
+					//Console.WriteLine("TRUE");
+					if (prv_highest_filtered_log.Equals(""))
+					{
+						//GO WITH CURRENT RESULT
+						highest_filtered_log = Convert.ToString(Peptide_Exp_Value_Log[i]);
+					}
+					else if (Convert.ToDouble(prv_highest_filtered_log) > Convert.ToDouble(Peptide_Exp_Value_Log[i]))
+					{
+						//GO WITH LOWER
+						highest_filtered_log = Convert.ToString(Peptide_Exp_Value_Log[i]);
+					}
+					else
+					{
+						//GO WITH HIGHER
+						highest_filtered_log = Convert.ToString(prv_highest_filtered_log);
+					}
+				}
+				else
+				{
+					//IF PREV RUNNING COUNT == CURRENT RUNNING COUNT
+					if (prv_running_count == Convert.ToInt32(RunningCountTable[i]))
+					{
+						//Console.WriteLine("D");
+						//GO WITH PREVIOUS HIGHEST FILTERED LOG
+						highest_filtered_log = Convert.ToString(prv_highest_filtered_log);
+					}
+					else
+					{
+						//Console.WriteLine("E");
+						//SET TO BLANK
+						highest_filtered_log = "";
+					}
 
-                //NOW CALCULATE FILTERED LOG
-                if (Convert.ToInt32(RunningCountTable[i]) == Convert.ToInt32(RunningCountTable[i + 1]))
-                {
-                    //SET FILTERED LOG TO ""
-                    filtered_log = "";
-                }
-                else
-                {
-                    //RUNNING TABLE COUNT IS NOT EQUAL SO USE HIGHEST FILTERED LOG
-                    filtered_log = highest_filtered_log;
-                }
+				}
 
-                //NOW COUNT # OF PEPTIDES
-                if ((Convert.ToInt32(RunningCountTable[i]) == Convert.ToInt32(RunningCountTable[i - 1])) && FILTER == true)
-                {
-                    //SET CURRENT PEPTIDE COUNT == PREV COUNT + 1
-                    current_peptide_count = prv_peptide_count + 1;
-                }
-                else
-                {
-                    //OTHERWISE
-                    if (Convert.ToInt32(RunningCountTable[i]) == Convert.ToInt32(RunningCountTable[i - 1]))
-                    {
-                        if (FILTER == true)
-                        {
-                            //SET CURRENT PEPTIDE COUNT == PREV COUNT + 1
-                            current_peptide_count = prv_peptide_count + 1;
-                        }
-                        else
-                        {
-                            //SET CURRENT PEPTIDE COUNT == PREV COUNT
-                            current_peptide_count = prv_peptide_count;
-                        }
-                    }
-                    else
-                    {
-                        if (FILTER == true)
-                        {
-                            //SET CURRENT PEPTIDE COUNT TO 1
-                            current_peptide_count = 1;
-                        }
-                        else
-                        {
-                            //SET CURRENT PEPTIDE COUNT TO 0
-                            current_peptide_count = 0;
-                        }
-                    }
-                }
+				//NOW CALCULATE FILTERED LOG
+				if (Convert.ToInt32(RunningCountTable[i]) == Convert.ToInt32(RunningCountTable[i + 1]))
+				{
+					//SET FILTERED LOG TO ""
+					filtered_log = "";
+				}
+				else
+				{
+					//RUNNING TABLE COUNT IS NOT EQUAL SO USE HIGHEST FILTERED LOG
+					filtered_log = highest_filtered_log;
+				}
 
-                //CALCULATE # {1,2,3} PEPTIDE COUNTS
-                if (current_peptide_count == 1 && !filtered_log.Equals("") )
-                {
-                    num_of_1_peptides++;
-                }
-                else if (current_peptide_count == 2 && !filtered_log.Equals(""))
-                {
-                    num_of_2_peptides++;
-                }
-                else if (current_peptide_count == 3 && !filtered_log.Equals(""))
-                {
-                    num_of_3_peptides++;
-                }
+				//NOW COUNT # OF PEPTIDES
+				if ((Convert.ToInt32(RunningCountTable[i]) == Convert.ToInt32(RunningCountTable[i - 1])) && FILTER == true)
+				{
+					//SET CURRENT PEPTIDE COUNT == PREV COUNT + 1
+					current_peptide_count = prv_peptide_count + 1;
+				}
+				else
+				{
+					//OTHERWISE
+					if (Convert.ToInt32(RunningCountTable[i]) == Convert.ToInt32(RunningCountTable[i - 1]))
+					{
+						if (FILTER == true)
+						{
+							//SET CURRENT PEPTIDE COUNT == PREV COUNT + 1
+							current_peptide_count = prv_peptide_count + 1;
+						}
+						else
+						{
+							//SET CURRENT PEPTIDE COUNT == PREV COUNT
+							current_peptide_count = prv_peptide_count;
+						}
+					}
+					else
+					{
+						if (FILTER == true)
+						{
+							//SET CURRENT PEPTIDE COUNT TO 1
+							current_peptide_count = 1;
+						}
+						else
+						{
+							//SET CURRENT PEPTIDE COUNT TO 0
+							current_peptide_count = 0;
+						}
+					}
+				}
 
-                //UPDATE PREVIOUS RESULT VARIABLES
-                prv_Peptide_Sequence = Convert.ToString(Peptide_Sequence[i]);
-                prv_running_count = Convert.ToInt32(RunningCountTable[i]);
-                prv_highest_filtered_log = Convert.ToString(highest_filtered_log);
-                prv_peptide_count = current_peptide_count;
-            }
+				//CALCULATE # {1,2,3} PEPTIDE COUNTS
+				if (current_peptide_count == 1 && !filtered_log.Equals(""))
+				{
+					num_of_1_peptides++;
+				}
+				else if (current_peptide_count == 2 && !filtered_log.Equals(""))
+				{
+					num_of_2_peptides++;
+				}
+				else if (current_peptide_count == 3 && !filtered_log.Equals(""))
+				{
+					num_of_3_peptides++;
+				}
 
-            //NOW CALCULATE DS_1A + ROUND TO 6 PLACES
+				//UPDATE PREVIOUS RESULT VARIABLES
+				prv_Peptide_Sequence = Convert.ToString(Peptide_Sequence[i]);
+				prv_running_count = Convert.ToInt32(RunningCountTable[i]);
+				prv_highest_filtered_log = Convert.ToString(highest_filtered_log);
+				prv_peptide_count = current_peptide_count;
+			}
 
-            //RETURN 0 IF NUM_OF_2 EQUALS 0
-            if (Convert.ToDouble(num_of_2_peptides) == 0)
-            {
-                result = Convert.ToDecimal(0);
-            }
-            else
-            {
-                result = Convert.ToDecimal(Convert.ToDouble(num_of_1_peptides) / Convert.ToDouble(num_of_2_peptides));
-            }
+			//NOW CALCULATE DS_1A + ROUND TO 6 PLACES
+
+			//RETURN 0 IF NUM_OF_2 EQUALS 0
+			if (Convert.ToDouble(num_of_2_peptides) == 0)
+			{
+				result = Convert.ToDecimal(0);
+			}
+			else
+			{
+				result = Convert.ToDecimal(Convert.ToDouble(num_of_1_peptides) / Convert.ToDouble(num_of_2_peptides));
+			}
 
 			return result.ToString("0.000000");
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// DS-1B: Count of peptides with two spectra / count of peptides with three spectra
-        /// </summary>
-        /// <returns></returns>
-        public String DS_1B()
-        {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT Peptide_Expectation_Value_Log,Peptide_Sequence,Scan "
-                + "FROM `temp_xt` "
-                + "WHERE temp_xt.random_id=" + r_id + " "
-                + "ORDER BY Peptide_Sequence,Scan;");
+		/// </summary>
+		/// <returns></returns>
+		public String DS_1B()
+		{
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT Peptide_Expectation_Value_Log,Peptide_Sequence,Scan "
+				+ "FROM `temp_xt` "
+				+ "WHERE temp_xt.random_id=" + r_id + " "
+				+ "ORDER BY Peptide_Sequence,Scan;");
 
-            int running_count = 0;                                                                  //RUNNING COUNT FOR COLUMN F
-            int num_of_1_peptides = 0;	                                                            //RUNNING COUNT FOR COLUMN J
-            int num_of_2_peptides = 0;                                                              //RUNNING COUNT FOR COLUMN K
-            int num_of_3_peptides = 0;                                                              //RUNNING COUNT FOR COLUMN L
-            decimal result = 0.00M;                                                                 //SOLUTION
-            Boolean FILTER;                                                                         //FILTER STATUS FOR COLUMN E
-            int i = 0;	                                                                            //TEMP POSITION
-            Hashtable Peptide_Exp_Value_Log = new Hashtable();                                      //STORE Peptide_Expectation_Value_Log NUMBERS
-            Hashtable Peptide_Sequence = new Hashtable();                                           //STORE Peptide Sequence NUMBERS
-            Hashtable Scan = new Hashtable();                                                       //STORE SCAN NUMBERS
-            Hashtable RunningCountTable = new Hashtable();                                          //STORE RUNNING COUNT'S IN A HASH TABLE FOR LATER ACCES
-            String prv_Peptide_Sequence = "";                                                       //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
-            int prv_running_count = 0;                                                              //INIT PREV RUNNING COUNT TO 0 [REQUIRED FOR COMPARISON]
-            String prv_highest_filtered_log = "";                                                   //INIT PREV HIGHEST FILTERED LOG TO BLANK [REQUIRED FOR COMPARISON]
-            int prv_peptide_count = 1;                                                              //INIT PREV PEPTIDE_COUNT TO BE 1
+			int running_count = 0;                                                                  //RUNNING COUNT FOR COLUMN F
+			int num_of_1_peptides = 0;	                                                            //RUNNING COUNT FOR COLUMN J
+			int num_of_2_peptides = 0;                                                              //RUNNING COUNT FOR COLUMN K
+			int num_of_3_peptides = 0;                                                              //RUNNING COUNT FOR COLUMN L
+			decimal result = 0.00M;                                                                 //SOLUTION
+			Boolean FILTER;                                                                         //FILTER STATUS FOR COLUMN E
+			int i = 0;	                                                                            //TEMP POSITION
+			Hashtable Peptide_Exp_Value_Log = new Hashtable();                                      //STORE Peptide_Expectation_Value_Log NUMBERS
+			Hashtable Peptide_Sequence = new Hashtable();                                           //STORE Peptide Sequence NUMBERS
+			Hashtable Scan = new Hashtable();                                                       //STORE SCAN NUMBERS
+			Hashtable RunningCountTable = new Hashtable();                                          //STORE RUNNING COUNT'S IN A HASH TABLE FOR LATER ACCES
+			String prv_Peptide_Sequence = "";                                                       //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
+			int prv_running_count = 0;                                                              //INIT PREV RUNNING COUNT TO 0 [REQUIRED FOR COMPARISON]
+			String prv_highest_filtered_log = "";                                                   //INIT PREV HIGHEST FILTERED LOG TO BLANK [REQUIRED FOR COMPARISON]
+			int prv_peptide_count = 1;                                                              //INIT PREV PEPTIDE_COUNT TO BE 1
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Peptide_Expectation_Value_Log", "Peptide_Sequence", "Scan" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Peptide_Expectation_Value_Log", "Peptide_Sequence", "Scan" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //ADD TO HASH TABLES
-                Peptide_Exp_Value_Log.Add(i, measurementhash["Peptide_Expectation_Value_Log"]);
-                Peptide_Sequence.Add(i, measurementhash["Peptide_Sequence"]);
-                Scan.Add(i, measurementhash["Scan"]);
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//ADD TO HASH TABLES
+				Peptide_Exp_Value_Log.Add(i, measurementhash["Peptide_Expectation_Value_Log"]);
+				Peptide_Sequence.Add(i, measurementhash["Peptide_Sequence"]);
+				Scan.Add(i, measurementhash["Scan"]);
 
-                //INCREMENT i
-                i++;
-            }
+				//INCREMENT i
+				i++;
+			}
 
-            //BUILD RUNNING COUNT TABLE
-            for (i = 0; i < Peptide_Exp_Value_Log.Count; i++)
-            {
-                //RESET FILTER STATUS
-                FILTER = false;
+			//BUILD RUNNING COUNT TABLE
+			for (i = 0; i < Peptide_Exp_Value_Log.Count; i++)
+			{
+				//RESET FILTER STATUS
+				FILTER = false;
 
-                //CALCULATE COLUMN E [TRUE/FALSE]
-                if (Convert.ToDouble(Peptide_Exp_Value_Log[i]) < -2)
-                {
-                    //Console.WriteLine("A");
-                    FILTER = true;
-                }
+				//CALCULATE COLUMN E [TRUE/FALSE]
+				if (Convert.ToDouble(Peptide_Exp_Value_Log[i]) < -2)
+				{
+					//Console.WriteLine("A");
+					FILTER = true;
+				}
 
-                //CALCULATE RUNNING COUNT + ADD TO RUNNING COUNT TABLE
-                if (prv_Peptide_Sequence.Equals(Convert.ToString(Peptide_Sequence[i])))
-                {
-                    //PREVIOUS RUNNING COUNT IS USED
-                    RunningCountTable.Add(i, running_count);
-                }
-                else
-                {
-                    //IF FILTER == FALSE
-                    if (FILTER == false)
-                    {
-                        running_count++;//INCREMENT BY ONE
+				//CALCULATE RUNNING COUNT + ADD TO RUNNING COUNT TABLE
+				if (prv_Peptide_Sequence.Equals(Convert.ToString(Peptide_Sequence[i])))
+				{
+					//PREVIOUS RUNNING COUNT IS USED
+					RunningCountTable.Add(i, running_count);
+				}
+				else
+				{
+					//IF FILTER == FALSE
+					if (FILTER == false)
+					{
+						running_count++;//INCREMENT BY ONE
 
-                        //ADD CURRENT RUNNING COUNT
-                        RunningCountTable.Add(i, running_count);
-                    }
-                    else
-                    {
-                        //ADD CURRENT RUNNING COUNT
-                        RunningCountTable.Add(i, running_count);
-                    }
-                }
+						//ADD CURRENT RUNNING COUNT
+						RunningCountTable.Add(i, running_count);
+					}
+					else
+					{
+						//ADD CURRENT RUNNING COUNT
+						RunningCountTable.Add(i, running_count);
+					}
+				}
 
-                //UPDATE PREVIOUS RESULT VARIABLES
-                prv_Peptide_Sequence = Convert.ToString(Peptide_Sequence[i]);
-            }
+				//UPDATE PREVIOUS RESULT VARIABLES
+				prv_Peptide_Sequence = Convert.ToString(Peptide_Sequence[i]);
+			}
 
-            //RESETS PREV PEPTIDE SEQUENCE
-            prv_Peptide_Sequence = "";
+			//RESETS PREV PEPTIDE SEQUENCE
+			prv_Peptide_Sequence = "";
 
-            //CALCULATE EVERYTHING ELSE
-            for (i = 0; i < Peptide_Exp_Value_Log.Count; i++)
-            //for (i = 0; i < 1065; i++)
-            {
-                //RESET FILTER STATUS
-                FILTER = false;
-                String highest_filtered_log = "";
-                String filtered_log = "";
-                int current_peptide_count = 0;
+			//CALCULATE EVERYTHING ELSE
+			for (i = 0; i < Peptide_Exp_Value_Log.Count; i++)
+			//for (i = 0; i < 1065; i++)
+			{
+				//RESET FILTER STATUS
+				FILTER = false;
+				String highest_filtered_log = "";
+				String filtered_log = "";
+				int current_peptide_count = 0;
 
-                //CALCULATE COLUMN E [TRUE/FALSE]
-                if (Convert.ToDouble(Peptide_Exp_Value_Log[i]) < -2)
-                {
-                    FILTER = true;
-                }
+				//CALCULATE COLUMN E [TRUE/FALSE]
+				if (Convert.ToDouble(Peptide_Exp_Value_Log[i]) < -2)
+				{
+					FILTER = true;
+				}
 
-                //CALCULATE HIGHEST FILTERED LOG
-                if (FILTER == true)
-                {
-                    //Console.WriteLine("TRUE");
-                    if (prv_highest_filtered_log.Equals(""))
-                    {
-                        //GO WITH CURRENT RESULT
-                        highest_filtered_log = Convert.ToString(Peptide_Exp_Value_Log[i]);
-                    }
-                    else if (Convert.ToDouble(prv_highest_filtered_log) > Convert.ToDouble(Peptide_Exp_Value_Log[i]))
-                    {
-                        //GO WITH LOWER
-                        highest_filtered_log = Convert.ToString(Peptide_Exp_Value_Log[i]);
-                    }
-                    else
-                    {
-                        //GO WITH HIGHER
-                        highest_filtered_log = Convert.ToString(prv_highest_filtered_log);
-                    }
-                }
-                else
-                {
-                    //IF PREV RUNNING COUNT == CURRENT RUNNING COUNT
-                    if (prv_running_count == Convert.ToInt32(RunningCountTable[i]))
-                    {
-                        //Console.WriteLine("D");
-                        //GO WITH PREVIOUS HIGHEST FILTERED LOG
-                        highest_filtered_log = Convert.ToString(prv_highest_filtered_log);
-                    }
-                    else
-                    {
-                        //Console.WriteLine("E");
-                        //SET TO BLANK
-                        highest_filtered_log = "";
-                    }
+				//CALCULATE HIGHEST FILTERED LOG
+				if (FILTER == true)
+				{
+					//Console.WriteLine("TRUE");
+					if (prv_highest_filtered_log.Equals(""))
+					{
+						//GO WITH CURRENT RESULT
+						highest_filtered_log = Convert.ToString(Peptide_Exp_Value_Log[i]);
+					}
+					else if (Convert.ToDouble(prv_highest_filtered_log) > Convert.ToDouble(Peptide_Exp_Value_Log[i]))
+					{
+						//GO WITH LOWER
+						highest_filtered_log = Convert.ToString(Peptide_Exp_Value_Log[i]);
+					}
+					else
+					{
+						//GO WITH HIGHER
+						highest_filtered_log = Convert.ToString(prv_highest_filtered_log);
+					}
+				}
+				else
+				{
+					//IF PREV RUNNING COUNT == CURRENT RUNNING COUNT
+					if (prv_running_count == Convert.ToInt32(RunningCountTable[i]))
+					{
+						//Console.WriteLine("D");
+						//GO WITH PREVIOUS HIGHEST FILTERED LOG
+						highest_filtered_log = Convert.ToString(prv_highest_filtered_log);
+					}
+					else
+					{
+						//Console.WriteLine("E");
+						//SET TO BLANK
+						highest_filtered_log = "";
+					}
 
-                }
+				}
 
-                //NOW CALCULATE FILTERED LOG
-                if (Convert.ToInt32(RunningCountTable[i]) == Convert.ToInt32(RunningCountTable[i + 1]))
-                {
-                    //SET FILTERED LOG TO ""
-                    filtered_log = "";
-                }
-                else
-                {
-                    //RUNNING TABLE COUNT IS NOT EQUAL SO USE HIGHEST FILTERED LOG
-                    filtered_log = highest_filtered_log;
-                }
+				//NOW CALCULATE FILTERED LOG
+				if (Convert.ToInt32(RunningCountTable[i]) == Convert.ToInt32(RunningCountTable[i + 1]))
+				{
+					//SET FILTERED LOG TO ""
+					filtered_log = "";
+				}
+				else
+				{
+					//RUNNING TABLE COUNT IS NOT EQUAL SO USE HIGHEST FILTERED LOG
+					filtered_log = highest_filtered_log;
+				}
 
-                //NOW COUNT # OF PEPTIDES
-                if ((Convert.ToInt32(RunningCountTable[i]) == Convert.ToInt32(RunningCountTable[i - 1])) && FILTER == true)
-                {
-                    //SET CURRENT PEPTIDE COUNT == PREV COUNT + 1
-                    current_peptide_count = prv_peptide_count + 1;
-                }
-                else
-                {
-                    //OTHERWISE
-                    if (Convert.ToInt32(RunningCountTable[i]) == Convert.ToInt32(RunningCountTable[i - 1]))
-                    {
-                        if (FILTER == true)
-                        {
-                            //SET CURRENT PEPTIDE COUNT == PREV COUNT + 1
-                            current_peptide_count = prv_peptide_count + 1;
-                        }
-                        else
-                        {
-                            //SET CURRENT PEPTIDE COUNT == PREV COUNT
-                            current_peptide_count = prv_peptide_count;
-                        }
-                    }
-                    else
-                    {
-                        if (FILTER == true)
-                        {
-                            //SET CURRENT PEPTIDE COUNT TO 1
-                            current_peptide_count = 1;
-                        }
-                        else
-                        {
-                            //SET CURRENT PEPTIDE COUNT TO 0
-                            current_peptide_count = 0;
-                        }
-                    }
-                }
+				//NOW COUNT # OF PEPTIDES
+				if ((Convert.ToInt32(RunningCountTable[i]) == Convert.ToInt32(RunningCountTable[i - 1])) && FILTER == true)
+				{
+					//SET CURRENT PEPTIDE COUNT == PREV COUNT + 1
+					current_peptide_count = prv_peptide_count + 1;
+				}
+				else
+				{
+					//OTHERWISE
+					if (Convert.ToInt32(RunningCountTable[i]) == Convert.ToInt32(RunningCountTable[i - 1]))
+					{
+						if (FILTER == true)
+						{
+							//SET CURRENT PEPTIDE COUNT == PREV COUNT + 1
+							current_peptide_count = prv_peptide_count + 1;
+						}
+						else
+						{
+							//SET CURRENT PEPTIDE COUNT == PREV COUNT
+							current_peptide_count = prv_peptide_count;
+						}
+					}
+					else
+					{
+						if (FILTER == true)
+						{
+							//SET CURRENT PEPTIDE COUNT TO 1
+							current_peptide_count = 1;
+						}
+						else
+						{
+							//SET CURRENT PEPTIDE COUNT TO 0
+							current_peptide_count = 0;
+						}
+					}
+				}
 
-                //CALCULATE # {1,2,3} PEPTIDE COUNTS
-                if (current_peptide_count == 1 && !filtered_log.Equals(""))
-                {
-                    num_of_1_peptides++;
-                }
-                else if (current_peptide_count == 2 && !filtered_log.Equals(""))
-                {
-                    num_of_2_peptides++;
-                }
-                else if (current_peptide_count == 3 && !filtered_log.Equals(""))
-                {
-                    num_of_3_peptides++;
-                }
+				//CALCULATE # {1,2,3} PEPTIDE COUNTS
+				if (current_peptide_count == 1 && !filtered_log.Equals(""))
+				{
+					num_of_1_peptides++;
+				}
+				else if (current_peptide_count == 2 && !filtered_log.Equals(""))
+				{
+					num_of_2_peptides++;
+				}
+				else if (current_peptide_count == 3 && !filtered_log.Equals(""))
+				{
+					num_of_3_peptides++;
+				}
 
-                //UPDATE PREVIOUS RESULT VARIABLES
-                prv_Peptide_Sequence = Convert.ToString(Peptide_Sequence[i]);
-                prv_running_count = Convert.ToInt32(RunningCountTable[i]);
-                prv_highest_filtered_log = Convert.ToString(highest_filtered_log);
-                prv_peptide_count = current_peptide_count;
-            }
+				//UPDATE PREVIOUS RESULT VARIABLES
+				prv_Peptide_Sequence = Convert.ToString(Peptide_Sequence[i]);
+				prv_running_count = Convert.ToInt32(RunningCountTable[i]);
+				prv_highest_filtered_log = Convert.ToString(highest_filtered_log);
+				prv_peptide_count = current_peptide_count;
+			}
 
-            //NOW CALCULATE DS_1A + ROUND TO 6 PLACES
+			//NOW CALCULATE DS_1A + ROUND TO 6 PLACES
 
 			//RETURN 0 IF NUM_OF_3 EQUALS 0
-            if (Convert.ToDouble(num_of_3_peptides) == 0)
-            {
-                result = Convert.ToDecimal(0);
-            }
-            else
-            {
-                result = Convert.ToDecimal(Convert.ToDouble(num_of_2_peptides) / Convert.ToDouble(num_of_3_peptides));
-            }
+			if (Convert.ToDouble(num_of_3_peptides) == 0)
+			{
+				result = Convert.ToDecimal(0);
+			}
+			else
+			{
+				result = Convert.ToDecimal(Convert.ToDouble(num_of_2_peptides) / Convert.ToDouble(num_of_3_peptides));
+			}
 
 			return result.ToString("0.000000");
 
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// DS-2A: Number of MS1 scans taken over middle 50% of separation
-        /// </summary>
-        /// <returns></returns>
-        public String DS_2A()
-        {
+		/// </summary>
+		/// <returns></returns>
+		public String DS_2A()
+		{
 			int msLevel = 1;
 			return DS_2_Shared(msLevel).ToString();
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// DS-2B: Number of MS2 scans taken over middle 50% of separation
-        /// </summary>
-        /// <returns></returns>
-        public String DS_2B()
-        {
+		/// </summary>
+		/// <returns></returns>
+		public String DS_2B()
+		{
 			int msLevel = 2;
 			return DS_2_Shared(msLevel).ToString();
-        }
+		}
 
 		protected int DS_2_Shared(int msLevel)
 		{
@@ -1711,7 +1711,7 @@ namespace SMAQC
 			//DECLARE VARIABLES
 			int scanStartC2A = GetStoredValueInt("C_2A_REGION_SCAN_START", 0);
 			int scanEndC2A = GetStoredValueInt("C_2A_REGION_SCAN_END", 0);
-			
+
 			int intScanCount = 0;
 			int scanNumber;
 			int scanType;
@@ -1734,70 +1734,70 @@ namespace SMAQC
 					intScanCount++;
 				}
 			}
-			
+
 			return intScanCount;
 		}
 
-        /// <summary>
+		/// <summary>
 		/// IS-2: Median precursor m/z for all peptides
-        /// </summary>
-        /// <returns></returns>
-        public String IS_2()
-        {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log,Peptide_MH,Charge "
-                + "FROM `temp_xt` "
-                + "WHERE temp_xt.random_id=" + r_id + " "
-                + ";");
+		/// </summary>
+		/// <returns></returns>
+		public String IS_2()
+		{
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log,Peptide_MH,Charge "
+				+ "FROM `temp_xt` "
+				+ "WHERE temp_xt.random_id=" + r_id + " "
+				+ ";");
 
-            //DECLARE VARIABLES
-            double MINUS_CONSTANT = 1.00727649;                                                 //REQUIRED CONSTANT TO SUBTRACT BY
-            List<double> MZ_List = new List<double>();                                          //MZ LIST
-            List<double> MZ_Final;																//MZ Final List
-            Dictionary<double, int> tempDict = new Dictionary<double, int>();                   //TEMP ... TO REMOVE DUPLICATES
-            double median = 0.00;                                                               //STORE MEDIAN
+			//DECLARE VARIABLES
+			double MINUS_CONSTANT = 1.00727649;                                                 //REQUIRED CONSTANT TO SUBTRACT BY
+			List<double> MZ_List = new List<double>();                                          //MZ LIST
+			List<double> MZ_Final;																//MZ Final List
+			Dictionary<double, int> tempDict = new Dictionary<double, int>();                   //TEMP ... TO REMOVE DUPLICATES
+			double median = 0.00;                                                               //STORE MEDIAN
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Peptide_MH", "Charge" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Peptide_MH", "Charge" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //IF PEPTIDE EXP VALUE LOG <= -2 SET FILTER TO TRUE
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //COMPUTE MZ VALUE
-                    double temp_mz = (Convert.ToDouble(measurementhash["Peptide_MH"])-MINUS_CONSTANT)/(Convert.ToDouble(measurementhash["Charge"]) );
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//IF PEPTIDE EXP VALUE LOG <= -2 SET FILTER TO TRUE
+				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				{
+					//COMPUTE MZ VALUE
+					double temp_mz = (Convert.ToDouble(measurementhash["Peptide_MH"]) - MINUS_CONSTANT) / (Convert.ToDouble(measurementhash["Charge"]));
 
-                    //ADD TO MZ_LIST
-                    MZ_List.Add(temp_mz);
-                    
-                }
-            }
+					//ADD TO MZ_LIST
+					MZ_List.Add(temp_mz);
 
-            //REMOVE DUPLICATES IN OUR TEMP DICT
-            foreach (double i in MZ_List)
-                tempDict[i] = 1;
+				}
+			}
 
-            //TURN TEMP DICT INTO NEW LIST
-            MZ_Final = new List<double>(tempDict.Keys);
+			//REMOVE DUPLICATES IN OUR TEMP DICT
+			foreach (double i in MZ_List)
+				tempDict[i] = 1;
 
-            //SORT FROM LOW->HIGH AS REQUIRED FOR COLUMN F
+			//TURN TEMP DICT INTO NEW LIST
+			MZ_Final = new List<double>(tempDict.Keys);
+
+			//SORT FROM LOW->HIGH AS REQUIRED FOR COLUMN F
 			median = ComputeMedian(MZ_Final);
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 4TH DIGIT       
+			//WE NOW HAVE RESULT ... NOW ROUND IT TO 4TH DIGIT       
 			return median.ToString("0.0000");
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// IS-3A: Count of 1+ peptides / count of 2+ peptides
-        /// </summary>
-        /// <returns></returns>
-        public String IS_3A()
-        {
+		/// </summary>
+		/// <returns></returns>
+		public String IS_3A()
+		{
 			//DECLARE VARIABLES
 			int count_ones = 0;                                                             //TOTAL # OF 1's
 			int count_twos = 0;                                                             //TOTAL # OF 2's
@@ -1807,20 +1807,20 @@ namespace SMAQC
 
 			IS3_Shared(out count_ones, out count_twos, out count_threes, out count_fours);
 
-            //CALC MEASUREMENT
+			//CALC MEASUREMENT
 			if (count_twos > 0)
 				result = Convert.ToDecimal(count_ones) / Convert.ToDecimal(count_twos);
 
-            //ROUND
+			//ROUND
 			return result.ToString("0.000000");
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// IS-3B: Count of 3+ peptides / count of 2+ peptides
-        /// </summary>
-        /// <returns></returns>
-        public String IS_3B()
-        {
+		/// </summary>
+		/// <returns></returns>
+		public String IS_3B()
+		{
 			//DECLARE VARIABLES
 			int count_ones = 0;                                                             //TOTAL # OF 1's
 			int count_twos = 0;                                                             //TOTAL # OF 2's
@@ -1830,36 +1830,36 @@ namespace SMAQC
 
 			IS3_Shared(out count_ones, out count_twos, out count_threes, out count_fours);
 
-            //CALC MEASUREMENT
+			//CALC MEASUREMENT
 			if (count_twos > 0)
 				result = Convert.ToDecimal(count_threes) / Convert.ToDecimal(count_twos);
 
-            //ROUND
+			//ROUND
 			return result.ToString("0.000000");
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// IS-3C: Count of 4+ peptides / count of 2+ peptides
-        /// </summary>
-        /// <returns></returns>
-        public String IS_3C()
-        {
-            //DECLARE VARIABLES
-            int count_ones = 0;                                                             //TOTAL # OF 1's
-            int count_twos = 0;                                                             //TOTAL # OF 2's
-            int count_threes = 0;                                                           //TOTAL # OF 3's
-            int count_fours = 0;                                                            //TOTAL # OF 4's
-            decimal result = 0.00M;                                                         //RESULT OF MEASUREMENT
+		/// </summary>
+		/// <returns></returns>
+		public String IS_3C()
+		{
+			//DECLARE VARIABLES
+			int count_ones = 0;                                                             //TOTAL # OF 1's
+			int count_twos = 0;                                                             //TOTAL # OF 2's
+			int count_threes = 0;                                                           //TOTAL # OF 3's
+			int count_fours = 0;                                                            //TOTAL # OF 4's
+			decimal result = 0.00M;                                                         //RESULT OF MEASUREMENT
 
 			IS3_Shared(out count_ones, out count_twos, out count_threes, out count_fours);
 
-            //CALC MEASUREMENT
+			//CALC MEASUREMENT
 			if (count_twos > 0)
 				result = Convert.ToDecimal(count_fours) / Convert.ToDecimal(count_twos);
 
-            //ROUND
+			//ROUND
 			return result.ToString("0.000000");
-        }
+		}
 
 		protected void IS3_Shared(out int count_ones, out int count_twos, out int count_threes, out int count_fours)
 		{
@@ -1916,56 +1916,56 @@ namespace SMAQC
 					}
 				}
 			}
-			
+
 		}
 
-        /// <summary>
+		/// <summary>
 		/// MS1_1: Median MS1 ion injection time
-        /// </summary>
-        /// <returns></returns>
-        public String MS1_1()
-        {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanType, temp_scanstatsex.Ion_Injection_Time "
-                + "FROM `temp_scanstats`, `temp_scanstatsex` "
-                + "WHERE temp_scanstats.ScanNumber=temp_scanstatsex.ScanNumber "
-                + "AND temp_scanstatsex.random_id=" + r_id + " "
-                + "AND temp_scanstats.random_id=" + r_id + " "
-                + "ORDER BY temp_scanstats.ScanNumber;");
+		/// </summary>
+		/// <returns></returns>
+		public String MS1_1()
+		{
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanType, temp_scanstatsex.Ion_Injection_Time "
+				+ "FROM `temp_scanstats`, `temp_scanstatsex` "
+				+ "WHERE temp_scanstats.ScanNumber=temp_scanstatsex.ScanNumber "
+				+ "AND temp_scanstatsex.random_id=" + r_id + " "
+				+ "AND temp_scanstats.random_id=" + r_id + " "
+				+ "ORDER BY temp_scanstats.ScanNumber;");
 
-            //DECLARE VARIABLES
-            List<double> Filter = new List<double>();                               //FILTER LIST
-            double median = 0.00;                                                   //RESULT
+			//DECLARE VARIABLES
+			List<double> Filter = new List<double>();                               //FILTER LIST
+			double median = 0.00;                                                   //RESULT
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "ScanNumber", "ScanType", "Ion_Injection_Time" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "ScanNumber", "ScanType", "Ion_Injection_Time" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //SCAN TYPE == 1
-                if (Convert.ToDouble(measurementhash["ScanType"]) == 1)
-                {
-                    //ADD TO FILTER LIST
-                    Filter.Add(Convert.ToDouble(measurementhash["Ion_Injection_Time"]));
-                }
-            }
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//SCAN TYPE == 1
+				if (Convert.ToDouble(measurementhash["ScanType"]) == 1)
+				{
+					//ADD TO FILTER LIST
+					Filter.Add(Convert.ToDouble(measurementhash["Ion_Injection_Time"]));
+				}
+			}
 
 			median = ComputeMedian(Filter);
 
-            return Convert.ToString(median);
-        }
+			return Convert.ToString(median);
+		}
 
-        /// <summary>
+		/// <summary>
 		/// MS1_2A: Median S/N value for MS1 spectra from run start through middle 50% of separation
-        /// </summary>
-        /// <returns></returns>
-        public String MS1_2A()
-        {
-            //DECLARE VARIABLES
+		/// </summary>
+		/// <returns></returns>
+		public String MS1_2A()
+		{
+			//DECLARE VARIABLES
 			List<double> List_BPSTNR_C_2A;
 			List<double> List_TII_C_2A;
 			double median = 0.00;                                               //RESULT
@@ -1978,30 +1978,30 @@ namespace SMAQC
 				median = ComputeMedian(List_BPSTNR_C_2A);
 			}
 
-            return Convert.ToString(median);
-        }
+			return Convert.ToString(median);
+		}
 
-        /// <summary>
+		/// <summary>
 		/// MS1_2B: Median TIC value for identified peptides from run start through middle 50% of separation
-        /// </summary>
-        /// <returns></returns>
-        public String MS1_2B()
-        {
+		/// </summary>
+		/// <returns></returns>
+		public String MS1_2B()
+		{
 			//DECLARE VARIABLES
 			List<double> List_BPSTNR_C_2A;
 			List<double> List_TII_C_2A;
-            double median = 0.00;                                               //RESULT
+			double median = 0.00;                                               //RESULT
 
 			MS1_2_Shared(out List_BPSTNR_C_2A, out List_TII_C_2A);
 
 			//CALC MEDIAN OF COLUMN K
 			median = ComputeMedian(List_TII_C_2A);
 
-            //DIVIDE BY 1000
-            median = median / 1000;
+			//DIVIDE BY 1000
+			median = median / 1000;
 
-            return Convert.ToString(median);
-        }
+			return Convert.ToString(median);
+		}
 
 		protected void MS1_2_Shared(out List<double> List_BPSTNR_C_2A, out List<double> List_TII_C_2A)
 		{
@@ -2045,7 +2045,7 @@ namespace SMAQC
 
 			//LOOP THROUGH ALL
 			for (int i = 0; i < List_ScanNumber.Count; i++)
-			{				
+			{
 				//SCAN TYPE == 1 && List_ScanNumber[i]>=STORAGE["SCAN_FIRST_FILTER_PASSING_PEPTIDE"] && List_ScanNumber[i]<=STORAGE["C_2A_REGION_SCAN_END"]
 				if ((List_ScanType[i] == 1) && (List_ScanNumber[i] >= scanFirstPeptide) && (List_ScanNumber[i] <= scanEndC2A))
 				{
@@ -2061,12 +2061,12 @@ namespace SMAQC
 
 		}
 
-        /// <summary>
+		/// <summary>
 		/// MS1_3A: Dynamic range estimate using 95th percentile peptide peak apex intensity / 5th percentile
-        /// </summary>
-        /// <returns></returns>
-        public String MS1_3A()
-        {
+		/// </summary>
+		/// <returns></returns>
+		public String MS1_3A()
+		{
 			double PMI_5PC;
 			double PMI_95PC;
 			List<double> result;
@@ -2074,20 +2074,20 @@ namespace SMAQC
 
 			MS1_3_Shared(out PMI_5PC, out PMI_95PC, out result);
 
-            //CALCULATE FINAL MEASUREMENT VALUE
+			//CALCULATE FINAL MEASUREMENT VALUE
 			if (PMI_5PC > 0)
 				final = PMI_95PC / PMI_5PC;
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 3RD DIGIT
+			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3RD DIGIT
 			return final.ToString("0.000");
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// MS1_3B: Median peak apex intensity for all peptides
-        /// </summary>
-        /// <returns></returns>
-        public String MS1_3B()
-        {
+		/// </summary>
+		/// <returns></returns>
+		public String MS1_3B()
+		{
 			double PMI_5PC;
 			double PMI_95PC;
 			List<double> result;
@@ -2098,9 +2098,9 @@ namespace SMAQC
 			//NOW CALCULATE MEDIAN
 			median = ComputeMedian(result);
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 3RD DIGIT
+			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3RD DIGIT
 			return median.ToString("0.000");
-        }
+		}
 
 		protected void MS1_3_Shared(out double PMI_5PC, out double PMI_95PC, out List<double> result)
 		{
@@ -2143,7 +2143,7 @@ namespace SMAQC
 					temp_list_running_sum.Add(max_running_sum);                                                 //ADD CURRENT RUNNING SUM
 				}
 			}
-			
+
 			if (max_running_sum > 0)
 			{
 				//LOOP THROUGH OUR TEMP LIST
@@ -2175,45 +2175,45 @@ namespace SMAQC
 
 		}
 
-        /// <summary>
+		/// <summary>
 		/// DS_3A: Median of MS1 max / MS1 sampled abundance
-        /// </summary>
-        /// <returns></returns>
-        public String DS_3A()
-        {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT Result_ID, FragScanNumber, ParentIonIntensity, PeakMaxIntensity, Peptide_Expectation_Value_Log  "
-                + "FROM `temp_sicstats`, `temp_xt` "
-                + "WHERE `temp_sicstats`.FragScanNumber=`temp_xt`.Scan "
-                + "AND temp_sicstats.random_id=" + r_id + " "
-                + "AND temp_xt.random_id=" + r_id + " "
-                + "ORDER BY FragScanNumber, Result_ID DESC;");
+		/// </summary>
+		/// <returns></returns>
+		public String DS_3A()
+		{
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT Result_ID, FragScanNumber, ParentIonIntensity, PeakMaxIntensity, Peptide_Expectation_Value_Log  "
+				+ "FROM `temp_sicstats`, `temp_xt` "
+				+ "WHERE `temp_sicstats`.FragScanNumber=`temp_xt`.Scan "
+				+ "AND temp_sicstats.random_id=" + r_id + " "
+				+ "AND temp_xt.random_id=" + r_id + " "
+				+ "ORDER BY FragScanNumber, Result_ID DESC;");
 
-            //DECLARE VARIABLES
-            Hashtable Lookup_Table = new Hashtable();                                                           //STORES [RESULT_ID, FragScanNumber] SO WE CAN HAVE DUP FSN'S
-            Hashtable Filter_Result = new Hashtable();                                                          //STORES [RESULT_ID, 1/0] SO WE CAN DETERMINE IF WE PASSED THE FILTER
-            Dictionary<int, double> Lookup_Table_KV = new Dictionary<int, double>();                            //STORES [RESULT_ID, VALUE] SO WE CAN SORT BY VALUE
-            List<double> result_PMIPII_Filtered = new List<double>();                                           //STORES TABLE VALUES COLUMN K
-            List<double> result_VBPMIPII_Filtered = new List<double>();                                         //STORES TABLE VALUES COLUMN N
-            int max_running_sum = 0;                                                                            //STORES THE LARGEST/MAX RUNNING SUM OF COLUMN L
-            int running_sum = 0;                                                                                //STORES THE CURRENT RUNNING SUM OF COLUMN L
-            double median = 0.00;                                                                               //INIT MEDIAN
+			//DECLARE VARIABLES
+			Hashtable Lookup_Table = new Hashtable();                                                           //STORES [RESULT_ID, FragScanNumber] SO WE CAN HAVE DUP FSN'S
+			Hashtable Filter_Result = new Hashtable();                                                          //STORES [RESULT_ID, 1/0] SO WE CAN DETERMINE IF WE PASSED THE FILTER
+			Dictionary<int, double> Lookup_Table_KV = new Dictionary<int, double>();                            //STORES [RESULT_ID, VALUE] SO WE CAN SORT BY VALUE
+			List<double> result_PMIPII_Filtered = new List<double>();                                           //STORES TABLE VALUES COLUMN K
+			List<double> result_VBPMIPII_Filtered = new List<double>();                                         //STORES TABLE VALUES COLUMN N
+			int max_running_sum = 0;                                                                            //STORES THE LARGEST/MAX RUNNING SUM OF COLUMN L
+			int running_sum = 0;                                                                                //STORES THE CURRENT RUNNING SUM OF COLUMN L
+			double median = 0.00;                                                                               //INIT MEDIAN
 			double parentIonIntensity = 0;
 			double ratioPeakMaxToParentIonIntensity = 0;
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Result_ID", "FragScanNumber", "ParentIonIntensity", "PeakMaxIntensity", "Peptide_Expectation_Value_Log" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Result_ID", "FragScanNumber", "ParentIonIntensity", "PeakMaxIntensity", "Peptide_Expectation_Value_Log" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //STORE RESULT_ID, SCAN [ALLOWS FOR US TO HAVE DUPLICATES WITHOUT CRASHING]
-                Lookup_Table.Add(Convert.ToInt32(measurementhash["Result_ID"]), Convert.ToInt32(measurementhash["FragScanNumber"]));
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//STORE RESULT_ID, SCAN [ALLOWS FOR US TO HAVE DUPLICATES WITHOUT CRASHING]
+				Lookup_Table.Add(Convert.ToInt32(measurementhash["Result_ID"]), Convert.ToInt32(measurementhash["FragScanNumber"]));
 
-                //STORE RESULT_ID, VALUE [SO WE CAN THEN SORT BY VALUE]
+				//STORE RESULT_ID, VALUE [SO WE CAN THEN SORT BY VALUE]
 				parentIonIntensity = Convert.ToDouble(measurementhash["ParentIonIntensity"]);
 				if (parentIonIntensity > 0)
 					ratioPeakMaxToParentIonIntensity = Convert.ToDouble(measurementhash["PeakMaxIntensity"]) / parentIonIntensity;
@@ -2222,44 +2222,44 @@ namespace SMAQC
 
 				Lookup_Table_KV.Add(Convert.ToInt32(measurementhash["Result_ID"]), ratioPeakMaxToParentIonIntensity);
 
-                //IF PEPTIDE EXP VALUE LOG <= -2 SET FILTER TO TRUE
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //SET FILTER TO 1
-                    Filter_Result.Add(Convert.ToInt32(measurementhash["Result_ID"]), 1);
+				//IF PEPTIDE EXP VALUE LOG <= -2 SET FILTER TO TRUE
+				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				{
+					//SET FILTER TO 1
+					Filter_Result.Add(Convert.ToInt32(measurementhash["Result_ID"]), 1);
 
-                    //INCREMENT MAX RUNNING SUM
-                    max_running_sum++;
-                }
-                else
-                {
-                    //SET FILTER TO 1
-                    Filter_Result.Add(Convert.ToInt32(measurementhash["Result_ID"]), 0);
-                }
-            }
+					//INCREMENT MAX RUNNING SUM
+					max_running_sum++;
+				}
+				else
+				{
+					//SET FILTER TO 1
+					Filter_Result.Add(Convert.ToInt32(measurementhash["Result_ID"]), 0);
+				}
+			}
 
-            //USE LINQ TO SORT VALUES IN ASC ORDER
-            var items = from i in Lookup_Table_KV.Keys
-                        orderby Lookup_Table_KV[i] ascending
-                        select i;
+			//USE LINQ TO SORT VALUES IN ASC ORDER
+			var items = from i in Lookup_Table_KV.Keys
+						orderby Lookup_Table_KV[i] ascending
+						select i;
 
-            //LOOP THROUGH ALL KEYS
-            foreach (int key in items)
-            {
-                //KEY==RESULT_ID WHICH IS UNIQUE
-                int Scan = Convert.ToInt32(Lookup_Table[key]);
-                //Console.WriteLine("Scan={0} && Value={1} && Filter={2}", Scan, Lookup_Table_KV[key], Filter_Result[key]);
+			//LOOP THROUGH ALL KEYS
+			foreach (int key in items)
+			{
+				//KEY==RESULT_ID WHICH IS UNIQUE
+				int Scan = Convert.ToInt32(Lookup_Table[key]);
+				//Console.WriteLine("Scan={0} && Value={1} && Filter={2}", Scan, Lookup_Table_KV[key], Filter_Result[key]);
 
-                //IF VALID FILTER
-                if (Convert.ToInt32(Filter_Result[key]) == 1)
-                {
-                    //INC RUNNING SUM
-                    running_sum++;
+				//IF VALID FILTER
+				if (Convert.ToInt32(Filter_Result[key]) == 1)
+				{
+					//INC RUNNING SUM
+					running_sum++;
 
-                    //ADD TO FILTERED LIST FOR COLUMN K
-                    result_PMIPII_Filtered.Add(Convert.ToDouble(Lookup_Table_KV[key]));
+					//ADD TO FILTERED LIST FOR COLUMN K
+					result_PMIPII_Filtered.Add(Convert.ToDouble(Lookup_Table_KV[key]));
 
-                    //IF IN VALID BOTTOM 50%
+					//IF IN VALID BOTTOM 50%
 					if (max_running_sum > 0)
 					{
 						if ((Convert.ToDouble(running_sum) / Convert.ToDouble(max_running_sum)) <= 0.5)
@@ -2268,55 +2268,55 @@ namespace SMAQC
 							result_VBPMIPII_Filtered.Add(Convert.ToDouble(Lookup_Table_KV[key]));
 						}
 					}
-                }
-            }
+				}
+			}
 
 			//NOW CALCULATE MEDIAN
 			median = ComputeMedian(result_PMIPII_Filtered);
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 3RD DIGIT
+			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3RD DIGIT
 			return median.ToString("0.000");
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// DS_3B: Median of MS1 max / MS1 sampled abundance; limit to bottom 50% of peptides by abundance
-        /// </summary>
-        /// <returns></returns>
-        public String DS_3B()
-        {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT Result_ID, FragScanNumber, ParentIonIntensity, PeakMaxIntensity, Peptide_Expectation_Value_Log  "
-                + "FROM `temp_sicstats`, `temp_xt` "
-                + "WHERE `temp_sicstats`.FragScanNumber=`temp_xt`.Scan "
-                + "AND temp_sicstats.random_id=" + r_id + " "
-                + "AND temp_xt.random_id=" + r_id + " "
-                + "ORDER BY FragScanNumber, Result_ID DESC;");
+		/// </summary>
+		/// <returns></returns>
+		public String DS_3B()
+		{
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT Result_ID, FragScanNumber, ParentIonIntensity, PeakMaxIntensity, Peptide_Expectation_Value_Log  "
+				+ "FROM `temp_sicstats`, `temp_xt` "
+				+ "WHERE `temp_sicstats`.FragScanNumber=`temp_xt`.Scan "
+				+ "AND temp_sicstats.random_id=" + r_id + " "
+				+ "AND temp_xt.random_id=" + r_id + " "
+				+ "ORDER BY FragScanNumber, Result_ID DESC;");
 
-            //DECLARE VARIABLES
-            Hashtable Lookup_Table = new Hashtable();                                                           //STORES [RESULT_ID, FragScanNumber] SO WE CAN HAVE DUP FSN'S
-            Hashtable Filter_Result = new Hashtable();                                                          //STORES [RESULT_ID, 1/0] SO WE CAN DETERMINE IF WE PASSED THE FILTER
-            Dictionary<int, double> Lookup_Table_KV = new Dictionary<int, double>();                            //STORES [RESULT_ID, VALUE] SO WE CAN SORT BY VALUE
-            List<double> result_PMIPII_Filtered = new List<double>();                                           //STORES TABLE VALUES COLUMN K
-            List<double> result_VBPMIPII_Filtered = new List<double>();                                         //STORES TABLE VALUES COLUMN N
-            int max_running_sum = 0;                                                                            //STORES THE LARGEST/MAX RUNNING SUM OF COLUMN L
-            int running_sum = 0;                                                                                //STORES THE CURRENT RUNNING SUM OF COLUMN L
-            double median = 0.00;                                                                               //INIT MEDIAN
+			//DECLARE VARIABLES
+			Hashtable Lookup_Table = new Hashtable();                                                           //STORES [RESULT_ID, FragScanNumber] SO WE CAN HAVE DUP FSN'S
+			Hashtable Filter_Result = new Hashtable();                                                          //STORES [RESULT_ID, 1/0] SO WE CAN DETERMINE IF WE PASSED THE FILTER
+			Dictionary<int, double> Lookup_Table_KV = new Dictionary<int, double>();                            //STORES [RESULT_ID, VALUE] SO WE CAN SORT BY VALUE
+			List<double> result_PMIPII_Filtered = new List<double>();                                           //STORES TABLE VALUES COLUMN K
+			List<double> result_VBPMIPII_Filtered = new List<double>();                                         //STORES TABLE VALUES COLUMN N
+			int max_running_sum = 0;                                                                            //STORES THE LARGEST/MAX RUNNING SUM OF COLUMN L
+			int running_sum = 0;                                                                                //STORES THE CURRENT RUNNING SUM OF COLUMN L
+			double median = 0.00;                                                                               //INIT MEDIAN
 			double parentIonIntensity = 0;
 			double ratioPeakMaxToParentIonIntensity = 0;
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Result_ID", "FragScanNumber", "ParentIonIntensity", "PeakMaxIntensity", "Peptide_Expectation_Value_Log" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Result_ID", "FragScanNumber", "ParentIonIntensity", "PeakMaxIntensity", "Peptide_Expectation_Value_Log" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //STORE RESULT_ID, SCAN [ALLOWS FOR US TO HAVE DUPLICATES WITHOUT CRASHING]
-                Lookup_Table.Add(Convert.ToInt32(measurementhash["Result_ID"]), Convert.ToInt32(measurementhash["FragScanNumber"]));
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//STORE RESULT_ID, SCAN [ALLOWS FOR US TO HAVE DUPLICATES WITHOUT CRASHING]
+				Lookup_Table.Add(Convert.ToInt32(measurementhash["Result_ID"]), Convert.ToInt32(measurementhash["FragScanNumber"]));
 
-                //STORE RESULT_ID, VALUE [SO WE CAN THEN SORT BY VALUE]
+				//STORE RESULT_ID, VALUE [SO WE CAN THEN SORT BY VALUE]
 				parentIonIntensity = Convert.ToDouble(measurementhash["ParentIonIntensity"]);
 				if (parentIonIntensity > 0)
 					ratioPeakMaxToParentIonIntensity = Convert.ToDouble(measurementhash["PeakMaxIntensity"]) / parentIonIntensity;
@@ -2325,44 +2325,44 @@ namespace SMAQC
 
 				Lookup_Table_KV.Add(Convert.ToInt32(measurementhash["Result_ID"]), ratioPeakMaxToParentIonIntensity);
 
-                //IF PEPTIDE EXP VALUE LOG <= -2 SET FILTER TO TRUE
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //SET FILTER TO 1
-                    Filter_Result.Add(Convert.ToInt32(measurementhash["Result_ID"]), 1);
+				//IF PEPTIDE EXP VALUE LOG <= -2 SET FILTER TO TRUE
+				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				{
+					//SET FILTER TO 1
+					Filter_Result.Add(Convert.ToInt32(measurementhash["Result_ID"]), 1);
 
-                    //INCREMENT MAX RUNNING SUM
-                    max_running_sum++;
-                }
-                else
-                {
-                    //SET FILTER TO 1
-                    Filter_Result.Add(Convert.ToInt32(measurementhash["Result_ID"]), 0);
-                }
-            }
+					//INCREMENT MAX RUNNING SUM
+					max_running_sum++;
+				}
+				else
+				{
+					//SET FILTER TO 1
+					Filter_Result.Add(Convert.ToInt32(measurementhash["Result_ID"]), 0);
+				}
+			}
 
-            //USE LINQ TO SORT VALUES IN ASC ORDER
-            var items = from i in Lookup_Table_KV.Keys
-                        orderby Lookup_Table_KV[i] ascending
-                        select i;
+			//USE LINQ TO SORT VALUES IN ASC ORDER
+			var items = from i in Lookup_Table_KV.Keys
+						orderby Lookup_Table_KV[i] ascending
+						select i;
 
-            //LOOP THROUGH ALL KEYS
-            foreach (int key in items)
-            {
-                //KEY==RESULT_ID WHICH IS UNIQUE
-                int Scan = Convert.ToInt32(Lookup_Table[key]);
-                //Console.WriteLine("Scan={0} && Value={1} && Filter={2}", Scan, Lookup_Table_KV[key], Filter_Result[key]);
+			//LOOP THROUGH ALL KEYS
+			foreach (int key in items)
+			{
+				//KEY==RESULT_ID WHICH IS UNIQUE
+				int Scan = Convert.ToInt32(Lookup_Table[key]);
+				//Console.WriteLine("Scan={0} && Value={1} && Filter={2}", Scan, Lookup_Table_KV[key], Filter_Result[key]);
 
-                //IF VALID FILTER
-                if (Convert.ToInt32(Filter_Result[key]) == 1)
-                {
-                    //INC RUNNING SUM
-                    running_sum++;
+				//IF VALID FILTER
+				if (Convert.ToInt32(Filter_Result[key]) == 1)
+				{
+					//INC RUNNING SUM
+					running_sum++;
 
-                    //ADD TO FILTERED LIST FOR COLUMN K
-                    result_PMIPII_Filtered.Add(Convert.ToDouble(Lookup_Table_KV[key]));
+					//ADD TO FILTERED LIST FOR COLUMN K
+					result_PMIPII_Filtered.Add(Convert.ToDouble(Lookup_Table_KV[key]));
 
-                    //IF IN VALID BOTTOM 50%
+					//IF IN VALID BOTTOM 50%
 					if (max_running_sum > 0)
 					{
 						if ((Convert.ToDouble(running_sum) / Convert.ToDouble(max_running_sum)) <= 0.5)
@@ -2371,43 +2371,45 @@ namespace SMAQC
 							result_VBPMIPII_Filtered.Add(Convert.ToDouble(Lookup_Table_KV[key]));
 						}
 					}
-                }
-            }
+				}
+			}
 
 			//NOW CALCULATE MEDIAN
 			median = ComputeMedian(result_VBPMIPII_Filtered);
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 3RD DIGIT
+			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3RD DIGIT
 			return median.ToString("0.000");
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// IS_1A: Occurrences of MS1 jumping >10x
-        /// </summary>
-        /// <returns></returns>
-        public String IS_1A()
-        {
-			int sum_is_1a;
-			int sum_is_1b;
+		/// </summary>
+		/// <returns></returns>
+		public String IS_1A()
+		{
+			int countMS1Jump10x;
+			int countMS1Fall10x;
+			int foldThreshold = 10;
 
-			IS_1_Shared(out sum_is_1a, out sum_is_1b);
-            return Convert.ToString(sum_is_1a);
-        }
+			IS_1_Shared(foldThreshold, out countMS1Jump10x, out countMS1Fall10x);
+			return Convert.ToString(countMS1Jump10x);
+		}
 
-        /// <summary>
+		/// <summary>
 		/// IS_1B: Occurrences of MS1 falling >10x
-        /// </summary>
-        /// <returns></returns>
-        public String IS_1B()
-        {
-			int sum_is_1a;
-			int sum_is_1b;
+		/// </summary>
+		/// <returns></returns>
+		public String IS_1B()
+		{
+			int countMS1Jump10x;
+			int countMS1Fall10x;
+			int foldThreshold = 10;
 
-			IS_1_Shared(out sum_is_1a, out sum_is_1b);
-            return Convert.ToString(sum_is_1b);
-        }
+			IS_1_Shared(foldThreshold, out countMS1Jump10x, out countMS1Fall10x);
+			return Convert.ToString(countMS1Fall10x);
+		}
 
-		protected void IS_1_Shared(out int sum_is_1a, out int sum_is_1b)
+		protected void IS_1_Shared(int foldThreshold, out int countMS1Jump10x, out int countMS1Fall10x)
 		{
 			//SET DB QUERY
 			DBInterface.setQuery("SELECT ScanNumber, ScanType, BasePeakIntensity  "
@@ -2416,19 +2418,14 @@ namespace SMAQC
 				+ ";");
 
 			//DECLARE VARIABLES
-			int fold_change_threshold = 10;                                             //CONSTANT DEFINED VALUE
-			int prv_ScanType = -1;
-			double prv_BasePeakIntensity = -1;
-			double prv_Compare_Only_MS1 = -1;
-			int intensity_fall;
-			int intensity_rise;
-			int intensity_fall_ms1;
-			int intensity_rise_ms1;
-			double Compare_Only_MS1;
-			int line_num = 0;                                                           //KEEP TRACK OF LINE_NUM
+			double bpiPrevious = -1;
+			double bpiCurrent = 0;
+			countMS1Jump10x = 0;                                                          //STORE COUNT FOR IS_1A
+			countMS1Fall10x = 0;                                                          //STORE COUNT FOR IS_1B
 
-			sum_is_1a = 0;                                                          //STORE SUM FOR IS_1A
-			sum_is_1b = 0;                                                          //STORE SUM FOR IS_1B
+			//VALIDATE foldThreshold
+			if (foldThreshold < 2)
+				foldThreshold = 2;
 
 			//DECLARE FIELDS TO READ FROM
 			String[] fields = { "ScanNumber", "ScanType", "BasePeakIntensity" };
@@ -2443,199 +2440,139 @@ namespace SMAQC
 				if (Convert.ToInt32(measurementhash["ScanType"]) == 1)
 				{
 					//SET COMPARE ONLY MS1 TO BPI
-					Compare_Only_MS1 = Convert.ToDouble(measurementhash["BasePeakIntensity"]);
-				}
-				else
-				{
-					//SET COMPARE ONLY MS1 TO PREV COMPARE_ONLY_MS1
-					if (line_num == 0)
+					bpiCurrent = Convert.ToDouble(measurementhash["BasePeakIntensity"]);
+
+					if (bpiPrevious != -1)
 					{
-						//MEANS THIS SHOULD BE A FALSE VALUE ... BUT INSTEAD JUST MARK AS -1
-						Compare_Only_MS1 = -1;
+						if (bpiCurrent > 0 && bpiPrevious / bpiCurrent > foldThreshold)
+						{
+							countMS1Fall10x += 1;
+
+						}
+
+						if (bpiPrevious > 0 && bpiCurrent / bpiPrevious > foldThreshold)
+						{
+							countMS1Jump10x += 1;
+						}
 					}
-					else
-					{
-						//VALID TO USE PREV VALUE
-						Compare_Only_MS1 = prv_Compare_Only_MS1;
-					}
+
+					bpiPrevious = bpiCurrent;
 				}
 
-
-				//IF PREV+CURRENT SCANTYPE == 1 AND PREV_BASEPEAKINTENSITY/CURRENT_BPI >= 10 [COLUMN E]
-				if (Convert.ToInt32(measurementhash["ScanType"]) == 1 && prv_ScanType == 1 && (prv_BasePeakIntensity / Convert.ToDouble(measurementhash["BasePeakIntensity"])) >= 10)
-				{
-					//SET IR = 1
-					intensity_rise = 1;
-				}
-				else
-				{
-					//SET IR = 0
-					intensity_rise = 0;
-				}
-
-				//IF PREV+CURRENT SCANTYPE == 1 AND CURRENT_BPI/PREV_BASEPEAKINTENSITY >= 10 [COLUMN F]
-				if (Convert.ToInt32(measurementhash["ScanType"]) == 1 && prv_ScanType == 1 && (Convert.ToDouble(measurementhash["BasePeakIntensity"]) / prv_BasePeakIntensity) >= 10)
-				{
-					//SET IF = 1
-					intensity_fall = 1;
-				}
-				else
-				{
-					//SET IF = 0
-					intensity_fall = 0;
-				}
-
-				//IF PREV_BASEPEAKINTENSITY/CURRENT_BPI (MS1) >= fold_change_threshold [COLUMN H]
-				if ((prv_Compare_Only_MS1 / Compare_Only_MS1) >= fold_change_threshold)
-				{
-					//SET IF = 1
-					intensity_fall_ms1 = 1;
-
-					//ADD TO SUM FOR IS_1A
-					sum_is_1a++;
-				}
-				else
-				{
-					//SET IF = 0
-					intensity_fall_ms1 = 0;
-				}
-
-				//IF CURRENT_BPI/PREV_BASEPEAKINTENSITY (MS1) >= fold_change_threshold [COLUMN I]
-				if ((Compare_Only_MS1 / prv_Compare_Only_MS1) >= fold_change_threshold)
-				{
-					//SET IR = 1
-					intensity_rise_ms1 = 1;
-
-					//ADD TO SUM FOR IS_1B
-					sum_is_1b++;
-				}
-				else
-				{
-					//SET IR = 0
-					intensity_rise_ms1 = 0;
-				}
-
-				//UPDATE PREV VALUES
-				prv_ScanType = Convert.ToInt32(measurementhash["ScanType"]);
-				prv_BasePeakIntensity = Convert.ToDouble(measurementhash["BasePeakIntensity"]);
-				prv_Compare_Only_MS1 = Compare_Only_MS1;
-
-				//INC line_num
-				line_num++;
 			}
-			
+
 		}
 
-        /// <summary>
+		/// <summary>
 		/// MS1_5A: Median of precursor mass error (Th)
-        /// </summary>
-        /// <returns></returns>
-        public String MS1_5A()
-        {
+		/// </summary>
+		/// <returns></returns>
+		public String MS1_5A()
+		{
 			//DECLARE VARIABLES
-			List<double> FilteredArray;                                    //STORE FILTERED VALUES [COLUMN G]
-			List<double> AbsFilteredArray;                                 //STORE FILTERED VALUES [COLUMN H]
-			List<double> PPMList;                                          //STORE FILTERED VALUES [COLUMN I]
+			List<double> FilteredDelM;                                    //STORE FILTERED VALUES [COLUMN G]
+			List<double> AbsFilteredDelM;                                 //STORE FILTERED VALUES [COLUMN H]
+			List<double> DelMPPM;                                          //STORE FILTERED VALUES [COLUMN I]
 
-			MS1_5_Shared(out FilteredArray, out AbsFilteredArray, out PPMList);
+			MS1_5_Shared(out FilteredDelM, out AbsFilteredDelM, out DelMPPM);
 
-            //NOW CALCULATE MEDIAN
+			//NOW CALCULATE MEDIAN
 			double median;
-			median = ComputeMedian(FilteredArray);
+			median = ComputeMedian(FilteredDelM);
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
+			//WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
 			return median.ToString("0.000000");
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// MS1_5B: Median of absolute value of precursor mass error (Th)
-        /// </summary>
-        /// <returns></returns>
-        public String MS1_5B()
-        {
+		/// </summary>
+		/// <returns></returns>
+		public String MS1_5B()
+		{
 			//DECLARE VARIABLES
-			List<double> FilteredArray;                                    //STORE FILTERED VALUES [COLUMN G]
-			List<double> AbsFilteredArray;                                 //STORE FILTERED VALUES [COLUMN H]
-			List<double> PPMList;                                          //STORE FILTERED VALUES [COLUMN I]
+			List<double> FilteredDelM;                                    //STORE FILTERED VALUES [COLUMN G]
+			List<double> AbsFilteredDelM;                                 //STORE FILTERED VALUES [COLUMN H]
+			List<double> DelMPPM;                                          //STORE FILTERED VALUES [COLUMN I]
 
-			MS1_5_Shared(out FilteredArray, out AbsFilteredArray, out PPMList);
+			MS1_5_Shared(out FilteredDelM, out AbsFilteredDelM, out DelMPPM);
 
-            //CALCULATE AVERAGE
+			//CALCULATE AVERAGE
 			double average;
-			average = AbsFilteredArray.Average();
+			average = AbsFilteredDelM.Average();
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
+			//WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
 			return average.ToString("0.000000");
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// MS1_5C: Median of precursor mass error (ppm)
-        /// </summary>
-        /// <returns></returns>
-        public String MS1_5C()
-        {
+		/// </summary>
+		/// <returns></returns>
+		public String MS1_5C()
+		{
 			//DECLARE VARIABLES
-			List<double> FilteredArray;                                    //STORE FILTERED VALUES [COLUMN G]
-			List<double> AbsFilteredArray;                                 //STORE FILTERED VALUES [COLUMN H]
-			List<double> PPMList;                                          //STORE FILTERED VALUES [COLUMN I]
+			List<double> FilteredDelM;                                    //STORE FILTERED VALUES [COLUMN G]
+			List<double> AbsFilteredDelM;                                 //STORE FILTERED VALUES [COLUMN H]
+			List<double> DelMPPM;                                          //STORE FILTERED VALUES [COLUMN I]
 
-			MS1_5_Shared(out FilteredArray, out AbsFilteredArray, out PPMList);
+			MS1_5_Shared(out FilteredDelM, out AbsFilteredDelM, out DelMPPM);
 
-            //NOW CALCULATE MEDIAN
+			//NOW CALCULATE MEDIAN
 			double median;
-			median = ComputeMedian(PPMList);
+			median = ComputeMedian(DelMPPM);
 
 			return median.ToString("0.000000");
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// MS1_5D: Interquartile distance in ppm-based precursor mass error
-        /// </summary>
-        /// <returns></returns>
-        public String MS1_5D()
-        {
+		/// </summary>
+		/// <returns></returns>
+		public String MS1_5D()
+		{
 			//DECLARE VARIABLES
-			List<double> FilteredArray;                                    //STORE FILTERED VALUES [COLUMN G]
-			List<double> AbsFilteredArray;                                 //STORE FILTERED VALUES [COLUMN H]
-			List<double> PPMList;                                          //STORE FILTERED VALUES [COLUMN I]
+			List<double> FilteredDelM;                                    //STORE FILTERED VALUES [COLUMN G]
+			List<double> AbsFilteredDelM;                                 //STORE FILTERED VALUES [COLUMN H]
+			List<double> DelMPPM;                                          //STORE FILTERED VALUES [COLUMN I]
 
-			MS1_5_Shared(out FilteredArray, out AbsFilteredArray, out PPMList);
+			MS1_5_Shared(out FilteredDelM, out AbsFilteredDelM, out DelMPPM);
 
-            //NOW FILTER PPM PASSED VALUES [COLUMN K] + START COUNT
-            PPMList.Sort();
+			//NOW FILTER PPM PASSED VALUES [COLUMN K] + START COUNT
+			DelMPPM.Sort();
 
-			List<double> PPMErrorsList = new List<double>();                                    //STORE ERRORS FROM PPMList [COLUMN M]
+			List<double> InterquartilePPMErrors = new List<double>();                           //STORE ERRORS FROM PPMList [COLUMN M]
 			double median = 0.00;                                                               //INIT MEDIAN
 			int INTER_QUARTILE_START = 0;                                                       //REQUIRED FOR MEASUREMENT
 			int INTER_QUARTILE_END = 0;                                                         //REQUIRED FOR MEASUREMENT
 			int count = 0;
 
-            //CALCULATE INTER_QUARTILE_START AND INTER_QUARTILE_END
-            INTER_QUARTILE_START = Convert.ToInt32(Math.Round(0.25 * Convert.ToDouble(PPMList.Count)));
-            INTER_QUARTILE_END = Convert.ToInt32(Math.Round(0.75 * Convert.ToDouble(PPMList.Count)));
+			//CALCULATE INTER_QUARTILE_START AND INTER_QUARTILE_END
+			INTER_QUARTILE_START = Convert.ToInt32(Math.Round(0.25 * Convert.ToDouble(DelMPPM.Count)));
+			INTER_QUARTILE_END = Convert.ToInt32(Math.Round(0.75 * Convert.ToDouble(DelMPPM.Count)));
 
-            //LOOP THROUGH EACH ITEM IN LIST
-            foreach(double item in PPMList)
-            {
-                //INC count
-                count++;
+			//LOOP THROUGH EACH ITEM IN LIST
+			foreach (double item in DelMPPM)
+			{
+				//INC count
+				count++;
 
-                //IF COUNT >= INTER_QUARTILE_START && COUNT <= INTER_QUARTILE_END
-                if ((count >= INTER_QUARTILE_START) && (count <= INTER_QUARTILE_END))
-                {
-                    //ADD TO LIST [COLUMN M]
-                    PPMErrorsList.Add(item);
-                }
-            }
+				//IF COUNT >= INTER_QUARTILE_START && COUNT <= INTER_QUARTILE_END
+				if ((count >= INTER_QUARTILE_START) && (count <= INTER_QUARTILE_END))
+				{
+					//ADD TO LIST [COLUMN M]
+					InterquartilePPMErrors.Add(item);
+				}
+			}
 
-            //NOW CALCULATE MEDIAN
-			median = ComputeMedian(PPMErrorsList);
+			//NOW CALCULATE MEDIAN
+			median = ComputeMedian(InterquartilePPMErrors);
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT
+			//WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT
 			return median.ToString("0.0000");
-        }
-		
-		protected void MS1_5_Shared(out List<double> FilteredArray, out List<double> AbsFilteredArray, out List<double> PPMList)
+		}
+
+		protected void MS1_5_Shared(out List<double> FilteredDelM, out List<double> AbsFilteredDelM, out List<double> DelMPPM)
 		{
 			//SET DB QUERY
 			DBInterface.setQuery("SELECT temp_xt.Scan,temp_xt.Peptide_Expectation_Value_Log,temp_xt.Peptide_MH,temp_xt.Charge, temp_sicstats.MZ "
@@ -2645,9 +2582,9 @@ namespace SMAQC
 
 			//DECLARE VARIABLES
 			double massHydrogen = 1.00727649;                                      //REQUIRED BY MEASUREMENT
-			FilteredArray = new List<double>();                                    //STORE FILTERED VALUES [COLUMN G]
-			AbsFilteredArray = new List<double>();                                 //STORE FILTERED VALUES [COLUMN H]
-			PPMList = new List<double>();                                          //STORE FILTERED VALUES [COLUMN I]
+			FilteredDelM = new List<double>();                                    //STORE FILTERED VALUES [COLUMN G]
+			AbsFilteredDelM = new List<double>();                                 //STORE FILTERED VALUES [COLUMN H]
+			DelMPPM = new List<double>();                                          //STORE FILTERED VALUES [COLUMN I]
 
 			//DECLARE FIELDS TO READ FROM
 			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Peptide_MH", "Charge", "MZ" };
@@ -2665,277 +2602,281 @@ namespace SMAQC
 				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
 					//CALC FILTERED ARRAY
-					FilteredArray.Add(Convert.ToDouble(measurementhash["MZ"]) - theo);
+					FilteredDelM.Add(Convert.ToDouble(measurementhash["MZ"]) - theo);
 
 					//NOW TAKE THE ABS VALUE OF OUR FILTERED ARRAY
-					AbsFilteredArray.Add(Math.Abs(FilteredArray.Last()));
+					AbsFilteredDelM.Add(Math.Abs(FilteredDelM.Last()));
 
 					//ADD TO PPM LIST
-					PPMList.Add(FilteredArray.Last() / (theo / 1000000));
+					if (theo > 0)
+						DelMPPM.Add(FilteredDelM.Last() / (theo / 1000000));
+					else
+						DelMPPM.Add(0);
 				}
 
 			}
 
 		}
 
-        /// <summary>
+		/// <summary>
 		/// MS2_1: Median MS2 ion injection time
-        /// </summary>
-        /// <returns></returns>
-        public String MS2_1()
-        {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_scanstatsex.Ion_Injection_Time "
-                + "FROM `temp_xt`, `temp_scanstatsex` "
-                + "WHERE temp_xt.Scan=temp_scanstatsex.ScanNumber AND temp_xt.random_id=" + r_id + " AND temp_scanstatsex.random_id=" + r_id + " "
-                + "ORDER BY temp_xt.Scan;");
+		/// </summary>
+		/// <returns></returns>
+		public String MS2_1()
+		{
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_scanstatsex.Ion_Injection_Time "
+				+ "FROM `temp_xt`, `temp_scanstatsex` "
+				+ "WHERE temp_xt.Scan=temp_scanstatsex.ScanNumber AND temp_xt.random_id=" + r_id + " AND temp_scanstatsex.random_id=" + r_id + " "
+				+ "ORDER BY temp_xt.Scan;");
 
-            //DECLARE VARIABLES
-            List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN P]
-            double median = 0.00;                                                               //STORE MEDIAN
+			//DECLARE VARIABLES
+			List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN P]
+			double median = 0.00;                                                               //STORE MEDIAN
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Ion_Injection_Time" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Ion_Injection_Time" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //CALCULATE COLUMN P
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //ADD TO FILTERED LIST
-                    FilterList.Add(Convert.ToDouble(measurementhash["Ion_Injection_Time"]));
-                }
-            }
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//CALCULATE COLUMN P
+				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				{
+					//ADD TO FILTERED LIST
+					FilterList.Add(Convert.ToDouble(measurementhash["Ion_Injection_Time"]));
+				}
+			}
 
-            //NOW CALCULATE MEDIAN
+			//NOW CALCULATE MEDIAN
 			median = ComputeMedian(FilterList);
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT
+			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT
 			return median.ToString("0.000");
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// MS2_2: Median S/N value for identified MS2 spectra
-        /// </summary>
-        /// <returns></returns>
-        public String MS2_2()
-        {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_scanstats.BasePeakSignalToNoiseRatio "
-                + "FROM `temp_xt`, `temp_scanstats` "
-                + "WHERE temp_xt.Scan=temp_scanstats.ScanNumber AND temp_xt.random_id=" + r_id + " AND temp_scanstats.random_id=" + r_id + " "
-                + "ORDER BY temp_xt.Scan;");
+		/// </summary>
+		/// <returns></returns>
+		public String MS2_2()
+		{
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_scanstats.BasePeakSignalToNoiseRatio "
+				+ "FROM `temp_xt`, `temp_scanstats` "
+				+ "WHERE temp_xt.Scan=temp_scanstats.ScanNumber AND temp_xt.random_id=" + r_id + " AND temp_scanstats.random_id=" + r_id + " "
+				+ "ORDER BY temp_xt.Scan;");
 
-            //DECLARE VARIABLES
-            List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN H]
-            List<double> FinishedList = new List<double>();                                     //FINISHED LIST [COLUMN J]
-            double median = 0.00;                                                               //STORE MEDIAN
-            int current_count = 0;                                                              //CURRENT COUNTER
+			//DECLARE VARIABLES
+			List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN H]
+			List<double> FinishedList = new List<double>();                                     //FINISHED LIST [COLUMN J]
+			double median = 0.00;                                                               //STORE MEDIAN
+			int current_count = 0;                                                              //CURRENT COUNTER
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "BasePeakSignalToNoiseRatio" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "BasePeakSignalToNoiseRatio" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //CALCULATE COLUMN P
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //ADD TO FILTERED LIST
-                    FilterList.Add(Convert.ToDouble(measurementhash["BasePeakSignalToNoiseRatio"]));
-                }
-            }
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//CALCULATE COLUMN P
+				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				{
+					//ADD TO FILTERED LIST
+					FilterList.Add(Convert.ToDouble(measurementhash["BasePeakSignalToNoiseRatio"]));
+				}
+			}
 
-            //LOOP THROUGH FILTERED LIST
-            for (int i = 0; i < FilterList.Count; i++)
-            {
-                //INC COUNTER
-                current_count++;
+			//LOOP THROUGH FILTERED LIST
+			for (int i = 0; i < FilterList.Count; i++)
+			{
+				//INC COUNTER
+				current_count++;
 
-                //CALCULATE IF <= 0.75
-                if(current_count <= (FilterList.Count*0.75) )
-                {
-                    //ADD TO FINISHED FILTERED LIST
-                    FinishedList.Add(FilterList[i]);
-                }
-            }
+				//CALCULATE IF <= 0.75
+				if (current_count <= (FilterList.Count * 0.75))
+				{
+					//ADD TO FINISHED FILTERED LIST
+					FinishedList.Add(FilterList[i]);
+				}
+			}
 
-            //NOW CALCULATE MEDIAN
+			//NOW CALCULATE MEDIAN
 			median = ComputeMedian(FinishedList);
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT          
+			//WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT          
 			return median.ToString("0.0000");
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// MS2_3: Median number of peaks in all MS2 spectra
-        /// </summary>
-        /// <returns></returns>
-        public String MS2_3()
-        {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_scanstats.IonCountRaw "
-                + "FROM `temp_xt`, `temp_scanstats` "
-                + "WHERE temp_xt.Scan=temp_scanstats.ScanNumber AND temp_xt.random_id=" + r_id + " AND temp_scanstats.random_id=" + r_id + " "
-                + "ORDER BY temp_xt.Scan;");
+		/// </summary>
+		/// <returns></returns>
+		public String MS2_3()
+		{
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_scanstats.IonCountRaw "
+				+ "FROM `temp_xt`, `temp_scanstats` "
+				+ "WHERE temp_xt.Scan=temp_scanstats.ScanNumber AND temp_xt.random_id=" + r_id + " AND temp_scanstats.random_id=" + r_id + " "
+				+ "ORDER BY temp_xt.Scan;");
 
-            //DECLARE VARIABLES
-            List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN M]
-            double median = 0.00;                                                               //STORE MEDIAN
+			//DECLARE VARIABLES
+			List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN M]
+			double median = 0.00;                                                               //STORE MEDIAN
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "IonCountRaw" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "IonCountRaw" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //CALCULATE COLUMN M
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //ADD TO FILTERED LIST
-                    FilterList.Add(Convert.ToDouble(measurementhash["IonCountRaw"]));
-                }
-            }
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//CALCULATE COLUMN M
+				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				{
+					//ADD TO FILTERED LIST
+					FilterList.Add(Convert.ToDouble(measurementhash["IonCountRaw"]));
+				}
+			}
 
-            //NOW CALCULATE MEDIAN
+			//NOW CALCULATE MEDIAN
 			median = ComputeMedian(FilterList);
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT
+			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT
 			return median.ToString("0.000");
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// MS2_4A: Fraction of all MS2 spectra identified; high abundance quartile (determined using MS1 intensity of identified peptides)
-        /// </summary>
-        /// <returns></returns>
-        public String MS2_4A()
-        {
-            //SET DB QUERY [TO FIND MAX NUMBER OF ROWS]
-            DBInterface.setQuery("SELECT COUNT(*) as MaxRows "
-                + "FROM `temp_xt`, `temp_sicstats` "
-                + "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
-                + "ORDER BY temp_sicstats.PeakMaxIntensity;");
+		/// </summary>
+		/// <returns></returns>
+		public String MS2_4A()
+		{
+			//SET DB QUERY [TO FIND MAX NUMBER OF ROWS]
+			DBInterface.setQuery("SELECT COUNT(DISTINCT temp_sicstats.FragScanNumber) as MS2ScanCount "
+				+ "FROM `temp_xt`, `temp_sicstats` "
+				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
+				+ ";");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields_temp = { "MaxRows" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields_temp = { "MS2ScanCount" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //READ LINE
-            DBInterface.readSingleLine(fields_temp, ref measurementhash);
+			//READ LINE
+			DBInterface.readSingleLine(fields_temp, ref measurementhash);
+			int scanCountMS2 = Convert.ToInt32(measurementhash["MS2ScanCount"]);                         //STORE TOTAL MS2 SCAN COUNT
 
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_sicstats.PeakMaxIntensity "
-                + "FROM `temp_xt`, `temp_sicstats` "
-                + "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
-                + "ORDER BY temp_sicstats.PeakMaxIntensity;");
+			//SET DB QUERY
+			//NOTE THAT WE SORT BY ASCENDING PeakMaxIntensity
+			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_sicstats.PeakMaxIntensity "
+				+ "FROM `temp_xt`, `temp_sicstats` "
+				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
+				+ "ORDER BY temp_sicstats.PeakMaxIntensity;");
 
-            //DECLARE VARIABLES
-            List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN G]
-            List<int> FoundFirstQuartileList = new List<int>();                                 //FOUND FOR FIRST QUARTILE LIST [COLUMN I]
-            List<int> FoundSecondQuartileList = new List<int>();                                //FOUND FOR SECOND QUARTILE LIST [COLUMN K]
-            List<int> FoundThirdQuartileList = new List<int>();                                 //FOUND FOR THIRD QUARTILE LIST [COLUMN M]
-            List<int> FoundFourthQuartileList = new List<int>();                                //FOUND FOR FOURTH QUARTILE LIST [COLUMN O]
-            List<int> IdentifiedFirstQuartileList = new List<int>();                            //Identified FOR FIRST QUARTILE LIST [COLUMN J]
-            List<int> IdentifiedSecondQuartileList = new List<int>();                           //Identified FOR SECOND QUARTILE LIST [COLUMN L]
-            List<int> IdentifiedThirdQuartileList = new List<int>();                            //Identified FOR THIRD QUARTILE LIST [COLUMN N]
-            List<int> IdentifiedFourthQuartileList = new List<int>();                           //Identified FOR FOURTH QUARTILE LIST [COLUMN P]
-            int max_rows = Convert.ToInt32(measurementhash["MaxRows"]);                         //STORE TOTAL ROWS
-            int scan_count = 1;                                                                 //RUNNING SCAN COUNT [COLUMN H]
+			//DECLARE VARIABLES
+			List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN G]
+			List<int> FoundFirstQuartileList = new List<int>();                                 //FOUND FOR FIRST QUARTILE LIST [COLUMN I]
+			List<int> FoundSecondQuartileList = new List<int>();                                //FOUND FOR SECOND QUARTILE LIST [COLUMN K]
+			List<int> FoundThirdQuartileList = new List<int>();                                 //FOUND FOR THIRD QUARTILE LIST [COLUMN M]
+			List<int> FoundFourthQuartileList = new List<int>();                                //FOUND FOR FOURTH QUARTILE LIST [COLUMN O]
+			List<int> IdentifiedFirstQuartileList = new List<int>();                            //Identified FOR FIRST QUARTILE LIST [COLUMN J]
+			List<int> IdentifiedSecondQuartileList = new List<int>();                           //Identified FOR SECOND QUARTILE LIST [COLUMN L]
+			List<int> IdentifiedThirdQuartileList = new List<int>();                            //Identified FOR THIRD QUARTILE LIST [COLUMN N]
+			List<int> IdentifiedFourthQuartileList = new List<int>();                           //Identified FOR FOURTH QUARTILE LIST [COLUMN P]
+			int scan_count = 1;                                                                 //RUNNING SCAN COUNT [COLUMN H]
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "PeakMaxIntensity" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "PeakMaxIntensity" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //DID IT PASS OUR FILTER?
-                Boolean passed_filter = false;
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//DID IT PASS OUR FILTER?
+				Boolean passed_filter = false;
 
-                //CALCULATE COLUMN G
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //ADD TO FILTERED LIST
-                    FilterList.Add(Convert.ToDouble(measurementhash["PeakMaxIntensity"]));
+				//CALCULATE COLUMN G
+				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				{
+					//ADD TO FILTERED LIST
+					FilterList.Add(Convert.ToDouble(measurementhash["PeakMaxIntensity"]));
 
-                    passed_filter = true;
-                }
+					passed_filter = true;
+				}
 
-                //IF SCAN IN FIRST QUARTILE
-                if (scan_count < (max_rows*0.25) )
-                {
-                    //FOUND SO ADD AS 1
-                    FoundFirstQuartileList.Add(1);
+				//IF SCAN IN FIRST QUARTILE
+				if (scan_count < (scanCountMS2 * 0.25))
+				{
+					//FOUND SO ADD AS 1
+					FoundFirstQuartileList.Add(1);
 
-                    //IF PASSED FILTER
-                    if (passed_filter)
-                    {
-                        //ADD SINCE PASSED FILTER
-                        IdentifiedFirstQuartileList.Add(1);
-                    }
-                }
+					//IF PASSED FILTER
+					if (passed_filter)
+					{
+						//ADD SINCE PASSED FILTER
+						IdentifiedFirstQuartileList.Add(1);
+					}
+				}
 
-                //IF SCAN IN SECOND QUARTILE
-                if (scan_count >= (max_rows * 0.25) && scan_count < (max_rows * 0.5))
-                {
-                    //FOUND SO ADD AS 1
-                    FoundSecondQuartileList.Add(1);
+				//IF SCAN IN SECOND QUARTILE
+				if (scan_count >= (scanCountMS2 * 0.25) && scan_count < (scanCountMS2 * 0.5))
+				{
+					//FOUND SO ADD AS 1
+					FoundSecondQuartileList.Add(1);
 
-                    //IF PASSED FILTER
-                    if (passed_filter)
-                    {
-                        //ADD SINCE PASSED FILTER
-                        IdentifiedSecondQuartileList.Add(1);
-                    }
-                }
+					//IF PASSED FILTER
+					if (passed_filter)
+					{
+						//ADD SINCE PASSED FILTER
+						IdentifiedSecondQuartileList.Add(1);
+					}
+				}
 
-                //IF SCAN IN THIRD QUARTILE
-                if (scan_count >= (max_rows * 0.5) && scan_count < (max_rows * 0.75))
-                {
-                    //FOUND SO ADD AS 1
-                    FoundThirdQuartileList.Add(1);
+				//IF SCAN IN THIRD QUARTILE
+				if (scan_count >= (scanCountMS2 * 0.5) && scan_count < (scanCountMS2 * 0.75))
+				{
+					//FOUND SO ADD AS 1
+					FoundThirdQuartileList.Add(1);
 
-                    //IF PASSED FILTER
-                    if (passed_filter)
-                    {
-                        //ADD SINCE PASSED FILTER
-                        IdentifiedThirdQuartileList.Add(1);
-                    }
-                }
+					//IF PASSED FILTER
+					if (passed_filter)
+					{
+						//ADD SINCE PASSED FILTER
+						IdentifiedThirdQuartileList.Add(1);
+					}
+				}
 
-                //IF SCAN IN FOURTH QUARTILE
-                if (scan_count >= (max_rows * 0.75))
-                {
-                    //FOUND SO ADD AS 1
-                    FoundFourthQuartileList.Add(1);
+				//IF SCAN IN FOURTH QUARTILE
+				if (scan_count >= (scanCountMS2 * 0.75))
+				{
+					//FOUND SO ADD AS 1
+					FoundFourthQuartileList.Add(1);
 
-                    //IF PASSED FILTER
-                    if (passed_filter)
-                    {
-                        //ADD SINCE PASSED FILTER
-                        IdentifiedFourthQuartileList.Add(1);
-                    }
-                }
+					//IF PASSED FILTER
+					if (passed_filter)
+					{
+						//ADD SINCE PASSED FILTER
+						IdentifiedFourthQuartileList.Add(1);
+					}
+				}
 
-                //INC
-                scan_count++;
-            }
+				//INC
+				scan_count++;
+			}
 
-            //COMPUTE THE RESULT
+			//COMPUTE THE RESULT
 			double sumFoundFirstQuartile = FoundFirstQuartileList.Sum();
 			double sumIdentifiedFirstQuartile = IdentifiedFirstQuartileList.Sum();
 
@@ -2944,128 +2885,128 @@ namespace SMAQC
 				result = sumIdentifiedFirstQuartile / sumFoundFirstQuartile;
 
 			return result.ToString("0.0000");
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// MS2_4B: Fraction of all MS2 spectra identified; second quartile (determined using MS1 intensity of identified peptides)
-        /// </summary>
-        /// <returns></returns>
-        public String MS2_4B()
-        {
-            //SET DB QUERY [TO FIND MAX NUMBER OF ROWS]
-            DBInterface.setQuery("SELECT COUNT(*) as MaxRows "
-                + "FROM `temp_xt`, `temp_sicstats` "
-                + "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
-                + "ORDER BY temp_sicstats.PeakMaxIntensity;");
+		/// </summary>
+		/// <returns></returns>
+		public String MS2_4B()
+		{
+			//SET DB QUERY [TO FIND MAX NUMBER OF ROWS]
+			DBInterface.setQuery("SELECT COUNT(*) as MaxRows "
+				+ "FROM `temp_xt`, `temp_sicstats` "
+				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
+				+ "ORDER BY temp_sicstats.PeakMaxIntensity;");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields_temp = { "MaxRows" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields_temp = { "MaxRows" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //READ LINE
-            DBInterface.readSingleLine(fields_temp, ref measurementhash);
+			//READ LINE
+			DBInterface.readSingleLine(fields_temp, ref measurementhash);
 
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_sicstats.PeakMaxIntensity "
-                + "FROM `temp_xt`, `temp_sicstats` "
-                + "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
-                + "ORDER BY temp_sicstats.PeakMaxIntensity;");
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_sicstats.PeakMaxIntensity "
+				+ "FROM `temp_xt`, `temp_sicstats` "
+				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
+				+ "ORDER BY temp_sicstats.PeakMaxIntensity;");
 
-            //DECLARE VARIABLES
-            List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN G]
-            List<int> FoundFirstQuartileList = new List<int>();                                 //FOUND FOR FIRST QUARTILE LIST [COLUMN I]
-            List<int> FoundSecondQuartileList = new List<int>();                                //FOUND FOR SECOND QUARTILE LIST [COLUMN K]
-            List<int> FoundThirdQuartileList = new List<int>();                                 //FOUND FOR THIRD QUARTILE LIST [COLUMN M]
-            List<int> FoundFourthQuartileList = new List<int>();                                //FOUND FOR FOURTH QUARTILE LIST [COLUMN O]
-            List<int> IdentifiedFirstQuartileList = new List<int>();                            //Identified FOR FIRST QUARTILE LIST [COLUMN J]
-            List<int> IdentifiedSecondQuartileList = new List<int>();                           //Identified FOR SECOND QUARTILE LIST [COLUMN L]
-            List<int> IdentifiedThirdQuartileList = new List<int>();                            //Identified FOR THIRD QUARTILE LIST [COLUMN N]
-            List<int> IdentifiedFourthQuartileList = new List<int>();                           //Identified FOR FOURTH QUARTILE LIST [COLUMN P]
-            int max_rows = Convert.ToInt32(measurementhash["MaxRows"]);                         //STORE TOTAL ROWS
-            int scan_count = 1;                                                                 //RUNNING SCAN COUNT [COLUMN H]
+			//DECLARE VARIABLES
+			List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN G]
+			List<int> FoundFirstQuartileList = new List<int>();                                 //FOUND FOR FIRST QUARTILE LIST [COLUMN I]
+			List<int> FoundSecondQuartileList = new List<int>();                                //FOUND FOR SECOND QUARTILE LIST [COLUMN K]
+			List<int> FoundThirdQuartileList = new List<int>();                                 //FOUND FOR THIRD QUARTILE LIST [COLUMN M]
+			List<int> FoundFourthQuartileList = new List<int>();                                //FOUND FOR FOURTH QUARTILE LIST [COLUMN O]
+			List<int> IdentifiedFirstQuartileList = new List<int>();                            //Identified FOR FIRST QUARTILE LIST [COLUMN J]
+			List<int> IdentifiedSecondQuartileList = new List<int>();                           //Identified FOR SECOND QUARTILE LIST [COLUMN L]
+			List<int> IdentifiedThirdQuartileList = new List<int>();                            //Identified FOR THIRD QUARTILE LIST [COLUMN N]
+			List<int> IdentifiedFourthQuartileList = new List<int>();                           //Identified FOR FOURTH QUARTILE LIST [COLUMN P]
+			int max_rows = Convert.ToInt32(measurementhash["MaxRows"]);                         //STORE TOTAL ROWS
+			int scan_count = 1;                                                                 //RUNNING SCAN COUNT [COLUMN H]
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "PeakMaxIntensity" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "PeakMaxIntensity" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //DID IT PASS OUR FILTER?
-                Boolean passed_filter = false;
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//DID IT PASS OUR FILTER?
+				Boolean passed_filter = false;
 
-                //CALCULATE COLUMN G
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //ADD TO FILTERED LIST
-                    FilterList.Add(Convert.ToDouble(measurementhash["PeakMaxIntensity"]));
+				//CALCULATE COLUMN G
+				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				{
+					//ADD TO FILTERED LIST
+					FilterList.Add(Convert.ToDouble(measurementhash["PeakMaxIntensity"]));
 
-                    passed_filter = true;
-                }
+					passed_filter = true;
+				}
 
-                //IF SCAN IN FIRST QUARTILE
-                if (scan_count < (max_rows * 0.25))
-                {
-                    //FOUND SO ADD AS 1
-                    FoundFirstQuartileList.Add(1);
+				//IF SCAN IN FIRST QUARTILE
+				if (scan_count < (max_rows * 0.25))
+				{
+					//FOUND SO ADD AS 1
+					FoundFirstQuartileList.Add(1);
 
-                    //IF PASSED FILTER
-                    if (passed_filter)
-                    {
-                        //ADD SINCE PASSED FILTER
-                        IdentifiedFirstQuartileList.Add(1);
-                    }
-                }
+					//IF PASSED FILTER
+					if (passed_filter)
+					{
+						//ADD SINCE PASSED FILTER
+						IdentifiedFirstQuartileList.Add(1);
+					}
+				}
 
-                //IF SCAN IN SECOND QUARTILE
-                if (scan_count >= (max_rows * 0.25) && scan_count < (max_rows * 0.5))
-                {
-                    //FOUND SO ADD AS 1
-                    FoundSecondQuartileList.Add(1);
+				//IF SCAN IN SECOND QUARTILE
+				if (scan_count >= (max_rows * 0.25) && scan_count < (max_rows * 0.5))
+				{
+					//FOUND SO ADD AS 1
+					FoundSecondQuartileList.Add(1);
 
-                    //IF PASSED FILTER
-                    if (passed_filter)
-                    {
-                        //ADD SINCE PASSED FILTER
-                        IdentifiedSecondQuartileList.Add(1);
-                    }
-                }
+					//IF PASSED FILTER
+					if (passed_filter)
+					{
+						//ADD SINCE PASSED FILTER
+						IdentifiedSecondQuartileList.Add(1);
+					}
+				}
 
-                //IF SCAN IN THIRD QUARTILE
-                if (scan_count >= (max_rows * 0.5) && scan_count < (max_rows * 0.75))
-                {
-                    //FOUND SO ADD AS 1
-                    FoundThirdQuartileList.Add(1);
+				//IF SCAN IN THIRD QUARTILE
+				if (scan_count >= (max_rows * 0.5) && scan_count < (max_rows * 0.75))
+				{
+					//FOUND SO ADD AS 1
+					FoundThirdQuartileList.Add(1);
 
-                    //IF PASSED FILTER
-                    if (passed_filter)
-                    {
-                        //ADD SINCE PASSED FILTER
-                        IdentifiedThirdQuartileList.Add(1);
-                    }
-                }
+					//IF PASSED FILTER
+					if (passed_filter)
+					{
+						//ADD SINCE PASSED FILTER
+						IdentifiedThirdQuartileList.Add(1);
+					}
+				}
 
-                //IF SCAN IN FOURTH QUARTILE
-                if (scan_count >= (max_rows * 0.75))
-                {
-                    //FOUND SO ADD AS 1
-                    FoundFourthQuartileList.Add(1);
+				//IF SCAN IN FOURTH QUARTILE
+				if (scan_count >= (max_rows * 0.75))
+				{
+					//FOUND SO ADD AS 1
+					FoundFourthQuartileList.Add(1);
 
-                    //IF PASSED FILTER
-                    if (passed_filter)
-                    {
-                        //ADD SINCE PASSED FILTER
-                        IdentifiedFourthQuartileList.Add(1);
-                    }
-                }
+					//IF PASSED FILTER
+					if (passed_filter)
+					{
+						//ADD SINCE PASSED FILTER
+						IdentifiedFourthQuartileList.Add(1);
+					}
+				}
 
-                //INC
-                scan_count++;
-            }
+				//INC
+				scan_count++;
+			}
 
 			//COMPUTE THE RESULT
 			double sumFoundSecondQuartile = FoundSecondQuartileList.Sum();
@@ -3077,128 +3018,128 @@ namespace SMAQC
 
 			return result.ToString("0.0000");
 
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// MS2_4C: Fraction of all MS2 spectra identified; third quartile (determined using MS1 intensity of identified peptides)
-        /// </summary>
-        /// <returns></returns>
-        public String MS2_4C()
-        {
-            //SET DB QUERY [TO FIND MAX NUMBER OF ROWS]
-            DBInterface.setQuery("SELECT COUNT(*) as MaxRows "
-                + "FROM `temp_xt`, `temp_sicstats` "
-                + "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
-                + "ORDER BY temp_sicstats.PeakMaxIntensity;");
+		/// </summary>
+		/// <returns></returns>
+		public String MS2_4C()
+		{
+			//SET DB QUERY [TO FIND MAX NUMBER OF ROWS]
+			DBInterface.setQuery("SELECT COUNT(*) as MaxRows "
+				+ "FROM `temp_xt`, `temp_sicstats` "
+				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
+				+ "ORDER BY temp_sicstats.PeakMaxIntensity;");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields_temp = { "MaxRows" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields_temp = { "MaxRows" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //READ LINE
-            DBInterface.readSingleLine(fields_temp, ref measurementhash);
+			//READ LINE
+			DBInterface.readSingleLine(fields_temp, ref measurementhash);
 
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_sicstats.PeakMaxIntensity "
-                + "FROM `temp_xt`, `temp_sicstats` "
-                + "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
-                + "ORDER BY temp_sicstats.PeakMaxIntensity;");
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_sicstats.PeakMaxIntensity "
+				+ "FROM `temp_xt`, `temp_sicstats` "
+				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
+				+ "ORDER BY temp_sicstats.PeakMaxIntensity;");
 
-            //DECLARE VARIABLES
-            List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN G]
-            List<int> FoundFirstQuartileList = new List<int>();                                 //FOUND FOR FIRST QUARTILE LIST [COLUMN I]
-            List<int> FoundSecondQuartileList = new List<int>();                                //FOUND FOR SECOND QUARTILE LIST [COLUMN K]
-            List<int> FoundThirdQuartileList = new List<int>();                                 //FOUND FOR THIRD QUARTILE LIST [COLUMN M]
-            List<int> FoundFourthQuartileList = new List<int>();                                //FOUND FOR FOURTH QUARTILE LIST [COLUMN O]
-            List<int> IdentifiedFirstQuartileList = new List<int>();                            //Identified FOR FIRST QUARTILE LIST [COLUMN J]
-            List<int> IdentifiedSecondQuartileList = new List<int>();                           //Identified FOR SECOND QUARTILE LIST [COLUMN L]
-            List<int> IdentifiedThirdQuartileList = new List<int>();                            //Identified FOR THIRD QUARTILE LIST [COLUMN N]
-            List<int> IdentifiedFourthQuartileList = new List<int>();                           //Identified FOR FOURTH QUARTILE LIST [COLUMN P]
-            int max_rows = Convert.ToInt32(measurementhash["MaxRows"]);                         //STORE TOTAL ROWS
-            int scan_count = 1;                                                                 //RUNNING SCAN COUNT [COLUMN H]
+			//DECLARE VARIABLES
+			List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN G]
+			List<int> FoundFirstQuartileList = new List<int>();                                 //FOUND FOR FIRST QUARTILE LIST [COLUMN I]
+			List<int> FoundSecondQuartileList = new List<int>();                                //FOUND FOR SECOND QUARTILE LIST [COLUMN K]
+			List<int> FoundThirdQuartileList = new List<int>();                                 //FOUND FOR THIRD QUARTILE LIST [COLUMN M]
+			List<int> FoundFourthQuartileList = new List<int>();                                //FOUND FOR FOURTH QUARTILE LIST [COLUMN O]
+			List<int> IdentifiedFirstQuartileList = new List<int>();                            //Identified FOR FIRST QUARTILE LIST [COLUMN J]
+			List<int> IdentifiedSecondQuartileList = new List<int>();                           //Identified FOR SECOND QUARTILE LIST [COLUMN L]
+			List<int> IdentifiedThirdQuartileList = new List<int>();                            //Identified FOR THIRD QUARTILE LIST [COLUMN N]
+			List<int> IdentifiedFourthQuartileList = new List<int>();                           //Identified FOR FOURTH QUARTILE LIST [COLUMN P]
+			int max_rows = Convert.ToInt32(measurementhash["MaxRows"]);                         //STORE TOTAL ROWS
+			int scan_count = 1;                                                                 //RUNNING SCAN COUNT [COLUMN H]
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "PeakMaxIntensity" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "PeakMaxIntensity" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //DID IT PASS OUR FILTER?
-                Boolean passed_filter = false;
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//DID IT PASS OUR FILTER?
+				Boolean passed_filter = false;
 
-                //CALCULATE COLUMN G
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //ADD TO FILTERED LIST
-                    FilterList.Add(Convert.ToDouble(measurementhash["PeakMaxIntensity"]));
+				//CALCULATE COLUMN G
+				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				{
+					//ADD TO FILTERED LIST
+					FilterList.Add(Convert.ToDouble(measurementhash["PeakMaxIntensity"]));
 
-                    passed_filter = true;
-                }
+					passed_filter = true;
+				}
 
-                //IF SCAN IN FIRST QUARTILE
-                if (scan_count < (max_rows * 0.25))
-                {
-                    //FOUND SO ADD AS 1
-                    FoundFirstQuartileList.Add(1);
+				//IF SCAN IN FIRST QUARTILE
+				if (scan_count < (max_rows * 0.25))
+				{
+					//FOUND SO ADD AS 1
+					FoundFirstQuartileList.Add(1);
 
-                    //IF PASSED FILTER
-                    if (passed_filter)
-                    {
-                        //ADD SINCE PASSED FILTER
-                        IdentifiedFirstQuartileList.Add(1);
-                    }
-                }
+					//IF PASSED FILTER
+					if (passed_filter)
+					{
+						//ADD SINCE PASSED FILTER
+						IdentifiedFirstQuartileList.Add(1);
+					}
+				}
 
-                //IF SCAN IN SECOND QUARTILE
-                if (scan_count >= (max_rows * 0.25) && scan_count < (max_rows * 0.5))
-                {
-                    //FOUND SO ADD AS 1
-                    FoundSecondQuartileList.Add(1);
+				//IF SCAN IN SECOND QUARTILE
+				if (scan_count >= (max_rows * 0.25) && scan_count < (max_rows * 0.5))
+				{
+					//FOUND SO ADD AS 1
+					FoundSecondQuartileList.Add(1);
 
-                    //IF PASSED FILTER
-                    if (passed_filter)
-                    {
-                        //ADD SINCE PASSED FILTER
-                        IdentifiedSecondQuartileList.Add(1);
-                    }
-                }
+					//IF PASSED FILTER
+					if (passed_filter)
+					{
+						//ADD SINCE PASSED FILTER
+						IdentifiedSecondQuartileList.Add(1);
+					}
+				}
 
-                //IF SCAN IN THIRD QUARTILE
-                if (scan_count >= (max_rows * 0.5) && scan_count < (max_rows * 0.75))
-                {
-                    //FOUND SO ADD AS 1
-                    FoundThirdQuartileList.Add(1);
+				//IF SCAN IN THIRD QUARTILE
+				if (scan_count >= (max_rows * 0.5) && scan_count < (max_rows * 0.75))
+				{
+					//FOUND SO ADD AS 1
+					FoundThirdQuartileList.Add(1);
 
-                    //IF PASSED FILTER
-                    if (passed_filter)
-                    {
-                        //ADD SINCE PASSED FILTER
-                        IdentifiedThirdQuartileList.Add(1);
-                    }
-                }
+					//IF PASSED FILTER
+					if (passed_filter)
+					{
+						//ADD SINCE PASSED FILTER
+						IdentifiedThirdQuartileList.Add(1);
+					}
+				}
 
-                //IF SCAN IN FOURTH QUARTILE
-                if (scan_count >= (max_rows * 0.75))
-                {
-                    //FOUND SO ADD AS 1
-                    FoundFourthQuartileList.Add(1);
+				//IF SCAN IN FOURTH QUARTILE
+				if (scan_count >= (max_rows * 0.75))
+				{
+					//FOUND SO ADD AS 1
+					FoundFourthQuartileList.Add(1);
 
-                    //IF PASSED FILTER
-                    if (passed_filter)
-                    {
-                        //ADD SINCE PASSED FILTER
-                        IdentifiedFourthQuartileList.Add(1);
-                    }
-                }
+					//IF PASSED FILTER
+					if (passed_filter)
+					{
+						//ADD SINCE PASSED FILTER
+						IdentifiedFourthQuartileList.Add(1);
+					}
+				}
 
-                //INC
-                scan_count++;
-            }
+				//INC
+				scan_count++;
+			}
 
 			//COMPUTE THE RESULT
 			double sumFoundThirdQuartile = FoundThirdQuartileList.Sum();
@@ -3210,128 +3151,128 @@ namespace SMAQC
 
 			return result.ToString("0.0000");
 
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// MS2_4D: Fraction of all MS2 spectra identified; low abundance quartile (determined using MS1 intensity of identified peptides)
-        /// </summary>
-        /// <returns></returns>
-        public String MS2_4D()
-        {
-            //SET DB QUERY [TO FIND MAX NUMBER OF ROWS]
-            DBInterface.setQuery("SELECT COUNT(*) as MaxRows "
-                + "FROM `temp_xt`, `temp_sicstats` "
-                + "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
-                + "ORDER BY temp_sicstats.PeakMaxIntensity;");
+		/// </summary>
+		/// <returns></returns>
+		public String MS2_4D()
+		{
+			//SET DB QUERY [TO FIND MAX NUMBER OF ROWS]
+			DBInterface.setQuery("SELECT COUNT(*) as MaxRows "
+				+ "FROM `temp_xt`, `temp_sicstats` "
+				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
+				+ "ORDER BY temp_sicstats.PeakMaxIntensity;");
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields_temp = { "MaxRows" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields_temp = { "MaxRows" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //READ LINE
-            DBInterface.readSingleLine(fields_temp, ref measurementhash);
+			//READ LINE
+			DBInterface.readSingleLine(fields_temp, ref measurementhash);
 
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_sicstats.PeakMaxIntensity "
-                + "FROM `temp_xt`, `temp_sicstats` "
-                + "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
-                + "ORDER BY temp_sicstats.PeakMaxIntensity;");
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_sicstats.PeakMaxIntensity "
+				+ "FROM `temp_xt`, `temp_sicstats` "
+				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
+				+ "ORDER BY temp_sicstats.PeakMaxIntensity;");
 
-            //DECLARE VARIABLES
-            List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN G]
-            List<int> FoundFirstQuartileList = new List<int>();                                 //FOUND FOR FIRST QUARTILE LIST [COLUMN I]
-            List<int> FoundSecondQuartileList = new List<int>();                                //FOUND FOR SECOND QUARTILE LIST [COLUMN K]
-            List<int> FoundThirdQuartileList = new List<int>();                                 //FOUND FOR THIRD QUARTILE LIST [COLUMN M]
-            List<int> FoundFourthQuartileList = new List<int>();                                //FOUND FOR FOURTH QUARTILE LIST [COLUMN O]
-            List<int> IdentifiedFirstQuartileList = new List<int>();                            //Identified FOR FIRST QUARTILE LIST [COLUMN J]
-            List<int> IdentifiedSecondQuartileList = new List<int>();                           //Identified FOR SECOND QUARTILE LIST [COLUMN L]
-            List<int> IdentifiedThirdQuartileList = new List<int>();                            //Identified FOR THIRD QUARTILE LIST [COLUMN N]
-            List<int> IdentifiedFourthQuartileList = new List<int>();                           //Identified FOR FOURTH QUARTILE LIST [COLUMN P]
-            int max_rows = Convert.ToInt32(measurementhash["MaxRows"]);                         //STORE TOTAL ROWS
-            int scan_count = 1;                                                                 //RUNNING SCAN COUNT [COLUMN H]
+			//DECLARE VARIABLES
+			List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN G]
+			List<int> FoundFirstQuartileList = new List<int>();                                 //FOUND FOR FIRST QUARTILE LIST [COLUMN I]
+			List<int> FoundSecondQuartileList = new List<int>();                                //FOUND FOR SECOND QUARTILE LIST [COLUMN K]
+			List<int> FoundThirdQuartileList = new List<int>();                                 //FOUND FOR THIRD QUARTILE LIST [COLUMN M]
+			List<int> FoundFourthQuartileList = new List<int>();                                //FOUND FOR FOURTH QUARTILE LIST [COLUMN O]
+			List<int> IdentifiedFirstQuartileList = new List<int>();                            //Identified FOR FIRST QUARTILE LIST [COLUMN J]
+			List<int> IdentifiedSecondQuartileList = new List<int>();                           //Identified FOR SECOND QUARTILE LIST [COLUMN L]
+			List<int> IdentifiedThirdQuartileList = new List<int>();                            //Identified FOR THIRD QUARTILE LIST [COLUMN N]
+			List<int> IdentifiedFourthQuartileList = new List<int>();                           //Identified FOR FOURTH QUARTILE LIST [COLUMN P]
+			int max_rows = Convert.ToInt32(measurementhash["MaxRows"]);                         //STORE TOTAL ROWS
+			int scan_count = 1;                                                                 //RUNNING SCAN COUNT [COLUMN H]
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "PeakMaxIntensity" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "PeakMaxIntensity" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //DID IT PASS OUR FILTER?
-                Boolean passed_filter = false;
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//DID IT PASS OUR FILTER?
+				Boolean passed_filter = false;
 
-                //CALCULATE COLUMN G
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //ADD TO FILTERED LIST
-                    FilterList.Add(Convert.ToDouble(measurementhash["PeakMaxIntensity"]));
+				//CALCULATE COLUMN G
+				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				{
+					//ADD TO FILTERED LIST
+					FilterList.Add(Convert.ToDouble(measurementhash["PeakMaxIntensity"]));
 
-                    passed_filter = true;
-                }
+					passed_filter = true;
+				}
 
-                //IF SCAN IN FIRST QUARTILE
-                if (scan_count < (max_rows * 0.25))
-                {
-                    //FOUND SO ADD AS 1
-                    FoundFirstQuartileList.Add(1);
+				//IF SCAN IN FIRST QUARTILE
+				if (scan_count < (max_rows * 0.25))
+				{
+					//FOUND SO ADD AS 1
+					FoundFirstQuartileList.Add(1);
 
-                    //IF PASSED FILTER
-                    if (passed_filter)
-                    {
-                        //ADD SINCE PASSED FILTER
-                        IdentifiedFirstQuartileList.Add(1);
-                    }
-                }
+					//IF PASSED FILTER
+					if (passed_filter)
+					{
+						//ADD SINCE PASSED FILTER
+						IdentifiedFirstQuartileList.Add(1);
+					}
+				}
 
-                //IF SCAN IN SECOND QUARTILE
-                if (scan_count >= (max_rows * 0.25) && scan_count < (max_rows * 0.5))
-                {
-                    //FOUND SO ADD AS 1
-                    FoundSecondQuartileList.Add(1);
+				//IF SCAN IN SECOND QUARTILE
+				if (scan_count >= (max_rows * 0.25) && scan_count < (max_rows * 0.5))
+				{
+					//FOUND SO ADD AS 1
+					FoundSecondQuartileList.Add(1);
 
-                    //IF PASSED FILTER
-                    if (passed_filter)
-                    {
-                        //ADD SINCE PASSED FILTER
-                        IdentifiedSecondQuartileList.Add(1);
-                    }
-                }
+					//IF PASSED FILTER
+					if (passed_filter)
+					{
+						//ADD SINCE PASSED FILTER
+						IdentifiedSecondQuartileList.Add(1);
+					}
+				}
 
-                //IF SCAN IN THIRD QUARTILE
-                if (scan_count >= (max_rows * 0.5) && scan_count < (max_rows * 0.75))
-                {
-                    //FOUND SO ADD AS 1
-                    FoundThirdQuartileList.Add(1);
+				//IF SCAN IN THIRD QUARTILE
+				if (scan_count >= (max_rows * 0.5) && scan_count < (max_rows * 0.75))
+				{
+					//FOUND SO ADD AS 1
+					FoundThirdQuartileList.Add(1);
 
-                    //IF PASSED FILTER
-                    if (passed_filter)
-                    {
-                        //ADD SINCE PASSED FILTER
-                        IdentifiedThirdQuartileList.Add(1);
-                    }
-                }
+					//IF PASSED FILTER
+					if (passed_filter)
+					{
+						//ADD SINCE PASSED FILTER
+						IdentifiedThirdQuartileList.Add(1);
+					}
+				}
 
-                //IF SCAN IN FOURTH QUARTILE
-                if (scan_count >= (max_rows * 0.75))
-                {
-                    //FOUND SO ADD AS 1
-                    FoundFourthQuartileList.Add(1);
+				//IF SCAN IN FOURTH QUARTILE
+				if (scan_count >= (max_rows * 0.75))
+				{
+					//FOUND SO ADD AS 1
+					FoundFourthQuartileList.Add(1);
 
-                    //IF PASSED FILTER
-                    if (passed_filter)
-                    {
-                        //ADD SINCE PASSED FILTER
-                        IdentifiedFourthQuartileList.Add(1);
-                    }
-                }
+					//IF PASSED FILTER
+					if (passed_filter)
+					{
+						//ADD SINCE PASSED FILTER
+						IdentifiedFourthQuartileList.Add(1);
+					}
+				}
 
-                //INC
-                scan_count++;
-            }
+				//INC
+				scan_count++;
+			}
 
 			//COMPUTE THE RESULT
 			double sumFoundFourthQuartile = FoundFourthQuartileList.Sum();
@@ -3343,290 +3284,86 @@ namespace SMAQC
 
 			return result.ToString("0.0000");
 
-        }
+		}
 
 		/// <summary>
 		/// P_1A: Median peptide ID score (X!Tandem hyperscore)
 		/// </summary>
 		/// <returns></returns>
-        public String P_1A()
-        {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT Scan, Peptide_Hyperscore, Peptide_Expectation_Value_Log "
-                + "FROM `temp_xt` "
-                + "WHERE temp_xt.random_id=" + r_id + " "
-                + "ORDER BY Scan;");
+		public String P_1A()
+		{
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT Scan, Peptide_Hyperscore, Peptide_Expectation_Value_Log "
+				+ "FROM `temp_xt` "
+				+ "WHERE temp_xt.random_id=" + r_id + " "
+				+ "ORDER BY Scan;");
 
-            //DECLARE VARIABLES
-            List<double> Peptide_Hyperscore_List = new List<double>();                          //STORE PEPTIDE HYPERSCORE LIST
-            double median = 0.00;                                                               //INIT MEDIAN VALUE
+			//DECLARE VARIABLES
+			List<double> Peptide_Hyperscore_List = new List<double>();                          //STORE PEPTIDE HYPERSCORE LIST
+			double median = 0.00;                                                               //INIT MEDIAN VALUE
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Hyperscore", "Peptide_Expectation_Value_Log" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Scan", "Peptide_Hyperscore", "Peptide_Expectation_Value_Log" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //CALCULATE COLUMN B + ADD TO LIST
-                Peptide_Hyperscore_List.Add(Convert.ToDouble(measurementhash["Peptide_Hyperscore"]));
-            }
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//CALCULATE COLUMN B + ADD TO LIST
+				Peptide_Hyperscore_List.Add(Convert.ToDouble(measurementhash["Peptide_Hyperscore"]));
+			}
 
-            //NOW CALCULATE MEDIAN
+			//NOW CALCULATE MEDIAN
 			median = ComputeMedian(Peptide_Hyperscore_List);
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT
+			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT
 			return median.ToString("0.000");
-        }
+		}
 
 		/// <summary>
 		/// P_1B: Median peptide ID score (X!Tandem Peptide_Expectation_Value_Log(e))
 		/// </summary>
 		/// <returns></returns>
-        public String P_1B()
-        {
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT Scan, Peptide_Hyperscore, Peptide_Expectation_Value_Log "
-                + "FROM `temp_xt` "
-                + "WHERE temp_xt.random_id=" + r_id + " "
-                + "ORDER BY Scan;");
+		public String P_1B()
+		{
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT Scan, Peptide_Hyperscore, Peptide_Expectation_Value_Log "
+				+ "FROM `temp_xt` "
+				+ "WHERE temp_xt.random_id=" + r_id + " "
+				+ "ORDER BY Scan;");
 
-            //DECLARE VARIABLES
-            List<double> Peptide_Expectation_List = new List<double>();                         //STORE PEPTIDE EXP LIST
-            double median = 0.00;                                                               //INIT MEDIAN VALUE
+			//DECLARE VARIABLES
+			List<double> Peptide_Expectation_List = new List<double>();                         //STORE PEPTIDE EXP LIST
+			double median = 0.00;                                                               //INIT MEDIAN VALUE
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Hyperscore", "Peptide_Expectation_Value_Log" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Scan", "Peptide_Hyperscore", "Peptide_Expectation_Value_Log" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //CALCULATE COLUMN C + ADD TO LIST
-                Peptide_Expectation_List.Add(Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]));
-            }
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				//CALCULATE COLUMN C + ADD TO LIST
+				Peptide_Expectation_List.Add(Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]));
+			}
 
-            //NOW CALCULATE MEDIAN
+			//NOW CALCULATE MEDIAN
 			median = ComputeMedian(Peptide_Expectation_List);
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT           
+			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT           
 			return median.ToString("0.000");
-        }
+		}
 
-        /// <summary>
+		/// <summary>
 		/// P_2A: Number of tryptic peptides; total spectra count
-        /// </summary>
-        /// <returns></returns>
-        public String P_2A()
-        {
-            //BUILD RESULT_ID, UNIQUE_SEQ_TABLE
-			System.Collections.Generic.Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
-			ResultID_to_Unique_Seq_ID_Table = GetResultIDToSeqIDTable();
-
-			// BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE            
-			// Populate a dictionary object via a single query to the database
-			System.Collections.Generic.Dictionary<int, int> Seq_ID_to_Cleavage_State_Table;
-			Seq_ID_to_Cleavage_State_Table = GetSeqIDToCleavageStateTable();
-
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log, Charge, temp_xt.Result_ID, Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State "
-                + "FROM `temp_xt`, `temp_xt_resulttoseqmap` "
-                + "JOIN `temp_xt_seqtoproteinmap` ON `temp_xt_resulttoseqmap`.Unique_Seq_ID=`temp_xt_seqtoproteinmap`.Unique_Seq_ID "
-                + "WHERE temp_xt.Peptide_Expectation_Value_Log <= -2.00 "
-                + "AND temp_xt.Result_ID=temp_xt_resulttoseqmap.Result_ID "
-                + "AND temp_xt.random_id=" + r_id + " "
-                + "AND temp_xt_resulttoseqmap.random_id=" + r_id + " "
-                + "GROUP BY temp_xt_resulttoseqmap.Result_ID "
-                + "ORDER BY temp_xt.Peptide_Sequence, temp_xt.Group_ID;");
-
-            //DECLARE VARIABLES
-            int cleavage_state_1_count = 0;                                                         //COLUMN H
-            int cleavage_state_2_count = 0;                                                         //COLUMN I
-            int unique_cleavage_state_2_count = 0;                                                  //COLUMN J
-            int cleavage_state_2_charge_1 = 0;                                                      //COLUMN K
-            int line_count = 0;                                                                     //LINE COUNTER
-            String prv_peptide_sequence = "";                                                       //PRV PEPTIDE SEQUENCE
-
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge", "Result_ID", "Peptide_Sequence", "Cleavage_State" };
-
-            //INIT READER
-            DBInterface.initReader();
-
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-				int resultID;
-				int seqID;
-				int cleavage_state = 0;
-
-				// DETERMINE THE CLEAVAGE STATE
-				if (int.TryParse(measurementhash["Result_ID"].ToString(), out resultID))
-				{
-					if (ResultID_to_Unique_Seq_ID_Table.TryGetValue(resultID, out seqID))
-					{
-						Seq_ID_to_Cleavage_State_Table.TryGetValue(seqID, out cleavage_state);   //CONVERT UNIQUE_SEQUENCE_ID TO CLEAVAGE_STATE
-					}
-				}
-
-                //FOR cleavage_state_1_count [COLUMN H]
-                if (cleavage_state == 1)
-                {
-                    //COLUMN H
-                    cleavage_state_1_count += 1;
-                }
-
-                //FOR cleavage_state_2_count [COLUMN I]
-                if (cleavage_state == 2)
-                {
-                    //COLUMN I
-                    cleavage_state_2_count += 1;
-                }
-
-                //IF THIS IS THE FIRST LINE
-                if (line_count == 0)
-                {
-                    //INC LINE COUNT
-                    line_count++;
-
-                    //FOR unique_cleavage_state_2_count [COLUMN J]
-                    if (cleavage_state == 2)
-                    {
-                        unique_cleavage_state_2_count = 1;
-                    }
-
-                    //FOR cleavage_state_2_charge_1 [COLUMN K]
-                    if (Convert.ToInt32(measurementhash["Charge"]) == 1)
-                    {
-                        cleavage_state_2_charge_1 = 1;
-                    }
-
-                }
-                else
-                {
-                    //LINE COUNT IS NOT THE FIRST LINE
-
-                    //FOR unique_cleavage_state_2_count IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN J]
-                    if (cleavage_state == 2 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
-                    {
-                        unique_cleavage_state_2_count += 1;
-                    }
-
-                    //FOR cleavage_state_2_charge_1 IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN K]
-                    if (Convert.ToInt32(measurementhash["Charge"]) == 1 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
-                    {
-                        cleavage_state_2_charge_1 += 1;
-                    }
-
-                }
-
-                //UPDATE PREVIOUS VALUES FOR NEXT LOOP
-                prv_peptide_sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
-            }
-
-            //SET ANSWER
-            int answer = cleavage_state_2_count;
-
-            return Convert.ToString(answer);
-        }
-
-        /// <summary>
-		/// P_2B: Number of tryptic peptides; unique peptide & charge count
-        /// </summary>
-        /// <returns></returns>
-        public String P_2B()
-        {
-            //BUILD RESULT_ID, UNIQUE_SEQ_TABLE
-			System.Collections.Generic.Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
-			ResultID_to_Unique_Seq_ID_Table = GetResultIDToSeqIDTable();
-
-			// BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE            
-			// Populate a dictionary object via a single query to the database
-			System.Collections.Generic.Dictionary<int, int> Seq_ID_to_Cleavage_State_Table;
-			Seq_ID_to_Cleavage_State_Table = GetSeqIDToCleavageStateTable();
-
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT temp_xt.Result_ID, temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_xt.Charge, temp_xt.Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State, temp_xt_seqtoproteinmap.Unique_Seq_ID "
-                + "FROM `temp_xt`, `temp_xt_resulttoseqmap` "
-                + "INNER JOIN `temp_xt_seqtoproteinmap` ON `temp_xt_resulttoseqmap`.Unique_Seq_ID=`temp_xt_seqtoproteinmap`.Unique_Seq_ID "
-                + "WHERE Peptide_Expectation_Value_Log <= -2.00 "
-                + "AND temp_xt.Result_ID=temp_xt_resulttoseqmap.Result_ID "
-                + "AND temp_xt.random_id=" + r_id + " "
-                + "AND temp_xt_resulttoseqmap.random_id=" + r_id + " "
-                + "GROUP BY temp_xt_resulttoseqmap.Result_ID "
-                + "ORDER BY Charge, Peptide_Sequence, Scan;");
-
-            //DECLARE VARIABLES
-            String prv_peptide_sequence = "";                                                       //STORE PREVIOUS PEPTIDE SEQUENCE
-            String prv_prv_peptide_sequence = "";                                                   //STORE PREVIOUS PREVIOUS PEPTIDE SEQUENCE
-            int prv_cleavage_state = 0;                                                             //STORE PREVIOUS CLEAVAGE STATE
-            int count_with_different_charges = 0;                                                   //COUNTS WITH DIFFERENT CHARGES [COLUMN F]
-            Boolean is_first_line = true;                                                           //IS FIRST LINE 
-
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Result_ID", "Scan", "Peptide_Expectation_Value_Log", "Charge", "Peptide_Sequence", "Cleavage_State", "Unique_Seq_ID" };
-
-            //INIT READER
-            DBInterface.initReader();
-
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-				int resultID;
-				int seqID;
-				int cleavage_state = 0;
-
-				// DETERMINE THE CLEAVAGE STATE
-				if (int.TryParse(measurementhash["Result_ID"].ToString(), out resultID))
-				{
-					if (ResultID_to_Unique_Seq_ID_Table.TryGetValue(resultID, out seqID))
-					{
-						Seq_ID_to_Cleavage_State_Table.TryGetValue(seqID, out cleavage_state);   //CONVERT UNIQUE_SEQUENCE_ID TO CLEAVAGE_STATE
-					}
-				}            
-
-                //IS FIRST LINE?
-                if (is_first_line)
-                {
-                    //SET TO FALSE
-                    is_first_line = false;
-
-                    //IF CURRENT CLEAVAGE STATE == 2 && PREV + CURRENT PEPTIDE SEQUENCE VALUES ARE DIFFERENT [ONLY FOR FIRST LINE]
-                    if (cleavage_state == 2 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
-                    {
-                        //INC
-                        count_with_different_charges++;
-                    }
-                }
-                else
-                {
-                    //IF PREV CLEAVAGE STATE == 2 && PREV + PREV PREV PEPTIDE SEQUENCE VALUES ARE DIFFERENT
-                    if (prv_cleavage_state == 2 && !prv_peptide_sequence.Equals(prv_prv_peptide_sequence))
-                    {
-                        //INC
-                        count_with_different_charges++;
-                    }
-                }
-
-                //UPDATE PREV VALUES
-                prv_prv_peptide_sequence = prv_peptide_sequence;
-                prv_peptide_sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
-                prv_cleavage_state = cleavage_state;
-            }
-
-            return Convert.ToString(count_with_different_charges);
-        }
-
-        /// <summary>
-		/// P_2C: Number of tryptic peptides; unique peptide count
-        /// </summary>
-        /// <returns></returns>
-        public String P_2C()
-        {
+		/// </summary>
+		/// <returns></returns>
+		public String P_2A()
+		{
 			//BUILD RESULT_ID, UNIQUE_SEQ_TABLE
 			System.Collections.Generic.Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
 			ResultID_to_Unique_Seq_ID_Table = GetResultIDToSeqIDTable();
@@ -3636,156 +3373,39 @@ namespace SMAQC
 			System.Collections.Generic.Dictionary<int, int> Seq_ID_to_Cleavage_State_Table;
 			Seq_ID_to_Cleavage_State_Table = GetSeqIDToCleavageStateTable();
 
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log, Charge, temp_xt.Result_ID, Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State, temp_xt_seqtoproteinmap.Unique_Seq_ID "
-                + "FROM `temp_xt`, `temp_xt_resulttoseqmap` "
-                + "JOIN `temp_xt_seqtoproteinmap` ON `temp_xt_resulttoseqmap`.Unique_Seq_ID=`temp_xt_seqtoproteinmap`.Unique_Seq_ID "
-                + "WHERE temp_xt.Peptide_Expectation_Value_Log <= -2.00 "
-                + "AND temp_xt.Result_ID=temp_xt_resulttoseqmap.Result_ID "
-                + "AND temp_xt.random_id=" + r_id + " "
-                + "AND temp_xt_resulttoseqmap.random_id=" + r_id + " "
-                + "GROUP BY temp_xt_resulttoseqmap.Result_ID "
-                + "ORDER BY temp_xt.Peptide_Sequence, temp_xt.Group_ID;");
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log, Charge, temp_xt.Result_ID, Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State "
+				+ "FROM `temp_xt`, `temp_xt_resulttoseqmap` "
+				+ "JOIN `temp_xt_seqtoproteinmap` ON `temp_xt_resulttoseqmap`.Unique_Seq_ID=`temp_xt_seqtoproteinmap`.Unique_Seq_ID "
+				+ "WHERE temp_xt.Peptide_Expectation_Value_Log <= -2.00 "
+				+ "AND temp_xt.Result_ID=temp_xt_resulttoseqmap.Result_ID "
+				+ "AND temp_xt.random_id=" + r_id + " "
+				+ "AND temp_xt_resulttoseqmap.random_id=" + r_id + " "
+				+ "GROUP BY temp_xt_resulttoseqmap.Result_ID "
+				+ "ORDER BY temp_xt.Peptide_Sequence, temp_xt.Group_ID;");
 
-            //DECLARE VARIABLES
-            int cleavage_state_1_count = 0;                                                         //COLUMN H
-            int cleavage_state_2_count = 0;                                                         //COLUMN I
-            int unique_cleavage_state_2_count = 0;                                                  //COLUMN J
-            int cleavage_state_2_charge_1 = 0;                                                      //COLUMN K
-            int line_count = 0;                                                                     //LINE COUNTER
-            String prv_peptide_sequence = "";                                                       //PRV PEPTIDE SEQUENCE
+			//DECLARE VARIABLES
+			int cleavage_state_1_count = 0;                                                         //COLUMN H
+			int cleavage_state_2_count = 0;                                                         //COLUMN I
+			int unique_cleavage_state_2_count = 0;                                                  //COLUMN J
+			int cleavage_state_2_charge_1 = 0;                                                      //COLUMN K
+			int line_count = 0;                                                                     //LINE COUNTER
+			String prv_peptide_sequence = "";                                                       //PRV PEPTIDE SEQUENCE
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge", "Result_ID", "Peptide_Sequence", "Cleavage_State", "Unique_Seq_ID" };
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge", "Result_ID", "Peptide_Sequence", "Cleavage_State" };
 
-            //INIT READER
-            DBInterface.initReader();
+			//INIT READER
+			DBInterface.initReader();
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
 				int resultID;
 				int seqID;
 				int cleavage_state = 0;
 
 				// DETERMINE THE CLEAVAGE STATE
-				if (int.TryParse(measurementhash["Result_ID"].ToString(), out resultID))
-				{
-					if (ResultID_to_Unique_Seq_ID_Table.TryGetValue(resultID, out seqID))
-					{
-						Seq_ID_to_Cleavage_State_Table.TryGetValue(seqID, out cleavage_state);   //CONVERT UNIQUE_SEQUENCE_ID TO CLEAVAGE_STATE
-					}
-				}
-
-                //FOR cleavage_state_1_count [COLUMN H]
-                if (cleavage_state == 1)
-                {
-                    //COLUMN H
-                    cleavage_state_1_count += 1;
-                }
-
-                //FOR cleavage_state_2_count [COLUMN I]
-                if (cleavage_state == 2)
-                {
-                    //COLUMN I
-                    cleavage_state_2_count += 1;
-                }
-
-                //IF THIS IS THE FIRST LINE
-                if (line_count == 0)
-                {
-                    //INC LINE COUNT
-                    line_count++;
-
-                    //FOR unique_cleavage_state_2_count [COLUMN J]
-                    if (cleavage_state == 2)
-                    {
-                        unique_cleavage_state_2_count = 1;
-                    }
-
-                    //FOR cleavage_state_2_charge_1 [COLUMN K]
-                    if (Convert.ToInt32(measurementhash["Charge"]) == 1)
-                    {
-                        cleavage_state_2_charge_1 = 1;
-                    }
-
-                }
-                else
-                {
-                    //LINE COUNT IS NOT THE FIRST LINE
-
-                    //FOR unique_cleavage_state_2_count IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN J]
-                    if (cleavage_state == 2 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
-                    {
-                        unique_cleavage_state_2_count += 1;
-                    }
-
-                    //FOR cleavage_state_2_charge_1 IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN K]
-                    if (Convert.ToInt32(measurementhash["Charge"]) == 1 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
-                    {
-                        cleavage_state_2_charge_1 += 1;
-                    }
-
-                }
-
-                //UPDATE PREVIOUS VALUES FOR NEXT LOOP
-                prv_peptide_sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
-            }
-
-            //SET ANSWER
-            int answer = unique_cleavage_state_2_count;
-
-            return Convert.ToString(answer);
-        }
-
-        /// <summary>
-		/// P_3: Ratio of semi-tryptic / fully tryptic peptides
-        /// </summary>
-        /// <returns></returns>
-        public String P_3()
-        {
-			//BUILD RESULT_ID, UNIQUE_SEQ_TABLE
-			System.Collections.Generic.Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
-			ResultID_to_Unique_Seq_ID_Table = GetResultIDToSeqIDTable();
-
-			// BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE            
-			// Populate a dictionary object via a single query to the database
-			System.Collections.Generic.Dictionary<int, int> Seq_ID_to_Cleavage_State_Table;
-			Seq_ID_to_Cleavage_State_Table = GetSeqIDToCleavageStateTable();
-
-            //SET DB QUERY
-            DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log, Charge, temp_xt.Result_ID, Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State "
-                + "FROM `temp_xt`, `temp_xt_resulttoseqmap` "
-                + "JOIN `temp_xt_seqtoproteinmap` ON `temp_xt_resulttoseqmap`.Unique_Seq_ID=`temp_xt_seqtoproteinmap`.Unique_Seq_ID "
-                + "WHERE temp_xt.Peptide_Expectation_Value_Log <= -2.00 "
-                + "AND temp_xt.Result_ID=temp_xt_resulttoseqmap.Result_ID "
-                + "AND temp_xt.random_id=" + r_id + " "
-                + "AND temp_xt_resulttoseqmap.random_id=" + r_id + " "
-                + "GROUP BY temp_xt_resulttoseqmap.Result_ID "
-                + "ORDER BY temp_xt.Peptide_Sequence, temp_xt.Group_ID;");
-
-            //DECLARE VARIABLES
-            int cleavage_state_1_count = 0;                                                         //COLUMN H
-            int cleavage_state_2_count = 0;                                                         //COLUMN I
-            int unique_cleavage_state_2_count = 0;                                                  //COLUMN J
-            int cleavage_state_2_charge_1 = 0;                                                      //COLUMN K
-            int line_count = 0;                                                                     //LINE COUNTER
-            String prv_peptide_sequence = "";                                                       //PRV PEPTIDE SEQUENCE
-
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge", "Result_ID", "Peptide_Sequence", "Cleavage_State" };
-
-            //INIT READER
-            DBInterface.initReader();
-
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-				int resultID;
-				int seqID;
-				int cleavage_state = 0;
-
-                // DETERMINE THE CLEAVAGE STATE
 				if (int.TryParse(measurementhash["Result_ID"].ToString(), out resultID))
 				{
 					if (ResultID_to_Unique_Seq_ID_Table.TryGetValue(resultID, out seqID))
@@ -3795,69 +3415,390 @@ namespace SMAQC
 				}
 
 				//FOR cleavage_state_1_count [COLUMN H]
-                if (cleavage_state == 1)
-                {
-                    //COLUMN H
-                    cleavage_state_1_count += 1;
-                }
-                
-                //FOR cleavage_state_2_count [COLUMN I]
-                if (cleavage_state == 2)
-                {
-                    //COLUMN I
-                    cleavage_state_2_count += 1;
-                }
+				if (cleavage_state == 1)
+				{
+					//COLUMN H
+					cleavage_state_1_count += 1;
+				}
 
-                //IF THIS IS THE FIRST LINE
-                if (line_count == 0)
-                {
-                    //INC LINE COUNT
-                    line_count++;
+				//FOR cleavage_state_2_count [COLUMN I]
+				if (cleavage_state == 2)
+				{
+					//COLUMN I
+					cleavage_state_2_count += 1;
+				}
 
-                    //FOR unique_cleavage_state_2_count [COLUMN J]
-                    if (cleavage_state == 2)
-                    {
-                        unique_cleavage_state_2_count = 1;
-                    }
+				//IF THIS IS THE FIRST LINE
+				if (line_count == 0)
+				{
+					//INC LINE COUNT
+					line_count++;
 
-                    //FOR cleavage_state_2_charge_1 [COLUMN K]
-                    if (Convert.ToInt32(measurementhash["Charge"]) == 1)
-                    {
-                        cleavage_state_2_charge_1 = 1;
-                    }
+					//FOR unique_cleavage_state_2_count [COLUMN J]
+					if (cleavage_state == 2)
+					{
+						unique_cleavage_state_2_count = 1;
+					}
 
-                }
-                else
-                {
-                    //LINE COUNT IS NOT THE FIRST LINE
+					//FOR cleavage_state_2_charge_1 [COLUMN K]
+					if (Convert.ToInt32(measurementhash["Charge"]) == 1)
+					{
+						cleavage_state_2_charge_1 = 1;
+					}
 
-                    //FOR unique_cleavage_state_2_count IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN J]
-                    if (cleavage_state == 2 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
-                    {
-                            unique_cleavage_state_2_count += 1;
-                    }
+				}
+				else
+				{
+					//LINE COUNT IS NOT THE FIRST LINE
 
-                    //FOR cleavage_state_2_charge_1 IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN K]
-                    if (Convert.ToInt32(measurementhash["Charge"]) == 1 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
-                    {
-                        cleavage_state_2_charge_1 += 1;
-                    }
+					//FOR unique_cleavage_state_2_count IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN J]
+					if (cleavage_state == 2 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
+					{
+						unique_cleavage_state_2_count += 1;
+					}
 
-                }
+					//FOR cleavage_state_2_charge_1 IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN K]
+					if (Convert.ToInt32(measurementhash["Charge"]) == 1 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
+					{
+						cleavage_state_2_charge_1 += 1;
+					}
 
-                //UPDATE PREVIOUS VALUES FOR NEXT LOOP
-                prv_peptide_sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
+				}
 
-            }
+				//UPDATE PREVIOUS VALUES FOR NEXT LOOP
+				prv_peptide_sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
+			}
 
-            //SET ANSWER
+			//SET ANSWER
+			int answer = cleavage_state_2_count;
+
+			return Convert.ToString(answer);
+		}
+
+		/// <summary>
+		/// P_2B: Number of tryptic peptides; unique peptide & charge count
+		/// </summary>
+		/// <returns></returns>
+		public String P_2B()
+		{
+			//BUILD RESULT_ID, UNIQUE_SEQ_TABLE
+			System.Collections.Generic.Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
+			ResultID_to_Unique_Seq_ID_Table = GetResultIDToSeqIDTable();
+
+			// BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE            
+			// Populate a dictionary object via a single query to the database
+			System.Collections.Generic.Dictionary<int, int> Seq_ID_to_Cleavage_State_Table;
+			Seq_ID_to_Cleavage_State_Table = GetSeqIDToCleavageStateTable();
+
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT temp_xt.Result_ID, temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_xt.Charge, temp_xt.Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State, temp_xt_seqtoproteinmap.Unique_Seq_ID "
+				+ "FROM `temp_xt`, `temp_xt_resulttoseqmap` "
+				+ "INNER JOIN `temp_xt_seqtoproteinmap` ON `temp_xt_resulttoseqmap`.Unique_Seq_ID=`temp_xt_seqtoproteinmap`.Unique_Seq_ID "
+				+ "WHERE Peptide_Expectation_Value_Log <= -2.00 "
+				+ "AND temp_xt.Result_ID=temp_xt_resulttoseqmap.Result_ID "
+				+ "AND temp_xt.random_id=" + r_id + " "
+				+ "AND temp_xt_resulttoseqmap.random_id=" + r_id + " "
+				+ "GROUP BY temp_xt_resulttoseqmap.Result_ID "
+				+ "ORDER BY Charge, Peptide_Sequence, Scan;");
+
+			//DECLARE VARIABLES
+			String prv_peptide_sequence = "";                                                       //STORE PREVIOUS PEPTIDE SEQUENCE
+			String prv_prv_peptide_sequence = "";                                                   //STORE PREVIOUS PREVIOUS PEPTIDE SEQUENCE
+			int prv_cleavage_state = 0;                                                             //STORE PREVIOUS CLEAVAGE STATE
+			int count_with_different_charges = 0;                                                   //COUNTS WITH DIFFERENT CHARGES [COLUMN F]
+			Boolean is_first_line = true;                                                           //IS FIRST LINE 
+
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Result_ID", "Scan", "Peptide_Expectation_Value_Log", "Charge", "Peptide_Sequence", "Cleavage_State", "Unique_Seq_ID" };
+
+			//INIT READER
+			DBInterface.initReader();
+
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				int resultID;
+				int seqID;
+				int cleavage_state = 0;
+
+				// DETERMINE THE CLEAVAGE STATE
+				if (int.TryParse(measurementhash["Result_ID"].ToString(), out resultID))
+				{
+					if (ResultID_to_Unique_Seq_ID_Table.TryGetValue(resultID, out seqID))
+					{
+						Seq_ID_to_Cleavage_State_Table.TryGetValue(seqID, out cleavage_state);   //CONVERT UNIQUE_SEQUENCE_ID TO CLEAVAGE_STATE
+					}
+				}
+
+				//IS FIRST LINE?
+				if (is_first_line)
+				{
+					//SET TO FALSE
+					is_first_line = false;
+
+					//IF CURRENT CLEAVAGE STATE == 2 && PREV + CURRENT PEPTIDE SEQUENCE VALUES ARE DIFFERENT [ONLY FOR FIRST LINE]
+					if (cleavage_state == 2 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
+					{
+						//INC
+						count_with_different_charges++;
+					}
+				}
+				else
+				{
+					//IF PREV CLEAVAGE STATE == 2 && PREV + PREV PREV PEPTIDE SEQUENCE VALUES ARE DIFFERENT
+					if (prv_cleavage_state == 2 && !prv_peptide_sequence.Equals(prv_prv_peptide_sequence))
+					{
+						//INC
+						count_with_different_charges++;
+					}
+				}
+
+				//UPDATE PREV VALUES
+				prv_prv_peptide_sequence = prv_peptide_sequence;
+				prv_peptide_sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
+				prv_cleavage_state = cleavage_state;
+			}
+
+			return Convert.ToString(count_with_different_charges);
+		}
+
+		/// <summary>
+		/// P_2C: Number of tryptic peptides; unique peptide count
+		/// </summary>
+		/// <returns></returns>
+		public String P_2C()
+		{
+			//BUILD RESULT_ID, UNIQUE_SEQ_TABLE
+			System.Collections.Generic.Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
+			ResultID_to_Unique_Seq_ID_Table = GetResultIDToSeqIDTable();
+
+			// BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE            
+			// Populate a dictionary object via a single query to the database
+			System.Collections.Generic.Dictionary<int, int> Seq_ID_to_Cleavage_State_Table;
+			Seq_ID_to_Cleavage_State_Table = GetSeqIDToCleavageStateTable();
+
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log, Charge, temp_xt.Result_ID, Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State, temp_xt_seqtoproteinmap.Unique_Seq_ID "
+				+ "FROM `temp_xt`, `temp_xt_resulttoseqmap` "
+				+ "JOIN `temp_xt_seqtoproteinmap` ON `temp_xt_resulttoseqmap`.Unique_Seq_ID=`temp_xt_seqtoproteinmap`.Unique_Seq_ID "
+				+ "WHERE temp_xt.Peptide_Expectation_Value_Log <= -2.00 "
+				+ "AND temp_xt.Result_ID=temp_xt_resulttoseqmap.Result_ID "
+				+ "AND temp_xt.random_id=" + r_id + " "
+				+ "AND temp_xt_resulttoseqmap.random_id=" + r_id + " "
+				+ "GROUP BY temp_xt_resulttoseqmap.Result_ID "
+				+ "ORDER BY temp_xt.Peptide_Sequence, temp_xt.Group_ID;");
+
+			//DECLARE VARIABLES
+			int cleavage_state_1_count = 0;                                                         //COLUMN H
+			int cleavage_state_2_count = 0;                                                         //COLUMN I
+			int unique_cleavage_state_2_count = 0;                                                  //COLUMN J
+			int cleavage_state_2_charge_1 = 0;                                                      //COLUMN K
+			int line_count = 0;                                                                     //LINE COUNTER
+			String prv_peptide_sequence = "";                                                       //PRV PEPTIDE SEQUENCE
+
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge", "Result_ID", "Peptide_Sequence", "Cleavage_State", "Unique_Seq_ID" };
+
+			//INIT READER
+			DBInterface.initReader();
+
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				int resultID;
+				int seqID;
+				int cleavage_state = 0;
+
+				// DETERMINE THE CLEAVAGE STATE
+				if (int.TryParse(measurementhash["Result_ID"].ToString(), out resultID))
+				{
+					if (ResultID_to_Unique_Seq_ID_Table.TryGetValue(resultID, out seqID))
+					{
+						Seq_ID_to_Cleavage_State_Table.TryGetValue(seqID, out cleavage_state);   //CONVERT UNIQUE_SEQUENCE_ID TO CLEAVAGE_STATE
+					}
+				}
+
+				//FOR cleavage_state_1_count [COLUMN H]
+				if (cleavage_state == 1)
+				{
+					//COLUMN H
+					cleavage_state_1_count += 1;
+				}
+
+				//FOR cleavage_state_2_count [COLUMN I]
+				if (cleavage_state == 2)
+				{
+					//COLUMN I
+					cleavage_state_2_count += 1;
+				}
+
+				//IF THIS IS THE FIRST LINE
+				if (line_count == 0)
+				{
+					//INC LINE COUNT
+					line_count++;
+
+					//FOR unique_cleavage_state_2_count [COLUMN J]
+					if (cleavage_state == 2)
+					{
+						unique_cleavage_state_2_count = 1;
+					}
+
+					//FOR cleavage_state_2_charge_1 [COLUMN K]
+					if (Convert.ToInt32(measurementhash["Charge"]) == 1)
+					{
+						cleavage_state_2_charge_1 = 1;
+					}
+
+				}
+				else
+				{
+					//LINE COUNT IS NOT THE FIRST LINE
+
+					//FOR unique_cleavage_state_2_count IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN J]
+					if (cleavage_state == 2 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
+					{
+						unique_cleavage_state_2_count += 1;
+					}
+
+					//FOR cleavage_state_2_charge_1 IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN K]
+					if (Convert.ToInt32(measurementhash["Charge"]) == 1 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
+					{
+						cleavage_state_2_charge_1 += 1;
+					}
+
+				}
+
+				//UPDATE PREVIOUS VALUES FOR NEXT LOOP
+				prv_peptide_sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
+			}
+
+			//SET ANSWER
+			int answer = unique_cleavage_state_2_count;
+
+			return Convert.ToString(answer);
+		}
+
+		/// <summary>
+		/// P_3: Ratio of semi-tryptic / fully tryptic peptides
+		/// </summary>
+		/// <returns></returns>
+		public String P_3()
+		{
+			//BUILD RESULT_ID, UNIQUE_SEQ_TABLE
+			System.Collections.Generic.Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
+			ResultID_to_Unique_Seq_ID_Table = GetResultIDToSeqIDTable();
+
+			// BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE            
+			// Populate a dictionary object via a single query to the database
+			System.Collections.Generic.Dictionary<int, int> Seq_ID_to_Cleavage_State_Table;
+			Seq_ID_to_Cleavage_State_Table = GetSeqIDToCleavageStateTable();
+
+			//SET DB QUERY
+			DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log, Charge, temp_xt.Result_ID, Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State "
+				+ "FROM `temp_xt`, `temp_xt_resulttoseqmap` "
+				+ "JOIN `temp_xt_seqtoproteinmap` ON `temp_xt_resulttoseqmap`.Unique_Seq_ID=`temp_xt_seqtoproteinmap`.Unique_Seq_ID "
+				+ "WHERE temp_xt.Peptide_Expectation_Value_Log <= -2.00 "
+				+ "AND temp_xt.Result_ID=temp_xt_resulttoseqmap.Result_ID "
+				+ "AND temp_xt.random_id=" + r_id + " "
+				+ "AND temp_xt_resulttoseqmap.random_id=" + r_id + " "
+				+ "GROUP BY temp_xt_resulttoseqmap.Result_ID "
+				+ "ORDER BY temp_xt.Peptide_Sequence, temp_xt.Group_ID;");
+
+			//DECLARE VARIABLES
+			int cleavage_state_1_count = 0;                                                         //COLUMN H
+			int cleavage_state_2_count = 0;                                                         //COLUMN I
+			int unique_cleavage_state_2_count = 0;                                                  //COLUMN J
+			int cleavage_state_2_charge_1 = 0;                                                      //COLUMN K
+			int line_count = 0;                                                                     //LINE COUNTER
+			String prv_peptide_sequence = "";                                                       //PRV PEPTIDE SEQUENCE
+
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge", "Result_ID", "Peptide_Sequence", "Cleavage_State" };
+
+			//INIT READER
+			DBInterface.initReader();
+
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			{
+				int resultID;
+				int seqID;
+				int cleavage_state = 0;
+
+				// DETERMINE THE CLEAVAGE STATE
+				if (int.TryParse(measurementhash["Result_ID"].ToString(), out resultID))
+				{
+					if (ResultID_to_Unique_Seq_ID_Table.TryGetValue(resultID, out seqID))
+					{
+						Seq_ID_to_Cleavage_State_Table.TryGetValue(seqID, out cleavage_state);   //CONVERT UNIQUE_SEQUENCE_ID TO CLEAVAGE_STATE
+					}
+				}
+
+				//FOR cleavage_state_1_count [COLUMN H]
+				if (cleavage_state == 1)
+				{
+					//COLUMN H
+					cleavage_state_1_count += 1;
+				}
+
+				//FOR cleavage_state_2_count [COLUMN I]
+				if (cleavage_state == 2)
+				{
+					//COLUMN I
+					cleavage_state_2_count += 1;
+				}
+
+				//IF THIS IS THE FIRST LINE
+				if (line_count == 0)
+				{
+					//INC LINE COUNT
+					line_count++;
+
+					//FOR unique_cleavage_state_2_count [COLUMN J]
+					if (cleavage_state == 2)
+					{
+						unique_cleavage_state_2_count = 1;
+					}
+
+					//FOR cleavage_state_2_charge_1 [COLUMN K]
+					if (Convert.ToInt32(measurementhash["Charge"]) == 1)
+					{
+						cleavage_state_2_charge_1 = 1;
+					}
+
+				}
+				else
+				{
+					//LINE COUNT IS NOT THE FIRST LINE
+
+					//FOR unique_cleavage_state_2_count IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN J]
+					if (cleavage_state == 2 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
+					{
+						unique_cleavage_state_2_count += 1;
+					}
+
+					//FOR cleavage_state_2_charge_1 IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN K]
+					if (Convert.ToInt32(measurementhash["Charge"]) == 1 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
+					{
+						cleavage_state_2_charge_1 += 1;
+					}
+
+				}
+
+				//UPDATE PREVIOUS VALUES FOR NEXT LOOP
+				prv_peptide_sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
+
+			}
+
+			//SET ANSWER
 			double answer = 0;
 			if (cleavage_state_2_count > 0)
 				answer = Convert.ToDouble(cleavage_state_1_count) / Convert.ToDouble(cleavage_state_2_count);
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
+			//WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
 			return answer.ToString("0.000000");
-        }
+		}
 
-    }
+	}
 }
