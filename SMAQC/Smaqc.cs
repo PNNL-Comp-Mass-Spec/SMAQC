@@ -188,8 +188,8 @@ namespace SMAQC
                     m_SystemLogManager.addApplicationLog("The 6 required data files not found in " + path_to_scan_files);
                     m_SystemLogManager.addApplicationLog("Exiting...");
 
-                    //SAVE APPLICATION LOG
-                    m_SystemLogManager.saveApplicationLogFile();
+                    //CLOSE THE APPLICATION LOG
+                    m_SystemLogManager.CloseLogFile();
 
                     Environment.Exit(1);
                 }
@@ -232,8 +232,8 @@ namespace SMAQC
             //OUTPUT A SMAQC ANALYSIS COMPLETE MESSAGE [MENTOR REQUIREMENT]
             m_SystemLogManager.addApplicationLog("SMAQC analysis complete");
 
-            //SAVE APPLICATION LOG
-            m_SystemLogManager.saveApplicationLogFile();
+			//CLOSE THE APPLICATION LOG
+			m_SystemLogManager.CloseLogFile();
 
         }
 

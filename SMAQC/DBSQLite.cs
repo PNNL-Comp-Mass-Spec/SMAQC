@@ -43,6 +43,7 @@ namespace SMAQC
             }
             catch (System.NullReferenceException ex)
             {
+				Console.WriteLine("Error closing the SQLite DB: " + ex.Message);
             }
         }
 

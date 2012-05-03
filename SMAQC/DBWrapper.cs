@@ -106,6 +106,7 @@ namespace SMAQC
             }
             catch (System.NullReferenceException ex)
             {
+				Console.WriteLine("Error setting the query text: " + ex.Message);
             }
         }
 
@@ -134,6 +135,7 @@ namespace SMAQC
             }
             catch (System.NullReferenceException ex)
             {
+				Console.WriteLine("Error in QueryNonQuery: " + ex.Message);
             }
 
             //RETURN TRUE/FALSE

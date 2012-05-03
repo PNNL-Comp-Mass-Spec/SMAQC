@@ -7,88 +7,95 @@ using System.IO;
 
 namespace SMAQC
 {
-    class SystemLogManager
-    {
-        ConcreteSubject s = new ConcreteSubject();
-        String applicationlog_filename = "";
-        List<String> applicationlog_records = new List<String>();
+	class SystemLogManager
+	{
+		ConcreteSubject s = new ConcreteSubject();
+		String applicationlog_filename = "";
+		List<String> applicationlog_records = new List<String>();
 
-        //CONSTRUCTOR
-        public SystemLogManager()
-        {
-            //ATTACH OBSERVER
-            s.Attach(new ConcreteObserver(s, "OBSERVER 1"));
-        }
+		StreamWriter mApplicationLogFile;
 
-        //DESTRUCTOR
-        ~SystemLogManager()
-        {
+		//CONSTRUCTOR
+		public SystemLogManager()
+		{
+			//ATTACH OBSERVER
+			s.Attach(new ConcreteObserver(s, "OBSERVER 1"));
+		}
 
-        }
+		//DESTRUCTOR
+		~SystemLogManager()
+		{
 
-        //CREATE OUR APPLICATION LOG FILENAME
-        public void createApplicationLog()
-        {
-            applicationlog_filename = "SMAQC-log_" + DateTime.Now.ToString("M-dd-yyyy-H-m-ss") + ".txt";
+		}
 
-            //ADD DEFAULT TEXT TO RECORD LOG
-            addApplicationLog("[Version Info]");
-            addApplicationLog("Loading Assemblies");
+		//CREATE OUR APPLICATION LOG FILENAME
+		public void createApplicationLog()
+		{
+			applicationlog_filename = "SMAQC-log_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".txt";
 
-            //FETCH ASSEMBLIES + LOG TO FILE
-            AppDomain MyDomain = AppDomain.CurrentDomain;
-            Assembly[] AssembliesLoaded = MyDomain.GetAssemblies();
-            foreach (Assembly MyAssembly in AssembliesLoaded)
-            {
-                addApplicationLog(MyAssembly.FullName);
-            }
+			try
+			{
+				//CREATE FILE
+				mApplicationLogFile = new StreamWriter(new System.IO.FileStream(applicationlog_filename, FileMode.Create, FileAccess.Write, FileShare.Read));
+				mApplicationLogFile.AutoFlush = true;
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine("Error creating log file: " + ex.Message);
+			}
 
-            //ADD SYSTEM INFORMATION
-            addApplicationLog("[System Information]");
-            addApplicationLog("OS Version: " + Environment.OSVersion);
-            addApplicationLog("Processor Count: " + Environment.ProcessorCount);
+			//ADD DEFAULT TEXT TO RECORD LOG
+			addApplicationLog("[Version Info]");
+			addApplicationLog("Loading Assemblies");
 
-            if (Environment.Is64BitOperatingSystem)
-                addApplicationLog("Operating System Type: 64-Bit OS");
-            else
-                addApplicationLog("Operating System Type: 32-Bit OS");
+			//FETCH ASSEMBLIES + LOG TO FILE
+			AppDomain MyDomain = AppDomain.CurrentDomain;
+			Assembly[] AssembliesLoaded = MyDomain.GetAssemblies();
+			foreach (Assembly MyAssembly in AssembliesLoaded)
+			{
+				addApplicationLog(MyAssembly.FullName);
+			}
 
-            addApplicationLog("Page Size: " + Environment.SystemPageSize);
+			//ADD SYSTEM INFORMATION
+			addApplicationLog("[System Information]");
+			addApplicationLog("OS Version: " + Environment.OSVersion);
+			addApplicationLog("Processor Count: " + Environment.ProcessorCount);
 
-            //START WITH MAIN SYSTEM LOG
-            addApplicationLog("[LogStart]");
-            addApplicationLog("-----------------------------------------------------");
-        }
+			if (Environment.Is64BitOperatingSystem)
+				addApplicationLog("Operating System Type: 64-Bit OS");
+			else
+				addApplicationLog("Operating System Type: 32-Bit OS");
 
-        //ADD APPLICATION LOGS TO OUR LIST<>
-        public void addApplicationLog(String message)
-        {
-            //ADD TO RECORD LOG
-            applicationlog_records.Add(DateTime.Now.ToString("M/dd/yyyy hh:mm:ss tt") + " - " + message);
+			addApplicationLog("Page Size: " + Environment.SystemPageSize);
 
-            //SET OBSERVER SUBJECT TO OUR MESSAGE
-            s.SubjectState = DateTime.Now.ToString("M/dd/yyyy hh:mm:ss tt") + " - " + message;
+			//START WITH MAIN SYSTEM LOG
+			addApplicationLog("[LogStart]");
+			addApplicationLog("-----------------------------------------------------");
+		}
 
-            //NOTIFY OBSERVER OF CHANGE
-            s.Notify();
-        }
+		//ADD APPLICATION LOGS TO OUR LIST<>
+		public void addApplicationLog(String message)
+		{
+			//APPEND TO THE LOG FILE
+			//ADD TO RECORD LOG
+			applicationlog_records.Add(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt") + " - " + message);
+			
+			if (mApplicationLogFile != null)
+				mApplicationLogFile.WriteLine(applicationlog_records.Last());
 
-        //SAVE LOG FILE
-        public void saveApplicationLogFile()
-        {
-            //CREATE FILE
-            StreamWriter file = new StreamWriter(applicationlog_filename);
+			//SET OBSERVER SUBJECT TO OUR MESSAGE
+			s.SubjectState = DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt") + " - " + message;
 
-            //ENABLE AUTOFLUSH [PNNL REQUIREMENT]
-            file.AutoFlush = true;
+			//NOTIFY OBSERVER OF CHANGE
+			s.Notify();
+		}
 
-            for (int i = 0; i < applicationlog_records.Count; i++)
-            {
-                file.Write(applicationlog_records[i] + "\r\n");
-            }
+		//CLOSE THE LOG FILE
+		public void CloseLogFile()
+		{
+			if (mApplicationLogFile != null)
+				mApplicationLogFile.Close();
 
-            //CLOSE FILE
-            file.Close();
-        }
-    }
+		}
+	}
 }
