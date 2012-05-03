@@ -404,6 +404,68 @@ namespace SMAQC
 		/// <returns></returns>
 		public String C_3A()
 		{
+			double startScanRelative = 0;
+			double endScanRelative = 1;
+
+			//COMPUTE RESULT
+			return ComputMedianPeakWidth(startScanRelative, endScanRelative);
+		}
+
+		/// <summary>
+		/// C-3B: Median peak width during middle 50% of separation
+		/// </summary>
+		/// <returns></returns>
+		public String C_3B()
+		{
+			double startScanRelative = 0.25;
+			double endScanRelative = 0.75;
+
+			//COMPUTE RESULT
+			return ComputMedianPeakWidth(startScanRelative, endScanRelative);
+		}
+
+		/// <summary>
+		/// C-4A: Median peak width during first 10% of separation
+		/// </summary>
+		/// <returns></returns>
+		public String C_4A()
+		{
+			double startScanRelative = 0.00;
+			double endScanRelative = 0.10;
+
+			//COMPUTE RESULT
+			return ComputMedianPeakWidth(startScanRelative, endScanRelative);
+		}
+
+		/// <summary>
+		/// C-4B: Median peak width during last 10% of separation
+		/// </summary>
+		/// <returns></returns>
+		public String C_4B()
+		{
+			double startScanRelative = 0.90;
+			double endScanRelative = 1.00;
+
+			//COMPUTE RESULT
+			return ComputMedianPeakWidth(startScanRelative, endScanRelative);
+		}
+
+		/// <summary>
+		/// C-4C: Median peak width during middle 10% of separation
+		/// </summary>
+		/// <returns></returns>
+		public String C_4C()
+		{
+			double startScanRelative = 0.45;
+			double endScanRelative = 0.55;
+
+			//COMPUTE RESULT
+			return ComputMedianPeakWidth(startScanRelative, endScanRelative);
+		}
+
+
+		protected string ComputMedianPeakWidth(double startScanRelative, double endScanRelative)
+		{
 			//DECLARE HASH TABLES
 			List<int> bestscan = new List<int>();                           //STORE Best Scan Results
 			Hashtable fragscannumber = new Hashtable();                     //STORE FRAG SCAN NUMBERS
@@ -531,165 +593,8 @@ namespace SMAQC
 				double end_minus_start_in_secs = end_minus_start * 60;
 				double running_percent = (double)running_sum / (double)bestscan.Count;
 
-				//ADD end_minus_start_in_secs TO OUR LIST [COLUMN R]
-				result.Add(end_minus_start_in_secs);
-
-				//INCREMENT RUNNING SUM [COLUMN S]
-				running_sum++;
-			}
-
-			string resultText = string.Empty;
-
-			if (result.Count > 0)
-			{
-				//CALCULATE MEDIAN
-				median = ComputeMedian(result);
-
-				//WE NOW HAVE RESULT ... NOW ROUND IT TO 2ND DIGIT			
-				resultText = median.ToString("0.00");
-			}
-
-			//RETURN RESULT
-			return resultText;
-		}
-
-		/// <summary>
-		/// C-3B: Median peak width during middle 50% of separation
-		/// </summary>
-		/// <returns></returns>
-		public String C_3B()
-		{
-			//DECLARE HASH TABLES
-			List<int> bestscan = new List<int>();                           //STORE Best Scan Results
-			Hashtable fragscannumber = new Hashtable();                     //STORE FRAG SCAN NUMBERS
-			Hashtable fwhminscans = new Hashtable();                        //STORE FWHMIN SCANS
-			Hashtable optimalpeakapexscannumber = new Hashtable();          //STORE OPTIMAL PEAK APEX SCAN NUMBERS
-			Hashtable scantime = new Hashtable();                           //STORE TIME
-			List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
-			int i;                                                          //TEMP POSITION VARIABLE
-			int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
-			String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
-			String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
-			String prev_Best_Evalue = "";                                   //INIT PREV BEST EVALUE TO BLANK [REQUIRED FOR COMPARISON]
-			double median = 0.00;                                           //INIT MEDIAN
-			double START_RANGE = 0.25;                                      //FUNCTION START RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
-			double END_RANGE = 0.75;                                        //FUNCTION END RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
-
-			//SET DB QUERY [REQUIRED TO SORT BY PEPTIDE SEQUENCE]
-			DBInterface.setQuery("SELECT Scan, Charge, Peptide_Expectation_Value_Log,Peptide_Sequence FROM `temp_xt` "
-			+ "WHERE temp_xt.random_id=" + r_id + " ORDER BY Peptide_Sequence,Charge,Scan,Scan");
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields1 = { "Scan", "Charge", "Peptide_Expectation_Value_Log", "Peptide_Sequence" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//FETCH COLUMNS Q,R NOW
-
-			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields1, ref measurementhash)) && (measurementhash.Count > 0))
-			{
-				//FIND COLUMN Q
-				String Best_Evalue = "";
-
-				//IF PREVIOUS PEPTIDE SEQUENCES == EACH OTHER && PREVIOUS CHARGES == EACH OTHER
-				if (prv_Peptide_Sequence.Equals(Convert.ToString(measurementhash["Peptide_Sequence"])) && prv_Charge.Equals(Convert.ToString(measurementhash["Charge"])))
-				{
-
-					//TAKE MIN [EITHER PREVIOUS BEST EVALUE OR CURRENT PEPTIDE EXPECTATION VALUE
-					if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) > Convert.ToDouble(prev_Best_Evalue))
-					{
-						Best_Evalue = prev_Best_Evalue;
-					}
-					else
-					{
-						Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-					}
-				}
-				else
-				{
-					Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-				}
-
-				//NOW FIND COLUMN R IF COLUMN U IS == TRUE
-				if (Best_Evalue.Equals(Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"])))
-				{
-					//WE ARE NOW == TRUE FOR THIS COLUMN ... AS TRUE WE ADD THIS TO OUR HASH TABLE/WHATEVER
-
-					//[ADD HERE]
-					bestscan.Add(Convert.ToInt32(measurementhash["Scan"]));
-				}
-
-				//UPDATE PREVIOUS VALUES FOR NEXT LOOP
-				prv_Charge = Convert.ToString(measurementhash["Charge"]);
-				prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
-				prev_Best_Evalue = Best_Evalue;
-			}
-
-			//NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
-			bestscan.Sort();
-
-			//SET DB QUERY
-			DBInterface.setQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM `temp_sicstats` WHERE temp_sicstats.random_id=" + r_id + "");
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//FETCH COLUMNS D-F
-
-			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields2, ref measurementhash)) && (measurementhash.Count > 0))
-			{
-				//ADD VALUES TO OUR TEMP HASH TABLES
-				fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
-				fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
-				optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
-			}
-
-			//SET DB QUERY
-			DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM `temp_scanstats` WHERE temp_scanstats.random_id=" + r_id + "");
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields3 = { "ScanNumber", "ScanTime" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//FETCH COLUMNS H-I
-			i = 1;
-			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
-			{
-				//ADD TO SCANTIME HASH TABLE
-				scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
-
-				//INCREMENT I POSITION
-				i++;
-			}
-
-			//NOW START THE ACTUAL MEASUREMENT CALCULATION
-
-			//LOOP THROUGH BESTSCAN
-			for (i = 0; i < bestscan.Count; i++)
-			{
-				//FIND INDEX + OPTIMAL PEAK APEX SCAN +- FWHMIN FOR EACH RESULT [COLUMNS: M,O]
-				String index = Convert.ToString(bestscan[i]);
-				int OptimalPeakApexScanMinusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) - Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
-				int OptimalPeakApexScanPlusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) + Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
-
-				//FIND OTHER COLUMNS [N,P, Q,R,T]
-				double start_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanMinusFWHMIN)]);
-				double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
-				double end_minus_start = end_time - start_time;
-				double end_minus_start_in_secs = end_minus_start * 60;
-				double running_percent = (double)running_sum /(double)bestscan.Count;
-
 				//CHECK FOR VALID RANGE DATA THEN ADD TO OUR RESULTS
-				if (running_percent >= START_RANGE && running_percent <= END_RANGE)
+				if (running_percent >= startScanRelative && running_percent <= endScanRelative)
 				{
 					//WE ARE WITHING OUR VALID RANGE ... SO ADD end_minus_start_in_secs TO OUR LIST [COLUMN U]
 					result.Add(end_minus_start_in_secs);
@@ -721,510 +626,6 @@ namespace SMAQC
 		}
 
 		/// <summary>
-		/// C-4A: Median peak width during first 10% of separation
-		/// </summary>
-		/// <returns></returns>
-		public String C_4A()
-		{
-			//DECLARE HASH TABLES
-			List<int> bestscan = new List<int>();                           //STORE Best Scan Results
-			Hashtable fragscannumber = new Hashtable();                     //STORE FRAG SCAN NUMBERS
-			Hashtable fwhminscans = new Hashtable();                        //STORE FWHMIN SCANS
-			Hashtable optimalpeakapexscannumber = new Hashtable();          //STORE OPTIMAL PEAK APEX SCAN NUMBERS
-			Hashtable scantime = new Hashtable();                           //STORE TIME
-			List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
-			int i;                                                          //TEMP POSITION VARIABLE
-			int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
-			String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
-			String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
-			String prev_Best_Evalue = "";                                   //INIT PREV BEST EVALUE TO BLANK [REQUIRED FOR COMPARISON]
-			double median = 0.00;                                           //INIT MEDIAN
-			double START_RANGE = 0.00;                                      //FUNCTION START RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
-			double END_RANGE = 0.10;                                        //FUNCTION END RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
-
-			//SET DB QUERY [REQUIRED TO SORT BY PEPTIDE SEQUENCE]
-			DBInterface.setQuery("SELECT Scan, Charge, Peptide_Expectation_Value_Log,Peptide_Sequence FROM `temp_xt` "
-			+ "WHERE temp_xt.random_id=" + r_id + " ORDER BY Peptide_Sequence,Charge,Scan,Scan");
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields1 = { "Scan", "Charge", "Peptide_Expectation_Value_Log", "Peptide_Sequence" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//FETCH COLUMNS Q,R NOW
-
-			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields1, ref measurementhash)) && (measurementhash.Count > 0))
-			{
-				//FIND COLUMN Q
-				String Best_Evalue = "";
-
-				//IF PREVIOUS PEPTIDE SEQUENCES == EACH OTHER && PREVIOUS CHARGES == EACH OTHER
-				if (prv_Peptide_Sequence.Equals(Convert.ToString(measurementhash["Peptide_Sequence"])) && prv_Charge.Equals(Convert.ToString(measurementhash["Charge"])))
-				{
-
-					//TAKE MIN [EITHER PREVIOUS BEST EVALUE OR CURRENT PEPTIDE EXPECTATION VALUE
-					if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) > Convert.ToDouble(prev_Best_Evalue))
-					{
-						Best_Evalue = prev_Best_Evalue;
-					}
-					else
-					{
-						Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-					}
-				}
-				else
-				{
-					Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-				}
-
-				//NOW FIND COLUMN R IF COLUMN U IS == TRUE
-				if (Best_Evalue.Equals(Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"])))
-				{
-					//WE ARE NOW == TRUE FOR THIS COLUMN ... AS TRUE WE ADD THIS TO OUR HASH TABLE/WHATEVER
-
-					//[ADD HERE]
-					bestscan.Add(Convert.ToInt32(measurementhash["Scan"]));
-				}
-
-				//UPDATE PREVIOUS VALUES FOR NEXT LOOP
-				prv_Charge = Convert.ToString(measurementhash["Charge"]);
-				prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
-				prev_Best_Evalue = Best_Evalue;
-			}
-
-			//NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
-			bestscan.Sort();
-
-			//SET DB QUERY
-			DBInterface.setQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM `temp_sicstats` WHERE temp_sicstats.random_id=" + r_id + "");
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//FETCH COLUMNS D-F
-
-			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields2, ref measurementhash)) && (measurementhash.Count > 0))
-			{
-				//ADD VALUES TO OUR TEMP HASH TABLES
-				fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
-				fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
-				optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
-			}
-
-			//SET DB QUERY
-			DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM `temp_scanstats` WHERE temp_scanstats.random_id=" + r_id + "");
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields3 = { "ScanNumber", "ScanTime" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//FETCH COLUMNS H-I
-			i = 1;
-			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
-			{
-				//ADD TO SCANTIME HASH TABLE
-				scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
-
-				//INCREMENT I POSITION
-				i++;
-			}
-
-			//NOW START THE ACTUAL MEASUREMENT CALCULATION
-
-			//LOOP THROUGH BESTSCAN
-			for (i = 0; i < bestscan.Count; i++)
-			{
-				//FIND INDEX + OPTIMAL PEAK APEX SCAN +- FWHMIN FOR EACH RESULT [COLUMNS: M,O]
-				String index = Convert.ToString(bestscan[i]);
-				int OptimalPeakApexScanMinusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) - Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
-				int OptimalPeakApexScanPlusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) + Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
-
-				//FIND OTHER COLUMNS [N,P, Q,R,T]
-				double start_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanMinusFWHMIN)]);
-				double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
-				double end_minus_start = end_time - start_time;
-				double end_minus_start_in_secs = end_minus_start * 60;
-				double running_percent = (double)running_sum /(double)bestscan.Count;
-
-				//CHECK FOR VALID RANGE DATA THEN ADD TO OUR RESULTS
-				if (running_percent >= START_RANGE && running_percent <= END_RANGE)
-				{
-					//WE ARE WITHING OUR VALID RANGE ... SO ADD end_minus_start_in_secs TO OUR LIST
-					result.Add(end_minus_start_in_secs);
-				}
-
-				//INCREMENT RUNNING SUM [COLUMN S]
-				running_sum++;
-			}
-
-			string resultText = string.Empty;
-
-			if (result.Count > 0)
-			{
-				//CALCULATE MEDIAN
-				median = ComputeMedian(result);
-
-				//WE NOW HAVE RESULT ... NOW ROUND IT TO 2ND DIGIT
-				resultText = median.ToString("0.00");
-
-				//IMPLEMENTATION NOTES
-				/*
-				 * result.Count == # OF U COLUMN VALID RESULTS
-				 * Console.WriteLine("MEDIAN={0} -- {1} [POS={2}]", result[pos], result[pos + 1], pos); == HELPFUL FOR DEBUGGING
-				*/
-			}
-
-			//RETURN RESULT
-			return resultText;
-		}
-
-		/// <summary>
-		/// C-4B: Median peak width during last 10% of separation
-		/// </summary>
-		/// <returns></returns>
-		public String C_4B()
-		{
-			//DECLARE HASH TABLES
-			List<int> bestscan = new List<int>();                           //STORE Best Scan Results
-			Hashtable fragscannumber = new Hashtable();                     //STORE FRAG SCAN NUMBERS
-			Hashtable fwhminscans = new Hashtable();                        //STORE FWHMIN SCANS
-			Hashtable optimalpeakapexscannumber = new Hashtable();          //STORE OPTIMAL PEAK APEX SCAN NUMBERS
-			Hashtable scantime = new Hashtable();                           //STORE TIME
-			List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
-			int i;                                                          //TEMP POSITION VARIABLE
-			int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
-			String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
-			String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
-			String prev_Best_Evalue = "";                                   //INIT PREV BEST EVALUE TO BLANK [REQUIRED FOR COMPARISON]
-			double median = 0.00;                                           //INIT MEDIAN
-			double START_RANGE = 0.90;                                      //FUNCTION START RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
-			double END_RANGE = 1.00;                                        //FUNCTION END RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
-
-			//SET DB QUERY [REQUIRED TO SORT BY PEPTIDE SEQUENCE]
-			DBInterface.setQuery("SELECT Scan, Charge, Peptide_Expectation_Value_Log,Peptide_Sequence FROM `temp_xt` "
-			+ "WHERE temp_xt.random_id=" + r_id + " ORDER BY Peptide_Sequence,Charge,Scan,Scan");
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields1 = { "Scan", "Charge", "Peptide_Expectation_Value_Log", "Peptide_Sequence" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//FETCH COLUMNS Q,R NOW
-
-			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields1, ref measurementhash)) && (measurementhash.Count > 0))
-			{
-				//FIND COLUMN Q
-				String Best_Evalue = "";
-
-				//IF PREVIOUS PEPTIDE SEQUENCES == EACH OTHER && PREVIOUS CHARGES == EACH OTHER
-				if (prv_Peptide_Sequence.Equals(Convert.ToString(measurementhash["Peptide_Sequence"])) && prv_Charge.Equals(Convert.ToString(measurementhash["Charge"])))
-				{
-
-					//TAKE MIN [EITHER PREVIOUS BEST EVALUE OR CURRENT PEPTIDE EXPECTATION VALUE
-					if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) > Convert.ToDouble(prev_Best_Evalue))
-					{
-						Best_Evalue = prev_Best_Evalue;
-					}
-					else
-					{
-						Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-					}
-				}
-				else
-				{
-					Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-				}
-
-				//NOW FIND COLUMN R IF COLUMN U IS == TRUE
-				if (Best_Evalue.Equals(Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"])))
-				{
-					//WE ARE NOW == TRUE FOR THIS COLUMN ... AS TRUE WE ADD THIS TO OUR HASH TABLE/WHATEVER
-
-					//[ADD HERE]
-					bestscan.Add(Convert.ToInt32(measurementhash["Scan"]));
-				}
-
-				//UPDATE PREVIOUS VALUES FOR NEXT LOOP
-				prv_Charge = Convert.ToString(measurementhash["Charge"]);
-				prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
-				prev_Best_Evalue = Best_Evalue;
-			}
-
-			//NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
-			bestscan.Sort();
-
-			//SET DB QUERY
-			DBInterface.setQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM `temp_sicstats` WHERE temp_sicstats.random_id=" + r_id + "");
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//FETCH COLUMNS D-F
-
-			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields2, ref measurementhash)) && (measurementhash.Count > 0))
-			{
-				//ADD VALUES TO OUR TEMP HASH TABLES
-				fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
-				fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
-				optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
-			}
-
-			//SET DB QUERY
-			DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM `temp_scanstats` WHERE temp_scanstats.random_id=" + r_id + "");
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields3 = { "ScanNumber", "ScanTime" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//FETCH COLUMNS H-I
-			i = 1;
-			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
-			{
-				//ADD TO SCANTIME HASH TABLE
-				scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
-
-				//INCREMENT I POSITION
-				i++;
-			}
-
-			//NOW START THE ACTUAL MEASUREMENT CALCULATION
-
-			//LOOP THROUGH BESTSCAN
-			for (i = 0; i < bestscan.Count; i++)
-			{
-				//FIND INDEX + OPTIMAL PEAK APEX SCAN +- FWHMIN FOR EACH RESULT [COLUMNS: M,O]
-				String index = Convert.ToString(bestscan[i]);
-				int OptimalPeakApexScanMinusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) - Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
-				int OptimalPeakApexScanPlusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) + Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
-
-				//FIND OTHER COLUMNS [N,P, Q,R,T]
-				double start_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanMinusFWHMIN)]);
-				double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
-				double end_minus_start = end_time - start_time;
-				double end_minus_start_in_secs = end_minus_start * 60;
-				double running_percent = (double)running_sum / (double)bestscan.Count;
-
-				//CHECK FOR VALID RANGE DATA THEN ADD TO OUR RESULTS
-				if (running_percent >= START_RANGE && running_percent <= END_RANGE)
-				{
-					//WE ARE WITHING OUR VALID RANGE ... SO ADD end_minus_start_in_secs TO OUR LIST
-					result.Add(end_minus_start_in_secs);
-				}
-
-				//INCREMENT RUNNING SUM [COLUMN S]
-				running_sum++;
-			}
-
-			string resultText = string.Empty;
-
-			if (result.Count > 0)
-			{
-				//CALCULATE MEDIAN
-				median = ComputeMedian(result);
-
-				//WE NOW HAVE RESULT ... NOW ROUND IT TO 2ND DIGIT
-				resultText = median.ToString("0.00");
-
-				//Console.WriteLine("RESULT={0} -- MEDIAN={1}", round_me, median);
-
-				//IMPLEMENTATION NOTES
-				/*
-				 * result.Count == # OF U COLUMN VALID RESULTS
-				 * Console.WriteLine("MEDIAN={0} -- {1} [POS={2}]", result[pos], result[pos + 1], pos); == HELPFUL FOR DEBUGGING
-				*/
-			}
-
-			//RETURN RESULT
-			return resultText;
-		}
-
-		/// <summary>
-		/// C-4C: Median peak width during middle 10% of separation
-		/// </summary>
-		/// <returns></returns>
-		public String C_4C()
-		{
-			//DECLARE HASH TABLES
-			List<int> bestscan = new List<int>();                           //STORE Best Scan Results
-			Hashtable fragscannumber = new Hashtable();                     //STORE FRAG SCAN NUMBERS
-			Hashtable fwhminscans = new Hashtable();                        //STORE FWHMIN SCANS
-			Hashtable optimalpeakapexscannumber = new Hashtable();          //STORE OPTIMAL PEAK APEX SCAN NUMBERS
-			Hashtable scantime = new Hashtable();                           //STORE TIME
-			List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
-			int i;                                                          //TEMP POSITION VARIABLE
-			int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
-			String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
-			String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
-			String prev_Best_Evalue = "";                                   //INIT PREV BEST EVALUE TO BLANK [REQUIRED FOR COMPARISON]
-			double median = 0.00;                                           //INIT MEDIAN
-			double START_RANGE = 0.45;                                      //FUNCTION START RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
-			double END_RANGE = 0.55;                                        //FUNCTION END RANGE [REQUIRED + SET BY DEFINED MEASUREMENTS]
-
-			//SET DB QUERY [REQUIRED TO SORT BY PEPTIDE SEQUENCE]
-			DBInterface.setQuery("SELECT Scan, Charge, Peptide_Expectation_Value_Log,Peptide_Sequence FROM `temp_xt` "
-			+ "WHERE temp_xt.random_id=" + r_id + " ORDER BY Peptide_Sequence,Charge,Scan,Scan");
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields1 = { "Scan", "Charge", "Peptide_Expectation_Value_Log", "Peptide_Sequence" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//FETCH COLUMNS Q,R NOW
-
-			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields1, ref measurementhash)) && (measurementhash.Count > 0))
-			{
-				//FIND COLUMN Q
-				String Best_Evalue = "";
-
-				//IF PREVIOUS PEPTIDE SEQUENCES == EACH OTHER && PREVIOUS CHARGES == EACH OTHER
-				if (prv_Peptide_Sequence.Equals(Convert.ToString(measurementhash["Peptide_Sequence"])) && prv_Charge.Equals(Convert.ToString(measurementhash["Charge"])))
-				{
-
-					//TAKE MIN [EITHER PREVIOUS BEST EVALUE OR CURRENT PEPTIDE EXPECTATION VALUE
-					if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) > Convert.ToDouble(prev_Best_Evalue))
-					{
-						Best_Evalue = prev_Best_Evalue;
-					}
-					else
-					{
-						Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-					}
-				}
-				else
-				{
-					Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
-				}
-
-				//NOW FIND COLUMN R IF COLUMN U IS == TRUE
-				if (Best_Evalue.Equals(Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"])))
-				{
-					//WE ARE NOW == TRUE FOR THIS COLUMN ... AS TRUE WE ADD THIS TO OUR HASH TABLE/WHATEVER
-
-					//[ADD HERE]
-					bestscan.Add(Convert.ToInt32(measurementhash["Scan"]));
-				}
-
-				//UPDATE PREVIOUS VALUES FOR NEXT LOOP
-				prv_Charge = Convert.ToString(measurementhash["Charge"]);
-				prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
-				prev_Best_Evalue = Best_Evalue;
-			}
-
-			//NOW SORT OUR VALUES SO THEY ARE IN THE CORRECT ORDER-
-			bestscan.Sort();
-
-			//SET DB QUERY
-			DBInterface.setQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM `temp_sicstats` WHERE temp_sicstats.random_id=" + r_id + "");
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//FETCH COLUMNS D-F
-
-			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields2, ref measurementhash)) && (measurementhash.Count > 0))
-			{
-				//ADD VALUES TO OUR TEMP HASH TABLES
-				fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
-				fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
-				optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
-			}
-
-			//SET DB QUERY
-			DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM `temp_scanstats` WHERE temp_scanstats.random_id=" + r_id + "");
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields3 = { "ScanNumber", "ScanTime" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//FETCH COLUMNS H-I
-			i = 1;
-			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
-			{
-				//ADD TO SCANTIME HASH TABLE
-				scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
-
-				//INCREMENT I POSITION
-				i++;
-			}
-
-			//NOW START THE ACTUAL MEASUREMENT CALCULATION
-
-			//LOOP THROUGH BESTSCAN
-			for (i = 0; i < bestscan.Count; i++)
-			{
-				//FIND INDEX + OPTIMAL PEAK APEX SCAN +- FWHMIN FOR EACH RESULT [COLUMNS: M,O]
-				String index = Convert.ToString(bestscan[i]);
-				int OptimalPeakApexScanMinusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) - Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
-				int OptimalPeakApexScanPlusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) + Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
-
-				//FIND OTHER COLUMNS [N,P, Q,R,T]
-				double start_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanMinusFWHMIN)]);
-				double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
-				double end_minus_start = end_time - start_time;
-				double end_minus_start_in_secs = end_minus_start * 60;
-				double running_percent = (double)running_sum / (double)bestscan.Count;
-
-				//CHECK FOR VALID RANGE DATA THEN ADD TO OUR RESULTS
-				if (running_percent >= START_RANGE && running_percent <= END_RANGE)
-				{
-					//WE ARE WITHING OUR VALID RANGE ... SO ADD end_minus_start_in_secs TO OUR LIST
-					result.Add(end_minus_start_in_secs);
-				}
-
-				//INCREMENT RUNNING SUM [COLUMN S]
-				running_sum++;
-			}
-
-			string resultText = string.Empty;
-
-			if (result.Count > 0)
-			{
-				//CALCULATE MEDIAN
-				median = ComputeMedian(result);
-
-				//WE NOW HAVE RESULT ... NOW ROUND IT TO 2ND DIGIT
-				resultText = median.ToString("0.00");
-
-				//IMPLEMENTATION NOTES
-				/*
-				 * result.Count == # OF U COLUMN VALID RESULTS
-				 * Console.WriteLine("MEDIAN={0} -- {1} [POS={2}]", result[pos], result[pos + 1], pos); == HELPFUL FOR DEBUGGING
-				*/
-
-			}
-
-			//RETURN RESULT
-			return resultText;
-		}
-
-		/// <summary>
 		/// DS-1A: Count of peptides with one spectrum / count of peptides with two spectra
 		/// </summary>
 		/// <returns></returns>
@@ -1233,19 +634,15 @@ namespace SMAQC
 			int num_of_1_peptides;	                                                            //RUNNING COUNT FOR COLUMN J
 			int num_of_2_peptides;                                                              //RUNNING COUNT FOR COLUMN K
 			int num_of_3_peptides;                                                              //RUNNING COUNT FOR COLUMN L
-			double result;																		//SOLUTION
+			double result = 0;																	//SOLUTION
 
 			DS_1_Shared(out num_of_1_peptides, out num_of_2_peptides, out num_of_3_peptides);
 
 			//NOW CALCULATE DS_1A
 			//RETURN 0 IF NUM_OF_2 EQUALS 0
-			if (Convert.ToDouble(num_of_2_peptides) == 0)
+			if (num_of_2_peptides > 0)
 			{
-				result = 0;
-			}
-			else
-			{
-				result = (double)num_of_1_peptides / (double)num_of_2_peptides;
+				result = num_of_1_peptides / (double)num_of_2_peptides;
 			}
 
 			return result.ToString("0.000000");
@@ -1260,19 +657,15 @@ namespace SMAQC
 			int num_of_1_peptides;	                                                            //RUNNING COUNT FOR COLUMN J
 			int num_of_2_peptides;                                                              //RUNNING COUNT FOR COLUMN K
 			int num_of_3_peptides;                                                              //RUNNING COUNT FOR COLUMN L
-			double result;																		//SOLUTION
+			double result = 0;																		//SOLUTION
 
 			DS_1_Shared(out num_of_1_peptides, out num_of_2_peptides, out num_of_3_peptides);
 
 			//NOW CALCULATE DS_1B
 			//RETURN 0 IF NUM_OF_3 EQUALS 0
-			if (Convert.ToDouble(num_of_3_peptides) == 0)
+			if (num_of_3_peptides > 0)
 			{
-				result = 0;
-			}
-			else
-			{
-				result = (double)num_of_2_peptides / (double)num_of_3_peptides;
+				result = num_of_2_peptides / (double)num_of_3_peptides;
 			}
 
 			return result.ToString("0.000000");
