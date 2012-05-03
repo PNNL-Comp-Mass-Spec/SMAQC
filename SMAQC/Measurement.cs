@@ -222,7 +222,7 @@ namespace SMAQC
 			//CALCULATE SOLUTION
 			if (valid_rows > 0)
 			{
-				answer = (double)difference_sum / valid_rows;
+				answer = difference_sum / (double)valid_rows;
 				return answer.ToString("0.000000");
 			}
 			else
@@ -529,7 +529,7 @@ namespace SMAQC
 				double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
 				double end_minus_start = end_time - start_time;
 				double end_minus_start_in_secs = end_minus_start * 60;
-				double running_percent = Convert.ToDouble(running_sum) / Convert.ToDouble(bestscan.Count);
+				double running_percent = (double)running_sum / (double)bestscan.Count;
 
 				//ADD end_minus_start_in_secs TO OUR LIST [COLUMN R]
 				result.Add(end_minus_start_in_secs);
@@ -686,7 +686,7 @@ namespace SMAQC
 				double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
 				double end_minus_start = end_time - start_time;
 				double end_minus_start_in_secs = end_minus_start * 60;
-				double running_percent = Convert.ToDouble(running_sum) / Convert.ToDouble(bestscan.Count);
+				double running_percent = (double)running_sum /(double)bestscan.Count;
 
 				//CHECK FOR VALID RANGE DATA THEN ADD TO OUR RESULTS
 				if (running_percent >= START_RANGE && running_percent <= END_RANGE)
@@ -853,7 +853,7 @@ namespace SMAQC
 				double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
 				double end_minus_start = end_time - start_time;
 				double end_minus_start_in_secs = end_minus_start * 60;
-				double running_percent = Convert.ToDouble(running_sum) / Convert.ToDouble(bestscan.Count);
+				double running_percent = (double)running_sum /(double)bestscan.Count;
 
 				//CHECK FOR VALID RANGE DATA THEN ADD TO OUR RESULTS
 				if (running_percent >= START_RANGE && running_percent <= END_RANGE)
@@ -1020,7 +1020,7 @@ namespace SMAQC
 				double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
 				double end_minus_start = end_time - start_time;
 				double end_minus_start_in_secs = end_minus_start * 60;
-				double running_percent = Convert.ToDouble(running_sum) / Convert.ToDouble(bestscan.Count);
+				double running_percent = (double)running_sum / (double)bestscan.Count;
 
 				//CHECK FOR VALID RANGE DATA THEN ADD TO OUR RESULTS
 				if (running_percent >= START_RANGE && running_percent <= END_RANGE)
@@ -1189,7 +1189,7 @@ namespace SMAQC
 				double end_time = Convert.ToDouble(scantime[Convert.ToString(OptimalPeakApexScanPlusFWHMIN)]);
 				double end_minus_start = end_time - start_time;
 				double end_minus_start_in_secs = end_minus_start * 60;
-				double running_percent = Convert.ToDouble(running_sum) / Convert.ToDouble(bestscan.Count);
+				double running_percent = (double)running_sum / (double)bestscan.Count;
 
 				//CHECK FOR VALID RANGE DATA THEN ADD TO OUR RESULTS
 				if (running_percent >= START_RANGE && running_percent <= END_RANGE)
@@ -1240,7 +1240,7 @@ namespace SMAQC
 			int num_of_1_peptides = 0;	                                                            //RUNNING COUNT FOR COLUMN J
 			int num_of_2_peptides = 0;                                                              //RUNNING COUNT FOR COLUMN K
 			int num_of_3_peptides = 0;                                                              //RUNNING COUNT FOR COLUMN L
-			decimal result = 0.00M;                                                                 //SOLUTION
+			double result;																			//SOLUTION
 			Boolean FILTER;                                                                         //FILTER STATUS FOR COLUMN E
 			int i = 0;	                                                                            //TEMP POSITION
 			Hashtable Peptide_Exp_Value_Log = new Hashtable();                                      //STORE Peptide_Expectation_Value_Log NUMBERS
@@ -1441,11 +1441,11 @@ namespace SMAQC
 			//RETURN 0 IF NUM_OF_2 EQUALS 0
 			if (Convert.ToDouble(num_of_2_peptides) == 0)
 			{
-				result = Convert.ToDecimal(0);
+				result = 0;
 			}
 			else
 			{
-				result = Convert.ToDecimal(Convert.ToDouble(num_of_1_peptides) / Convert.ToDouble(num_of_2_peptides));
+				result = (double)num_of_1_peptides / (double)num_of_2_peptides;
 			}
 
 			return result.ToString("0.000000");
@@ -1467,7 +1467,7 @@ namespace SMAQC
 			int num_of_1_peptides = 0;	                                                            //RUNNING COUNT FOR COLUMN J
 			int num_of_2_peptides = 0;                                                              //RUNNING COUNT FOR COLUMN K
 			int num_of_3_peptides = 0;                                                              //RUNNING COUNT FOR COLUMN L
-			decimal result = 0.00M;                                                                 //SOLUTION
+			double result;																			//SOLUTION
 			Boolean FILTER;                                                                         //FILTER STATUS FOR COLUMN E
 			int i = 0;	                                                                            //TEMP POSITION
 			Hashtable Peptide_Exp_Value_Log = new Hashtable();                                      //STORE Peptide_Expectation_Value_Log NUMBERS
@@ -1669,11 +1669,11 @@ namespace SMAQC
 			//RETURN 0 IF NUM_OF_3 EQUALS 0
 			if (Convert.ToDouble(num_of_3_peptides) == 0)
 			{
-				result = Convert.ToDecimal(0);
+				result = 0;
 			}
 			else
 			{
-				result = Convert.ToDecimal(Convert.ToDouble(num_of_2_peptides) / Convert.ToDouble(num_of_3_peptides));
+				result = (double)num_of_2_peptides / (double)num_of_3_peptides;
 			}
 
 			return result.ToString("0.000000");
@@ -1803,13 +1803,13 @@ namespace SMAQC
 			int count_twos = 0;                                                             //TOTAL # OF 2's
 			int count_threes = 0;                                                           //TOTAL # OF 3's
 			int count_fours = 0;                                                            //TOTAL # OF 4's
-			decimal result = 0.00M;                                                         //RESULT OF MEASUREMENT
+			double result = 0;																//RESULT OF MEASUREMENT
 
 			IS3_Shared(out count_ones, out count_twos, out count_threes, out count_fours);
 
 			//CALC MEASUREMENT
 			if (count_twos > 0)
-				result = Convert.ToDecimal(count_ones) / Convert.ToDecimal(count_twos);
+				result = count_ones / (double)count_twos;
 
 			//ROUND
 			return result.ToString("0.000000");
@@ -1826,13 +1826,13 @@ namespace SMAQC
 			int count_twos = 0;                                                             //TOTAL # OF 2's
 			int count_threes = 0;                                                           //TOTAL # OF 3's
 			int count_fours = 0;                                                            //TOTAL # OF 4's
-			decimal result = 0.00M;                                                         //RESULT OF MEASUREMENT
+			double result = 0;																//RESULT OF MEASUREMENT
 
 			IS3_Shared(out count_ones, out count_twos, out count_threes, out count_fours);
 
 			//CALC MEASUREMENT
 			if (count_twos > 0)
-				result = Convert.ToDecimal(count_threes) / Convert.ToDecimal(count_twos);
+				result = count_threes / (double)count_twos;
 
 			//ROUND
 			return result.ToString("0.000000");
@@ -1849,13 +1849,13 @@ namespace SMAQC
 			int count_twos = 0;                                                             //TOTAL # OF 2's
 			int count_threes = 0;                                                           //TOTAL # OF 3's
 			int count_fours = 0;                                                            //TOTAL # OF 4's
-			decimal result = 0.00M;                                                         //RESULT OF MEASUREMENT
+			double result = 0;																//RESULT OF MEASUREMENT
 
 			IS3_Shared(out count_ones, out count_twos, out count_threes, out count_fours);
 
 			//CALC MEASUREMENT
 			if (count_twos > 0)
-				result = Convert.ToDecimal(count_fours) / Convert.ToDecimal(count_twos);
+				result = count_fours / (double)count_twos;
 
 			//ROUND
 			return result.ToString("0.000000");
@@ -2262,7 +2262,7 @@ namespace SMAQC
 					//IF IN VALID BOTTOM 50%
 					if (max_running_sum > 0)
 					{
-						if ((Convert.ToDouble(running_sum) / Convert.ToDouble(max_running_sum)) <= 0.5)
+						if (running_sum / (double)max_running_sum <= 0.5)
 						{
 							//ADD TO FILTERED LIST FOR COLUMN N
 							result_VBPMIPII_Filtered.Add(Convert.ToDouble(Lookup_Table_KV[key]));
@@ -2365,7 +2365,7 @@ namespace SMAQC
 					//IF IN VALID BOTTOM 50%
 					if (max_running_sum > 0)
 					{
-						if ((Convert.ToDouble(running_sum) / Convert.ToDouble(max_running_sum)) <= 0.5)
+						if (running_sum / (double)max_running_sum <= 0.5)
 						{
 							//ADD TO FILTERED LIST FOR COLUMN N
 							result_VBPMIPII_Filtered.Add(Convert.ToDouble(Lookup_Table_KV[key]));
@@ -2760,8 +2760,108 @@ namespace SMAQC
 		/// <returns></returns>
 		public String MS2_4A()
 		{
+			int ScanCountQ1 = 0;
+			int ScanCountQ2 = 0;
+			int ScanCountQ3 = 0;
+			int ScanCountQ4 = 0;
+			int Q1PassFilt = 0;
+			int Q2PassFilt = 0;
+			int Q3PassFilt = 0;
+			int Q4PassFilt = 0;
+
+			MS2_4_Shared(out ScanCountQ1, out ScanCountQ2, out ScanCountQ3, out ScanCountQ4, out Q1PassFilt, out Q2PassFilt, out Q3PassFilt, out Q4PassFilt);
+
+			//COMPUTE THE RESULT
+			double result = 0;
+			if (ScanCountQ1 > 0)
+				result = Q1PassFilt / (double)ScanCountQ1;
+
+			return result.ToString("0.0000");
+		}
+
+		/// <summary>
+		/// MS2_4B: Fraction of all MS2 spectra identified; second quartile (determined using MS1 intensity of identified peptides)
+		/// </summary>
+		/// <returns></returns>
+		public String MS2_4B()
+		{
+			int ScanCountQ1 = 0;
+			int ScanCountQ2 = 0;
+			int ScanCountQ3 = 0;
+			int ScanCountQ4 = 0;
+			int Q1PassFilt = 0;
+			int Q2PassFilt = 0;
+			int Q3PassFilt = 0;
+			int Q4PassFilt = 0;
+
+			MS2_4_Shared(out ScanCountQ1, out ScanCountQ2, out ScanCountQ3, out ScanCountQ4, out Q1PassFilt, out Q2PassFilt, out Q3PassFilt, out Q4PassFilt);
+
+			//COMPUTE THE RESULT
+			double result = 0;
+			if (ScanCountQ2 > 0)
+				result = Q2PassFilt / (double)ScanCountQ2;
+
+			return result.ToString("0.0000");
+
+		}
+
+		/// <summary>
+		/// MS2_4C: Fraction of all MS2 spectra identified; third quartile (determined using MS1 intensity of identified peptides)
+		/// </summary>
+		/// <returns></returns>
+		public String MS2_4C()
+		{
+			int ScanCountQ1 = 0;
+			int ScanCountQ2 = 0;
+			int ScanCountQ3 = 0;
+			int ScanCountQ4 = 0;
+			int Q1PassFilt = 0;
+			int Q2PassFilt = 0;
+			int Q3PassFilt = 0;
+			int Q4PassFilt = 0;
+
+			MS2_4_Shared(out ScanCountQ1, out ScanCountQ2, out ScanCountQ3, out ScanCountQ4, out Q1PassFilt, out Q2PassFilt, out Q3PassFilt, out Q4PassFilt);
+
+			//COMPUTE THE RESULT
+			double result = 0;
+			if (ScanCountQ3 > 0)
+				result = Q3PassFilt / (double)ScanCountQ3;
+
+			return result.ToString("0.0000");
+
+		}
+
+		/// <summary>
+		/// MS2_4D: Fraction of all MS2 spectra identified; low abundance quartile (determined using MS1 intensity of identified peptides)
+		/// </summary>
+		/// <returns></returns>
+		public String MS2_4D()
+		{
+			int ScanCountQ1 = 0;
+			int ScanCountQ2 = 0;
+			int ScanCountQ3 = 0;
+			int ScanCountQ4 = 0;
+			int Q1PassFilt = 0;
+			int Q2PassFilt = 0;
+			int Q3PassFilt = 0;
+			int Q4PassFilt = 0;
+
+			MS2_4_Shared(out ScanCountQ1, out ScanCountQ2, out ScanCountQ3, out ScanCountQ4, out Q1PassFilt, out Q2PassFilt, out Q3PassFilt, out Q4PassFilt);
+
+			//COMPUTE THE RESULT
+			double result = 0;
+			if (ScanCountQ4 > 0)
+				result = Q4PassFilt / (double)ScanCountQ4;
+
+			return result.ToString("0.0000");
+
+		}
+
+		protected void MS2_4_Shared(out int ScanCountQ1, out int ScanCountQ2, out int ScanCountQ3, out int ScanCountQ4, 
+			                        out int Q1PassFilt, out int Q2PassFilt, out int Q3PassFilt, out int Q4PassFilt)
+		{
 			//SET DB QUERY [TO FIND MAX NUMBER OF ROWS]
-			DBInterface.setQuery("SELECT COUNT(DISTINCT temp_sicstats.FragScanNumber) as MS2ScanCount "
+			DBInterface.setQuery("SELECT COUNT(*) as MS2ScanCount "
 				+ "FROM `temp_xt`, `temp_sicstats` "
 				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
 				+ ";");
@@ -2784,16 +2884,15 @@ namespace SMAQC
 				+ "ORDER BY temp_sicstats.PeakMaxIntensity;");
 
 			//DECLARE VARIABLES
-			List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN G]
-			List<int> FoundFirstQuartileList = new List<int>();                                 //FOUND FOR FIRST QUARTILE LIST [COLUMN I]
-			List<int> FoundSecondQuartileList = new List<int>();                                //FOUND FOR SECOND QUARTILE LIST [COLUMN K]
-			List<int> FoundThirdQuartileList = new List<int>();                                 //FOUND FOR THIRD QUARTILE LIST [COLUMN M]
-			List<int> FoundFourthQuartileList = new List<int>();                                //FOUND FOR FOURTH QUARTILE LIST [COLUMN O]
-			List<int> IdentifiedFirstQuartileList = new List<int>();                            //Identified FOR FIRST QUARTILE LIST [COLUMN J]
-			List<int> IdentifiedSecondQuartileList = new List<int>();                           //Identified FOR SECOND QUARTILE LIST [COLUMN L]
-			List<int> IdentifiedThirdQuartileList = new List<int>();                            //Identified FOR THIRD QUARTILE LIST [COLUMN N]
-			List<int> IdentifiedFourthQuartileList = new List<int>();                           //Identified FOR FOURTH QUARTILE LIST [COLUMN P]
-			int scan_count = 1;                                                                 //RUNNING SCAN COUNT [COLUMN H]
+			ScanCountQ1 = 0;														//FOUND FOR FIRST QUARTILE LIST [COLUMN I]
+			ScanCountQ2 = 0;														//FOUND FOR SECOND QUARTILE LIST [COLUMN K]
+			ScanCountQ3 = 0;														//FOUND FOR THIRD QUARTILE LIST [COLUMN M]
+			ScanCountQ4 = 0;														//FOUND FOR FOURTH QUARTILE LIST [COLUMN O]
+			Q1PassFilt = 0;															//Identified FOR FIRST QUARTILE LIST [COLUMN J]
+			Q2PassFilt = 0;															//Identified FOR SECOND QUARTILE LIST [COLUMN L]
+			Q3PassFilt = 0;															//Identified FOR THIRD QUARTILE LIST [COLUMN N]
+			Q4PassFilt = 0;															//Identified FOR FOURTH QUARTILE LIST [COLUMN P]
+			int scan_count = 1;                                                     //RUNNING SCAN COUNT [COLUMN H]
 
 			//DECLARE FIELDS TO READ FROM
 			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "PeakMaxIntensity" };
@@ -2805,14 +2904,11 @@ namespace SMAQC
 			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
 			{
 				//DID IT PASS OUR FILTER?
-				Boolean passed_filter = false;
+				bool passed_filter = false;
 
 				//CALCULATE COLUMN G
 				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
-					//ADD TO FILTERED LIST
-					FilterList.Add(Convert.ToDouble(measurementhash["PeakMaxIntensity"]));
-
 					passed_filter = true;
 				}
 
@@ -2820,469 +2916,45 @@ namespace SMAQC
 				if (scan_count < (scanCountMS2 * 0.25))
 				{
 					//FOUND SO ADD AS 1
-					FoundFirstQuartileList.Add(1);
+					ScanCountQ1++;
 
-					//IF PASSED FILTER
 					if (passed_filter)
-					{
-						//ADD SINCE PASSED FILTER
-						IdentifiedFirstQuartileList.Add(1);
-					}
+						Q1PassFilt++;
 				}
 
 				//IF SCAN IN SECOND QUARTILE
 				if (scan_count >= (scanCountMS2 * 0.25) && scan_count < (scanCountMS2 * 0.5))
 				{
 					//FOUND SO ADD AS 1
-					FoundSecondQuartileList.Add(1);
+					ScanCountQ2++;
 
-					//IF PASSED FILTER
 					if (passed_filter)
-					{
-						//ADD SINCE PASSED FILTER
-						IdentifiedSecondQuartileList.Add(1);
-					}
+						Q2PassFilt++;
 				}
 
 				//IF SCAN IN THIRD QUARTILE
 				if (scan_count >= (scanCountMS2 * 0.5) && scan_count < (scanCountMS2 * 0.75))
 				{
 					//FOUND SO ADD AS 1
-					FoundThirdQuartileList.Add(1);
+					ScanCountQ3++;
 
-					//IF PASSED FILTER
 					if (passed_filter)
-					{
-						//ADD SINCE PASSED FILTER
-						IdentifiedThirdQuartileList.Add(1);
-					}
+						Q3PassFilt++;
 				}
 
 				//IF SCAN IN FOURTH QUARTILE
 				if (scan_count >= (scanCountMS2 * 0.75))
 				{
 					//FOUND SO ADD AS 1
-					FoundFourthQuartileList.Add(1);
+					ScanCountQ4++;
 
-					//IF PASSED FILTER
 					if (passed_filter)
-					{
-						//ADD SINCE PASSED FILTER
-						IdentifiedFourthQuartileList.Add(1);
-					}
+						Q4PassFilt++;
 				}
 
 				//INC
 				scan_count++;
 			}
-
-			//COMPUTE THE RESULT
-			double sumFoundFirstQuartile = FoundFirstQuartileList.Sum();
-			double sumIdentifiedFirstQuartile = IdentifiedFirstQuartileList.Sum();
-
-			double result = 0;
-			if (sumFoundFirstQuartile > 0)
-				result = sumIdentifiedFirstQuartile / sumFoundFirstQuartile;
-
-			return result.ToString("0.0000");
-		}
-
-		/// <summary>
-		/// MS2_4B: Fraction of all MS2 spectra identified; second quartile (determined using MS1 intensity of identified peptides)
-		/// </summary>
-		/// <returns></returns>
-		public String MS2_4B()
-		{
-			//SET DB QUERY [TO FIND MAX NUMBER OF ROWS]
-			DBInterface.setQuery("SELECT COUNT(*) as MaxRows "
-				+ "FROM `temp_xt`, `temp_sicstats` "
-				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
-				+ "ORDER BY temp_sicstats.PeakMaxIntensity;");
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields_temp = { "MaxRows" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//READ LINE
-			DBInterface.readSingleLine(fields_temp, ref measurementhash);
-
-			//SET DB QUERY
-			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_sicstats.PeakMaxIntensity "
-				+ "FROM `temp_xt`, `temp_sicstats` "
-				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
-				+ "ORDER BY temp_sicstats.PeakMaxIntensity;");
-
-			//DECLARE VARIABLES
-			List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN G]
-			List<int> FoundFirstQuartileList = new List<int>();                                 //FOUND FOR FIRST QUARTILE LIST [COLUMN I]
-			List<int> FoundSecondQuartileList = new List<int>();                                //FOUND FOR SECOND QUARTILE LIST [COLUMN K]
-			List<int> FoundThirdQuartileList = new List<int>();                                 //FOUND FOR THIRD QUARTILE LIST [COLUMN M]
-			List<int> FoundFourthQuartileList = new List<int>();                                //FOUND FOR FOURTH QUARTILE LIST [COLUMN O]
-			List<int> IdentifiedFirstQuartileList = new List<int>();                            //Identified FOR FIRST QUARTILE LIST [COLUMN J]
-			List<int> IdentifiedSecondQuartileList = new List<int>();                           //Identified FOR SECOND QUARTILE LIST [COLUMN L]
-			List<int> IdentifiedThirdQuartileList = new List<int>();                            //Identified FOR THIRD QUARTILE LIST [COLUMN N]
-			List<int> IdentifiedFourthQuartileList = new List<int>();                           //Identified FOR FOURTH QUARTILE LIST [COLUMN P]
-			int max_rows = Convert.ToInt32(measurementhash["MaxRows"]);                         //STORE TOTAL ROWS
-			int scan_count = 1;                                                                 //RUNNING SCAN COUNT [COLUMN H]
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "PeakMaxIntensity" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-			{
-				//DID IT PASS OUR FILTER?
-				Boolean passed_filter = false;
-
-				//CALCULATE COLUMN G
-				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-				{
-					//ADD TO FILTERED LIST
-					FilterList.Add(Convert.ToDouble(measurementhash["PeakMaxIntensity"]));
-
-					passed_filter = true;
-				}
-
-				//IF SCAN IN FIRST QUARTILE
-				if (scan_count < (max_rows * 0.25))
-				{
-					//FOUND SO ADD AS 1
-					FoundFirstQuartileList.Add(1);
-
-					//IF PASSED FILTER
-					if (passed_filter)
-					{
-						//ADD SINCE PASSED FILTER
-						IdentifiedFirstQuartileList.Add(1);
-					}
-				}
-
-				//IF SCAN IN SECOND QUARTILE
-				if (scan_count >= (max_rows * 0.25) && scan_count < (max_rows * 0.5))
-				{
-					//FOUND SO ADD AS 1
-					FoundSecondQuartileList.Add(1);
-
-					//IF PASSED FILTER
-					if (passed_filter)
-					{
-						//ADD SINCE PASSED FILTER
-						IdentifiedSecondQuartileList.Add(1);
-					}
-				}
-
-				//IF SCAN IN THIRD QUARTILE
-				if (scan_count >= (max_rows * 0.5) && scan_count < (max_rows * 0.75))
-				{
-					//FOUND SO ADD AS 1
-					FoundThirdQuartileList.Add(1);
-
-					//IF PASSED FILTER
-					if (passed_filter)
-					{
-						//ADD SINCE PASSED FILTER
-						IdentifiedThirdQuartileList.Add(1);
-					}
-				}
-
-				//IF SCAN IN FOURTH QUARTILE
-				if (scan_count >= (max_rows * 0.75))
-				{
-					//FOUND SO ADD AS 1
-					FoundFourthQuartileList.Add(1);
-
-					//IF PASSED FILTER
-					if (passed_filter)
-					{
-						//ADD SINCE PASSED FILTER
-						IdentifiedFourthQuartileList.Add(1);
-					}
-				}
-
-				//INC
-				scan_count++;
-			}
-
-			//COMPUTE THE RESULT
-			double sumFoundSecondQuartile = FoundSecondQuartileList.Sum();
-			double sumIdentifiedSecondQuartile = IdentifiedSecondQuartileList.Sum();
-
-			double result = 0;
-			if (sumFoundSecondQuartile > 0)
-				result = sumIdentifiedSecondQuartile / sumFoundSecondQuartile;
-
-			return result.ToString("0.0000");
-
-		}
-
-		/// <summary>
-		/// MS2_4C: Fraction of all MS2 spectra identified; third quartile (determined using MS1 intensity of identified peptides)
-		/// </summary>
-		/// <returns></returns>
-		public String MS2_4C()
-		{
-			//SET DB QUERY [TO FIND MAX NUMBER OF ROWS]
-			DBInterface.setQuery("SELECT COUNT(*) as MaxRows "
-				+ "FROM `temp_xt`, `temp_sicstats` "
-				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
-				+ "ORDER BY temp_sicstats.PeakMaxIntensity;");
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields_temp = { "MaxRows" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//READ LINE
-			DBInterface.readSingleLine(fields_temp, ref measurementhash);
-
-			//SET DB QUERY
-			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_sicstats.PeakMaxIntensity "
-				+ "FROM `temp_xt`, `temp_sicstats` "
-				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
-				+ "ORDER BY temp_sicstats.PeakMaxIntensity;");
-
-			//DECLARE VARIABLES
-			List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN G]
-			List<int> FoundFirstQuartileList = new List<int>();                                 //FOUND FOR FIRST QUARTILE LIST [COLUMN I]
-			List<int> FoundSecondQuartileList = new List<int>();                                //FOUND FOR SECOND QUARTILE LIST [COLUMN K]
-			List<int> FoundThirdQuartileList = new List<int>();                                 //FOUND FOR THIRD QUARTILE LIST [COLUMN M]
-			List<int> FoundFourthQuartileList = new List<int>();                                //FOUND FOR FOURTH QUARTILE LIST [COLUMN O]
-			List<int> IdentifiedFirstQuartileList = new List<int>();                            //Identified FOR FIRST QUARTILE LIST [COLUMN J]
-			List<int> IdentifiedSecondQuartileList = new List<int>();                           //Identified FOR SECOND QUARTILE LIST [COLUMN L]
-			List<int> IdentifiedThirdQuartileList = new List<int>();                            //Identified FOR THIRD QUARTILE LIST [COLUMN N]
-			List<int> IdentifiedFourthQuartileList = new List<int>();                           //Identified FOR FOURTH QUARTILE LIST [COLUMN P]
-			int max_rows = Convert.ToInt32(measurementhash["MaxRows"]);                         //STORE TOTAL ROWS
-			int scan_count = 1;                                                                 //RUNNING SCAN COUNT [COLUMN H]
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "PeakMaxIntensity" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-			{
-				//DID IT PASS OUR FILTER?
-				Boolean passed_filter = false;
-
-				//CALCULATE COLUMN G
-				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-				{
-					//ADD TO FILTERED LIST
-					FilterList.Add(Convert.ToDouble(measurementhash["PeakMaxIntensity"]));
-
-					passed_filter = true;
-				}
-
-				//IF SCAN IN FIRST QUARTILE
-				if (scan_count < (max_rows * 0.25))
-				{
-					//FOUND SO ADD AS 1
-					FoundFirstQuartileList.Add(1);
-
-					//IF PASSED FILTER
-					if (passed_filter)
-					{
-						//ADD SINCE PASSED FILTER
-						IdentifiedFirstQuartileList.Add(1);
-					}
-				}
-
-				//IF SCAN IN SECOND QUARTILE
-				if (scan_count >= (max_rows * 0.25) && scan_count < (max_rows * 0.5))
-				{
-					//FOUND SO ADD AS 1
-					FoundSecondQuartileList.Add(1);
-
-					//IF PASSED FILTER
-					if (passed_filter)
-					{
-						//ADD SINCE PASSED FILTER
-						IdentifiedSecondQuartileList.Add(1);
-					}
-				}
-
-				//IF SCAN IN THIRD QUARTILE
-				if (scan_count >= (max_rows * 0.5) && scan_count < (max_rows * 0.75))
-				{
-					//FOUND SO ADD AS 1
-					FoundThirdQuartileList.Add(1);
-
-					//IF PASSED FILTER
-					if (passed_filter)
-					{
-						//ADD SINCE PASSED FILTER
-						IdentifiedThirdQuartileList.Add(1);
-					}
-				}
-
-				//IF SCAN IN FOURTH QUARTILE
-				if (scan_count >= (max_rows * 0.75))
-				{
-					//FOUND SO ADD AS 1
-					FoundFourthQuartileList.Add(1);
-
-					//IF PASSED FILTER
-					if (passed_filter)
-					{
-						//ADD SINCE PASSED FILTER
-						IdentifiedFourthQuartileList.Add(1);
-					}
-				}
-
-				//INC
-				scan_count++;
-			}
-
-			//COMPUTE THE RESULT
-			double sumFoundThirdQuartile = FoundThirdQuartileList.Sum();
-			double sumIdentifiedThirdQuartile = IdentifiedThirdQuartileList.Sum();
-
-			double result = 0;
-			if (sumFoundThirdQuartile > 0)
-				result = sumIdentifiedThirdQuartile / sumFoundThirdQuartile;
-
-			return result.ToString("0.0000");
-
-		}
-
-		/// <summary>
-		/// MS2_4D: Fraction of all MS2 spectra identified; low abundance quartile (determined using MS1 intensity of identified peptides)
-		/// </summary>
-		/// <returns></returns>
-		public String MS2_4D()
-		{
-			//SET DB QUERY [TO FIND MAX NUMBER OF ROWS]
-			DBInterface.setQuery("SELECT COUNT(*) as MaxRows "
-				+ "FROM `temp_xt`, `temp_sicstats` "
-				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
-				+ "ORDER BY temp_sicstats.PeakMaxIntensity;");
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields_temp = { "MaxRows" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//READ LINE
-			DBInterface.readSingleLine(fields_temp, ref measurementhash);
-
-			//SET DB QUERY
-			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_sicstats.PeakMaxIntensity "
-				+ "FROM `temp_xt`, `temp_sicstats` "
-				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
-				+ "ORDER BY temp_sicstats.PeakMaxIntensity;");
-
-			//DECLARE VARIABLES
-			List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN G]
-			List<int> FoundFirstQuartileList = new List<int>();                                 //FOUND FOR FIRST QUARTILE LIST [COLUMN I]
-			List<int> FoundSecondQuartileList = new List<int>();                                //FOUND FOR SECOND QUARTILE LIST [COLUMN K]
-			List<int> FoundThirdQuartileList = new List<int>();                                 //FOUND FOR THIRD QUARTILE LIST [COLUMN M]
-			List<int> FoundFourthQuartileList = new List<int>();                                //FOUND FOR FOURTH QUARTILE LIST [COLUMN O]
-			List<int> IdentifiedFirstQuartileList = new List<int>();                            //Identified FOR FIRST QUARTILE LIST [COLUMN J]
-			List<int> IdentifiedSecondQuartileList = new List<int>();                           //Identified FOR SECOND QUARTILE LIST [COLUMN L]
-			List<int> IdentifiedThirdQuartileList = new List<int>();                            //Identified FOR THIRD QUARTILE LIST [COLUMN N]
-			List<int> IdentifiedFourthQuartileList = new List<int>();                           //Identified FOR FOURTH QUARTILE LIST [COLUMN P]
-			int max_rows = Convert.ToInt32(measurementhash["MaxRows"]);                         //STORE TOTAL ROWS
-			int scan_count = 1;                                                                 //RUNNING SCAN COUNT [COLUMN H]
-
-			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "PeakMaxIntensity" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-			{
-				//DID IT PASS OUR FILTER?
-				Boolean passed_filter = false;
-
-				//CALCULATE COLUMN G
-				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-				{
-					//ADD TO FILTERED LIST
-					FilterList.Add(Convert.ToDouble(measurementhash["PeakMaxIntensity"]));
-
-					passed_filter = true;
-				}
-
-				//IF SCAN IN FIRST QUARTILE
-				if (scan_count < (max_rows * 0.25))
-				{
-					//FOUND SO ADD AS 1
-					FoundFirstQuartileList.Add(1);
-
-					//IF PASSED FILTER
-					if (passed_filter)
-					{
-						//ADD SINCE PASSED FILTER
-						IdentifiedFirstQuartileList.Add(1);
-					}
-				}
-
-				//IF SCAN IN SECOND QUARTILE
-				if (scan_count >= (max_rows * 0.25) && scan_count < (max_rows * 0.5))
-				{
-					//FOUND SO ADD AS 1
-					FoundSecondQuartileList.Add(1);
-
-					//IF PASSED FILTER
-					if (passed_filter)
-					{
-						//ADD SINCE PASSED FILTER
-						IdentifiedSecondQuartileList.Add(1);
-					}
-				}
-
-				//IF SCAN IN THIRD QUARTILE
-				if (scan_count >= (max_rows * 0.5) && scan_count < (max_rows * 0.75))
-				{
-					//FOUND SO ADD AS 1
-					FoundThirdQuartileList.Add(1);
-
-					//IF PASSED FILTER
-					if (passed_filter)
-					{
-						//ADD SINCE PASSED FILTER
-						IdentifiedThirdQuartileList.Add(1);
-					}
-				}
-
-				//IF SCAN IN FOURTH QUARTILE
-				if (scan_count >= (max_rows * 0.75))
-				{
-					//FOUND SO ADD AS 1
-					FoundFourthQuartileList.Add(1);
-
-					//IF PASSED FILTER
-					if (passed_filter)
-					{
-						//ADD SINCE PASSED FILTER
-						IdentifiedFourthQuartileList.Add(1);
-					}
-				}
-
-				//INC
-				scan_count++;
-			}
-
-			//COMPUTE THE RESULT
-			double sumFoundFourthQuartile = FoundFourthQuartileList.Sum();
-			double sumIdentifiedFourthQuartile = IdentifiedFourthQuartileList.Sum();
-
-			double result = 0;
-			if (sumFoundFourthQuartile > 0)
-				result = sumIdentifiedFourthQuartile / sumFoundFourthQuartile;
-
-			return result.ToString("0.0000");
 
 		}
 
@@ -3794,7 +3466,7 @@ namespace SMAQC
 			//SET ANSWER
 			double answer = 0;
 			if (cleavage_state_2_count > 0)
-				answer = Convert.ToDouble(cleavage_state_1_count) / Convert.ToDouble(cleavage_state_2_count);
+				answer = cleavage_state_1_count / (double)cleavage_state_2_count;
 
 			//WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
 			return answer.ToString("0.000000");
