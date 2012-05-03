@@ -28,8 +28,8 @@ namespace SMAQC
         private static string appDirectoryPath = System.IO.Path.GetDirectoryName(GetAppPath());         //GET PATH TO SMAQC.exe [USEFUL IF NOT RUNNING IN SAME DIRECTORY]
 
         //DECLARE VERSION, BUILD DATE, VALID FILE TABLES AND MEASUREMENT FIELDS
-        private static String SMAQC_VERSION = "1.05";
-        private static String SMAQC_BUILD_DATE = "April 29, 2012";
+        private static String SMAQC_VERSION = "1.06";
+        private static String SMAQC_BUILD_DATE = "May 2, 2012";
         private static String[] valid_file_tables = { "_scanstats", "_scanstatsex", "_sicstats", "_xt", 
                                                        "_xt_resulttoseqmap", "_xt_seqtoproteinmap" };   //VALID FILE / TABLES
         private static String[] fields = { "instrument_id", "random_id", "scan_date", "C_1A", "C_1B", 
@@ -147,7 +147,7 @@ namespace SMAQC
                                 configtable["dbpass"].ToString(), configtable["dbname"].ToString(),
                                 configtable["dbtype"].ToString(), dbFolderPath);
 
-			DBWrapper.ShowQueryText = true;
+			DBWrapper.ShowQueryText = false;
 
             //DB OBJECT
             m_Aggregate = new Aggregate(path_to_scan_files);                                                        //AGGREGATE OBJECT

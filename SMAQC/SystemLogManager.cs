@@ -64,10 +64,10 @@ namespace SMAQC
         public void addApplicationLog(String message)
         {
             //ADD TO RECORD LOG
-            applicationlog_records.Add(DateTime.Now.ToString("M/dd/yyyy hh:m:ss tt") + " - " + message);
+            applicationlog_records.Add(DateTime.Now.ToString("M/dd/yyyy hh:mm:ss tt") + " - " + message);
 
             //SET OBSERVER SUBJECT TO OUR MESSAGE
-            s.SubjectState = DateTime.Now.ToString("M/dd/yyyy hh:m:ss tt") + " - " + message;
+            s.SubjectState = DateTime.Now.ToString("M/dd/yyyy hh:mm:ss tt") + " - " + message;
 
             //NOTIFY OBSERVER OF CHANGE
             s.Notify();

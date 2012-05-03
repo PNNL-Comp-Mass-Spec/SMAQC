@@ -64,7 +64,7 @@ namespace SMAQC
                 //GET LIST OF FILES IN SPECIFIED DIRECTORY MATCHING FILE_EXT
                 filePaths = Directory.GetFiles(filedir, file_ext);
             }
-            catch (DirectoryNotFoundException ex)
+            catch (DirectoryNotFoundException)
             {
                 Console.WriteLine("GFIL():: Could not find directory {0}!", filedir);
                 Environment.Exit(1);
@@ -116,7 +116,7 @@ namespace SMAQC
                 //GET LIST OF FILES IN SPECIFIED DIRECTORY MATCHING FILE_EXT
                 filePaths = Directory.GetFiles(filedir, file_ext);
             }
-            catch (DirectoryNotFoundException ex)
+            catch (DirectoryNotFoundException)
             {
                 Console.WriteLine("GFIL():: Could not find directory {0}!", filedir);
                 Environment.Exit(1);
