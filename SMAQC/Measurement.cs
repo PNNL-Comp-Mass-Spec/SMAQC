@@ -51,6 +51,31 @@ namespace SMAQC
             mResultsStorage.Clear();
         }
 
+		protected double ComputeMedian(List<double> values)
+		{
+			if (values.Count == 0)
+				return 0;
+
+			if (values.Count == 1)
+				return values[0];
+
+			// Assure the list is sorted
+			values.Sort();
+
+			//IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NO NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
+			if (values.Count % 2 == 1)
+			{
+				//IF ODD
+				int pos = (values.Count / 2);
+				return values[pos];
+			}
+			else
+			{
+				//IF EVEN
+				int pos = (values.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
+				return (values[pos] + values[pos + 1]) / 2;
+			}
+		}
 		protected double GetStoredValue(string entryName, double valueIfMissing)
 		{
 			double value;
@@ -304,14 +329,14 @@ namespace SMAQC
 			double answer = C2AScanTimeEnd - C2AScanTimeStart;
 
             //STORE IN GLOBAL HASH TABLE FOR C_2B
-			AddUpdateResultsStorage("C_2A_ANSWER", answer);
+			AddUpdateResultsStorage("C_2A_TIME_MINUTES", answer);
 
             return Convert.ToString(answer);
         }
 
 
         /// <summary>
-		/// C-2B: Fraction of peptides identified more than 4 minutes later than the chromatographic peak apex
+		/// C-2B: Rate of peptide identification during C-2A
         /// </summary>
         /// <returns></returns>
         public String C_2B()
@@ -327,74 +352,48 @@ namespace SMAQC
                 + "AND t1.random_id=" + r_id + " "
                 + "ORDER BY Scan;");
 
-            int running_sum = 0;                                                                //RUNNING SUM FOR COLUMN H
-            List<double> ScanTimeList = new List<double>();                                     //STORES SCAN TIMES
-            List<int> RunningSumList = new List<int>();                                         //STORES RUNNING SUM LISTS
-            List<double> ScanRangeList = new List<double>();                                    //STORE SCAN TIME VALUES HERE THAT ARE WITHIN RANGE
-            int counter = 0;                                                                    //STORE COUNT FOR COLUMN K
-            int i = 0;                                                                          //COUNTER
+			// This list keeps track of the scan numbers already processed so that we can avoid double-counting a scan number
+			SortedSet<int> lstScansWithFilterPassingIDs = new SortedSet<int>();
 
-            //DECLARE FIELDS TO READ FROM
-            String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "ScanNumber", "ScanTime1" };
+			int scanNumber;
 
-            //INIT READER
-            DBInterface.initReader();
+			double timeMinutesC2A = GetStoredValue("C_2A_TIME_MINUTES", 0);
+			int scanStartC2A = GetStoredValueInt("C_2A_REGION_SCAN_START", 0);
+			int scanEndC2A = GetStoredValueInt("C_2A_REGION_SCAN_END", 0);
 
-            //LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-            while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-            {
-                //IF LOG(E) <= -2 ... CALCULATE DIFFERENCE [COLUMN D]
-                if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
-                {
-                    //FOUND MATCH SO INCREMENT RUNNING SUM
-                    running_sum++;
-                }
+			//DECLARE FIELDS TO READ FROM
+			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "ScanNumber", "ScanTime1" };
 
-                //ADD SCAN TIME TO LIST
-                ScanTimeList.Add((double)Convert.ToDouble(measurementhash["ScanTime1"]));
+			//INIT READER
+			DBInterface.initReader();
 
-                //ADD RUNNING SUM TO LIST
-                RunningSumList.Add(running_sum);
-            }
-
-			string answerText = string.Empty;
-			if (running_sum > 0)
+			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
+			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
 			{
-				//CALCULATE METRIC BY LOOPING THROUGH RUNNING SUM LIST
-				for (i = 0; i < RunningSumList.Count; i++)
+				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
-					//CALC RUNNING SUM
-					decimal drsum = Convert.ToDecimal((double)RunningSumList[i] / running_sum);
-					double rsum = Convert.ToDouble(drsum);
-
-					//IF WITHIN 25% to 75%
-					if ((rsum >= .25) && (rsum <= .75))
+					// FILTER-PASSING PEPTIDE; Append to the dictionary
+					if (int.TryParse(measurementhash["ScanNumber"].ToString(), out scanNumber))
 					{
-						//ADD TO SCOAN RANGE LIST
-						ScanRangeList.Add(ScanTimeList[i]);
-
-						//INC COUNTER
-						counter++;
+						if (scanNumber >= scanStartC2A && scanNumber <= scanEndC2A && !lstScansWithFilterPassingIDs.Contains(scanNumber))
+						{
+							lstScansWithFilterPassingIDs.Add(scanNumber);
+						}
 					}
-				}
 
-				//DETERMINE ANSWER
-				double valC2A = GetStoredValue("C_2A_ANSWER", 0);
-				if (valC2A != 0)
-				{
-					double answer = counter / valC2A;
-
-					//WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
-					decimal round_me = Convert.ToDecimal(answer);
-					round_me = Math.Round(round_me, 6);                        //ROUND MEDIAN
-					answerText = Convert.ToString(round_me);
 				}
 			}
 
-            //CLEAR HASH TABLES
-            ScanTimeList.Clear();
-            RunningSumList.Clear();
-            ScanRangeList.Clear();
+			string answerText = string.Empty;
+
+			if (timeMinutesC2A > 0)
+			{
+				double answer = lstScansWithFilterPassingIDs.Count / timeMinutesC2A;
+			
+				//WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
+				answerText = answer.ToString("0.000000");
+				
+			}
 
 			return answerText;
         }
@@ -544,29 +543,10 @@ namespace SMAQC
 			if (result.Count > 0)
 			{
 				//CALCULATE MEDIAN
-				result.Sort();                          //START BY SORTING
+				median = ComputeMedian(result);
 
-				//IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-				if (result.Count % 2 == 1)
-				{
-					//IF ODD
-					int pos = (result.Count / 2);
-					median = result[result.Count / 2];
-				}
-				else
-				{
-					//IF EVEN
-					int pos = (result.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-					median = (result[pos] + result[pos + 1]) / 2;
-				}
-
-				//WE NOW HAVE RESULT ... NOW ROUND IT TO 2ND DIGIT
-				decimal round_me = Convert.ToDecimal(median);
-				round_me = Math.Round(round_me, 2);                        //ROUND MEDIAN
-
-				//Console.WriteLine("C_3A :: RESULT={0}", round_me);
-
-				resultText = Convert.ToString(round_me);
+				//WE NOW HAVE RESULT ... NOW ROUND IT TO 2ND DIGIT			
+				resultText = median.ToString("0.00");
 			}
 
             //CLEAR HASH TABLES
@@ -732,36 +712,16 @@ namespace SMAQC
 			if (result.Count > 0)
 			{
 				//CALCULATE MEDIAN
-				result.Sort();                          //START BY SORTING
-
-				//IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-				if (result.Count % 2 == 1)
-				{
-					//IF ODD
-					int pos = (result.Count / 2);
-					median = result[result.Count / 2];
-				}
-				else
-				{
-					//IF EVEN
-					int pos = (result.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-					median = (result[pos] + result[pos + 1]) / 2;
-				}
+				median = ComputeMedian(result);
 
 				//WE NOW HAVE RESULT ... NOW ROUND IT TO 2ND DIGIT
-				decimal round_me = Convert.ToDecimal(median);
-				round_me = Math.Round(round_me, 2);                        //ROUND MEDIAN
-
-
-				//Console.WriteLine("RESULT={0} -- MEDIAN={1}", round_me, median);
+				resultText = median.ToString("0.00");
 
 				//IMPLEMENTATION NOTES
 				/*
 				 * result.Count == # OF U COLUMN VALID RESULTS
 				 * Console.WriteLine("MEDIAN={0} -- {1} [POS={2}]", result[pos], result[pos + 1], pos); == HELPFUL FOR DEBUGGING
 				*/
-
-				resultText = Convert.ToString(round_me);
 			}
 
             //CLEAR HASH TABLES
@@ -927,36 +887,16 @@ namespace SMAQC
 			if (result.Count > 0)
 			{
 				//CALCULATE MEDIAN
-				result.Sort();                          //START BY SORTING
-
-				//IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-				if (result.Count % 2 == 1)
-				{
-					//IF ODD
-					int pos = (result.Count / 2);
-					median = result[result.Count / 2];
-				}
-				else
-				{
-					//IF EVEN
-					int pos = (result.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-					median = (result[pos] + result[pos + 1]) / 2;
-				}
+				median = ComputeMedian(result);
 
 				//WE NOW HAVE RESULT ... NOW ROUND IT TO 2ND DIGIT
-				decimal round_me = Convert.ToDecimal(median);
-				round_me = Math.Round(round_me, 2);                        //ROUND MEDIAN
-
-
-				//Console.WriteLine("RESULT={0} -- MEDIAN={1}", round_me, median);
+				resultText = median.ToString("0.00");
 
 				//IMPLEMENTATION NOTES
 				/*
 				 * result.Count == # OF U COLUMN VALID RESULTS
 				 * Console.WriteLine("MEDIAN={0} -- {1} [POS={2}]", result[pos], result[pos + 1], pos); == HELPFUL FOR DEBUGGING
-				*/
-
-				resultText = Convert.ToString(round_me);
+				*/				
 			}
 
             //CLEAR HASH TABLES
@@ -1122,26 +1062,10 @@ namespace SMAQC
 			if (result.Count > 0)
 			{
 				//CALCULATE MEDIAN
-				result.Sort();                          //START BY SORTING
-
-				//IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-				if (result.Count % 2 == 1)
-				{
-					//IF ODD
-					int pos = (result.Count / 2);
-					median = result[result.Count / 2];
-				}
-				else
-				{
-					//IF EVEN
-					int pos = (result.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-					median = (result[pos] + result[pos + 1]) / 2;
-				}
+				median = ComputeMedian(result);
 
 				//WE NOW HAVE RESULT ... NOW ROUND IT TO 2ND DIGIT
-				decimal round_me = Convert.ToDecimal(median);
-				round_me = Math.Round(round_me, 2);                        //ROUND MEDIAN
-
+				resultText = median.ToString("0.00");
 
 				//Console.WriteLine("RESULT={0} -- MEDIAN={1}", round_me, median);
 
@@ -1149,9 +1073,7 @@ namespace SMAQC
 				/*
 				 * result.Count == # OF U COLUMN VALID RESULTS
 				 * Console.WriteLine("MEDIAN={0} -- {1} [POS={2}]", result[pos], result[pos + 1], pos); == HELPFUL FOR DEBUGGING
-				*/
-				
-				resultText = Convert.ToString(round_me);
+				*/								
 			}
 
             //CLEAR HASH TABLES
@@ -1317,36 +1239,17 @@ namespace SMAQC
 			if (result.Count > 0)
 			{
 				//CALCULATE MEDIAN
-				result.Sort();                          //START BY SORTING
-
-				//IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-				if (result.Count % 2 == 1)
-				{
-					//IF ODD
-					int pos = (result.Count / 2);
-					median = result[result.Count / 2];
-				}
-				else
-				{
-					//IF EVEN
-					int pos = (result.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-					median = (result[pos] + result[pos + 1]) / 2;
-				}
+				median = ComputeMedian(result);
 
 				//WE NOW HAVE RESULT ... NOW ROUND IT TO 2ND DIGIT
-				decimal round_me = Convert.ToDecimal(median);
-				round_me = Math.Round(round_me, 2);                        //ROUND MEDIAN
-
-
-				//Console.WriteLine("RESULT={0} -- MEDIAN={1}", round_me, median);
+				resultText = median.ToString("0.00");
 
 				//IMPLEMENTATION NOTES
 				/*
 				 * result.Count == # OF U COLUMN VALID RESULTS
 				 * Console.WriteLine("MEDIAN={0} -- {1} [POS={2}]", result[pos], result[pos + 1], pos); == HELPFUL FOR DEBUGGING
 				*/
-
-				resultText = Convert.ToString(round_me);
+				
 			}
 
             //CLEAR HASH TABLES
@@ -1452,7 +1355,6 @@ namespace SMAQC
 
             //CALCULATE EVERYTHING ELSE
             for (i = 0; i < Peptide_Exp_Value_Log.Count; i++)
-            //for (i = 0; i < 1065; i++)
             {
                 //RESET FILTER STATUS
                 FILTER = false;
@@ -1863,8 +1765,8 @@ namespace SMAQC
 				+ "ORDER BY ScanNumber;");
 
 			//DECLARE VARIABLES
-			int valC2ARegionScanStart = GetStoredValueInt("C_2A_REGION_SCAN_START", 0);
-			int valC2ARegionScanEnd = GetStoredValueInt("C_2A_REGION_SCAN_END", 0);
+			int scanStartC2A = GetStoredValueInt("C_2A_REGION_SCAN_START", 0);
+			int scanEndC2A = GetStoredValueInt("C_2A_REGION_SCAN_END", 0);
 			
 			int intScanCount = 0;
 			int scanNumber;
@@ -1883,7 +1785,7 @@ namespace SMAQC
 				scanType = Convert.ToInt32(measurementhash["ScanType"]);
 
 				//IF IS WITHIN RANGE
-				if (scanType == msLevel && scanNumber >= valC2ARegionScanStart && scanNumber <= valC2ARegionScanEnd)
+				if (scanType == msLevel && scanNumber >= scanStartC2A && scanNumber <= scanEndC2A)
 				{
 					intScanCount++;
 				}
@@ -1907,7 +1809,7 @@ namespace SMAQC
             //DECLARE VARIABLES
             double MINUS_CONSTANT = 1.00727649;                                                 //REQUIRED CONSTANT TO SUBTRACT BY
             List<double> MZ_List = new List<double>();                                          //MZ LIST
-            List<double> MZ_Final;// = new List<double>();                                      //MZ Final List
+            List<double> MZ_Final;																//MZ Final List
             Dictionary<double, int> tempDict = new Dictionary<double, int>();                   //TEMP ... TO REMOVE DUPLICATES
             double median = 0.00;                                                               //STORE MEDIAN
 
@@ -1940,32 +1842,10 @@ namespace SMAQC
             MZ_Final = new List<double>(tempDict.Keys);
 
             //SORT FROM LOW->HIGH AS REQUIRED FOR COLUMN F
-            MZ_Final.Sort();
+			median = ComputeMedian(MZ_Final);
 
-            //IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-            if (MZ_Final.Count % 2 == 1)
-            {
-                //IF ODD
-                int pos = (MZ_Final.Count / 2);
-                median = MZ_Final[MZ_Final.Count / 2];
-            }
-            else
-            {
-                //IF EVEN
-                int pos = (MZ_Final.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-                median = (MZ_Final[pos] + MZ_Final[pos + 1]) / 2;
-            }
-
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 4TH DIGIT
-            decimal round_me = Convert.ToDecimal(median);
-            round_me = Math.Round(round_me, 4);                        //ROUND MEDIAN
-
-            //CLEAR HASH TABLES
-            MZ_List.Clear();
-            MZ_Final.Clear();
-            tempDict.Clear();
-
-            return Convert.ToString(round_me);
+            //WE NOW HAVE RESULT ... NOW ROUND IT TO 4TH DIGIT       
+			return median.ToString("0.0000");
         }
 
         /// <summary>
@@ -1988,9 +1868,7 @@ namespace SMAQC
 				result = Convert.ToDecimal(count_ones) / Convert.ToDecimal(count_twos);
 
             //ROUND
-            result = Math.Round(result, 6);
-
-            return Convert.ToString(result);
+			return result.ToString("0.000000");
         }
 
         /// <summary>
@@ -2013,9 +1891,7 @@ namespace SMAQC
 				result = Convert.ToDecimal(count_threes) / Convert.ToDecimal(count_twos);
 
             //ROUND
-            result = Math.Round(result, 6);
-
-            return Convert.ToString(result);
+			return result.ToString("0.000000");
         }
 
         /// <summary>
@@ -2038,9 +1914,7 @@ namespace SMAQC
 				result = Convert.ToDecimal(count_fours) / Convert.ToDecimal(count_twos);
 
             //ROUND
-            result = Math.Round(result, 6);
-
-            return Convert.ToString(result);
+			return result.ToString("0.000000");
         }
 
 		protected void IS3_Shared(out int count_ones, out int count_twos, out int count_threes, out int count_fours)
@@ -2070,29 +1944,31 @@ namespace SMAQC
 				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
 					//CONVERT CHARGE TO INT FOR SWITCH()
-					int charge = Convert.ToInt32(measurementhash["Charge"]);
-
-					//ADD TO CORRECT COUNT
-					switch (charge)
+					int charge;
+					if (int.TryParse(measurementhash["Charge"].ToString(), out charge))
 					{
-						case 1:
-							count_ones++;
-							break;
+						//ADD TO CORRECT COUNT
+						switch (charge)
+						{
+							case 1:
+								count_ones++;
+								break;
 
-						case 2:
-							count_twos++;
-							break;
+							case 2:
+								count_twos++;
+								break;
 
-						case 3:
-							count_threes++;
-							break;
+							case 3:
+								count_threes++;
+								break;
 
-						case 4:
-							count_fours++;
-							break;
+							case 4:
+								count_fours++;
+								break;
 
-						default:
-							break;
+							default:
+								break;
+						}
 					}
 				}
 			}
@@ -2134,25 +2010,7 @@ namespace SMAQC
                 }
             }
 
-			if (Filter.Count > 0)
-			{
-				//SORT LIST
-				Filter.Sort();
-
-				//IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-				if (Filter.Count % 2 == 1)
-				{
-					//IF ODD
-					int pos = (Filter.Count / 2);
-					median = Filter[Filter.Count / 2];
-				}
-				else
-				{
-					//IF EVEN
-					int pos = (Filter.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-					median = (Filter[pos] + Filter[pos + 1]) / 2;
-				}
-			}
+			median = ComputeMedian(Filter);
 
             return Convert.ToString(median);
         }
@@ -2173,19 +2031,7 @@ namespace SMAQC
 			if (List_BPSTNR_C_2A.Count > 0)
 			{
 				//CALC MEDIAN OF COLUMN J
-				//IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NO NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-				if (List_BPSTNR_C_2A.Count % 2 == 1)
-				{
-					//IF ODD
-					int pos = (List_BPSTNR_C_2A.Count / 2);
-					median = List_BPSTNR_C_2A[List_BPSTNR_C_2A.Count / 2];
-				}
-				else
-				{
-					//IF EVEN
-					int pos = (List_BPSTNR_C_2A.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-					median = (List_BPSTNR_C_2A[pos] + List_BPSTNR_C_2A[pos + 1]) / 2;
-				}
+				median = ComputeMedian(List_BPSTNR_C_2A);
 			}
 
             return Convert.ToString(median);
@@ -2204,23 +2050,8 @@ namespace SMAQC
 
 			MS1_2_Shared(out List_BPSTNR_C_2A, out List_TII_C_2A);
 
-			if (List_TII_C_2A.Count > 0)
-			{
-				//CALC MEDIAN OF COLUMN K
-				//IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NO NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-				if (List_TII_C_2A.Count % 2 == 1)
-				{
-					//IF ODD
-					int pos = (List_TII_C_2A.Count / 2);
-					median = List_TII_C_2A[List_TII_C_2A.Count / 2];
-				}
-				else
-				{
-					//IF EVEN
-					int pos = (List_TII_C_2A.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-					median = (List_TII_C_2A[pos] + List_TII_C_2A[pos + 1]) / 2;
-				}
-			}
+			//CALC MEDIAN OF COLUMN K
+			median = ComputeMedian(List_TII_C_2A);
 
             //DIVIDE BY 1000
             median = median / 1000;
@@ -2272,14 +2103,14 @@ namespace SMAQC
 
 			int max_scannumber = List_ScanNumber.Max();
 
-			int valScanFirstPeptide = GetStoredValueInt("SCAN_FIRST_FILTER_PASSING_PEPTIDE", 0);
-			int valC2ARegionScanEnd = GetStoredValueInt("C_2A_REGION_SCAN_END", 0);
+			int scanFirstPeptide = GetStoredValueInt("SCAN_FIRST_FILTER_PASSING_PEPTIDE", 0);
+			int scanEndC2A = GetStoredValueInt("C_2A_REGION_SCAN_END", 0);
 
 			//LOOP THROUGH ALL
 			for (i = 0; i < List_ScanNumber.Count; i++)
 			{				
 				//SCAN TYPE == 1 && List_ScanNumber[i]>=STORAGE["SCAN_FIRST_FILTER_PASSING_PEPTIDE"] && List_ScanNumber[i]<=STORAGE["C_2A_REGION_SCAN_END"]
-				if ((List_ScanType[i] == 1) && (List_ScanNumber[i] >= valScanFirstPeptide) && (List_ScanNumber[i] <= valC2ARegionScanEnd))
+				if ((List_ScanType[i] == 1) && (List_ScanNumber[i] >= scanFirstPeptide) && (List_ScanNumber[i] <= scanEndC2A))
 				{
 					//ADD TO FILTER LISTS
 					List_BPSTNR_C_2A.Add(List_BasePeakSignalToNoiseRatio[i]);
@@ -2311,10 +2142,7 @@ namespace SMAQC
 				final = PMI_95PC / PMI_5PC;
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 3RD DIGIT
-            decimal round_me = Convert.ToDecimal(final);
-            round_me = Math.Round(round_me, 3);                        //ROUND MEDIAN
-
-            return Convert.ToString(round_me);
+			return final.ToString("0.000");
         }
 
         /// <summary>
@@ -2330,31 +2158,11 @@ namespace SMAQC
 
 			MS1_3_Shared(out PMI_5PC, out PMI_95PC, out result);
 
-			if (result.Count > 0)
-			{
-				//NOW CALCULATE MEDIAN
-				result.Sort();                          //START BY SORTING
-
-				//IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-				if (result.Count % 2 == 1)
-				{
-					//IF ODD
-					int pos = (result.Count / 2);
-					median = result[result.Count / 2];
-				}
-				else
-				{
-					//IF EVEN
-					int pos = (result.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-					median = (result[pos] + result[pos + 1]) / 2;
-				}
-			}
+			//NOW CALCULATE MEDIAN
+			median = ComputeMedian(result);
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 3RD DIGIT
-            decimal round_me = Convert.ToDecimal(median);
-            round_me = Math.Round(round_me, 3);                        //ROUND MEDIAN			      
-
-            return Convert.ToString(round_me);
+			return median.ToString("0.000");
         }
 
 		protected void MS1_3_Shared(out double PMI_5PC, out double PMI_95PC, out List<double> result)
@@ -2526,25 +2334,8 @@ namespace SMAQC
                 }
             }
 
-			if (result_PMIPII_Filtered.Count > 0)
-			{
-				//NOW CALCULATE MEDIAN
-				result_PMIPII_Filtered.Sort();                          //START BY SORTING
-
-				//IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-				if (result_PMIPII_Filtered.Count % 2 == 1)
-				{
-					//IF ODD
-					int pos = (result_PMIPII_Filtered.Count / 2);
-					median = result_PMIPII_Filtered[result_PMIPII_Filtered.Count / 2];
-				}
-				else
-				{
-					//IF EVEN
-					int pos = (result_PMIPII_Filtered.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-					median = (result_PMIPII_Filtered[pos] + result_PMIPII_Filtered[pos + 1]) / 2;
-				}
-			}
+			//NOW CALCULATE MEDIAN
+			median = ComputeMedian(result_PMIPII_Filtered);
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 3RD DIGIT
             decimal round_me = Convert.ToDecimal(median);
@@ -2656,25 +2447,8 @@ namespace SMAQC
                 }
             }
 
-			if (result_VBPMIPII_Filtered.Count > 0)
-			{
-				//NOW CALCULATE MEDIAN
-				result_VBPMIPII_Filtered.Sort();                          //START BY SORTING
-
-				//IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-				if (result_VBPMIPII_Filtered.Count % 2 == 1)
-				{
-					//IF ODD
-					int pos = (result_VBPMIPII_Filtered.Count / 2);
-					median = result_VBPMIPII_Filtered[result_VBPMIPII_Filtered.Count / 2];
-				}
-				else
-				{
-					//IF EVEN
-					int pos = (result_VBPMIPII_Filtered.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-					median = (result_VBPMIPII_Filtered[pos] + result_VBPMIPII_Filtered[pos + 1]) / 2;
-				}
-			}
+			//NOW CALCULATE MEDIAN
+			median = ComputeMedian(result_VBPMIPII_Filtered);
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 3RD DIGIT
             decimal round_me = Convert.ToDecimal(median);
@@ -2891,34 +2665,10 @@ namespace SMAQC
             }
 
             //NOW CALCULATE MEDIAN
-            FilteredArray.Sort();                          //START BY SORTING
-
-            //IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-            if (FilteredArray.Count % 2 == 1)
-            {
-                //IF ODD
-                int pos = (FilteredArray.Count / 2);
-                median = FilteredArray[FilteredArray.Count / 2];
-            }
-            else
-            {
-                //IF EVEN
-                int pos = (FilteredArray.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-                median = (FilteredArray[pos] + FilteredArray[pos + 1]) / 2;
-            }
+			median = ComputeMedian(FilteredArray);
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
-            decimal round_me = Convert.ToDecimal(median);
-            round_me = Math.Round(round_me, 6);                        //ROUND MEDIAN
-
-            //CLEAR HASH TABLE
-            FilteredArray.Clear();
-            AbsFilteredArray.Clear();
-            PPMList.Clear();
-
-            //Console.WriteLine("MS1_5A={0}", round_me);
-
-            return Convert.ToString(round_me);
+			return median.ToString("0.000000");
         }
 
         /// <summary>
@@ -3049,34 +2799,9 @@ namespace SMAQC
             }
 
             //NOW CALCULATE MEDIAN
-            PPMList.Sort();                          //START BY SORTING
+			median = ComputeMedian(PPMList);
 
-            //IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-            if (PPMList.Count % 2 == 1)
-            {
-                //IF ODD
-                int pos = (PPMList.Count / 2);
-                median = PPMList[PPMList.Count / 2];
-            }
-            else
-            {
-                //IF EVEN
-                int pos = (PPMList.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-                median = (PPMList[pos] + PPMList[pos + 1]) / 2;
-            }
-
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
-            decimal round_me = Convert.ToDecimal(median);
-            round_me = Math.Round(round_me, 6);                        //ROUND MEDIAN
-
-            //CLEAR HASH TABLE
-            FilteredArray.Clear();
-            AbsFilteredArray.Clear();
-            PPMList.Clear();
-
-            //Console.WriteLine("MS1_5C={0}", round_me);
-
-            return Convert.ToString(round_me);
+			return median.ToString("0.000000");
         }
 
         /// <summary>
@@ -3160,35 +2885,10 @@ namespace SMAQC
             }
 
             //NOW CALCULATE MEDIAN
-            PPMErrorsList.Sort();                          //START BY SORTING
-
-            //IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-            if (PPMErrorsList.Count % 2 == 1)
-            {
-                //IF ODD
-                int pos = (PPMErrorsList.Count / 2);
-                median = PPMErrorsList[PPMErrorsList.Count / 2];
-            }
-            else
-            {
-                //IF EVEN
-                int pos = (PPMErrorsList.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-                median = (PPMErrorsList[pos] + PPMErrorsList[pos + 1]) / 2;
-            }
+			median = ComputeMedian(PPMErrorsList);
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT
-            decimal round_me = Convert.ToDecimal(median);
-            round_me = Math.Round(round_me, 4);                        //ROUND MEDIAN
-
-            //CLEAR HASH TABLE
-            FilteredArray.Clear();
-            AbsFilteredArray.Clear();
-            PPMList.Clear();
-            PPMErrorsList.Clear();
-
-            //Console.WriteLine("MS1_5D={0}", round_me);
-
-            return Convert.ToString(round_me);
+			return median.ToString("0.0000");
         }
 
         /// <summary>
@@ -3228,32 +2928,10 @@ namespace SMAQC
             }
 
             //NOW CALCULATE MEDIAN
-            FilterList.Sort();                          //START BY SORTING
-
-            //IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-            if (FilterList.Count % 2 == 1)
-            {
-                //IF ODD
-                int pos = (FilterList.Count / 2);
-                median = FilterList[FilterList.Count / 2];
-            }
-            else
-            {
-                //IF EVEN
-                int pos = (FilterList.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-                median = (FilterList[pos] + FilterList[pos + 1]) / 2;
-            }
+			median = ComputeMedian(FilterList);
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT
-            decimal round_me = Convert.ToDecimal(median);
-            round_me = Math.Round(round_me, 3);                        //ROUND MEDIAN
-
-            //CLEAR HASH TABLE
-            FilterList.Clear();
-
-            //Console.WriteLine("MS2_1={0}", round_me);
-
-            return Convert.ToString(round_me);
+			return median.ToString("0.000");
         }
 
         /// <summary>
@@ -3309,33 +2987,10 @@ namespace SMAQC
             }
 
             //NOW CALCULATE MEDIAN
-            FinishedList.Sort();                          //START BY SORTING
+			median = ComputeMedian(FinishedList);
 
-            //IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-            if (FinishedList.Count % 2 == 1)
-            {
-                //IF ODD
-                int pos = (FinishedList.Count / 2);
-                median = FinishedList[FinishedList.Count / 2];
-            }
-            else
-            {
-                //IF EVEN
-                int pos = (FinishedList.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-                median = (FinishedList[pos] + FinishedList[pos + 1]) / 2;
-            }
-
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT
-            decimal round_me = Convert.ToDecimal(median);
-            round_me = Math.Round(round_me, 4);                        //ROUND MEDIAN
-
-            //Console.WriteLine("MS1_2={0}", round_me);
-
-            //CLEAR HASH TABLE
-            FilterList.Clear();
-            FinishedList.Clear();
-
-            return Convert.ToString(round_me);
+            //WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT          
+			return median.ToString("0.0000");
         }
 
         /// <summary>
@@ -3375,32 +3030,10 @@ namespace SMAQC
             }
 
             //NOW CALCULATE MEDIAN
-            FilterList.Sort();                          //START BY SORTING
-
-            //IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-            if (FilterList.Count % 2 == 1)
-            {
-                //IF ODD
-                int pos = (FilterList.Count / 2);
-                median = FilterList[FilterList.Count / 2];
-            }
-            else
-            {
-                //IF EVEN
-                int pos = (FilterList.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-                median = (FilterList[pos] + FilterList[pos + 1]) / 2;
-            }
+			median = ComputeMedian(FilterList);
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT
-            decimal round_me = Convert.ToDecimal(median);
-            round_me = Math.Round(round_me, 3);                        //ROUND MEDIAN
-
-            //CLEAR HASH TABLE
-            FilterList.Clear();
-
-            //Console.WriteLine("MS2_3={0}", round_me);
-
-            return Convert.ToString(round_me);
+			return median.ToString("0.000");
         }
 
         /// <summary>
@@ -3524,24 +3157,15 @@ namespace SMAQC
                 scan_count++;
             }
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT
-            decimal round_me = Convert.ToDecimal( Convert.ToDouble(IdentifiedFirstQuartileList.Sum()) / Convert.ToDouble(FoundFirstQuartileList.Sum()) );
-            round_me = Math.Round(round_me, 4);                        //ROUND MEDIAN
+            //COMPUTE THE RESULT
+			double sumFoundFirstQuartile = FoundFirstQuartileList.Sum();
+			double sumIdentifiedFirstQuartile = IdentifiedFirstQuartileList.Sum();
 
-            //CLEAR HASH TABLE
-            FilterList.Clear();
-            FoundFirstQuartileList.Clear();
-            FoundSecondQuartileList.Clear();
-            FoundThirdQuartileList.Clear();
-            FoundFourthQuartileList.Clear();
-            IdentifiedFirstQuartileList.Clear();
-            IdentifiedSecondQuartileList.Clear();
-            IdentifiedThirdQuartileList.Clear();
-            IdentifiedFourthQuartileList.Clear();
+			double result = 0;
+			if (sumFoundFirstQuartile > 0)
+				result = sumIdentifiedFirstQuartile / sumFoundFirstQuartile;
 
-            //Console.WriteLine("MS2_4A: {0}", round_me);
-
-            return Convert.ToString(round_me);
+			return result.ToString("0.0000");
         }
 
         /// <summary>
@@ -3665,24 +3289,16 @@ namespace SMAQC
                 scan_count++;
             }
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT
-            decimal round_me = Convert.ToDecimal(Convert.ToDouble(IdentifiedSecondQuartileList.Sum()) / Convert.ToDouble(FoundSecondQuartileList.Sum()));
-            round_me = Math.Round(round_me, 4);                        //ROUND MEDIAN
+			//COMPUTE THE RESULT
+			double sumFoundSecondQuartile = FoundSecondQuartileList.Sum();
+			double sumIdentifiedSecondQuartile = IdentifiedSecondQuartileList.Sum();
 
-            //CLEAR HASH TABLE
-            FilterList.Clear();
-            FoundFirstQuartileList.Clear();
-            FoundSecondQuartileList.Clear();
-            FoundThirdQuartileList.Clear();
-            FoundFourthQuartileList.Clear();
-            IdentifiedFirstQuartileList.Clear();
-            IdentifiedSecondQuartileList.Clear();
-            IdentifiedThirdQuartileList.Clear();
-            IdentifiedFourthQuartileList.Clear();
+			double result = 0;
+			if (sumFoundSecondQuartile > 0)
+				result = sumIdentifiedSecondQuartile / sumFoundSecondQuartile;
 
-            //Console.WriteLine("MS2_4B: {0}", round_me);
+			return result.ToString("0.0000");
 
-            return Convert.ToString(round_me);
         }
 
         /// <summary>
@@ -3803,27 +3419,19 @@ namespace SMAQC
                 }
 
                 //INC
-                scan_count++;;
+                scan_count++;
             }
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT
-            decimal round_me = Convert.ToDecimal(Convert.ToDouble(IdentifiedThirdQuartileList.Sum()) / Convert.ToDouble(FoundThirdQuartileList.Sum()));
-            round_me = Math.Round(round_me, 4);                        //ROUND MEDIAN
+			//COMPUTE THE RESULT
+			double sumFoundThirdQuartile = FoundThirdQuartileList.Sum();
+			double sumIdentifiedThirdQuartile = IdentifiedThirdQuartileList.Sum();
 
-            //CLEAR HASH TABLE
-            FilterList.Clear();
-            FoundFirstQuartileList.Clear();
-            FoundSecondQuartileList.Clear();
-            FoundThirdQuartileList.Clear();
-            FoundFourthQuartileList.Clear();
-            IdentifiedFirstQuartileList.Clear();
-            IdentifiedSecondQuartileList.Clear();
-            IdentifiedThirdQuartileList.Clear();
-            IdentifiedFourthQuartileList.Clear();
+			double result = 0;
+			if (sumFoundThirdQuartile > 0)
+				result = sumIdentifiedThirdQuartile / sumFoundThirdQuartile;
 
-            //Console.WriteLine("MS2_4C: {0}", round_me);
+			return result.ToString("0.0000");
 
-            return Convert.ToString(round_me);
         }
 
         /// <summary>
@@ -3947,24 +3555,16 @@ namespace SMAQC
                 scan_count++;
             }
 
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT
-            decimal round_me = Convert.ToDecimal(Convert.ToDouble(IdentifiedFourthQuartileList.Sum()) / Convert.ToDouble(FoundFourthQuartileList.Sum()));
-            round_me = Math.Round(round_me, 4);                        //ROUND MEDIAN
+			//COMPUTE THE RESULT
+			double sumFoundFourthQuartile = FoundFourthQuartileList.Sum();
+			double sumIdentifiedFourthQuartile = IdentifiedFourthQuartileList.Sum();
 
-            //CLEAR HASH TABLE
-            FilterList.Clear();
-            FoundFirstQuartileList.Clear();
-            FoundSecondQuartileList.Clear();
-            FoundThirdQuartileList.Clear();
-            FoundFourthQuartileList.Clear();
-            IdentifiedFirstQuartileList.Clear();
-            IdentifiedSecondQuartileList.Clear();
-            IdentifiedThirdQuartileList.Clear();
-            IdentifiedFourthQuartileList.Clear();
+			double result = 0;
+			if (sumFoundFourthQuartile > 0)
+				result = sumIdentifiedFourthQuartile / sumFoundFourthQuartile;
 
-            //Console.WriteLine("MS2_4D: {0}", round_me);
+			return result.ToString("0.0000");
 
-            return Convert.ToString(round_me);
         }
 
 		/// <summary>
@@ -3997,32 +3597,10 @@ namespace SMAQC
             }
 
             //NOW CALCULATE MEDIAN
-            Peptide_Hyperscore_List.Sort();                          //START BY SORTING
-
-            //IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-            if (Peptide_Hyperscore_List.Count % 2 == 1)
-            {
-                //IF ODD
-                int pos = (Peptide_Hyperscore_List.Count / 2);
-                median = Peptide_Hyperscore_List[Peptide_Hyperscore_List.Count / 2];
-            }
-            else
-            {
-                //IF EVEN
-                int pos = (Peptide_Hyperscore_List.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-                median = (Peptide_Hyperscore_List[pos] + Peptide_Hyperscore_List[pos + 1]) / 2;
-            }
+			median = ComputeMedian(Peptide_Hyperscore_List);
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT
-            decimal round_me = Convert.ToDecimal(median);
-            round_me = Math.Round(round_me, 3);                        //ROUND MEDIAN
-
-            //Console.WriteLine("P_1A: {0}", round_me);
-
-            //CLEAR HASH TABLE
-            Peptide_Hyperscore_List.Clear();
-
-            return Convert.ToString(round_me);
+			return median.ToString("0.000");
         }
 
 		/// <summary>
@@ -4055,32 +3633,10 @@ namespace SMAQC
             }
 
             //NOW CALCULATE MEDIAN
-            Peptide_Expectation_List.Sort();                          //START BY SORTING
+			median = ComputeMedian(Peptide_Expectation_List);
 
-            //IF ODD # OF RESULTS WE MUST DIVIDE BY 2 AND TAKE RESULT [NOT NEED TO ADD 1 DUE TO STARTING AT 0 POSITION LIKE YOU NORMALLY WOULD IF A MEDIAN HAS ODD TOTAL #]
-            if (Peptide_Expectation_List.Count % 2 == 1)
-            {
-                //IF ODD
-                int pos = (Peptide_Expectation_List.Count / 2);
-                median = Peptide_Expectation_List[Peptide_Expectation_List.Count / 2];
-            }
-            else
-            {
-                //IF EVEN
-                int pos = (Peptide_Expectation_List.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
-                median = (Peptide_Expectation_List[pos] + Peptide_Expectation_List[pos + 1]) / 2;
-            }
-
-            //WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT
-            decimal round_me = Convert.ToDecimal(median);
-            round_me = Math.Round(round_me, 3);                        //ROUND MEDIAN
-
-            //Console.WriteLine("P_1B: {0}", round_me);
-
-            //CLEAR HASH TABLE
-            Peptide_Expectation_List.Clear();
-
-            return Convert.ToString(round_me);
+            //WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT           
+			return median.ToString("0.000");
         }
 
         /// <summary>
@@ -4526,26 +4082,13 @@ namespace SMAQC
             }
 
             //SET ANSWER
-            double answer = Convert.ToDouble(cleavage_state_1_count) / Convert.ToDouble(cleavage_state_2_count);
+			double answer = 0;
+			if (cleavage_state_2_count > 0)
+				answer = Convert.ToDouble(cleavage_state_1_count) / Convert.ToDouble(cleavage_state_2_count);
 
             //WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
-            decimal round_me = Convert.ToDecimal(answer);
-            round_me = Math.Round(round_me, 6);                        //ROUND MEDIAN
-
-            //CLEAR HASH TABLE
-            //Console.WriteLine("P_3:: {0}", round_me);
-
-            return Convert.ToString(round_me);
+			return answer.ToString("0.000000");
         }
-
-/*
-TRUNCATE `temp_scanstats`;
-TRUNCATE `temp_scanstatsex`;
-TRUNCATE `temp_sicstats`;
-TRUNCATE `temp_xt`;
-TRUNCATE `temp_xt_resulttoseqmap`;
-TRUNCATE `temp_xt_seqtoproteinmap`;
-*/
 
     }
 }
