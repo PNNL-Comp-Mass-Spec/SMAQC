@@ -1230,214 +1230,14 @@ namespace SMAQC
 		/// <returns></returns>
 		public String DS_1A()
 		{
-			//SET DB QUERY
-			DBInterface.setQuery("SELECT Peptide_Expectation_Value_Log,Peptide_Sequence,Scan "
-				+ "FROM `temp_xt` "
-				+ "WHERE temp_xt.random_id=" + r_id + " "
-				+ "ORDER BY Peptide_Sequence,Scan;");
+			int num_of_1_peptides;	                                                            //RUNNING COUNT FOR COLUMN J
+			int num_of_2_peptides;                                                              //RUNNING COUNT FOR COLUMN K
+			int num_of_3_peptides;                                                              //RUNNING COUNT FOR COLUMN L
+			double result;																		//SOLUTION
 
-			int running_count = 0;                                                                  //RUNNING COUNT FOR COLUMN F
-			int num_of_1_peptides = 0;	                                                            //RUNNING COUNT FOR COLUMN J
-			int num_of_2_peptides = 0;                                                              //RUNNING COUNT FOR COLUMN K
-			int num_of_3_peptides = 0;                                                              //RUNNING COUNT FOR COLUMN L
-			double result;																			//SOLUTION
-			Boolean FILTER;                                                                         //FILTER STATUS FOR COLUMN E
-			int i = 0;	                                                                            //TEMP POSITION
-			Hashtable Peptide_Exp_Value_Log = new Hashtable();                                      //STORE Peptide_Expectation_Value_Log NUMBERS
-			Hashtable Peptide_Sequence = new Hashtable();                                           //STORE Peptide Sequence NUMBERS
-			Hashtable Scan = new Hashtable();                                                       //STORE SCAN NUMBERS
-			Hashtable RunningCountTable = new Hashtable();                                          //STORE RUNNING COUNT'S IN A HASH TABLE FOR LATER ACCES
-			String prv_Peptide_Sequence = "";                                                       //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
-			int prv_running_count = 0;                                                              //INIT PREV RUNNING COUNT TO 0 [REQUIRED FOR COMPARISON]
-			String prv_highest_filtered_log = "";                                                   //INIT PREV HIGHEST FILTERED LOG TO BLANK [REQUIRED FOR COMPARISON]
-			int prv_peptide_count = 1;                                                              //INIT PREV PEPTIDE_COUNT TO BE 1
+			DS_1_Shared(out num_of_1_peptides, out num_of_2_peptides, out num_of_3_peptides);
 
-			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Peptide_Expectation_Value_Log", "Peptide_Sequence", "Scan" };
-
-			//INIT READER
-			DBInterface.initReader();
-
-			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
-			{
-				//ADD TO HASH TABLES
-				Peptide_Exp_Value_Log.Add(i, measurementhash["Peptide_Expectation_Value_Log"]);
-				Peptide_Sequence.Add(i, measurementhash["Peptide_Sequence"]);
-				Scan.Add(i, measurementhash["Scan"]);
-
-				//INCREMENT i
-				i++;
-			}
-
-			//BUILD RUNNING COUNT TABLE
-			for (i = 0; i < Peptide_Exp_Value_Log.Count; i++)
-			{
-				//RESET FILTER STATUS
-				FILTER = false;
-
-				//CALCULATE COLUMN E [TRUE/FALSE]
-				if (Convert.ToDouble(Peptide_Exp_Value_Log[i]) < -2)
-				{
-					//Console.WriteLine("A");
-					FILTER = true;
-				}
-
-				//CALCULATE RUNNING COUNT + ADD TO RUNNING COUNT TABLE
-				if (prv_Peptide_Sequence.Equals(Convert.ToString(Peptide_Sequence[i])))
-				{
-					//PREVIOUS RUNNING COUNT IS USED
-					RunningCountTable.Add(i, running_count);
-				}
-				else
-				{
-					//IF FILTER == FALSE
-					if (FILTER == false)
-					{
-						running_count++;//INCREMENT BY ONE
-
-						//ADD CURRENT RUNNING COUNT
-						RunningCountTable.Add(i, running_count);
-					}
-					else
-					{
-						//ADD CURRENT RUNNING COUNT
-						RunningCountTable.Add(i, running_count);
-					}
-				}
-
-				//UPDATE PREVIOUS RESULT VARIABLES
-				prv_Peptide_Sequence = Convert.ToString(Peptide_Sequence[i]);
-			}
-
-			//RESETS PREV PEPTIDE SEQUENCE
-			prv_Peptide_Sequence = "";
-
-			//CALCULATE EVERYTHING ELSE
-			for (i = 0; i < Peptide_Exp_Value_Log.Count; i++)
-			{
-				//RESET FILTER STATUS
-				FILTER = false;
-				String highest_filtered_log = "";
-				String filtered_log = "";
-				int current_peptide_count = 0;
-
-				//CALCULATE COLUMN E [TRUE/FALSE]
-				if (Convert.ToDouble(Peptide_Exp_Value_Log[i]) < -2)
-				{
-					FILTER = true;
-				}
-
-				//CALCULATE HIGHEST FILTERED LOG
-				if (FILTER == true)
-				{
-					//Console.WriteLine("TRUE");
-					if (prv_highest_filtered_log.Equals(""))
-					{
-						//GO WITH CURRENT RESULT
-						highest_filtered_log = Convert.ToString(Peptide_Exp_Value_Log[i]);
-					}
-					else if (Convert.ToDouble(prv_highest_filtered_log) > Convert.ToDouble(Peptide_Exp_Value_Log[i]))
-					{
-						//GO WITH LOWER
-						highest_filtered_log = Convert.ToString(Peptide_Exp_Value_Log[i]);
-					}
-					else
-					{
-						//GO WITH HIGHER
-						highest_filtered_log = Convert.ToString(prv_highest_filtered_log);
-					}
-				}
-				else
-				{
-					//IF PREV RUNNING COUNT == CURRENT RUNNING COUNT
-					if (prv_running_count == Convert.ToInt32(RunningCountTable[i]))
-					{
-						//Console.WriteLine("D");
-						//GO WITH PREVIOUS HIGHEST FILTERED LOG
-						highest_filtered_log = Convert.ToString(prv_highest_filtered_log);
-					}
-					else
-					{
-						//Console.WriteLine("E");
-						//SET TO BLANK
-						highest_filtered_log = "";
-					}
-
-				}
-
-				//NOW CALCULATE FILTERED LOG
-				if (Convert.ToInt32(RunningCountTable[i]) == Convert.ToInt32(RunningCountTable[i + 1]))
-				{
-					//SET FILTERED LOG TO ""
-					filtered_log = "";
-				}
-				else
-				{
-					//RUNNING TABLE COUNT IS NOT EQUAL SO USE HIGHEST FILTERED LOG
-					filtered_log = highest_filtered_log;
-				}
-
-				//NOW COUNT # OF PEPTIDES
-				if ((Convert.ToInt32(RunningCountTable[i]) == Convert.ToInt32(RunningCountTable[i - 1])) && FILTER == true)
-				{
-					//SET CURRENT PEPTIDE COUNT == PREV COUNT + 1
-					current_peptide_count = prv_peptide_count + 1;
-				}
-				else
-				{
-					//OTHERWISE
-					if (Convert.ToInt32(RunningCountTable[i]) == Convert.ToInt32(RunningCountTable[i - 1]))
-					{
-						if (FILTER == true)
-						{
-							//SET CURRENT PEPTIDE COUNT == PREV COUNT + 1
-							current_peptide_count = prv_peptide_count + 1;
-						}
-						else
-						{
-							//SET CURRENT PEPTIDE COUNT == PREV COUNT
-							current_peptide_count = prv_peptide_count;
-						}
-					}
-					else
-					{
-						if (FILTER == true)
-						{
-							//SET CURRENT PEPTIDE COUNT TO 1
-							current_peptide_count = 1;
-						}
-						else
-						{
-							//SET CURRENT PEPTIDE COUNT TO 0
-							current_peptide_count = 0;
-						}
-					}
-				}
-
-				//CALCULATE # {1,2,3} PEPTIDE COUNTS
-				if (current_peptide_count == 1 && !filtered_log.Equals(""))
-				{
-					num_of_1_peptides++;
-				}
-				else if (current_peptide_count == 2 && !filtered_log.Equals(""))
-				{
-					num_of_2_peptides++;
-				}
-				else if (current_peptide_count == 3 && !filtered_log.Equals(""))
-				{
-					num_of_3_peptides++;
-				}
-
-				//UPDATE PREVIOUS RESULT VARIABLES
-				prv_Peptide_Sequence = Convert.ToString(Peptide_Sequence[i]);
-				prv_running_count = Convert.ToInt32(RunningCountTable[i]);
-				prv_highest_filtered_log = Convert.ToString(highest_filtered_log);
-				prv_peptide_count = current_peptide_count;
-			}
-
-			//NOW CALCULATE DS_1A + ROUND TO 6 PLACES
-
+			//NOW CALCULATE DS_1A
 			//RETURN 0 IF NUM_OF_2 EQUALS 0
 			if (Convert.ToDouble(num_of_2_peptides) == 0)
 			{
@@ -1457,6 +1257,30 @@ namespace SMAQC
 		/// <returns></returns>
 		public String DS_1B()
 		{
+			int num_of_1_peptides;	                                                            //RUNNING COUNT FOR COLUMN J
+			int num_of_2_peptides;                                                              //RUNNING COUNT FOR COLUMN K
+			int num_of_3_peptides;                                                              //RUNNING COUNT FOR COLUMN L
+			double result;																		//SOLUTION
+
+			DS_1_Shared(out num_of_1_peptides, out num_of_2_peptides, out num_of_3_peptides);
+
+			//NOW CALCULATE DS_1B
+			//RETURN 0 IF NUM_OF_3 EQUALS 0
+			if (Convert.ToDouble(num_of_3_peptides) == 0)
+			{
+				result = 0;
+			}
+			else
+			{
+				result = (double)num_of_2_peptides / (double)num_of_3_peptides;
+			}
+
+			return result.ToString("0.000000");
+
+		}
+
+		protected void DS_1_Shared(out int num_of_1_peptides, out int num_of_2_peptides, out int num_of_3_peptides)
+		{
 			//SET DB QUERY
 			DBInterface.setQuery("SELECT Peptide_Expectation_Value_Log,Peptide_Sequence,Scan "
 				+ "FROM `temp_xt` "
@@ -1464,10 +1288,9 @@ namespace SMAQC
 				+ "ORDER BY Peptide_Sequence,Scan;");
 
 			int running_count = 0;                                                                  //RUNNING COUNT FOR COLUMN F
-			int num_of_1_peptides = 0;	                                                            //RUNNING COUNT FOR COLUMN J
-			int num_of_2_peptides = 0;                                                              //RUNNING COUNT FOR COLUMN K
-			int num_of_3_peptides = 0;                                                              //RUNNING COUNT FOR COLUMN L
-			double result;																			//SOLUTION
+			num_of_1_peptides = 0;																	//RUNNING COUNT FOR COLUMN J
+			num_of_2_peptides = 0;																	//RUNNING COUNT FOR COLUMN K
+			num_of_3_peptides = 0;																	//RUNNING COUNT FOR COLUMN L
 			Boolean FILTER;                                                                         //FILTER STATUS FOR COLUMN E
 			int i = 0;	                                                                            //TEMP POSITION
 			Hashtable Peptide_Exp_Value_Log = new Hashtable();                                      //STORE Peptide_Expectation_Value_Log NUMBERS
@@ -1542,7 +1365,6 @@ namespace SMAQC
 
 			//CALCULATE EVERYTHING ELSE
 			for (i = 0; i < Peptide_Exp_Value_Log.Count; i++)
-			//for (i = 0; i < 1065; i++)
 			{
 				//RESET FILTER STATUS
 				FILTER = false;
@@ -1663,20 +1485,6 @@ namespace SMAQC
 				prv_highest_filtered_log = Convert.ToString(highest_filtered_log);
 				prv_peptide_count = current_peptide_count;
 			}
-
-			//NOW CALCULATE DS_1A + ROUND TO 6 PLACES
-
-			//RETURN 0 IF NUM_OF_3 EQUALS 0
-			if (Convert.ToDouble(num_of_3_peptides) == 0)
-			{
-				result = 0;
-			}
-			else
-			{
-				result = (double)num_of_2_peptides / (double)num_of_3_peptides;
-			}
-
-			return result.ToString("0.000000");
 
 		}
 
@@ -3142,9 +2950,7 @@ namespace SMAQC
 			}
 
 			//SET ANSWER
-			int answer = cleavage_state_2_count;
-
-			return Convert.ToString(answer);
+			return cleavage_state_2_count.ToString();
 		}
 
 		/// <summary>
@@ -3231,7 +3037,8 @@ namespace SMAQC
 				prv_cleavage_state = cleavage_state;
 			}
 
-			return Convert.ToString(count_with_different_charges);
+			//SET ANSWER
+			return count_with_different_charges.ToString();
 		}
 
 		/// <summary>
@@ -3346,9 +3153,7 @@ namespace SMAQC
 			}
 
 			//SET ANSWER
-			int answer = unique_cleavage_state_2_count;
-
-			return Convert.ToString(answer);
+			return unique_cleavage_state_2_count.ToString();
 		}
 
 		/// <summary>
