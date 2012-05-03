@@ -331,7 +331,7 @@ namespace SMAQC
 			//STORE IN GLOBAL HASH TABLE FOR C_2B
 			AddUpdateResultsStorage("C_2A_TIME_MINUTES", answer);
 
-			return Convert.ToString(answer);
+			return answer.ToString("0.0000");
 		}
 
 
@@ -390,8 +390,8 @@ namespace SMAQC
 			{
 				double answer = lstScansWithFilterPassingIDs.Count / timeMinutesC2A;
 
-				//WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
-				answerText = answer.ToString("0.000000");
+				//WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT
+				answerText = answer.ToString("0.0000");
 
 			}
 
@@ -645,7 +645,7 @@ namespace SMAQC
 				result = num_of_1_peptides / (double)num_of_2_peptides;
 			}
 
-			return result.ToString("0.000000");
+			return result.ToString("0.000");
 		}
 
 		/// <summary>
@@ -668,7 +668,7 @@ namespace SMAQC
 				result = num_of_2_peptides / (double)num_of_3_peptides;
 			}
 
-			return result.ToString("0.000000");
+			return result.ToString("0.000");
 
 		}
 
@@ -1299,8 +1299,11 @@ namespace SMAQC
 			//NOW CALCULATE MEDIAN
 			median = ComputeMedian(result);
 
-			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3RD DIGIT
-			return median.ToString("0.000");
+			//WE NOW HAVE RESULT
+			if (median > 100)
+				return median.ToString("0");
+			else
+				return median.ToString("0.0");
 		}
 
 		protected void MS1_3_Shared(out double PMI_5PC, out double PMI_95PC, out List<double> result)
@@ -1723,7 +1726,7 @@ namespace SMAQC
 			double median;
 			median = ComputeMedian(DelMPPM);
 
-			return median.ToString("0.000000");
+			return median.ToString("0.000");
 		}
 
 		/// <summary>
@@ -1769,8 +1772,8 @@ namespace SMAQC
 			//NOW CALCULATE MEDIAN
 			median = ComputeMedian(InterquartilePPMErrors);
 
-			//WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT
-			return median.ToString("0.0000");
+			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3 DIGITS
+			return median.ToString("0.000");
 		}
 
 		protected void MS1_5_Shared(out List<double> FilteredDelM, out List<double> AbsFilteredDelM, out List<double> DelMPPM)
@@ -1911,8 +1914,8 @@ namespace SMAQC
 			//NOW CALCULATE MEDIAN
 			median = ComputeMedian(FinishedList);
 
-			//WE NOW HAVE RESULT ... NOW ROUND IT TO 4th DIGIT          
-			return median.ToString("0.0000");
+			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3 DIGITS
+			return median.ToString("0.000");
 		}
 
 		/// <summary>
@@ -1951,8 +1954,8 @@ namespace SMAQC
 			//NOW CALCULATE MEDIAN
 			median = ComputeMedian(FilterList);
 
-			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT
-			return median.ToString("0.000");
+			//WE NOW HAVE RESULT ... NOW ROUND IT TO THE NEAREST INTEGER
+			return median.ToString("0");
 		}
 
 		/// <summary>
@@ -2192,7 +2195,7 @@ namespace SMAQC
 			median = ComputeMedian(Peptide_Hyperscore_List);
 
 			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT
-			return median.ToString("0.000");
+			return median.ToString("0.00");
 		}
 
 		/// <summary>
