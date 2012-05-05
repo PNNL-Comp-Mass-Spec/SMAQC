@@ -14,6 +14,10 @@ namespace SMAQC
 {
     class DBWrapper
     {
+		//DELEGATE FUNCTION FOR ERROR EVENTS
+		public delegate void DBErrorEventHandler(string errorMessage);
+		public event DBWrapper.DBErrorEventHandler ErrorEvent;
+
         //DECLARE VARIABLES
         DBInterface dbConn = null;
         public String[] db_tables = { "temp_scanstats", "temp_scanstatsex", "temp_sicstats", "temp_xt", "temp_xt_resulttoseqmap", "temp_xt_seqtoproteinmap" };
@@ -78,6 +82,10 @@ namespace SMAQC
                 Console.WriteLine("Invalid DBType! config.xml only supports 'MySQL' or 'SQLite'!");
                 Environment.Exit(1);
             }
+
+			// Attach the event handler
+			dbConn.ErrorEvent +=new DBErrorEventHandler(dbConn_ErrorEvent);
+
         }
 
         //DESTRUCTOR
@@ -187,10 +195,13 @@ namespace SMAQC
             return dbConn.getDateTime();
         }
 
-
-
-
-
+		void dbConn_ErrorEvent(string errorMessage)
+		{
+			if (ErrorEvent != null)
+			{
+				ErrorEvent(errorMessage);
+			}
+		}
 
     }
 }

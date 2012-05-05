@@ -25,5 +25,8 @@ namespace SMAQC
         Boolean readSingleLine(String[] fields, ref Hashtable hash);
         Boolean readLines(String[] fields, ref Hashtable hash);
         String getDateTime();
+
+		event DBWrapper.DBErrorEventHandler ErrorEvent;
+
     }
 }

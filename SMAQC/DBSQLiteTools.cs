@@ -232,7 +232,7 @@ namespace SMAQC
 					// CREATE INDICES ON THE TABLES
 					RunSql(cmd, "CREATE UNIQUE INDEX pk_temp_ScanStats on temp_scanstats(random_id, ScanNumber)");
 					RunSql(cmd, "CREATE UNIQUE INDEX pk_temp_ScanStatsEx on temp_scanstatsex(random_id, ScanNumber)");
-					RunSql(cmd, "CREATE UNIQUE INDEX pk_temp_SicStats on temp_sicstats(random_id, ParentIonIndex)");
+					RunSql(cmd, "CREATE UNIQUE INDEX pk_temp_SicStats on temp_sicstats(random_id, ParentIonIndex, FragScanNumber)");
 
 					RunSql(cmd, "CREATE INDEX IX_temp_ScanStats on temp_scanstats(ScanNumber)");
 					RunSql(cmd, "CREATE INDEX IX_temp_ScanStatsEx on temp_scanstatsex(ScanNumber)");

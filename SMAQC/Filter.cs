@@ -9,17 +9,22 @@ namespace SMAQC
     class Filter
     {
         //DECLARE VARIABLES
-        public DBWrapper DBInterface;                                                               //CREATE DB INTERFACE OBJECT
+        public DBWrapper mDBWrapper;                                                                //CREATE DB INTERFACE OBJECT
         public String instrument_id;                                                                //INSTRUMENT ID
         public int random_id;                                                                       //RANDOM ID
         public DataFileFormatter DFF = new DataFileFormatter();                                     //DFF OBJECT
+		SystemLogManager m_SystemLogManager;
 
         //CONSTRUCTOR
-        public Filter(ref DBWrapper DBInterface, String instrument_id, int random_id)
+		public Filter(ref DBWrapper DBInterface, String instrument_id, int random_id, ref SystemLogManager systemLogManager)
         {
-            this.DBInterface = DBInterface;
+            this.mDBWrapper = DBInterface;
             this.instrument_id = instrument_id;
             this.random_id = random_id;
+			this.m_SystemLogManager = systemLogManager;
+
+			// Attach the event handler
+			this.mDBWrapper.ErrorEvent += new DBWrapper.DBErrorEventHandler(DBWrapper_ErrorEvent);
         }
 
         //DESTRUCTOR
@@ -140,11 +145,12 @@ namespace SMAQC
 
         //THIS FUNCTION:
         //1. LOOPS THROUGH A VALID FILE LIST
-        //2. Calls another function that loads that file and rewrites the \tab as ',' seperated.
+        //2. Calls another function that loads that file and rewrites the \tab as ',' separated.
         //3. From the filename, determines the correct table to insert into, appends temp
         //4. Calls our bulk insert function
         public void LoadFilesAndInsertIntoDB(List<String> FileList, String[] valid_file_tables, String dataset)
         {
+
             //LOOP THROUGH EACH FILE
             for (int i = 0; i < FileList.Count; i++)
             {
@@ -180,7 +186,7 @@ namespace SMAQC
                     //Console.WriteLine("INSERT ({0}) INTO TABLE {1}", file_info, query_table);
 
                     //INSERT INTO DB
-                    DBInterface.BulkInsert(query_table, temp_file);
+                    mDBWrapper.BulkInsert(query_table, temp_file);
                 }
                 else
                 {
@@ -238,6 +244,10 @@ namespace SMAQC
             return -1;
         }
 
+		protected void DBWrapper_ErrorEvent(string errorMessage)
+		{
+			m_SystemLogManager.addApplicationLog(errorMessage);
+		}
 
     }
 }

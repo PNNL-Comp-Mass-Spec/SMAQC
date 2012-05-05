@@ -1761,7 +1761,6 @@ namespace SMAQC
 				//INC count
 				count++;
 
-				//IF COUNT >= INTER_QUARTILE_START && COUNT <= INTER_QUARTILE_END
 				if ((count >= INTER_QUARTILE_START) && (count <= INTER_QUARTILE_END))
 				{
 					//ADD TO LIST [COLUMN M]

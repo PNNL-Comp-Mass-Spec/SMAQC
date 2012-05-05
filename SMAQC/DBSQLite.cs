@@ -17,6 +17,9 @@ namespace SMAQC
         private SQLiteDataReader reader;                                                //SQLITE READER
         private DBSQLiteTools SQLiteTools = new DBSQLiteTools();                        //CREATE DBSQLITE TOOLS OBJECT
 
+		//EVENT
+		public event DBWrapper.DBErrorEventHandler ErrorEvent;
+
         //CONSTRUCTOR
         public DBSQLite(String datasource)
         {
@@ -124,8 +127,13 @@ namespace SMAQC
             //FETCH FIELDS
             String[] fields = SQLiteBulkInsert_Fields(file_to_read_from);
 
+			System.Collections.Generic.Dictionary<string, int> dctErrorMessages;
+			dctErrorMessages = new System.Collections.Generic.Dictionary<string, int>();
+			int errorMsgCount;
+
             //BUILD SQL LINE
             String sql = SQLiteBulkInsert_BuildSQL_Line(insert_into_table, fields);
+			string previousLine = string.Empty;
 
             using (DbTransaction dbTrans = conn.BeginTransaction())
             {
@@ -138,14 +146,20 @@ namespace SMAQC
                     int line_num = 0;
                     while ((line = file.ReadLine()) != null)
                     {
-                        //CHECK IF FIELD LISTING LINE #
-                        if (line_num == 0)
+						line_num++;
+
+                        if (line_num == 1)
                         {
-                            line_num++;
-                            continue;//SKIP THIS LINE AS WE DO NOT WANT THE FIELD LISTING
+							// HEADER LINE, SKIP IT
+                            continue;
                         }
 
-
+						if (string.Compare(line, previousLine) == 0)
+						{
+							// Duplicate line; skip it
+							continue;
+						}
+						
                         //Console.WriteLine("LINE [{0}]", line);
                         //FETCH VALUES
                         String[] values = SQLiteBulkInsert_TokenizeLine(line);
@@ -160,12 +174,55 @@ namespace SMAQC
                         }
 
                         //NOW THAT ALL FIELDS + VALUES ARE IN OUR SYSTEM
-                        mycommand.ExecuteNonQuery();
+
+						try
+						{
+							mycommand.ExecuteNonQuery();
+						}
+						catch (Exception ex)
+						{
+							string msg = ex.Message.Replace("\r\n", ": ");
+
+							errorMsgCount = 1;
+							if (dctErrorMessages.TryGetValue(msg, out errorMsgCount))
+								dctErrorMessages[msg] = errorMsgCount + 1;
+							else
+								dctErrorMessages.Add(msg, 1);
+
+							if (errorMsgCount < 10)
+								OnErrorEvent("Error inserting row " + line_num + ": " + msg);
+						}
+
+						previousLine = string.Copy(line);
+                        
                     }
                     //CLOSE FILE
                     file.Close();
                 }
                 dbTrans.Commit();
+
+				if (dctErrorMessages.Count > 0)
+				{
+					string msg;
+					string firstErrorMsg = string.Empty;
+					int totalErrorRows = 0;
+
+					foreach (System.Collections.Generic.KeyValuePair<string, int> kvEntry in dctErrorMessages)
+					{
+						totalErrorRows += kvEntry.Value;
+						OnErrorEvent("Error message count = " + kvEntry.Value + " for '" + kvEntry.Key + "'");
+						if (string.IsNullOrEmpty(firstErrorMsg))
+							firstErrorMsg = string.Copy(kvEntry.Key);
+					}
+
+					msg = "Errors during BulkInsert from file " + System.IO.Path.GetFileName(file_to_read_from) + "; problem with " + totalErrorRows + " row";
+					if (totalErrorRows != 1)
+						msg += "s";
+
+					msg += "; " + firstErrorMsg;
+
+					throw new Exception(msg);
+				}
             }
         }
 
@@ -354,6 +411,15 @@ namespace SMAQC
         {
             return "strftime('%Y-%m-%d %H:%M:%S','now', 'localtime')";
         }
+
+		void OnErrorEvent(string errorMessage)
+		{
+			if (ErrorEvent != null)
+			{
+				ErrorEvent(errorMessage);
+			}
+		}
+
 
     }
 }
