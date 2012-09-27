@@ -1785,6 +1785,7 @@ namespace SMAQC
 
 			//DECLARE VARIABLES
 			double massHydrogen = 1.00727649;                                      //REQUIRED BY MEASUREMENT
+			double massC13 = 1.00335483;
 			FilteredDelM = new List<double>();                                    //STORE FILTERED VALUES [COLUMN G]
 			AbsFilteredDelM = new List<double>();                                 //STORE FILTERED VALUES [COLUMN H]
 			DelMPPM = new List<double>();                                          //STORE FILTERED VALUES [COLUMN I]
@@ -1804,8 +1805,18 @@ namespace SMAQC
 				//IF LOG(E) <= -2 ... CALC FILTERED AND ABS FILTERED
 				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
+					double delm = Convert.ToDouble(measurementhash["MZ"]) - theo;
+
+					// Correct the delm value by assuring that it is between -0.5 and5 0.5
+					// This corrects for the instrument choosing the 2nd or 3rd isotope of an isotopic distribution as the parent ion
+					while (delm < -0.5)
+						delm += massC13;
+
+					while (delm > 0.5)
+						delm -= massC13;
+
 					//CALC FILTERED ARRAY
-					FilteredDelM.Add(Convert.ToDouble(measurementhash["MZ"]) - theo);
+					FilteredDelM.Add(delm);
 
 					//NOW TAKE THE ABS VALUE OF OUR FILTERED ARRAY
 					AbsFilteredDelM.Add(Math.Abs(FilteredDelM.Last()));
