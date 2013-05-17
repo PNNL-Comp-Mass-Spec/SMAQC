@@ -28,8 +28,8 @@ namespace SMAQC
 		private static string appDirectoryPath = System.IO.Path.GetDirectoryName(GetAppPath());         //GET PATH TO SMAQC.exe [USEFUL IF NOT RUNNING IN SAME DIRECTORY]
 
 		//DECLARE VERSION, BUILD DATE, VALID FILE TABLES AND MEASUREMENT FIELDS
-		private static String SMAQC_VERSION = "1.09";
-		private static String SMAQC_BUILD_DATE = "December 13, 2012";
+		private static String SMAQC_VERSION = "1.10";
+		private static String SMAQC_BUILD_DATE = "May 17, 2013";
 		private static String[] valid_file_tables = { "_scanstats", "_scanstatsex", "_sicstats", "_xt", 
                                                        "_xt_resulttoseqmap", "_xt_seqtoproteinmap" };   //VALID FILE / TABLES
 		private static String[] fields = { "instrument_id", "random_id", "scan_date", "C_1A", "C_1B", 
@@ -178,6 +178,29 @@ namespace SMAQC
 					{
 						//NOT ALL FILES HAVE BEEN FOUND! ... EXIT AS CANNOT RUN METRICS WITH INCOMPLETE DATASET
 						m_SystemLogManager.addApplicationLog("The 6 required data files not found in " + path_to_scan_files);
+
+						// Find the missing files
+						foreach (string sSuffix in valid_file_tables)
+						{		
+							bool bMatchFound = false;
+				
+							foreach (string sFilePath in FileList)
+							{
+								string sFileName = System.IO.Path.GetFileNameWithoutExtension(sFilePath);
+								if (sFileName.EndsWith(sSuffix, true, System.Globalization.CultureInfo.CurrentCulture))
+								{
+									bMatchFound=true;
+									break;
+								}
+							}
+
+							if (!bMatchFound)
+							{
+								m_SystemLogManager.addApplicationLog("  Missing file: " + DataPrefix[i] + sSuffix + ".txt");
+							}
+
+						}
+					
 						m_SystemLogManager.addApplicationLog("Exiting...");
 
 						//CLOSE THE APPLICATION LOG

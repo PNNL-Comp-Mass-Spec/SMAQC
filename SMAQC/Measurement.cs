@@ -1799,13 +1799,19 @@ namespace SMAQC
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
 			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
 			{
-				//CALC THEORETICAL VALUE [COLUMN F]
-				double theo = ((Convert.ToDouble(measurementhash["Peptide_MH"]) - massHydrogen) + (massHydrogen * Convert.ToDouble(measurementhash["Charge"]))) / (Convert.ToDouble(measurementhash["Charge"]));
+				//CALC THEORETICAL VALUE [COLUMN F], which would be theoretical m/z of the peptide
+				// Instead, calculate theoretical monoisotopic mass of the peptide
+
+				double theoMonoMass = Convert.ToDouble(measurementhash["Peptide_MH"]) - massHydrogen;
 
 				//IF LOG(E) <= -2 ... CALC FILTERED AND ABS FILTERED
 				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
-					double delm = Convert.ToDouble(measurementhash["MZ"]) - theo;
+					// Compute observed precursor mass, as monoisotopic mass					
+					int observedCharge = Convert.ToInt16(measurementhash["Charge"]);
+					double observedMonoMass = Convert.ToDouble(measurementhash["MZ"]) * observedCharge - massHydrogen * observedCharge;
+
+					double delm = observedMonoMass - theoMonoMass;
 
 					// Correct the delm value by assuring that it is between -0.5 and5 0.5
 					// This corrects for the instrument choosing the 2nd or 3rd isotope of an isotopic distribution as the parent ion
@@ -1815,17 +1821,26 @@ namespace SMAQC
 					while (delm > 0.5)
 						delm -= massC13;
 
+					double delMppm = 0;
+
+					if (theoMonoMass > 0)
+					{
+						delMppm = delm / (theoMonoMass / 1000000);
+					}
+
+					if (Math.Abs(delMppm) > 200)
+					{
+						Console.WriteLine("Large DelM_PPM: " + delMppm);
+					}
+
 					//CALC FILTERED ARRAY
 					FilteredDelM.Add(delm);
 
 					//NOW TAKE THE ABS VALUE OF OUR FILTERED ARRAY
-					AbsFilteredDelM.Add(Math.Abs(FilteredDelM.Last()));
+					AbsFilteredDelM.Add(Math.Abs(delm));
 
 					//ADD TO PPM LIST
-					if (theo > 0)
-						DelMPPM.Add(FilteredDelM.Last() / (theo / 1000000));
-					else
-						DelMPPM.Add(0);
+					DelMPPM.Add(delMppm);
 				}
 
 			}
