@@ -18,7 +18,7 @@ namespace SMAQC
         private DBSQLiteTools SQLiteTools = new DBSQLiteTools();                        //CREATE DBSQLITE TOOLS OBJECT
 
 		private int errorMsgCount;
-		private System.Collections.Generic.Dictionary<string, int> dctErrorMessages;
+		private Dictionary<string, int> dctErrorMessages;
 
 		//EVENT
 		public event DBWrapper.DBErrorEventHandler ErrorEvent;
@@ -132,7 +132,7 @@ namespace SMAQC
 
 			errorMsgCount = 0;
 			if (dctErrorMessages == null)
-				dctErrorMessages = new System.Collections.Generic.Dictionary<string, int>();
+				dctErrorMessages = new Dictionary<string, int>();
 			else
 				dctErrorMessages.Clear();
 
@@ -204,7 +204,7 @@ namespace SMAQC
 					string firstErrorMsg = string.Empty;
 					int totalErrorRows = 0;
 
-					foreach (System.Collections.Generic.KeyValuePair<string, int> kvEntry in dctErrorMessages)
+					foreach (KeyValuePair<string, int> kvEntry in dctErrorMessages)
 					{
 						totalErrorRows += kvEntry.Value;
 						OnErrorEvent("Error message count = " + kvEntry.Value + " for '" + kvEntry.Key + "'");

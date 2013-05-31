@@ -1,8 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Collections;
 using System.IO;
 
 namespace SMAQC
@@ -92,9 +92,9 @@ namespace SMAQC
 			return (int)value;
 		}
 
-		protected System.Collections.Generic.Dictionary<int, int> GetResultIDToSeqIDTable()
+		protected Dictionary<int, int> GetResultIDToSeqIDTable()
 		{
-			System.Collections.Generic.Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table = new System.Collections.Generic.Dictionary<int, int>();
+			Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table = new Dictionary<int, int>();
 			int resultID;
 			int seqID;
 
@@ -118,9 +118,9 @@ namespace SMAQC
 			return ResultID_to_Unique_Seq_ID_Table;
 		}
 
-		protected System.Collections.Generic.Dictionary<int, int> GetSeqIDToCleavageStateTable()
+		protected Dictionary<int, int> GetSeqIDToCleavageStateTable()
 		{
-			System.Collections.Generic.Dictionary<int, int> Seq_ID_to_Cleavage_State_Table = new System.Collections.Generic.Dictionary<int, int>();
+			Dictionary<int, int> Seq_ID_to_Cleavage_State_Table = new Dictionary<int, int>();
 			int seqID;
 			short cleavageState;
 
@@ -2266,12 +2266,12 @@ namespace SMAQC
 		public String P_2A()
 		{
 			//BUILD RESULT_ID, UNIQUE_SEQ_TABLE
-			System.Collections.Generic.Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
+			Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
 			ResultID_to_Unique_Seq_ID_Table = GetResultIDToSeqIDTable();
 
 			// BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE            
 			// Populate a dictionary object via a single query to the database
-			System.Collections.Generic.Dictionary<int, int> Seq_ID_to_Cleavage_State_Table;
+			Dictionary<int, int> Seq_ID_to_Cleavage_State_Table;
 			Seq_ID_to_Cleavage_State_Table = GetSeqIDToCleavageStateTable();
 
 			//SET DB QUERY
@@ -2381,12 +2381,12 @@ namespace SMAQC
 		public String P_2B()
 		{
 			//BUILD RESULT_ID, UNIQUE_SEQ_TABLE
-			System.Collections.Generic.Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
+			Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
 			ResultID_to_Unique_Seq_ID_Table = GetResultIDToSeqIDTable();
 
 			// BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE            
 			// Populate a dictionary object via a single query to the database
-			System.Collections.Generic.Dictionary<int, int> Seq_ID_to_Cleavage_State_Table;
+			Dictionary<int, int> Seq_ID_to_Cleavage_State_Table;
 			Seq_ID_to_Cleavage_State_Table = GetSeqIDToCleavageStateTable();
 
 			//SET DB QUERY
@@ -2469,12 +2469,12 @@ namespace SMAQC
 		public String P_2C()
 		{
 			//BUILD RESULT_ID, UNIQUE_SEQ_TABLE
-			System.Collections.Generic.Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
+			Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
 			ResultID_to_Unique_Seq_ID_Table = GetResultIDToSeqIDTable();
 
 			// BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE            
 			// Populate a dictionary object via a single query to the database
-			System.Collections.Generic.Dictionary<int, int> Seq_ID_to_Cleavage_State_Table;
+			Dictionary<int, int> Seq_ID_to_Cleavage_State_Table;
 			Seq_ID_to_Cleavage_State_Table = GetSeqIDToCleavageStateTable();
 
 			//SET DB QUERY
@@ -2584,12 +2584,12 @@ namespace SMAQC
 		public String P_3()
 		{
 			//BUILD RESULT_ID, UNIQUE_SEQ_TABLE
-			System.Collections.Generic.Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
+			Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
 			ResultID_to_Unique_Seq_ID_Table = GetResultIDToSeqIDTable();
 
 			// BUILD UNIQUE_SEQ_TABLE, CLEAVAGE STATE TABLE            
 			// Populate a dictionary object via a single query to the database
-			System.Collections.Generic.Dictionary<int, int> Seq_ID_to_Cleavage_State_Table;
+			Dictionary<int, int> Seq_ID_to_Cleavage_State_Table;
 			Seq_ID_to_Cleavage_State_Table = GetSeqIDToCleavageStateTable();
 
 			//SET DB QUERY
