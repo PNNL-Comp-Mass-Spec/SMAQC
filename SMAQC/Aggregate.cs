@@ -57,16 +57,18 @@ namespace SMAQC
         public List<String> DetectDatasets(string file_ext)
         {
             //DECLARE VARIABLES
-            string[] filePaths = null;                      //SET TO NULL AS IN TRY BLOCK OR WILL NOT COMPILE
+            System.IO.FileInfo[] filePaths = null;                      //SET TO NULL AS IN TRY BLOCK OR WILL NOT COMPILE
 
             try
             {
                 //GET LIST OF FILES IN SPECIFIED DIRECTORY MATCHING FILE_EXT
-                filePaths = Directory.GetFiles(filedir, file_ext);
+				System.IO.DirectoryInfo fidir = new System.IO.DirectoryInfo(filedir);
+				filePaths = fidir.GetFiles(file_ext);
             }
             catch (DirectoryNotFoundException)
             {
                 Console.WriteLine("GFIL():: Could not find directory {0}!", filedir);
+				System.Threading.Thread.Sleep(2000);
                 Environment.Exit(1);
             }
 
@@ -74,10 +76,10 @@ namespace SMAQC
             for (int i = 0; i < filePaths.Length; i++)
             {
                 //IF THE FILE IS IN OUR LIST
-                if (is_valid_import_file(filePaths[i]))
+                if (is_valid_import_file(filePaths[i].FullName))
                 {
                     //STRIP FULL PATHNAME FROM FILENAME AND STORE AS filename
-					string filename = System.IO.Path.GetFileName(filePaths[i]);
+					string filename = filePaths[i].Name;
 
                     //FIND THE DATASET BY CHECKING FOR _ BEFORE ScanStats.txt [ScanStats.txt will be used to detect each dataset]
                     int dataprefix = filename.ToLower().LastIndexOf("_ScanStats.txt".ToLower());
@@ -119,7 +121,8 @@ namespace SMAQC
             catch (DirectoryNotFoundException)
             {
                 Console.WriteLine("GFIL():: Could not find directory {0}!", filedir);
-                Environment.Exit(1);
+				System.Threading.Thread.Sleep(2000);
+                Environment.Exit(1);				
             }
 
             //LOOP THROUGH ALL FILES IN SPECIFIED DIRECTORY

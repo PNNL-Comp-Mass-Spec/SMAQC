@@ -53,7 +53,7 @@ namespace SMAQC
 
 			bSuccess = ParseCommandLine(args, ref outputfile, ref instrument_id, ref dbFolderPath, out path_to_scan_files, out measurementsFile);
 			if (!bSuccess)
-				Environment.Exit(5);
+				NotifyError("Error parsing the command line arguments", 5);
 
 			try
 			{
@@ -67,8 +67,7 @@ namespace SMAQC
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine("Error initializing log file: " + ex.Message);
-				Environment.Exit(6);
+				NotifyError("Error initializing log file: " + ex.Message, 6);
 			}
 
 
@@ -104,15 +103,13 @@ namespace SMAQC
 				}
 				catch (Exception ex)
 				{
-					Console.WriteLine("Error initializing database wrapper: " + ex.Message);
-					Environment.Exit(7);
+					NotifyError("Error initializing database wrapper: " + ex.Message, 7);
 				}
 
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine("Error initializing loading configuration: " + ex.Message);
-				Environment.Exit(8);
+				NotifyError("Error initializing loading configuration: " + ex.Message, 8);
 			}
 
 
@@ -122,8 +119,7 @@ namespace SMAQC
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine("Error finding datasets to process: " + ex.Message);
-				Environment.Exit(9);
+				NotifyError("Error finding datasets to process: " + ex.Message, 9);
 			}
 
 			try
@@ -136,12 +132,23 @@ namespace SMAQC
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine("Error closing the log file: " + ex.Message);
-				Environment.Exit(10);
+				NotifyError("Error closing the log file: " + ex.Message, 10);
 			}
 
 		}
 
+		private static void NotifyError(String message)
+		{
+			NotifyError(message, 1);
+		}
+
+		private static void NotifyError(String message, int exitCode)
+		{
+			Console.WriteLine(message);
+			System.Threading.Thread.Sleep(2000);
+			Environment.Exit(exitCode);
+
+		}
 		private static void ProcessDatasets(String path_to_scan_files, String outputfile, int r_id, String instrument_id)
 		{
 
@@ -179,6 +186,8 @@ namespace SMAQC
 						//NOT ALL FILES HAVE BEEN FOUND! ... EXIT AS CANNOT RUN METRICS WITH INCOMPLETE DATASET
 						m_SystemLogManager.addApplicationLog("The 6 required data files not found in " + path_to_scan_files);
 
+						bool bScanStatsExMissing = false;
+
 						// Find the missing files
 						foreach (string sSuffix in valid_file_tables)
 						{		
@@ -196,17 +205,26 @@ namespace SMAQC
 
 							if (!bMatchFound)
 							{
-								m_SystemLogManager.addApplicationLog("  Missing file: " + DataPrefix[i] + sSuffix + ".txt");
+								if (sSuffix == "_scanstatsex")
+									bScanStatsExMissing = true;
+								else
+									m_SystemLogManager.addApplicationLog("  Missing file: " + DataPrefix[i] + sSuffix + ".txt");
 							}
 
 						}
-					
-						m_SystemLogManager.addApplicationLog("Exiting...");
 
-						//CLOSE THE APPLICATION LOG
-						m_SystemLogManager.CloseLogFile();
+						if (FileList.Count == 5 && bScanStatsExMissing)
+							// The only missing file is the _ScanStatsEx file; that's OK
+							m_SystemLogManager.addApplicationLog("Did not find file " + DataPrefix[i] + "_ScanStatsEx.txt; metrics MS1_1 and MS2_1 will not be computed");
+						else
+						{
+							m_SystemLogManager.addApplicationLog("Exiting...");
 
-						Environment.Exit(11);
+							//CLOSE THE APPLICATION LOG
+							m_SystemLogManager.CloseLogFile();
+
+							NotifyError("", 11);
+						}
 					}
 
 					//LOOP THROUGH EACH FILE IN FileList, CREATE TEMP FILE, REWRITE TO USE ',' AND BULK INSERT INTO DB
@@ -247,7 +265,7 @@ namespace SMAQC
 				catch (Exception ex)
 				{
 					m_SystemLogManager.addApplicationLog("Error processing dataset " + DataPrefix[i] + ": " + ex.Message);
-					Environment.Exit(5);
+					NotifyError("", 5);
 				}
 
 			}
@@ -280,7 +298,9 @@ namespace SMAQC
 				Console.WriteLine("\t-db [path]");
 				Console.WriteLine("\t\tPath to folder where SQLite database should be created (default is same folder as .Exe)");
 
-				Environment.Exit(1);
+				System.Threading.Thread.Sleep(1500);
+
+				NotifyError("", 1);
 			}
 
 			//SET VARIABLES BASED ON ARGUMENTS
@@ -290,20 +310,17 @@ namespace SMAQC
 
 			if (string.IsNullOrEmpty(instrument_id))
 			{
-				Console.WriteLine("Instrument_ID parameter is empty; unable to continue");
-				Environment.Exit(2);
+				NotifyError("Instrument_ID parameter is empty; unable to continue", 2);
 			}
 
 			if (string.IsNullOrEmpty(path_to_scan_files))
 			{
-				Console.WriteLine("Path to datasets is empty; unable to continue");
-				Environment.Exit(3);
+				NotifyError("Path to datasets is empty; unable to continue", 3);
 			}
 
 			if (string.IsNullOrEmpty(measurementsFile))
 			{
-				Console.WriteLine("Measurements file path is empty; unable to continue");
-				Environment.Exit(4);
+				NotifyError("Measurements file path is empty; unable to continue", 4);
 			}
 
 			if (args.Length >= 8)
@@ -445,8 +462,7 @@ namespace SMAQC
 			}
 			catch (FileNotFoundException ex)
 			{
-				Console.WriteLine("Error:: Could not open config file (" + configFilePath + "): " + ex.Message);
-				Environment.Exit(12);
+				NotifyError("Error:: Could not open config file (" + configFilePath + "): " + ex.Message, 12);
 			}
 
 			XmlTextReader parser = new XmlTextReader(configFile);
@@ -489,8 +505,7 @@ namespace SMAQC
 			}
 			catch (FileNotFoundException ex)
 			{
-				Console.WriteLine("Error:: Could not open measurements file (" + measurementsFilePath + "): " + ex.Message);
-				Environment.Exit(13);
+				NotifyError("Error:: Could not open measurements file (" + measurementsFilePath + "): " + ex.Message, 13);
 			}
 
 			XmlTextReader parser = new XmlTextReader(measurementsFile);
@@ -520,8 +535,7 @@ namespace SMAQC
 			}
 			catch (FileNotFoundException ex)
 			{
-				Console.WriteLine("Could not find file {0}!", ex.Message);
-				Environment.Exit(14);
+				NotifyError("Could not find file: " + ex.Message, 14);
 			}
 			XmlTextReader parser = new XmlTextReader(configFile);
 

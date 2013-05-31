@@ -55,12 +55,14 @@ namespace SMAQC
                     dbConn = new DBMySQL(host, user, pass, db);
 #else
 					Console.WriteLine("Error: MySQL support is not enabled in this version of SMAQC.");
+					System.Threading.Thread.Sleep(2000);
 					Environment.Exit(1);
 #endif
                 }
                 catch
                 {
                     Console.WriteLine("Error: You do not have MySQL NET Connector Installed on your Machine!");
+					System.Threading.Thread.Sleep(2000);
                     Environment.Exit(1);
                 }
             }
@@ -74,12 +76,14 @@ namespace SMAQC
                 //catch
                 //{
                 //    Console.WriteLine("Error: You do not have SQLite Library Installed on your Machine!");
+				//    System.Threading.Thread.Sleep(2000);
                 //    Environment.Exit(1);
                 //}
             }
             else
             {
                 Console.WriteLine("Invalid DBType! config.xml only supports 'MySQL' or 'SQLite'!");
+				System.Threading.Thread.Sleep(2000);
                 Environment.Exit(1);
             }
 

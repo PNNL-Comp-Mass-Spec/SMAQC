@@ -183,7 +183,7 @@ namespace SMAQC
                     //WE NOW HAVE A ACCESS TO valid_file_tables[j] which starts with the prefix '_'
                     //APPEND temp [DB PREFIX] to this.
                     query_table += valid_file_tables[j];
-                    //Console.WriteLine("INSERT ({0}) INTO TABLE {1}", file_info, query_table);
+                    Console.WriteLine("Populating Table {0}", query_table);
 
                     //INSERT INTO DB
                     mDBWrapper.BulkInsert(query_table, temp_file);

@@ -17,6 +17,9 @@ namespace SMAQC
         private SQLiteDataReader reader;                                                //SQLITE READER
         private DBSQLiteTools SQLiteTools = new DBSQLiteTools();                        //CREATE DBSQLITE TOOLS OBJECT
 
+		private int errorMsgCount;
+		private System.Collections.Generic.Dictionary<string, int> dctErrorMessages;
+
 		//EVENT
 		public event DBWrapper.DBErrorEventHandler ErrorEvent;
 
@@ -127,18 +130,27 @@ namespace SMAQC
             //FETCH FIELDS
             String[] fields = SQLiteBulkInsert_Fields(file_to_read_from);
 
-			System.Collections.Generic.Dictionary<string, int> dctErrorMessages;
-			dctErrorMessages = new System.Collections.Generic.Dictionary<string, int>();
-			int errorMsgCount;
+			errorMsgCount = 0;
+			if (dctErrorMessages == null)
+				dctErrorMessages = new System.Collections.Generic.Dictionary<string, int>();
+			else
+				dctErrorMessages.Clear();
 
             //BUILD SQL LINE
             String sql = SQLiteBulkInsert_BuildSQL_Line(insert_into_table, fields);
 			string previousLine = string.Empty;
 
+			using (SQLiteCommand mycommand = conn.CreateCommand())
+			{
+				mycommand.CommandText = "PRAGMA synchronous=OFF";
+				ExecuteCommand(mycommand, -1);
+			}
+
             using (DbTransaction dbTrans = conn.BeginTransaction())
             {
                 using (SQLiteCommand mycommand = conn.CreateCommand())
                 {
+
                     mycommand.CommandText = sql;
 
                     StreamReader file = new StreamReader(file_to_read_from);
@@ -175,29 +187,14 @@ namespace SMAQC
 
                         //NOW THAT ALL FIELDS + VALUES ARE IN OUR SYSTEM
 
-						try
-						{
-							mycommand.ExecuteNonQuery();
-						}
-						catch (Exception ex)
-						{
-							string msg = ex.Message.Replace("\r\n", ": ");
-
-							errorMsgCount = 1;
-							if (dctErrorMessages.TryGetValue(msg, out errorMsgCount))
-								dctErrorMessages[msg] = errorMsgCount + 1;
-							else
-								dctErrorMessages.Add(msg, 1);
-
-							if (errorMsgCount < 10)
-								OnErrorEvent("Error inserting row " + line_num + ": " + msg);
-						}
+						ExecuteCommand(mycommand, line_num);
 
 						previousLine = string.Copy(line);
                         
                     }
                     //CLOSE FILE
                     file.Close();
+
                 }
                 dbTrans.Commit();
 
@@ -225,6 +222,31 @@ namespace SMAQC
 				}
             }
         }
+
+		protected bool ExecuteCommand(SQLiteCommand mycommand, int line_num)
+		{
+			try
+			{
+				mycommand.ExecuteNonQuery();
+			}
+			catch (Exception ex)
+			{
+				string msg = ex.Message.Replace("\r\n", ": ");
+
+				errorMsgCount = 1;
+				if (dctErrorMessages.TryGetValue(msg, out errorMsgCount))
+					dctErrorMessages[msg] = errorMsgCount + 1;
+				else
+					dctErrorMessages.Add(msg, 1);
+
+				if (errorMsgCount < 10)
+					OnErrorEvent("Error inserting row " + line_num + ": " + msg);
+
+				return false;
+			}
+
+			return true;
+		}
 
         //INIT MYSQL READER [WHENEVER WE WANT TO READ A ROW]
         public void initReader()
