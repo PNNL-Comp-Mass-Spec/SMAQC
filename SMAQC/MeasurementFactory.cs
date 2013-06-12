@@ -22,15 +22,15 @@ namespace SMAQC
         {
         }
 
-        public String buildMeasurement(String measurement)
+        public string buildMeasurement(string measurement)
         {
             //DECLARE VARIABLE
-            String result;
+            string result;
 
             //CONVERT STRING TO FUNCTION USING REFLECTION
             string methodName = measurement;
             System.Reflection.MethodInfo info = m_Measurement.GetType().GetMethod(methodName);
-            result = (String)info.Invoke(m_Measurement, null);
+            result = (string)info.Invoke(m_Measurement, null);
 
             return result;
         }

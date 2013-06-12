@@ -18,15 +18,25 @@ namespace SMAQC
 		public delegate void DBErrorEventHandler(string errorMessage);
 		public event DBWrapper.DBErrorEventHandler ErrorEvent;
 
+		public enum eDBTypeConstants {
+			Unknown = 0,
+			SQLite = 1,
+			MySql = 2
+		}
+
         //DECLARE VARIABLES
         DBInterface dbConn = null;
-        public String[] db_tables = { "temp_scanstats", "temp_scanstatsex", "temp_sicstats", "temp_xt", "temp_xt_resulttoseqmap", "temp_xt_seqtoproteinmap" };
+        public string[] db_tables = { "temp_scanstats", "temp_scanstatsex", "temp_sicstats", "temp_xt", "temp_xt_resulttoseqmap", "temp_xt_seqtoproteinmap" };
 		private bool mShowQueryText;
-	
+
+		private eDBTypeConstants m_DBType = eDBTypeConstants.Unknown;
+
 #if (!MySqlMissing)
 		//MySqlDataReader reader;                                 //READ POINTER
         IDataReader reader;
 #endif
+
+		#region "Properties"
 
 		public bool ShowQueryText
 		{
@@ -40,13 +50,22 @@ namespace SMAQC
 			}
 		}
 
-        //CONSTRUCTOR
-        public DBWrapper(string host, string user, string pass, string db, string dbtype, string dbFolderPath)
+		public eDBTypeConstants DBType
+		{
+			get { 
+				return m_DBType; 
+			}
+		}
+
+		#endregion
+
+		//CONSTRUCTOR
+		public DBWrapper(string host, string user, string pass, string db, eDBTypeConstants dbtype, string dbFolderPath)
         {
             //GET PATH TO DB [NEEDED FOR SQLite SO WE SAVE IN CORRECT LOCATION]
 			string dbPath = System.IO.Path.Combine(dbFolderPath, "SMAQC.s3db");
 
-            if (dbtype.Equals("MySQL", StringComparison.OrdinalIgnoreCase))
+            if (dbtype == eDBTypeConstants.MySql)
             {
                 //CREATE DB CONN
                 try
@@ -65,8 +84,11 @@ namespace SMAQC
 					System.Threading.Thread.Sleep(2000);
                     Environment.Exit(1);
                 }
+
+				m_DBType = eDBTypeConstants.MySql;
+
             }
-            else if(dbtype.Equals("SQLite", StringComparison.OrdinalIgnoreCase))
+            else if(dbtype == eDBTypeConstants.SQLite)
             {
                 //CREATE DB CONN
                 //try
@@ -79,6 +101,8 @@ namespace SMAQC
 				//    System.Threading.Thread.Sleep(2000);
                 //    Environment.Exit(1);
                 //}
+
+					m_DBType = eDBTypeConstants.SQLite;
             }
             else
             {
@@ -98,9 +122,9 @@ namespace SMAQC
         }
 
         //CLEAR DB TABLES
-        public void clearTempTables(int r_id)
+        public void clearTempTables(int random_id)
         {
-            dbConn.clearTempTables(r_id, db_tables);
+            dbConn.clearTempTables(random_id, db_tables);
         }
 
         //SET QUERY
@@ -123,7 +147,7 @@ namespace SMAQC
         }
 
         //BULK MYSQL INSERT
-        public void BulkInsert(String insert_into_table, String file_to_read_from)
+        public void BulkInsert(string insert_into_table, string file_to_read_from)
         {
             dbConn.BulkInsert(insert_into_table, file_to_read_from);
         }
@@ -160,9 +184,9 @@ namespace SMAQC
             dbConn.initReader();
         }
 
-        //READ SINGLE DB ROW [DIFFERENT FROM readLines() as here we close reader afterwords]
+        //READ SINGLE DB ROW [DIFFERENT FROM readLines() as here we close reader afterward]
         //[RETURNS FALSE IF NO FURTHER ROWS TO READ]
-        public Boolean readSingleLine(String[] fields, ref Hashtable hash)
+        public Boolean readSingleLine(string[] fields, ref Hashtable hash)
         {
             //DECLARE VARIABLE
             Boolean status = false;
@@ -178,7 +202,7 @@ namespace SMAQC
         }
 
         //READ DB ROW(s) [RETURNS FALSE IF NO FURTHER ROWS TO READ]
-        public Boolean readLines(String[] fields, ref Hashtable hash)
+        public Boolean readLines(string[] fields, ref Hashtable hash)
         {
             //DECLARE VARIABLE
             Boolean status = false;
@@ -194,10 +218,31 @@ namespace SMAQC
         }
 
         //GET THE DB GETDATE() FOR OUR DB'S AS STRING
-        public String getDateTime()
+        public string getDateTime()
         {
             return dbConn.getDateTime();
         }
+
+		/// <summary>
+		/// Initialize the command for inserting PHRP data
+		/// </summary>
+		/// <param name="dctFieldsForInsert"></param>
+		/// <returns></returns>
+		public bool InitPHRPInsertCommand(out System.Data.Common.DbTransaction dbTrans)
+		{
+			return dbConn.InitPHRPInsertCommand(out dbTrans);
+		}
+
+		/// <summary>
+		/// Add new PHRP data
+		/// </summary>
+		/// <param name="dctFieldsForInsert"></param>
+		/// <param name="dctData"></param>
+		/// <param name="line_num"></param>
+		public void ExecutePHRPInsertCommand( Dictionary<string, string> dctData, int line_num)
+		{
+			dbConn.ExecutePHRPInsert(dctData, line_num);
+		}
 
 		void dbConn_ErrorEvent(string errorMessage)
 		{

@@ -8,27 +8,37 @@ namespace SMAQC
 {
     class Aggregate
     {
+		private const string SCAN_STATS_FILENAME_SUFFIX = "_ScanStats.txt";
+
         //DECLARE VARIABLES
-        private string filedir;                                             //DIRECTORY WE NEED TO SEARCH
-        List<String> ValidImportFiles;                                      //LIST OF THE ONLY VALID FILES WE SHOULD BE READING
-        List<String> ValidDataSets = new List<String>();                    //LIST OF VALID DATASETS
-        private string dataset = "";                                        //CURRENT RUNNING DATASET
+        private string m_DataFolder;                                            // DIRECTORY WE NEED TO SEARCH
+		
+		Dictionary<string, bool> MasicImportFiles;                              // LIST OF THE FILES TO IMPORT
+		Dictionary<string, bool> XTandemImportFiles;                              // LIST OF THE FILES TO IMPORT
+
+        List<string> ValidDataSets = new List<string>();						// LIST OF VALID DATASETS
+        private string m_CurrentDataset = "";									//CURRENT RUNNING DATASET
 
 
         //CONSTRUCTOR
         public Aggregate(string dirtosearch)
         {
             //SET FILE DIR
-            filedir = dirtosearch;
+            m_DataFolder = dirtosearch;
         
-            //SET VALID IMPORT FILES
-            ValidImportFiles = new List<string>();
-            ValidImportFiles.Add("ScanStats");
-            ValidImportFiles.Add("ScanStatsEx");
-            ValidImportFiles.Add("SICstats");
-            ValidImportFiles.Add("xt");
-            ValidImportFiles.Add("xt_ResultToSeqMap");
-            ValidImportFiles.Add("xt_SeqToProteinMap");
+            // SET VALID IMPORT FILES
+            MasicImportFiles = new Dictionary<string, bool>(StringComparer.CurrentCultureIgnoreCase);
+			XTandemImportFiles = new Dictionary<string, bool>(StringComparer.CurrentCultureIgnoreCase);
+
+			// Masic files (ScanStats and SicStats are required)
+            MasicImportFiles.Add("ScanStats", true);
+            MasicImportFiles.Add("ScanStatsEx", false);
+            MasicImportFiles.Add("SICstats", true);
+
+			// X!Tandem files (only use this if not using PHRP Reader)
+            XTandemImportFiles.Add("xt", true);
+			XTandemImportFiles.Add("xt_ResultToSeqMap", true);
+			XTandemImportFiles.Add("xt_SeqToProteinMap", true);
 
             //ENSURE temp.txt does not exist ... IF PROGRAM CLOSED FILE NOT REMOVED AND ON RESTART CRASHES
             checkTempFileNotExist();
@@ -38,14 +48,15 @@ namespace SMAQC
         //DESTRUCTOR
         ~Aggregate()
         {
-            ValidImportFiles.Clear();
+            MasicImportFiles.Clear();
+			XTandemImportFiles.Clear();
             ValidDataSets.Clear();
         }
 
         //THIS ENSURES THAT OUR TEMP FILE HAS BEEN DELETED IN SOME CASES IF IT IS NOT DUE TO PROGRAM CRASHING WE CAN HAVE PROBLEMS
         public void checkTempFileNotExist()
         {
-            String file = "temp.txt";
+            string file = "temp.txt";
             if (File.Exists(file))
             {
                 File.Delete(file);
@@ -54,20 +65,23 @@ namespace SMAQC
         }
 
         //THIS FUNCTION DETECTS THE NUMBER OF DATASETS THAT WE MUST CHECK [USEFUL IF FOLDER WE ARE SEARCHING HAS 2+ DIFFERENT DATA SETS IN THEM]
-        public List<String> DetectDatasets(string file_ext)
+		// Performs check by looking for files ending in _ScanStats.txt
+        public List<string> DetectDatasets()
         {
             //DECLARE VARIABLES
             System.IO.FileInfo[] filePaths = null;                      //SET TO NULL AS IN TRY BLOCK OR WILL NOT COMPILE
 
+			ValidDataSets.Clear();
+
             try
             {
                 //GET LIST OF FILES IN SPECIFIED DIRECTORY MATCHING FILE_EXT
-				System.IO.DirectoryInfo fidir = new System.IO.DirectoryInfo(filedir);
-				filePaths = fidir.GetFiles(file_ext);
+				System.IO.DirectoryInfo fidir = new System.IO.DirectoryInfo(m_DataFolder);
+				filePaths = fidir.GetFiles("*" + SCAN_STATS_FILENAME_SUFFIX);
             }
             catch (DirectoryNotFoundException)
             {
-                Console.WriteLine("GFIL():: Could not find directory {0}!", filedir);
+                Console.WriteLine("GFIL():: Could not find directory {0}!", m_DataFolder);
 				System.Threading.Thread.Sleep(2000);
                 Environment.Exit(1);
             }
@@ -75,26 +89,8 @@ namespace SMAQC
             //LOOP THROUGH ALL FILES IN SPECIFIED DIRECTORY
             for (int i = 0; i < filePaths.Length; i++)
             {
-                //IF THE FILE IS IN OUR LIST
-                if (is_valid_import_file(filePaths[i].FullName))
-                {
-                    //STRIP FULL PATHNAME FROM FILENAME AND STORE AS filename
-					string filename = filePaths[i].Name;
-
-                    //FIND THE DATASET BY CHECKING FOR _ BEFORE ScanStats.txt [ScanStats.txt will be used to detect each dataset]
-                    int dataprefix = filename.ToLower().LastIndexOf("_ScanStats.txt".ToLower());
-
-                    //IF FOUND A UNIQUE DATA SET [USING ScanStats.txt TO FIND EACH ONE SINCE IT IS SIMPLE]
-                    if (dataprefix > 0)
-                    {
-                        //GET DATA NAME
-                        string dataname = filename.Substring(0, dataprefix);
-
-                        ValidDataSets.Add(dataname);
-                        //Console.WriteLine("File {0}:: {1}", i, dataname);
-                    }
-
-                }
+				string dataSetName = filePaths[i].Name.Substring(0, filePaths[i].Name.Length - SCAN_STATS_FILENAME_SUFFIX.Length);
+				ValidDataSets.Add(dataSetName);
             }
 
             return ValidDataSets;
@@ -106,21 +102,31 @@ namespace SMAQC
             return ValidDataSets.Count;
         }
 
+		public List<string> getMasicFileImportList(string dataset, string file_ext)
+		{
+			return getFileImportList(dataset, file_ext, MasicImportFiles);
+		}
+
+		public List<string> getXTandemFileImportList(string dataset, string file_ext)
+		{
+			return getFileImportList(dataset, file_ext, XTandemImportFiles);
+		}
+
         //GET A LIST OF ALL FILES MATCHING FILE EXT IN OUR FILE DIRECTORY
-        public List<String> getFileImportList(string dataset, string file_ext)
+        protected List<string> getFileImportList(string dataset, string file_ext, Dictionary<string, bool> importFiles)
         {
             //DECLARE VARIABLES
-            List<String> FileArray = new List<String>();
+            List<string> FileArray = new List<string>();
             string[] filePaths = null;                      //SET TO NULL AS IN TRY BLOCK OR WILL NOT COMPILE
 
             try
             {
                 //GET LIST OF FILES IN SPECIFIED DIRECTORY MATCHING FILE_EXT
-                filePaths = Directory.GetFiles(filedir, file_ext);
+                filePaths = Directory.GetFiles(m_DataFolder, file_ext);
             }
             catch (DirectoryNotFoundException)
             {
-                Console.WriteLine("GFIL():: Could not find directory {0}!", filedir);
+				Console.WriteLine("getFileImportList():: Could not find directory {0}!", m_DataFolder);
 				System.Threading.Thread.Sleep(2000);
                 Environment.Exit(1);				
             }
@@ -129,7 +135,7 @@ namespace SMAQC
             for (int i = 0; i < filePaths.Length; i++)
             {
                 //IF THE FILE IS IN OUR LIST
-                if (is_valid_import_file(filePaths[i], 1))
+				if (is_valid_import_file(filePaths[i], importFiles))
                 {
                     //ENSURE FILE IS A VALID DATASET FILE
                     if (is_valid_dataset_file(dataset, filePaths[i]))
@@ -146,21 +152,14 @@ namespace SMAQC
         //THIS FUNCTION VERIFIES IF A FILENAME IS IN OUR DATASET LIST
         public Boolean is_valid_dataset_file(string dataset, string filename)
         {
-            //DECLARE VARIABLES
-
-            //Console.WriteLine("DS={0}", dataset);
 
 			//GET FILENAME WITHOUT EXTENSION
 			filename = System.IO.Path.GetFileNameWithoutExtension(filename);
 
             //NOW CHECK FOR DATASET NAME IN FILENAME
             //IF FOUND A VALID FILE IN A CERTAIN DATASET
-			if (filename.ToLower().Contains(dataset.ToLower()))
+			if (filename.ToLower().StartsWith(dataset.ToLower()))
             {
-                //REPLACE THE FILENAME [FOR PRINTING REASONS]
-                //filename = filename.Substring(dataset.Length + 1);                  //RETURNS ScanStats, ScanStatsEx, ...
-                //Console.WriteLine("FN={0}", filename);
-
                 return true;
             }
             return false;
@@ -168,56 +167,33 @@ namespace SMAQC
 
         //THIS FUNCTION VERIFIES IF A FILENAME IS IN OUR IMPORT LIST
         //KNOWN_DATASET IS FOR IF WE HAVE ALREADY SET A RUNNING DATASET
-        public Boolean is_valid_import_file(string filename, int known_dataset=0)
+		public Boolean is_valid_import_file(string filename, Dictionary<string, bool> importFiles)
         {
-            //DECLALRE VARIABLES
-            int index = 0;                              //SET DEFAULT VALUE
+			string fileType = String.Empty;
 
-            //GET FILENAME WITHOUT EXTENSION
+			//GET FILENAME WITHOUT EXTENSION
 			filename = System.IO.Path.GetFileNameWithoutExtension(filename);
 
-            //IF WE ARE PROCESSING A DATASET
-            if (known_dataset == 1)
-            {
-                index = filename.ToLower().LastIndexOf(dataset.ToLower());
+			if (filename.ToLower().StartsWith(m_CurrentDataset.ToLower()))
+			{
+				//SET TO FILENAME type[xt, scanstats, etc]
+				fileType = filename.Substring(m_CurrentDataset.Length + 1);
+			}
+			else
+			{
+				return false;
+			}
 
-                //IF INVALID!
-                if (index < 0)
-                {
-                    return false;
-                }
+			if (importFiles.ContainsKey(fileType))
+				return true;
 
-                //SET TO FILENAME [xt, scanstats, etc]
-                filename = filename.Substring(dataset.Length + 1);
-            }
-
-            //LOOP THROUGH VALID IMPORT LIST SEARCHING FOR INDEX ... RETURN TRUE IF INDEX > 0
-            for (int i = 0; i < ValidImportFiles.Count; i++)
-            {
-                //FOR CHECKING FOR VALID MATCH
-                index = filename.IndexOf(ValidImportFiles[i]);
-
-                //IF WE ARE PROCESSING A DATASET
-                if (known_dataset == 1)
-                {
-                    //CHECK AGAINST NAME ... NOT INDEX VALUE
-                    if (ValidImportFiles[i].Equals(filename, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return true;
-                    }
-                }
-                else if (index != -1)
-                {
-                    return true;
-                }
-            }
-            return false;
+			return false;
         }
 
         //SET RUNNING DATASET
         public void setDataset(string mydataset)
         {
-            dataset = mydataset;
+            m_CurrentDataset = mydataset;
         }
 
     }

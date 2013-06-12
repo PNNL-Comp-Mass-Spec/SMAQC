@@ -10,17 +10,21 @@ namespace SMAQC
 	class Measurement
 	{
 		//DECLARE VARIABLES
-		private DBWrapper DBInterface;                                                      //CREATE DB INTERFACE OBJECT
-		private Hashtable measurementhash = new Hashtable();                                        //HASH TABLE FOR MEASUREMENTS
-		private int r_id;                                                                           //RANDOM ID FOR TEMP TABLES
-		private Dictionary<string, double> mResultsStorage = new Dictionary<string, double>();		//SOME MEASUREMENTS HAVE DATA REQUIRED BY OTHERS ... WILL BE STORED HERE
+		private DBWrapper m_DBInterface;															// CREATE DB INTERFACE OBJECT
+		private Hashtable m_MeasurementHash = new Hashtable();                                      // HASH TABLE FOR MEASUREMENTS
+		private int m_Random_ID;                                                                    // RANDOM ID FOR TEMP TABLES
+		private Dictionary<string, double> m_ResultsStorage = new Dictionary<string, double>();		// SOME MEASUREMENTS HAVE DATA REQUIRED BY OTHERS ... WILL BE STORED HERE
+
+		// Properties
+		public bool UsingPHRP { get; set; }
 
 		//CONSTRUCTOR
-		public Measurement(int r_id, ref DBWrapper DBInterface)
+		public Measurement(int random_id, ref DBWrapper DBInterface)
 		{
 			//CREATE CONNECTIONS
-			this.r_id = r_id;                                                                       //SET RANDOM ID
-			this.DBInterface = DBInterface;                                                         //SET DB OBJECT
+			this.m_Random_ID = random_id;
+			this.m_DBInterface = DBInterface;
+			this.UsingPHRP = false;
 		}
 
 		//DESTRUCTOR
@@ -37,18 +41,18 @@ namespace SMAQC
 		/// <param name="value"></param>
 		protected void AddUpdateResultsStorage(string entryName, double value)
 		{
-			if (mResultsStorage.ContainsKey(entryName))
-				mResultsStorage[entryName] = value;
+			if (m_ResultsStorage.ContainsKey(entryName))
+				m_ResultsStorage[entryName] = value;
 			else
-				mResultsStorage.Add(entryName, value);
+				m_ResultsStorage.Add(entryName, value);
 		}
 
 		//THIS CALLS OUR HASH TABLE CLEARER. WHICH WE NEED BETWEEN DATASETS AS IT IS NO LONGER NEEDED
 		public void clearStorage()
 		{
 			//CLEAR HASHTABLE STORAGE
-			measurementhash.Clear();
-			mResultsStorage.Clear();
+			m_MeasurementHash.Clear();
+			m_ResultsStorage.Clear();
 		}
 
 		protected double ComputeMedian(List<double> values)
@@ -80,7 +84,7 @@ namespace SMAQC
 		{
 			double value;
 
-			if (mResultsStorage.TryGetValue(entryName, out value))
+			if (m_ResultsStorage.TryGetValue(entryName, out value))
 				return value;
 			else
 				return valueIfMissing;
@@ -98,12 +102,12 @@ namespace SMAQC
 			int resultID;
 			int seqID;
 
-			String[] fields_n2 = { "Result_ID", "Unique_Seq_ID" };
+			string[] fields_n2 = { "Result_ID", "Unique_Seq_ID" };
 			Hashtable htValues = new Hashtable();                                        //HASH TABLE FOR MEASUREMENTS
 
-			DBInterface.setQuery("SELECT * FROM temp_xt_resulttoseqmap WHERE temp_xt_resulttoseqmap.random_id=" + r_id + ";");
-			DBInterface.initReader();
-			while ((DBInterface.readLines(fields_n2, ref htValues)) && (htValues.Count > 0))
+			m_DBInterface.setQuery("SELECT * FROM temp_xt_resulttoseqmap WHERE temp_xt_resulttoseqmap.random_id=" + m_Random_ID + ";");
+			m_DBInterface.initReader();
+			while ((m_DBInterface.readLines(fields_n2, ref htValues)) && (htValues.Count > 0))
 			{
 				if (int.TryParse(htValues["Result_ID"].ToString(), out resultID))
 				{
@@ -124,12 +128,12 @@ namespace SMAQC
 			int seqID;
 			short cleavageState;
 
-			String[] fields_n1 = { "Unique_Seq_ID", "Cleavage_State" };
+			string[] fields_n1 = { "Unique_Seq_ID", "Cleavage_State" };
 			Hashtable htValues = new Hashtable();                                        //HASH TABLE FOR MEASUREMENTS
 
-			DBInterface.setQuery("SELECT Unique_Seq_ID, MAX(Cleavage_State) AS Cleavage_State FROM `temp_xt_seqtoproteinmap` WHERE temp_xt_seqtoproteinmap.random_id=" + r_id + " GROUP BY Unique_Seq_ID;");
-			DBInterface.initReader();
-			while ((DBInterface.readLines(fields_n1, ref htValues)) && (htValues.Count > 0))
+			m_DBInterface.setQuery("SELECT Unique_Seq_ID, MAX(Cleavage_State) AS Cleavage_State FROM `temp_xt_seqtoproteinmap` WHERE temp_xt_seqtoproteinmap.random_id=" + m_Random_ID + " GROUP BY Unique_Seq_ID;");
+			m_DBInterface.initReader();
+			while ((m_DBInterface.readLines(fields_n1, ref htValues)) && (htValues.Count > 0))
 			{
 				if (int.TryParse(htValues["Unique_Seq_ID"].ToString(), out seqID))
 				{
@@ -148,7 +152,7 @@ namespace SMAQC
 		/// C-1A: Fraction of peptides identified more than 4 minutes earlier than the chromatographic peak apex
 		/// </summary>
 		/// <returns></returns>
-		public String C_1A()
+		public string C_1A()
 		{
 			bool countTailingPeptides = false;
 			return C_1_Shared(countTailingPeptides);
@@ -159,7 +163,7 @@ namespace SMAQC
 		/// C-1B: Fraction of peptides identified more than 4 minutes later than the chromatographic peak apex
 		/// </summary>
 		/// <returns></returns>
-		public String C_1B()
+		public string C_1B()
 		{
 			bool countTailingPeptides = true;
 			return C_1_Shared(countTailingPeptides);
@@ -170,19 +174,19 @@ namespace SMAQC
 		/// </summary>
 		/// <param name="countTailingPeptides">False means to count early eluting peptides; True means to count late-eluting peptides</param>
 		/// <returns></returns>
-		protected String C_1_Shared(bool countTailingPeptides)
+		protected string C_1_Shared(bool countTailingPeptides)
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.`Peptide_Expectation_Value_Log`, t1.FragScanNumber, t1.OptimalPeakApexScanNumber,"
+			m_DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.`Peptide_Expectation_Value_Log`, t1.FragScanNumber, t1.OptimalPeakApexScanNumber,"
 			+ "temp_scanstats.ScanTime as ScanTime1, t2.ScanTime as ScanTime2 "
 			+ "FROM temp_xt, temp_scanstats, temp_sicstats as t1 "
 			+ "LEFT JOIN temp_scanstats as t2 on t1.OptimalPeakApexScanNumber=t2.ScanNumber "
 			+ "WHERE temp_xt.Scan = t1.FragScanNumber "
 			+ "AND temp_xt.Scan = temp_scanstats.ScanNumber "
-			+ "AND temp_xt.random_id=" + r_id + " "
-			+ "AND temp_scanstats.random_id=" + r_id + " "
-			+ "AND t1.random_id=" + r_id + " "
-			+ "AND t2.random_id=" + r_id + " "
+			+ "AND temp_xt.random_id=" + m_Random_ID + " "
+			+ "AND temp_scanstats.random_id=" + m_Random_ID + " "
+			+ "AND t1.random_id=" + m_Random_ID + " "
+			+ "AND t2.random_id=" + m_Random_ID + " "
 			+ "ORDER BY Scan;");
 
 			int difference_sum = 0;                                                             //FOR COLUMN J
@@ -190,23 +194,23 @@ namespace SMAQC
 			double answer;
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "FragScanNumber", "OptimalPeakApexScanNumber", "ScanTime1", "ScanTime2" };
+			string[] fields = { "Scan", "Peptide_Expectation_Value_Log", "FragScanNumber", "OptimalPeakApexScanNumber", "ScanTime1", "ScanTime2" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//IF LOG(E) <= -2 ... CALCULATE DIFFERENCE [COLUMN C]
-				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				if (Convert.ToDouble(m_MeasurementHash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
 					//CALC DIFFERENCE [COLUMN C]
 					double temp_difference;
 					if (countTailingPeptides)
-						temp_difference = (Convert.ToDouble(measurementhash["ScanTime1"]) - Convert.ToDouble(measurementhash["ScanTime2"]));
+						temp_difference = (Convert.ToDouble(m_MeasurementHash["ScanTime1"]) - Convert.ToDouble(m_MeasurementHash["ScanTime2"]));
 					else
-						temp_difference = (Convert.ToDouble(measurementhash["ScanTime2"]) - Convert.ToDouble(measurementhash["ScanTime1"]));
+						temp_difference = (Convert.ToDouble(m_MeasurementHash["ScanTime2"]) - Convert.ToDouble(m_MeasurementHash["ScanTime1"]));
 
 					//IF DIFFERENCE >= 4 [COLUMN I]
 					if (temp_difference >= 4.00)
@@ -226,7 +230,7 @@ namespace SMAQC
 				return answer.ToString("0.000000");
 			}
 			else
-				return string.Empty;
+				return String.Empty;
 		}
 
 		/// <summary>
@@ -234,17 +238,17 @@ namespace SMAQC
 		/// We also cache various scan numbers associated with filter-passing peptides
 		/// </summary>
 		/// <returns></returns>
-		public String C_2A()
+		public string C_2A()
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.`Peptide_Expectation_Value_Log`, t1.FragScanNumber as ScanNumber,"
+			m_DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.`Peptide_Expectation_Value_Log`, t1.FragScanNumber as ScanNumber,"
 				+ "temp_scanstats.ScanTime as ScanTime1 "
 				+ "FROM temp_xt, temp_scanstats, temp_sicstats as t1 "
 				+ "WHERE temp_xt.Scan = t1.FragScanNumber "
 				+ "AND temp_xt.Scan = temp_scanstats.ScanNumber "
-				+ "AND temp_xt.random_id=" + r_id + " "
-				+ "AND temp_scanstats.random_id=" + r_id + " "
-				+ "AND t1.random_id=" + r_id + " "
+				+ "AND temp_xt.random_id=" + m_Random_ID + " "
+				+ "AND temp_scanstats.random_id=" + m_Random_ID + " "
+				+ "AND t1.random_id=" + m_Random_ID + " "
 				+ "ORDER BY Scan;");
 
 			// This list stores scan numbers and elution times for filter-passing peptides; duplicate scans are not allowed
@@ -254,20 +258,20 @@ namespace SMAQC
 			double scanTime;
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "ScanNumber", "ScanTime1" };
+			string[] fields = { "Scan", "Peptide_Expectation_Value_Log", "ScanNumber", "ScanTime1" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
-				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				if (Convert.ToDouble(m_MeasurementHash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
 					// FILTER-PASSING PEPTIDE; Append to the dictionary
-					if (int.TryParse(measurementhash["ScanNumber"].ToString(), out scanNumber))
+					if (int.TryParse(m_MeasurementHash["ScanNumber"].ToString(), out scanNumber))
 					{
-						if (double.TryParse(measurementhash["ScanTime1"].ToString(), out scanTime))
+						if (double.TryParse(m_MeasurementHash["ScanTime1"].ToString(), out scanTime))
 						{
 
 							if (!lstFilterPassingPeptides.ContainsKey(scanNumber))
@@ -339,17 +343,17 @@ namespace SMAQC
 		/// C-2B: Rate of peptide identification during C-2A
 		/// </summary>
 		/// <returns></returns>
-		public String C_2B()
+		public string C_2B()
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.`Peptide_Expectation_Value_Log`, t1.FragScanNumber as ScanNumber,"
+			m_DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.`Peptide_Expectation_Value_Log`, t1.FragScanNumber as ScanNumber,"
 				+ "temp_scanstats.ScanTime as ScanTime1 "
 				+ "FROM temp_xt, temp_scanstats, temp_sicstats as t1 "
 				+ "WHERE temp_xt.Scan = t1.FragScanNumber "
 				+ "AND temp_xt.Scan = temp_scanstats.ScanNumber "
-				+ "AND temp_xt.random_id=" + r_id + " "
-				+ "AND temp_scanstats.random_id=" + r_id + " "
-				+ "AND t1.random_id=" + r_id + " "
+				+ "AND temp_xt.random_id=" + m_Random_ID + " "
+				+ "AND temp_scanstats.random_id=" + m_Random_ID + " "
+				+ "AND t1.random_id=" + m_Random_ID + " "
 				+ "ORDER BY Scan;");
 
 			// This list keeps track of the scan numbers already processed so that we can avoid double-counting a scan number
@@ -362,18 +366,18 @@ namespace SMAQC
 			int scanEndC2A = GetStoredValueInt("C_2A_REGION_SCAN_END", 0);
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "ScanNumber", "ScanTime1" };
+			string[] fields = { "Scan", "Peptide_Expectation_Value_Log", "ScanNumber", "ScanTime1" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
-				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				if (Convert.ToDouble(m_MeasurementHash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
 					// FILTER-PASSING PEPTIDE; Append to the dictionary
-					if (int.TryParse(measurementhash["ScanNumber"].ToString(), out scanNumber))
+					if (int.TryParse(m_MeasurementHash["ScanNumber"].ToString(), out scanNumber))
 					{
 						if (scanNumber >= scanStartC2A && scanNumber <= scanEndC2A && !lstScansWithFilterPassingIDs.Contains(scanNumber))
 						{
@@ -384,7 +388,7 @@ namespace SMAQC
 				}
 			}
 
-			string answerText = string.Empty;
+			string answerText = String.Empty;
 
 			if (timeMinutesC2A > 0)
 			{
@@ -402,69 +406,69 @@ namespace SMAQC
 		/// C-3A: Median peak width for all peptides
 		/// </summary>
 		/// <returns></returns>
-		public String C_3A()
+		public string C_3A()
 		{
 			double startScanRelative = 0;
 			double endScanRelative = 1;
 
 			//COMPUTE RESULT
-			return ComputMedianPeakWidth(startScanRelative, endScanRelative);
+			return ComputeMedianPeakWidth(startScanRelative, endScanRelative);
 		}
 
 		/// <summary>
 		/// C-3B: Median peak width during middle 50% of separation
 		/// </summary>
 		/// <returns></returns>
-		public String C_3B()
+		public string C_3B()
 		{
 			double startScanRelative = 0.25;
 			double endScanRelative = 0.75;
 
 			//COMPUTE RESULT
-			return ComputMedianPeakWidth(startScanRelative, endScanRelative);
+			return ComputeMedianPeakWidth(startScanRelative, endScanRelative);
 		}
 
 		/// <summary>
 		/// C-4A: Median peak width during first 10% of separation
 		/// </summary>
 		/// <returns></returns>
-		public String C_4A()
+		public string C_4A()
 		{
 			double startScanRelative = 0.00;
 			double endScanRelative = 0.10;
 
 			//COMPUTE RESULT
-			return ComputMedianPeakWidth(startScanRelative, endScanRelative);
+			return ComputeMedianPeakWidth(startScanRelative, endScanRelative);
 		}
 
 		/// <summary>
 		/// C-4B: Median peak width during last 10% of separation
 		/// </summary>
 		/// <returns></returns>
-		public String C_4B()
+		public string C_4B()
 		{
 			double startScanRelative = 0.90;
 			double endScanRelative = 1.00;
 
 			//COMPUTE RESULT
-			return ComputMedianPeakWidth(startScanRelative, endScanRelative);
+			return ComputeMedianPeakWidth(startScanRelative, endScanRelative);
 		}
 
 		/// <summary>
 		/// C-4C: Median peak width during middle 10% of separation
 		/// </summary>
 		/// <returns></returns>
-		public String C_4C()
+		public string C_4C()
 		{
 			double startScanRelative = 0.45;
 			double endScanRelative = 0.55;
 
 			//COMPUTE RESULT
-			return ComputMedianPeakWidth(startScanRelative, endScanRelative);
+			return ComputeMedianPeakWidth(startScanRelative, endScanRelative);
 		}
 
 
-		protected string ComputMedianPeakWidth(double startScanRelative, double endScanRelative)
+		protected string ComputeMedianPeakWidth(double startScanRelative, double endScanRelative)
 		{
 			//DECLARE HASH TABLES
 			List<int> bestscan = new List<int>();                           //STORE Best Scan Results
@@ -475,60 +479,60 @@ namespace SMAQC
 			List<double> result = new List<double>();                       //STORE RESULT FOR FINAL CALCULATION
 			int i;                                                          //TEMP POSITION VARIABLE
 			int running_sum = 1;                                            //STORE RUNNING SUM STARTING AT 1
-			String prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
-			String prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
-			String prev_Best_Evalue = "";                                   //INIT PREV BEST EVALUE TO BLANK [REQUIRED FOR COMPARISON]
+			string prv_Charge = "";                                         //INIT PREV CHARGE TO BLANK [REQUIRED FOR COMPARISON]
+			string prv_Peptide_Sequence = "";                               //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
+			string prev_Best_Evalue = "";                                   //INIT PREV BEST EVALUE TO BLANK [REQUIRED FOR COMPARISON]
 			double median = 0.00;                                           //INIT MEDIAN
 
 			//SET DB QUERY [REQUIRED TO SORT BY PEPTIDE SEQUENCE]
-			DBInterface.setQuery("SELECT Scan, Charge, Peptide_Expectation_Value_Log,Peptide_Sequence FROM `temp_xt` "
-			+ "WHERE temp_xt.random_id=" + r_id + " ORDER BY Peptide_Sequence,Charge,Scan,Scan");
+			m_DBInterface.setQuery("SELECT Scan, Charge, Peptide_Expectation_Value_Log,Peptide_Sequence FROM `temp_xt` "
+			+ "WHERE temp_xt.random_id=" + m_Random_ID + " ORDER BY Peptide_Sequence,Charge,Scan,Scan");
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields1 = { "Scan", "Charge", "Peptide_Expectation_Value_Log", "Peptide_Sequence" };
+			string[] fields1 = { "Scan", "Charge", "Peptide_Expectation_Value_Log", "Peptide_Sequence" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//FETCH COLUMNS Q,R NOW
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields1, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields1, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//FIND COLUMN Q
-				String Best_Evalue = "";
+				string Best_Evalue = "";
 
 				//IF PREVIOUS PEPTIDE SEQUENCES == EACH OTHER && PREVIOUS CHARGES == EACH OTHER
-				if (prv_Peptide_Sequence.Equals(Convert.ToString(measurementhash["Peptide_Sequence"])) && prv_Charge.Equals(Convert.ToString(measurementhash["Charge"])))
+				if (prv_Peptide_Sequence.Equals(Convert.ToString(m_MeasurementHash["Peptide_Sequence"])) && prv_Charge.Equals(Convert.ToString(m_MeasurementHash["Charge"])))
 				{
 
 					//TAKE MIN [EITHER PREVIOUS BEST EVALUE OR CURRENT PEPTIDE EXPECTATION VALUE
-					if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) > Convert.ToDouble(prev_Best_Evalue))
+					if (Convert.ToDouble(m_MeasurementHash["Peptide_Expectation_Value_Log"]) > Convert.ToDouble(prev_Best_Evalue))
 					{
 						Best_Evalue = prev_Best_Evalue;
 					}
 					else
 					{
-						Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
+						Best_Evalue = Convert.ToString(m_MeasurementHash["Peptide_Expectation_Value_Log"]);
 					}
 				}
 				else
 				{
-					Best_Evalue = Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"]);
+					Best_Evalue = Convert.ToString(m_MeasurementHash["Peptide_Expectation_Value_Log"]);
 				}
 
 				//NOW FIND COLUMN R IF COLUMN U IS == TRUE
-				if (Best_Evalue.Equals(Convert.ToString(measurementhash["Peptide_Expectation_Value_Log"])))
+				if (Best_Evalue.Equals(Convert.ToString(m_MeasurementHash["Peptide_Expectation_Value_Log"])))
 				{
 					//WE ARE NOW == TRUE FOR THIS COLUMN ... AS TRUE WE ADD THIS TO OUR HASH TABLE/WHATEVER
 
 					//[ADD HERE]
-					bestscan.Add(Convert.ToInt32(measurementhash["Scan"]));
+					bestscan.Add(Convert.ToInt32(m_MeasurementHash["Scan"]));
 				}
 
 				//UPDATE PREVIOUS VALUES FOR NEXT LOOP
-				prv_Charge = Convert.ToString(measurementhash["Charge"]);
-				prv_Peptide_Sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
+				prv_Charge = Convert.ToString(m_MeasurementHash["Charge"]);
+				prv_Peptide_Sequence = Convert.ToString(m_MeasurementHash["Peptide_Sequence"]);
 				prev_Best_Evalue = Best_Evalue;
 			}
 
@@ -536,41 +540,41 @@ namespace SMAQC
 			bestscan.Sort();
 
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM `temp_sicstats` WHERE temp_sicstats.random_id=" + r_id + "");
+			m_DBInterface.setQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM `temp_sicstats` WHERE temp_sicstats.random_id=" + m_Random_ID + "");
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
+			string[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//FETCH COLUMNS D-F
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields2, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields2, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//ADD VALUES TO OUR TEMP HASH TABLES
-				fragscannumber.Add(measurementhash["FragScanNumber"], measurementhash["FragScanNumber"]);
-				fwhminscans.Add(measurementhash["FragScanNumber"], measurementhash["FWHMInScans"]);
-				optimalpeakapexscannumber.Add(measurementhash["FragScanNumber"], measurementhash["OptimalPeakApexScanNumber"]);
+				fragscannumber.Add(m_MeasurementHash["FragScanNumber"], m_MeasurementHash["FragScanNumber"]);
+				fwhminscans.Add(m_MeasurementHash["FragScanNumber"], m_MeasurementHash["FWHMInScans"]);
+				optimalpeakapexscannumber.Add(m_MeasurementHash["FragScanNumber"], m_MeasurementHash["OptimalPeakApexScanNumber"]);
 			}
 
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM `temp_scanstats` WHERE temp_scanstats.random_id=" + r_id + "");
+			m_DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM `temp_scanstats` WHERE temp_scanstats.random_id=" + m_Random_ID + "");
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields3 = { "ScanNumber", "ScanTime" };
+			string[] fields3 = { "ScanNumber", "ScanTime" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//FETCH COLUMNS H-I
 			i = 1;
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields3, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields3, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//ADD TO SCANTIME HASH TABLE
-				scantime.Add(Convert.ToString(i), measurementhash["ScanTime"]);
+				scantime.Add(Convert.ToString(i), m_MeasurementHash["ScanTime"]);
 
 				//INCREMENT I POSITION
 				i++;
@@ -582,7 +586,7 @@ namespace SMAQC
 			for (i = 0; i < bestscan.Count; i++)
 			{
 				//FIND INDEX + OPTIMAL PEAK APEX SCAN +- FWHMIN FOR EACH RESULT [COLUMNS: M,O]
-				String index = Convert.ToString(bestscan[i]);
+				string index = Convert.ToString(bestscan[i]);
 				int OptimalPeakApexScanMinusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) - Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
 				int OptimalPeakApexScanPlusFWHMIN = Convert.ToInt32(optimalpeakapexscannumber[index]) + Convert.ToInt32(Math.Ceiling(Convert.ToDouble(fwhminscans[index]) / 2));
 
@@ -604,7 +608,7 @@ namespace SMAQC
 				running_sum++;
 			}
 
-			string resultText = string.Empty;
+			string resultText = String.Empty;
 
 			if (result.Count > 0)
 			{
@@ -629,7 +633,7 @@ namespace SMAQC
 		/// DS-1A: Count of peptides with one spectrum / count of peptides with two spectra
 		/// </summary>
 		/// <returns></returns>
-		public String DS_1A()
+		public string DS_1A()
 		{
 			int num_of_1_peptides;	                                                            //RUNNING COUNT FOR COLUMN J
 			int num_of_2_peptides;                                                              //RUNNING COUNT FOR COLUMN K
@@ -652,7 +656,7 @@ namespace SMAQC
 		/// DS-1B: Count of peptides with two spectra / count of peptides with three spectra
 		/// </summary>
 		/// <returns></returns>
-		public String DS_1B()
+		public string DS_1B()
 		{
 			int num_of_1_peptides;	                                                            //RUNNING COUNT FOR COLUMN J
 			int num_of_2_peptides;                                                              //RUNNING COUNT FOR COLUMN K
@@ -675,9 +679,9 @@ namespace SMAQC
 		protected void DS_1_Shared(out int num_of_1_peptides, out int num_of_2_peptides, out int num_of_3_peptides)
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT Peptide_Expectation_Value_Log,Peptide_Sequence,Scan "
+			m_DBInterface.setQuery("SELECT Peptide_Expectation_Value_Log,Peptide_Sequence,Scan "
 				+ "FROM `temp_xt` "
-				+ "WHERE temp_xt.random_id=" + r_id + " "
+				+ "WHERE temp_xt.random_id=" + m_Random_ID + " "
 				+ "ORDER BY Peptide_Sequence,Scan;");
 
 			int running_count = 0;                                                                  //RUNNING COUNT FOR COLUMN F
@@ -690,24 +694,24 @@ namespace SMAQC
 			Hashtable Peptide_Sequence = new Hashtable();                                           //STORE Peptide Sequence NUMBERS
 			Hashtable Scan = new Hashtable();                                                       //STORE SCAN NUMBERS
 			Hashtable RunningCountTable = new Hashtable();                                          //STORE RUNNING COUNT'S IN A HASH TABLE FOR LATER ACCES
-			String prv_Peptide_Sequence = "";                                                       //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
+			string prv_Peptide_Sequence = "";                                                       //INIT PREV PEPTIDE SEQUENCE TO BLANK [REQUIRED FOR COMPARISON]
 			int prv_running_count = 0;                                                              //INIT PREV RUNNING COUNT TO 0 [REQUIRED FOR COMPARISON]
-			String prv_highest_filtered_log = "";                                                   //INIT PREV HIGHEST FILTERED LOG TO BLANK [REQUIRED FOR COMPARISON]
+			string prv_highest_filtered_log = "";                                                   //INIT PREV HIGHEST FILTERED LOG TO BLANK [REQUIRED FOR COMPARISON]
 			int prv_peptide_count = 1;                                                              //INIT PREV PEPTIDE_COUNT TO BE 1
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Peptide_Expectation_Value_Log", "Peptide_Sequence", "Scan" };
+			string[] fields = { "Peptide_Expectation_Value_Log", "Peptide_Sequence", "Scan" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//ADD TO HASH TABLES
-				Peptide_Exp_Value_Log.Add(i, measurementhash["Peptide_Expectation_Value_Log"]);
-				Peptide_Sequence.Add(i, measurementhash["Peptide_Sequence"]);
-				Scan.Add(i, measurementhash["Scan"]);
+				Peptide_Exp_Value_Log.Add(i, m_MeasurementHash["Peptide_Expectation_Value_Log"]);
+				Peptide_Sequence.Add(i, m_MeasurementHash["Peptide_Sequence"]);
+				Scan.Add(i, m_MeasurementHash["Scan"]);
 
 				//INCREMENT i
 				i++;
@@ -761,8 +765,8 @@ namespace SMAQC
 			{
 				//RESET FILTER STATUS
 				FILTER = false;
-				String highest_filtered_log = "";
-				String filtered_log = "";
+				string highest_filtered_log = "";
+				string filtered_log = "";
 				int current_peptide_count = 0;
 
 				//CALCULATE COLUMN E [TRUE/FALSE]
@@ -885,7 +889,7 @@ namespace SMAQC
 		/// DS-2A: Number of MS1 scans taken over middle 50% of separation
 		/// </summary>
 		/// <returns></returns>
-		public String DS_2A()
+		public string DS_2A()
 		{
 			int msLevel = 1;
 			return DS_2_Shared(msLevel).ToString();
@@ -895,7 +899,7 @@ namespace SMAQC
 		/// DS-2B: Number of MS2 scans taken over middle 50% of separation
 		/// </summary>
 		/// <returns></returns>
-		public String DS_2B()
+		public string DS_2B()
 		{
 			int msLevel = 2;
 			return DS_2_Shared(msLevel).ToString();
@@ -904,9 +908,9 @@ namespace SMAQC
 		protected int DS_2_Shared(int msLevel)
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT ScanNumber, ScanType "
+			m_DBInterface.setQuery("SELECT ScanNumber, ScanType "
 				+ "FROM `temp_scanstats` "
-				+ "WHERE temp_scanstats.random_id=" + r_id + " "
+				+ "WHERE temp_scanstats.random_id=" + m_Random_ID + " "
 				+ "ORDER BY ScanNumber;");
 
 			//DECLARE VARIABLES
@@ -918,16 +922,16 @@ namespace SMAQC
 			int scanType;
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "ScanNumber", "ScanType" };
+			string[] fields = { "ScanNumber", "ScanType" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
-				scanNumber = Convert.ToInt32(measurementhash["ScanNumber"]);
-				scanType = Convert.ToInt32(measurementhash["ScanType"]);
+				scanNumber = Convert.ToInt32(m_MeasurementHash["ScanNumber"]);
+				scanType = Convert.ToInt32(m_MeasurementHash["ScanType"]);
 
 				//IF IS WITHIN RANGE
 				if (scanType == msLevel && scanNumber >= scanStartC2A && scanNumber <= scanEndC2A)
@@ -943,12 +947,12 @@ namespace SMAQC
 		/// IS-2: Median precursor m/z for all peptides
 		/// </summary>
 		/// <returns></returns>
-		public String IS_2()
+		public string IS_2()
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log,Peptide_MH,Charge "
+			m_DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log,Peptide_MH,Charge "
 				+ "FROM `temp_xt` "
-				+ "WHERE temp_xt.random_id=" + r_id + " "
+				+ "WHERE temp_xt.random_id=" + m_Random_ID + " "
 				+ ";");
 
 			//DECLARE VARIABLES
@@ -959,19 +963,19 @@ namespace SMAQC
 			double median = 0.00;                                                               //STORE MEDIAN
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Peptide_MH", "Charge" };
+			string[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Peptide_MH", "Charge" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//IF PEPTIDE EXP VALUE LOG <= -2 SET FILTER TO TRUE
-				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				if (Convert.ToDouble(m_MeasurementHash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
 					//COMPUTE MZ VALUE
-					double temp_mz = (Convert.ToDouble(measurementhash["Peptide_MH"]) - MINUS_CONSTANT) / (Convert.ToDouble(measurementhash["Charge"]));
+					double temp_mz = (Convert.ToDouble(m_MeasurementHash["Peptide_MH"]) - MINUS_CONSTANT) / (Convert.ToDouble(m_MeasurementHash["Charge"]));
 
 					//ADD TO MZ_LIST
 					MZ_List.Add(temp_mz);
@@ -997,7 +1001,7 @@ namespace SMAQC
 		/// IS-3A: Count of 1+ peptides / count of 2+ peptides
 		/// </summary>
 		/// <returns></returns>
-		public String IS_3A()
+		public string IS_3A()
 		{
 			//DECLARE VARIABLES
 			int count_ones = 0;                                                             //TOTAL # OF 1's
@@ -1020,7 +1024,7 @@ namespace SMAQC
 		/// IS-3B: Count of 3+ peptides / count of 2+ peptides
 		/// </summary>
 		/// <returns></returns>
-		public String IS_3B()
+		public string IS_3B()
 		{
 			//DECLARE VARIABLES
 			int count_ones = 0;                                                             //TOTAL # OF 1's
@@ -1043,7 +1047,7 @@ namespace SMAQC
 		/// IS-3C: Count of 4+ peptides / count of 2+ peptides
 		/// </summary>
 		/// <returns></returns>
-		public String IS_3C()
+		public string IS_3C()
 		{
 			//DECLARE VARIABLES
 			int count_ones = 0;                                                             //TOTAL # OF 1's
@@ -1065,9 +1069,9 @@ namespace SMAQC
 		protected void IS3_Shared(out int count_ones, out int count_twos, out int count_threes, out int count_fours)
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log,Charge "
+			m_DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log,Charge "
 				+ "FROM `temp_xt` "
-				+ "WHERE temp_xt.random_id=" + r_id + " "
+				+ "WHERE temp_xt.random_id=" + m_Random_ID + " "
 				+ "Order by Scan;");
 
 			//DECLARE VARIABLES
@@ -1077,20 +1081,20 @@ namespace SMAQC
 			count_fours = 0;                                                            //TOTAL # OF 4's
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge" };
+			string[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//IF PEPTIDE EXP VALUE LOG <= -2 SET FILTER TO TRUE
-				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				if (Convert.ToDouble(m_MeasurementHash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
 					//CONVERT CHARGE TO INT FOR SWITCH()
 					int charge;
-					if (int.TryParse(measurementhash["Charge"].ToString(), out charge))
+					if (int.TryParse(m_MeasurementHash["Charge"].ToString(), out charge))
 					{
 						//ADD TO CORRECT COUNT
 						switch (charge)
@@ -1124,14 +1128,14 @@ namespace SMAQC
 		/// MS1_1: Median MS1 ion injection time
 		/// </summary>
 		/// <returns></returns>
-		public String MS1_1()
+		public string MS1_1()
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanType, temp_scanstatsex.Ion_Injection_Time "
+			m_DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanType, temp_scanstatsex.Ion_Injection_Time "
 				+ "FROM `temp_scanstats`, `temp_scanstatsex` "
 				+ "WHERE temp_scanstats.ScanNumber=temp_scanstatsex.ScanNumber "
-				+ "AND temp_scanstatsex.random_id=" + r_id + " "
-				+ "AND temp_scanstats.random_id=" + r_id + " "
+				+ "AND temp_scanstatsex.random_id=" + m_Random_ID + " "
+				+ "AND temp_scanstats.random_id=" + m_Random_ID + " "
 				+ "ORDER BY temp_scanstats.ScanNumber;");
 
 			//DECLARE VARIABLES
@@ -1139,19 +1143,19 @@ namespace SMAQC
 			double median = 0.00;                                                   //RESULT
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "ScanNumber", "ScanType", "Ion_Injection_Time" };
+			string[] fields = { "ScanNumber", "ScanType", "Ion_Injection_Time" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//SCAN TYPE == 1
-				if (Convert.ToDouble(measurementhash["ScanType"]) == 1)
+				if (Convert.ToDouble(m_MeasurementHash["ScanType"]) == 1)
 				{
 					//ADD TO FILTER LIST
-					Filter.Add(Convert.ToDouble(measurementhash["Ion_Injection_Time"]));
+					Filter.Add(Convert.ToDouble(m_MeasurementHash["Ion_Injection_Time"]));
 				}
 			}
 
@@ -1164,7 +1168,7 @@ namespace SMAQC
 		/// MS1_2A: Median S/N value for MS1 spectra from run start through middle 50% of separation
 		/// </summary>
 		/// <returns></returns>
-		public String MS1_2A()
+		public string MS1_2A()
 		{
 			//DECLARE VARIABLES
 			List<double> List_BPSTNR_C_2A;
@@ -1186,7 +1190,7 @@ namespace SMAQC
 		/// MS1_2B: Median TIC value for identified peptides from run start through middle 50% of separation
 		/// </summary>
 		/// <returns></returns>
-		public String MS1_2B()
+		public string MS1_2B()
 		{
 			//DECLARE VARIABLES
 			List<double> List_BPSTNR_C_2A;
@@ -1207,9 +1211,9 @@ namespace SMAQC
 		protected void MS1_2_Shared(out List<double> List_BPSTNR_C_2A, out List<double> List_TII_C_2A)
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT ScanNumber, ScanType, BasePeakSignalToNoiseRatio, TotalIonIntensity "
+			m_DBInterface.setQuery("SELECT ScanNumber, ScanType, BasePeakSignalToNoiseRatio, TotalIonIntensity "
 				+ "FROM `temp_scanstats` "
-				+ "WHERE temp_scanstats.random_id=" + r_id + " "
+				+ "WHERE temp_scanstats.random_id=" + m_Random_ID + " "
 				+ ";");
 
 			//DECLARE VARIABLES
@@ -1224,19 +1228,19 @@ namespace SMAQC
 			List<double> List_TotalIonIntensity = new List<double>();           //TII List
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "ScanNumber", "ScanType", "BasePeakSignalToNoiseRatio", "TotalIonIntensity" };
+			string[] fields = { "ScanNumber", "ScanType", "BasePeakSignalToNoiseRatio", "TotalIonIntensity" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//ADD TO HASH TABLES
-				List_ScanNumber.Add(Convert.ToInt32(measurementhash["ScanNumber"]));
-				List_ScanType.Add(Convert.ToInt32(measurementhash["ScanType"]));
-				List_BasePeakSignalToNoiseRatio.Add(Convert.ToDouble(measurementhash["BasePeakSignalToNoiseRatio"]));
-				List_TotalIonIntensity.Add(Convert.ToDouble(measurementhash["TotalIonIntensity"]));
+				List_ScanNumber.Add(Convert.ToInt32(m_MeasurementHash["ScanNumber"]));
+				List_ScanType.Add(Convert.ToInt32(m_MeasurementHash["ScanType"]));
+				List_BasePeakSignalToNoiseRatio.Add(Convert.ToDouble(m_MeasurementHash["BasePeakSignalToNoiseRatio"]));
+				List_TotalIonIntensity.Add(Convert.ToDouble(m_MeasurementHash["TotalIonIntensity"]));
 			}
 
 			int max_scannumber = List_ScanNumber.Max();
@@ -1266,7 +1270,7 @@ namespace SMAQC
 		/// MS1_3A: Dynamic range estimate using 95th percentile peptide peak apex intensity / 5th percentile
 		/// </summary>
 		/// <returns></returns>
-		public String MS1_3A()
+		public string MS1_3A()
 		{
 			double PMI_5PC;
 			double PMI_95PC;
@@ -1287,7 +1291,7 @@ namespace SMAQC
 		/// MS1_3B: Median peak apex intensity for all peptides
 		/// </summary>
 		/// <returns></returns>
-		public String MS1_3B()
+		public string MS1_3B()
 		{
 			double PMI_5PC;
 			double PMI_95PC;
@@ -1309,11 +1313,11 @@ namespace SMAQC
 		protected void MS1_3_Shared(out double PMI_5PC, out double PMI_95PC, out List<double> result)
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT Result_ID, FragScanNumber, PeakMaxIntensity, Peptide_Expectation_Value_Log  "
+			m_DBInterface.setQuery("SELECT Result_ID, FragScanNumber, PeakMaxIntensity, Peptide_Expectation_Value_Log  "
 				+ "FROM `temp_sicstats`, `temp_xt` "
 				+ "WHERE `temp_sicstats`.FragScanNumber=`temp_xt`.Scan "
-				+ "AND temp_sicstats.random_id=" + r_id + " "
-				+ "AND temp_xt.random_id=" + r_id + " "
+				+ "AND temp_sicstats.random_id=" + m_Random_ID + " "
+				+ "AND temp_xt.random_id=" + m_Random_ID + " "
 				+ "ORDER BY PeakMaxIntensity, Result_ID DESC;");
 
 			//DECLARE VARIABLES
@@ -1325,25 +1329,25 @@ namespace SMAQC
 
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Result_ID", "FragScanNumber", "PeakMaxIntensity", "Peptide_Expectation_Value_Log" };
+			string[] fields = { "Result_ID", "FragScanNumber", "PeakMaxIntensity", "Peptide_Expectation_Value_Log" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//IF PEPTIDE EXP VALUE LOG <= -2 SET FILTER TO TRUE
-				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				if (Convert.ToDouble(m_MeasurementHash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
 					//INC TOTAL RUNNING SUM
 					max_running_sum++;
 
 					//ADD TO FILTER LIST
-					result.Add(Convert.ToDouble(measurementhash["PeakMaxIntensity"]));
+					result.Add(Convert.ToDouble(m_MeasurementHash["PeakMaxIntensity"]));
 
 					//ADD TO TEMP LIST TO PROCESS LATER AS WE FIRST NEED TO FIND THE MAX RUNNING SUM WHICH IS DONE AT THE END
-					temp_list_mpi.Add(Convert.ToDouble(measurementhash["PeakMaxIntensity"]));                   //ADD MPI
+					temp_list_mpi.Add(Convert.ToDouble(m_MeasurementHash["PeakMaxIntensity"]));                   //ADD MPI
 					temp_list_running_sum.Add(max_running_sum);                                                 //ADD CURRENT RUNNING SUM
 				}
 			}
@@ -1383,14 +1387,14 @@ namespace SMAQC
 		/// DS_3A: Median of MS1 max / MS1 sampled abundance
 		/// </summary>
 		/// <returns></returns>
-		public String DS_3A()
+		public string DS_3A()
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT Result_ID, FragScanNumber, ParentIonIntensity, PeakMaxIntensity, Peptide_Expectation_Value_Log  "
+			m_DBInterface.setQuery("SELECT Result_ID, FragScanNumber, ParentIonIntensity, PeakMaxIntensity, Peptide_Expectation_Value_Log  "
 				+ "FROM `temp_sicstats`, `temp_xt` "
 				+ "WHERE `temp_sicstats`.FragScanNumber=`temp_xt`.Scan "
-				+ "AND temp_sicstats.random_id=" + r_id + " "
-				+ "AND temp_xt.random_id=" + r_id + " "
+				+ "AND temp_sicstats.random_id=" + m_Random_ID + " "
+				+ "AND temp_xt.random_id=" + m_Random_ID + " "
 				+ "ORDER BY FragScanNumber, Result_ID DESC;");
 
 			//DECLARE VARIABLES
@@ -1406,31 +1410,31 @@ namespace SMAQC
 			double ratioPeakMaxToParentIonIntensity = 0;
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Result_ID", "FragScanNumber", "ParentIonIntensity", "PeakMaxIntensity", "Peptide_Expectation_Value_Log" };
+			string[] fields = { "Result_ID", "FragScanNumber", "ParentIonIntensity", "PeakMaxIntensity", "Peptide_Expectation_Value_Log" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//STORE RESULT_ID, SCAN [ALLOWS FOR US TO HAVE DUPLICATES WITHOUT CRASHING]
-				Lookup_Table.Add(Convert.ToInt32(measurementhash["Result_ID"]), Convert.ToInt32(measurementhash["FragScanNumber"]));
+				Lookup_Table.Add(Convert.ToInt32(m_MeasurementHash["Result_ID"]), Convert.ToInt32(m_MeasurementHash["FragScanNumber"]));
 
 				//STORE RESULT_ID, VALUE [SO WE CAN THEN SORT BY VALUE]
-				parentIonIntensity = Convert.ToDouble(measurementhash["ParentIonIntensity"]);
+				parentIonIntensity = Convert.ToDouble(m_MeasurementHash["ParentIonIntensity"]);
 				if (parentIonIntensity > 0)
-					ratioPeakMaxToParentIonIntensity = Convert.ToDouble(measurementhash["PeakMaxIntensity"]) / parentIonIntensity;
+					ratioPeakMaxToParentIonIntensity = Convert.ToDouble(m_MeasurementHash["PeakMaxIntensity"]) / parentIonIntensity;
 				else
 					ratioPeakMaxToParentIonIntensity = 0;
 
-				Lookup_Table_KV.Add(Convert.ToInt32(measurementhash["Result_ID"]), ratioPeakMaxToParentIonIntensity);
+				Lookup_Table_KV.Add(Convert.ToInt32(m_MeasurementHash["Result_ID"]), ratioPeakMaxToParentIonIntensity);
 
 				//IF PEPTIDE EXP VALUE LOG <= -2 SET FILTER TO TRUE
-				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				if (Convert.ToDouble(m_MeasurementHash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
 					//SET FILTER TO 1
-					Filter_Result.Add(Convert.ToInt32(measurementhash["Result_ID"]), 1);
+					Filter_Result.Add(Convert.ToInt32(m_MeasurementHash["Result_ID"]), 1);
 
 					//INCREMENT MAX RUNNING SUM
 					max_running_sum++;
@@ -1438,7 +1442,7 @@ namespace SMAQC
 				else
 				{
 					//SET FILTER TO 1
-					Filter_Result.Add(Convert.ToInt32(measurementhash["Result_ID"]), 0);
+					Filter_Result.Add(Convert.ToInt32(m_MeasurementHash["Result_ID"]), 0);
 				}
 			}
 
@@ -1486,14 +1490,14 @@ namespace SMAQC
 		/// DS_3B: Median of MS1 max / MS1 sampled abundance; limit to bottom 50% of peptides by abundance
 		/// </summary>
 		/// <returns></returns>
-		public String DS_3B()
+		public string DS_3B()
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT Result_ID, FragScanNumber, ParentIonIntensity, PeakMaxIntensity, Peptide_Expectation_Value_Log  "
+			m_DBInterface.setQuery("SELECT Result_ID, FragScanNumber, ParentIonIntensity, PeakMaxIntensity, Peptide_Expectation_Value_Log  "
 				+ "FROM `temp_sicstats`, `temp_xt` "
 				+ "WHERE `temp_sicstats`.FragScanNumber=`temp_xt`.Scan "
-				+ "AND temp_sicstats.random_id=" + r_id + " "
-				+ "AND temp_xt.random_id=" + r_id + " "
+				+ "AND temp_sicstats.random_id=" + m_Random_ID + " "
+				+ "AND temp_xt.random_id=" + m_Random_ID + " "
 				+ "ORDER BY FragScanNumber, Result_ID DESC;");
 
 			//DECLARE VARIABLES
@@ -1509,31 +1513,31 @@ namespace SMAQC
 			double ratioPeakMaxToParentIonIntensity = 0;
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Result_ID", "FragScanNumber", "ParentIonIntensity", "PeakMaxIntensity", "Peptide_Expectation_Value_Log" };
+			string[] fields = { "Result_ID", "FragScanNumber", "ParentIonIntensity", "PeakMaxIntensity", "Peptide_Expectation_Value_Log" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//STORE RESULT_ID, SCAN [ALLOWS FOR US TO HAVE DUPLICATES WITHOUT CRASHING]
-				Lookup_Table.Add(Convert.ToInt32(measurementhash["Result_ID"]), Convert.ToInt32(measurementhash["FragScanNumber"]));
+				Lookup_Table.Add(Convert.ToInt32(m_MeasurementHash["Result_ID"]), Convert.ToInt32(m_MeasurementHash["FragScanNumber"]));
 
 				//STORE RESULT_ID, VALUE [SO WE CAN THEN SORT BY VALUE]
-				parentIonIntensity = Convert.ToDouble(measurementhash["ParentIonIntensity"]);
+				parentIonIntensity = Convert.ToDouble(m_MeasurementHash["ParentIonIntensity"]);
 				if (parentIonIntensity > 0)
-					ratioPeakMaxToParentIonIntensity = Convert.ToDouble(measurementhash["PeakMaxIntensity"]) / parentIonIntensity;
+					ratioPeakMaxToParentIonIntensity = Convert.ToDouble(m_MeasurementHash["PeakMaxIntensity"]) / parentIonIntensity;
 				else
 					ratioPeakMaxToParentIonIntensity = 0;
 
-				Lookup_Table_KV.Add(Convert.ToInt32(measurementhash["Result_ID"]), ratioPeakMaxToParentIonIntensity);
+				Lookup_Table_KV.Add(Convert.ToInt32(m_MeasurementHash["Result_ID"]), ratioPeakMaxToParentIonIntensity);
 
 				//IF PEPTIDE EXP VALUE LOG <= -2 SET FILTER TO TRUE
-				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				if (Convert.ToDouble(m_MeasurementHash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
 					//SET FILTER TO 1
-					Filter_Result.Add(Convert.ToInt32(measurementhash["Result_ID"]), 1);
+					Filter_Result.Add(Convert.ToInt32(m_MeasurementHash["Result_ID"]), 1);
 
 					//INCREMENT MAX RUNNING SUM
 					max_running_sum++;
@@ -1541,7 +1545,7 @@ namespace SMAQC
 				else
 				{
 					//SET FILTER TO 1
-					Filter_Result.Add(Convert.ToInt32(measurementhash["Result_ID"]), 0);
+					Filter_Result.Add(Convert.ToInt32(m_MeasurementHash["Result_ID"]), 0);
 				}
 			}
 
@@ -1589,7 +1593,7 @@ namespace SMAQC
 		/// IS_1A: Occurrences of MS1 jumping >10x
 		/// </summary>
 		/// <returns></returns>
-		public String IS_1A()
+		public string IS_1A()
 		{
 			int countMS1Jump10x;
 			int countMS1Fall10x;
@@ -1603,7 +1607,7 @@ namespace SMAQC
 		/// IS_1B: Occurrences of MS1 falling >10x
 		/// </summary>
 		/// <returns></returns>
-		public String IS_1B()
+		public string IS_1B()
 		{
 			int countMS1Jump10x;
 			int countMS1Fall10x;
@@ -1616,9 +1620,9 @@ namespace SMAQC
 		protected void IS_1_Shared(int foldThreshold, out int countMS1Jump10x, out int countMS1Fall10x)
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT ScanNumber, ScanType, BasePeakIntensity  "
+			m_DBInterface.setQuery("SELECT ScanNumber, ScanType, BasePeakIntensity  "
 				+ "FROM `temp_scanstats` "
-				+ "WHERE temp_scanstats.random_id=" + r_id + " "
+				+ "WHERE temp_scanstats.random_id=" + m_Random_ID + " "
 				+ ";");
 
 			//DECLARE VARIABLES
@@ -1632,19 +1636,19 @@ namespace SMAQC
 				foldThreshold = 2;
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "ScanNumber", "ScanType", "BasePeakIntensity" };
+			string[] fields = { "ScanNumber", "ScanType", "BasePeakIntensity" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//DETERMINE Compare_Only_MS1
-				if (Convert.ToInt32(measurementhash["ScanType"]) == 1)
+				if (Convert.ToInt32(m_MeasurementHash["ScanType"]) == 1)
 				{
 					//SET COMPARE ONLY MS1 TO BPI
-					bpiCurrent = Convert.ToDouble(measurementhash["BasePeakIntensity"]);
+					bpiCurrent = Convert.ToDouble(m_MeasurementHash["BasePeakIntensity"]);
 
 					if (bpiPrevious != -1)
 					{
@@ -1671,7 +1675,7 @@ namespace SMAQC
 		/// MS1_5A: Median of precursor mass error (Th)
 		/// </summary>
 		/// <returns></returns>
-		public String MS1_5A()
+		public string MS1_5A()
 		{
 			//DECLARE VARIABLES
 			List<double> FilteredDelM;                                    //STORE FILTERED VALUES [COLUMN G]
@@ -1692,7 +1696,7 @@ namespace SMAQC
 		/// MS1_5B: Median of absolute value of precursor mass error (Th)
 		/// </summary>
 		/// <returns></returns>
-		public String MS1_5B()
+		public string MS1_5B()
 		{
 			//DECLARE VARIABLES
 			List<double> FilteredDelM;                                    //STORE FILTERED VALUES [COLUMN G]
@@ -1713,7 +1717,7 @@ namespace SMAQC
 		/// MS1_5C: Median of precursor mass error (ppm)
 		/// </summary>
 		/// <returns></returns>
-		public String MS1_5C()
+		public string MS1_5C()
 		{
 			//DECLARE VARIABLES
 			List<double> FilteredDelM;                                    //STORE FILTERED VALUES [COLUMN G]
@@ -1733,7 +1737,7 @@ namespace SMAQC
 		/// MS1_5D: Interquartile distance in ppm-based precursor mass error
 		/// </summary>
 		/// <returns></returns>
-		public String MS1_5D()
+		public string MS1_5D()
 		{
 			//DECLARE VARIABLES
 			List<double> FilteredDelM;                                    //STORE FILTERED VALUES [COLUMN G]
@@ -1778,9 +1782,9 @@ namespace SMAQC
 		protected void MS1_5_Shared(out List<double> FilteredDelM, out List<double> AbsFilteredDelM, out List<double> DelMPPM)
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT temp_xt.Scan,temp_xt.Peptide_Expectation_Value_Log,temp_xt.Peptide_MH,temp_xt.Charge, temp_sicstats.MZ "
+			m_DBInterface.setQuery("SELECT temp_xt.Scan,temp_xt.Peptide_Expectation_Value_Log,temp_xt.Peptide_MH,temp_xt.Charge, temp_sicstats.MZ "
 				+ "FROM `temp_xt`,`temp_sicstats` "
-				+ "WHERE temp_sicstats.FragScanNumber=temp_xt.Scan AND temp_sicstats.random_id=" + r_id + " AND temp_xt.random_id=" + r_id + " "
+				+ "WHERE temp_sicstats.FragScanNumber=temp_xt.Scan AND temp_sicstats.random_id=" + m_Random_ID + " AND temp_xt.random_id=" + m_Random_ID + " "
 				+ "ORDER BY temp_xt.Scan;");
 
 			//DECLARE VARIABLES
@@ -1791,25 +1795,25 @@ namespace SMAQC
 			DelMPPM = new List<double>();                                          //STORE FILTERED VALUES [COLUMN I]
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Peptide_MH", "Charge", "MZ" };
+			string[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Peptide_MH", "Charge", "MZ" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//CALC THEORETICAL VALUE [COLUMN F], which would be theoretical m/z of the peptide
 				// Instead, calculate theoretical monoisotopic mass of the peptide
 
-				double theoMonoMass = Convert.ToDouble(measurementhash["Peptide_MH"]) - massHydrogen;
+				double theoMonoMass = Convert.ToDouble(m_MeasurementHash["Peptide_MH"]) - massHydrogen;
 
 				//IF LOG(E) <= -2 ... CALC FILTERED AND ABS FILTERED
-				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				if (Convert.ToDouble(m_MeasurementHash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
 					// Compute observed precursor mass, as monoisotopic mass					
-					int observedCharge = Convert.ToInt16(measurementhash["Charge"]);
-					double observedMonoMass = Convert.ToDouble(measurementhash["MZ"]) * observedCharge - massHydrogen * observedCharge;
+					int observedCharge = Convert.ToInt16(m_MeasurementHash["Charge"]);
+					double observedMonoMass = Convert.ToDouble(m_MeasurementHash["MZ"]) * observedCharge - massHydrogen * observedCharge;
 
 					double delm = observedMonoMass - theoMonoMass;
 
@@ -1851,12 +1855,12 @@ namespace SMAQC
 		/// MS2_1: Median MS2 ion injection time
 		/// </summary>
 		/// <returns></returns>
-		public String MS2_1()
+		public string MS2_1()
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_scanstatsex.Ion_Injection_Time "
+			m_DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_scanstatsex.Ion_Injection_Time "
 				+ "FROM `temp_xt`, `temp_scanstatsex` "
-				+ "WHERE temp_xt.Scan=temp_scanstatsex.ScanNumber AND temp_xt.random_id=" + r_id + " AND temp_scanstatsex.random_id=" + r_id + " "
+				+ "WHERE temp_xt.Scan=temp_scanstatsex.ScanNumber AND temp_xt.random_id=" + m_Random_ID + " AND temp_scanstatsex.random_id=" + m_Random_ID + " "
 				+ "ORDER BY temp_xt.Scan;");
 
 			//DECLARE VARIABLES
@@ -1864,19 +1868,19 @@ namespace SMAQC
 			double median = 0.00;                                                               //STORE MEDIAN
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Ion_Injection_Time" };
+			string[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Ion_Injection_Time" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//CALCULATE COLUMN P
-				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				if (Convert.ToDouble(m_MeasurementHash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
 					//ADD TO FILTERED LIST
-					FilterList.Add(Convert.ToDouble(measurementhash["Ion_Injection_Time"]));
+					FilterList.Add(Convert.ToDouble(m_MeasurementHash["Ion_Injection_Time"]));
 				}
 			}
 
@@ -1891,12 +1895,12 @@ namespace SMAQC
 		/// MS2_2: Median S/N value for identified MS2 spectra
 		/// </summary>
 		/// <returns></returns>
-		public String MS2_2()
+		public string MS2_2()
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_scanstats.BasePeakSignalToNoiseRatio "
+			m_DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_scanstats.BasePeakSignalToNoiseRatio "
 				+ "FROM `temp_xt`, `temp_scanstats` "
-				+ "WHERE temp_xt.Scan=temp_scanstats.ScanNumber AND temp_xt.random_id=" + r_id + " AND temp_scanstats.random_id=" + r_id + " "
+				+ "WHERE temp_xt.Scan=temp_scanstats.ScanNumber AND temp_xt.random_id=" + m_Random_ID + " AND temp_scanstats.random_id=" + m_Random_ID + " "
 				+ "ORDER BY temp_xt.Scan;");
 
 			//DECLARE VARIABLES
@@ -1906,19 +1910,19 @@ namespace SMAQC
 			int current_count = 0;                                                              //CURRENT COUNTER
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "BasePeakSignalToNoiseRatio" };
+			string[] fields = { "Scan", "Peptide_Expectation_Value_Log", "BasePeakSignalToNoiseRatio" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//CALCULATE COLUMN P
-				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				if (Convert.ToDouble(m_MeasurementHash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
 					//ADD TO FILTERED LIST
-					FilterList.Add(Convert.ToDouble(measurementhash["BasePeakSignalToNoiseRatio"]));
+					FilterList.Add(Convert.ToDouble(m_MeasurementHash["BasePeakSignalToNoiseRatio"]));
 				}
 			}
 
@@ -1947,12 +1951,12 @@ namespace SMAQC
 		/// MS2_3: Median number of peaks in all MS2 spectra
 		/// </summary>
 		/// <returns></returns>
-		public String MS2_3()
+		public string MS2_3()
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_scanstats.IonCountRaw "
+			m_DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_scanstats.IonCountRaw "
 				+ "FROM `temp_xt`, `temp_scanstats` "
-				+ "WHERE temp_xt.Scan=temp_scanstats.ScanNumber AND temp_xt.random_id=" + r_id + " AND temp_scanstats.random_id=" + r_id + " "
+				+ "WHERE temp_xt.Scan=temp_scanstats.ScanNumber AND temp_xt.random_id=" + m_Random_ID + " AND temp_scanstats.random_id=" + m_Random_ID + " "
 				+ "ORDER BY temp_xt.Scan;");
 
 			//DECLARE VARIABLES
@@ -1960,19 +1964,19 @@ namespace SMAQC
 			double median = 0.00;                                                               //STORE MEDIAN
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "IonCountRaw" };
+			string[] fields = { "Scan", "Peptide_Expectation_Value_Log", "IonCountRaw" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//CALCULATE COLUMN M
-				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				if (Convert.ToDouble(m_MeasurementHash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
 					//ADD TO FILTERED LIST
-					FilterList.Add(Convert.ToDouble(measurementhash["IonCountRaw"]));
+					FilterList.Add(Convert.ToDouble(m_MeasurementHash["IonCountRaw"]));
 				}
 			}
 
@@ -1987,7 +1991,7 @@ namespace SMAQC
 		/// MS2_4A: Fraction of all MS2 spectra identified; high abundance quartile (determined using MS1 intensity of identified peptides)
 		/// </summary>
 		/// <returns></returns>
-		public String MS2_4A()
+		public string MS2_4A()
 		{
 			int ScanCountQ1 = 0;
 			int ScanCountQ2 = 0;
@@ -2012,7 +2016,7 @@ namespace SMAQC
 		/// MS2_4B: Fraction of all MS2 spectra identified; second quartile (determined using MS1 intensity of identified peptides)
 		/// </summary>
 		/// <returns></returns>
-		public String MS2_4B()
+		public string MS2_4B()
 		{
 			int ScanCountQ1 = 0;
 			int ScanCountQ2 = 0;
@@ -2038,7 +2042,7 @@ namespace SMAQC
 		/// MS2_4C: Fraction of all MS2 spectra identified; third quartile (determined using MS1 intensity of identified peptides)
 		/// </summary>
 		/// <returns></returns>
-		public String MS2_4C()
+		public string MS2_4C()
 		{
 			int ScanCountQ1 = 0;
 			int ScanCountQ2 = 0;
@@ -2064,7 +2068,7 @@ namespace SMAQC
 		/// MS2_4D: Fraction of all MS2 spectra identified; low abundance quartile (determined using MS1 intensity of identified peptides)
 		/// </summary>
 		/// <returns></returns>
-		public String MS2_4D()
+		public string MS2_4D()
 		{
 			int ScanCountQ1 = 0;
 			int ScanCountQ2 = 0;
@@ -2090,26 +2094,26 @@ namespace SMAQC
 			                        out int Q1PassFilt, out int Q2PassFilt, out int Q3PassFilt, out int Q4PassFilt)
 		{
 			//SET DB QUERY [TO FIND MAX NUMBER OF ROWS]
-			DBInterface.setQuery("SELECT COUNT(*) as MS2ScanCount "
+			m_DBInterface.setQuery("SELECT COUNT(*) as MS2ScanCount "
 				+ "FROM `temp_xt`, `temp_sicstats` "
-				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
+				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + m_Random_ID + " AND temp_sicstats.random_id=" + m_Random_ID + " "
 				+ ";");
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields_temp = { "MS2ScanCount" };
+			string[] fields_temp = { "MS2ScanCount" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//READ LINE
-			DBInterface.readSingleLine(fields_temp, ref measurementhash);
-			int scanCountMS2 = Convert.ToInt32(measurementhash["MS2ScanCount"]);                         //STORE TOTAL MS2 SCAN COUNT
+			m_DBInterface.readSingleLine(fields_temp, ref m_MeasurementHash);
+			int scanCountMS2 = Convert.ToInt32(m_MeasurementHash["MS2ScanCount"]);                         //STORE TOTAL MS2 SCAN COUNT
 
 			//SET DB QUERY
 			//NOTE THAT WE SORT BY ASCENDING PeakMaxIntensity
-			DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_sicstats.PeakMaxIntensity "
+			m_DBInterface.setQuery("SELECT temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_sicstats.PeakMaxIntensity "
 				+ "FROM `temp_xt`, `temp_sicstats` "
-				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + r_id + " AND temp_sicstats.random_id=" + r_id + " "
+				+ "WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + m_Random_ID + " AND temp_sicstats.random_id=" + m_Random_ID + " "
 				+ "ORDER BY temp_sicstats.PeakMaxIntensity;");
 
 			//DECLARE VARIABLES
@@ -2124,19 +2128,19 @@ namespace SMAQC
 			int scan_count = 1;                                                     //RUNNING SCAN COUNT [COLUMN H]
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "PeakMaxIntensity" };
+			string[] fields = { "Scan", "Peptide_Expectation_Value_Log", "PeakMaxIntensity" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//DID IT PASS OUR FILTER?
 				bool passed_filter = false;
 
 				//CALCULATE COLUMN G
-				if (Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]) <= -2)
+				if (Convert.ToDouble(m_MeasurementHash["Peptide_Expectation_Value_Log"]) <= -2)
 				{
 					passed_filter = true;
 				}
@@ -2191,12 +2195,12 @@ namespace SMAQC
 		/// P_1A: Median peptide ID score (X!Tandem hyperscore)
 		/// </summary>
 		/// <returns></returns>
-		public String P_1A()
+		public string P_1A()
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT Scan, Peptide_Hyperscore, Peptide_Expectation_Value_Log "
+			m_DBInterface.setQuery("SELECT Scan, Peptide_Hyperscore, Peptide_Expectation_Value_Log "
 				+ "FROM `temp_xt` "
-				+ "WHERE temp_xt.random_id=" + r_id + " "
+				+ "WHERE temp_xt.random_id=" + m_Random_ID + " "
 				+ "ORDER BY Scan;");
 
 			//DECLARE VARIABLES
@@ -2204,16 +2208,16 @@ namespace SMAQC
 			double median = 0.00;                                                               //INIT MEDIAN VALUE
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Hyperscore", "Peptide_Expectation_Value_Log" };
+			string[] fields = { "Scan", "Peptide_Hyperscore", "Peptide_Expectation_Value_Log" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//CALCULATE COLUMN B + ADD TO LIST
-				Peptide_Hyperscore_List.Add(Convert.ToDouble(measurementhash["Peptide_Hyperscore"]));
+				Peptide_Hyperscore_List.Add(Convert.ToDouble(m_MeasurementHash["Peptide_Hyperscore"]));
 			}
 
 			//NOW CALCULATE MEDIAN
@@ -2227,12 +2231,12 @@ namespace SMAQC
 		/// P_1B: Median peptide ID score (X!Tandem Peptide_Expectation_Value_Log(e))
 		/// </summary>
 		/// <returns></returns>
-		public String P_1B()
+		public string P_1B()
 		{
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT Scan, Peptide_Hyperscore, Peptide_Expectation_Value_Log "
+			m_DBInterface.setQuery("SELECT Scan, Peptide_Hyperscore, Peptide_Expectation_Value_Log "
 				+ "FROM `temp_xt` "
-				+ "WHERE temp_xt.random_id=" + r_id + " "
+				+ "WHERE temp_xt.random_id=" + m_Random_ID + " "
 				+ "ORDER BY Scan;");
 
 			//DECLARE VARIABLES
@@ -2240,16 +2244,16 @@ namespace SMAQC
 			double median = 0.00;                                                               //INIT MEDIAN VALUE
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Hyperscore", "Peptide_Expectation_Value_Log" };
+			string[] fields = { "Scan", "Peptide_Hyperscore", "Peptide_Expectation_Value_Log" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				//CALCULATE COLUMN C + ADD TO LIST
-				Peptide_Expectation_List.Add(Convert.ToDouble(measurementhash["Peptide_Expectation_Value_Log"]));
+				Peptide_Expectation_List.Add(Convert.ToDouble(m_MeasurementHash["Peptide_Expectation_Value_Log"]));
 			}
 
 			//NOW CALCULATE MEDIAN
@@ -2263,7 +2267,7 @@ namespace SMAQC
 		/// P_2A: Number of tryptic peptides; total spectra count
 		/// </summary>
 		/// <returns></returns>
-		public String P_2A()
+		public string P_2A()
 		{
 			//BUILD RESULT_ID, UNIQUE_SEQ_TABLE
 			Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
@@ -2275,13 +2279,13 @@ namespace SMAQC
 			Seq_ID_to_Cleavage_State_Table = GetSeqIDToCleavageStateTable();
 
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log, Charge, temp_xt.Result_ID, Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State "
+			m_DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log, Charge, temp_xt.Result_ID, Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State "
 				+ "FROM `temp_xt`, `temp_xt_resulttoseqmap` "
 				+ "JOIN `temp_xt_seqtoproteinmap` ON `temp_xt_resulttoseqmap`.Unique_Seq_ID=`temp_xt_seqtoproteinmap`.Unique_Seq_ID "
 				+ "WHERE temp_xt.Peptide_Expectation_Value_Log <= -2.00 "
 				+ "AND temp_xt.Result_ID=temp_xt_resulttoseqmap.Result_ID "
-				+ "AND temp_xt.random_id=" + r_id + " "
-				+ "AND temp_xt_resulttoseqmap.random_id=" + r_id + " "
+				+ "AND temp_xt.random_id=" + m_Random_ID + " "
+				+ "AND temp_xt_resulttoseqmap.random_id=" + m_Random_ID + " "
 				+ "GROUP BY temp_xt_resulttoseqmap.Result_ID "
 				+ "ORDER BY temp_xt.Peptide_Sequence, temp_xt.Group_ID;");
 
@@ -2291,23 +2295,23 @@ namespace SMAQC
 			int unique_cleavage_state_2_count = 0;                                                  //COLUMN J
 			int cleavage_state_2_charge_1 = 0;                                                      //COLUMN K
 			int line_count = 0;                                                                     //LINE COUNTER
-			String prv_peptide_sequence = "";                                                       //PRV PEPTIDE SEQUENCE
+			string prv_peptide_sequence = "";                                                       //PRV PEPTIDE SEQUENCE
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge", "Result_ID", "Peptide_Sequence", "Cleavage_State" };
+			string[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge", "Result_ID", "Peptide_Sequence", "Cleavage_State" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				int resultID;
 				int seqID;
 				int cleavage_state = 0;
 
 				// DETERMINE THE CLEAVAGE STATE
-				if (int.TryParse(measurementhash["Result_ID"].ToString(), out resultID))
+				if (int.TryParse(m_MeasurementHash["Result_ID"].ToString(), out resultID))
 				{
 					if (ResultID_to_Unique_Seq_ID_Table.TryGetValue(resultID, out seqID))
 					{
@@ -2342,7 +2346,7 @@ namespace SMAQC
 					}
 
 					//FOR cleavage_state_2_charge_1 [COLUMN K]
-					if (Convert.ToInt32(measurementhash["Charge"]) == 1)
+					if (Convert.ToInt32(m_MeasurementHash["Charge"]) == 1)
 					{
 						cleavage_state_2_charge_1 = 1;
 					}
@@ -2353,13 +2357,13 @@ namespace SMAQC
 					//LINE COUNT IS NOT THE FIRST LINE
 
 					//FOR unique_cleavage_state_2_count IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN J]
-					if (cleavage_state == 2 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
+					if (cleavage_state == 2 && !Convert.ToString(m_MeasurementHash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
 					{
 						unique_cleavage_state_2_count += 1;
 					}
 
 					//FOR cleavage_state_2_charge_1 IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN K]
-					if (Convert.ToInt32(measurementhash["Charge"]) == 1 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
+					if (Convert.ToInt32(m_MeasurementHash["Charge"]) == 1 && !Convert.ToString(m_MeasurementHash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
 					{
 						cleavage_state_2_charge_1 += 1;
 					}
@@ -2367,7 +2371,7 @@ namespace SMAQC
 				}
 
 				//UPDATE PREVIOUS VALUES FOR NEXT LOOP
-				prv_peptide_sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
+				prv_peptide_sequence = Convert.ToString(m_MeasurementHash["Peptide_Sequence"]);
 			}
 
 			//SET ANSWER
@@ -2378,7 +2382,7 @@ namespace SMAQC
 		/// P_2B: Number of tryptic peptides; unique peptide & charge count
 		/// </summary>
 		/// <returns></returns>
-		public String P_2B()
+		public string P_2B()
 		{
 			//BUILD RESULT_ID, UNIQUE_SEQ_TABLE
 			Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
@@ -2390,38 +2394,38 @@ namespace SMAQC
 			Seq_ID_to_Cleavage_State_Table = GetSeqIDToCleavageStateTable();
 
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT temp_xt.Result_ID, temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_xt.Charge, temp_xt.Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State, temp_xt_seqtoproteinmap.Unique_Seq_ID "
+			m_DBInterface.setQuery("SELECT temp_xt.Result_ID, temp_xt.Scan, temp_xt.Peptide_Expectation_Value_Log, temp_xt.Charge, temp_xt.Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State, temp_xt_seqtoproteinmap.Unique_Seq_ID "
 				+ "FROM `temp_xt`, `temp_xt_resulttoseqmap` "
 				+ "INNER JOIN `temp_xt_seqtoproteinmap` ON `temp_xt_resulttoseqmap`.Unique_Seq_ID=`temp_xt_seqtoproteinmap`.Unique_Seq_ID "
 				+ "WHERE Peptide_Expectation_Value_Log <= -2.00 "
 				+ "AND temp_xt.Result_ID=temp_xt_resulttoseqmap.Result_ID "
-				+ "AND temp_xt.random_id=" + r_id + " "
-				+ "AND temp_xt_resulttoseqmap.random_id=" + r_id + " "
+				+ "AND temp_xt.random_id=" + m_Random_ID + " "
+				+ "AND temp_xt_resulttoseqmap.random_id=" + m_Random_ID + " "
 				+ "GROUP BY temp_xt_resulttoseqmap.Result_ID "
 				+ "ORDER BY Charge, Peptide_Sequence, Scan;");
 
 			//DECLARE VARIABLES
-			String prv_peptide_sequence = "";                                                       //STORE PREVIOUS PEPTIDE SEQUENCE
-			String prv_prv_peptide_sequence = "";                                                   //STORE PREVIOUS PREVIOUS PEPTIDE SEQUENCE
+			string prv_peptide_sequence = "";                                                       //STORE PREVIOUS PEPTIDE SEQUENCE
+			string prv_prv_peptide_sequence = "";                                                   //STORE PREVIOUS PREVIOUS PEPTIDE SEQUENCE
 			int prv_cleavage_state = 0;                                                             //STORE PREVIOUS CLEAVAGE STATE
 			int count_with_different_charges = 0;                                                   //COUNTS WITH DIFFERENT CHARGES [COLUMN F]
 			Boolean is_first_line = true;                                                           //IS FIRST LINE 
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Result_ID", "Scan", "Peptide_Expectation_Value_Log", "Charge", "Peptide_Sequence", "Cleavage_State", "Unique_Seq_ID" };
+			string[] fields = { "Result_ID", "Scan", "Peptide_Expectation_Value_Log", "Charge", "Peptide_Sequence", "Cleavage_State", "Unique_Seq_ID" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				int resultID;
 				int seqID;
 				int cleavage_state = 0;
 
 				// DETERMINE THE CLEAVAGE STATE
-				if (int.TryParse(measurementhash["Result_ID"].ToString(), out resultID))
+				if (int.TryParse(m_MeasurementHash["Result_ID"].ToString(), out resultID))
 				{
 					if (ResultID_to_Unique_Seq_ID_Table.TryGetValue(resultID, out seqID))
 					{
@@ -2436,7 +2440,7 @@ namespace SMAQC
 					is_first_line = false;
 
 					//IF CURRENT CLEAVAGE STATE == 2 && PREV + CURRENT PEPTIDE SEQUENCE VALUES ARE DIFFERENT [ONLY FOR FIRST LINE]
-					if (cleavage_state == 2 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
+					if (cleavage_state == 2 && !Convert.ToString(m_MeasurementHash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
 					{
 						//INC
 						count_with_different_charges++;
@@ -2454,7 +2458,7 @@ namespace SMAQC
 
 				//UPDATE PREV VALUES
 				prv_prv_peptide_sequence = prv_peptide_sequence;
-				prv_peptide_sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
+				prv_peptide_sequence = Convert.ToString(m_MeasurementHash["Peptide_Sequence"]);
 				prv_cleavage_state = cleavage_state;
 			}
 
@@ -2466,7 +2470,7 @@ namespace SMAQC
 		/// P_2C: Number of tryptic peptides; unique peptide count
 		/// </summary>
 		/// <returns></returns>
-		public String P_2C()
+		public string P_2C()
 		{
 			//BUILD RESULT_ID, UNIQUE_SEQ_TABLE
 			Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
@@ -2478,13 +2482,13 @@ namespace SMAQC
 			Seq_ID_to_Cleavage_State_Table = GetSeqIDToCleavageStateTable();
 
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log, Charge, temp_xt.Result_ID, Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State, temp_xt_seqtoproteinmap.Unique_Seq_ID "
+			m_DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log, Charge, temp_xt.Result_ID, Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State, temp_xt_seqtoproteinmap.Unique_Seq_ID "
 				+ "FROM `temp_xt`, `temp_xt_resulttoseqmap` "
 				+ "JOIN `temp_xt_seqtoproteinmap` ON `temp_xt_resulttoseqmap`.Unique_Seq_ID=`temp_xt_seqtoproteinmap`.Unique_Seq_ID "
 				+ "WHERE temp_xt.Peptide_Expectation_Value_Log <= -2.00 "
 				+ "AND temp_xt.Result_ID=temp_xt_resulttoseqmap.Result_ID "
-				+ "AND temp_xt.random_id=" + r_id + " "
-				+ "AND temp_xt_resulttoseqmap.random_id=" + r_id + " "
+				+ "AND temp_xt.random_id=" + m_Random_ID + " "
+				+ "AND temp_xt_resulttoseqmap.random_id=" + m_Random_ID + " "
 				+ "GROUP BY temp_xt_resulttoseqmap.Result_ID "
 				+ "ORDER BY temp_xt.Peptide_Sequence, temp_xt.Group_ID;");
 
@@ -2494,23 +2498,23 @@ namespace SMAQC
 			int unique_cleavage_state_2_count = 0;                                                  //COLUMN J
 			int cleavage_state_2_charge_1 = 0;                                                      //COLUMN K
 			int line_count = 0;                                                                     //LINE COUNTER
-			String prv_peptide_sequence = "";                                                       //PRV PEPTIDE SEQUENCE
+			string prv_peptide_sequence = "";                                                       //PRV PEPTIDE SEQUENCE
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge", "Result_ID", "Peptide_Sequence", "Cleavage_State", "Unique_Seq_ID" };
+			string[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge", "Result_ID", "Peptide_Sequence", "Cleavage_State", "Unique_Seq_ID" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				int resultID;
 				int seqID;
 				int cleavage_state = 0;
 
 				// DETERMINE THE CLEAVAGE STATE
-				if (int.TryParse(measurementhash["Result_ID"].ToString(), out resultID))
+				if (int.TryParse(m_MeasurementHash["Result_ID"].ToString(), out resultID))
 				{
 					if (ResultID_to_Unique_Seq_ID_Table.TryGetValue(resultID, out seqID))
 					{
@@ -2545,7 +2549,7 @@ namespace SMAQC
 					}
 
 					//FOR cleavage_state_2_charge_1 [COLUMN K]
-					if (Convert.ToInt32(measurementhash["Charge"]) == 1)
+					if (Convert.ToInt32(m_MeasurementHash["Charge"]) == 1)
 					{
 						cleavage_state_2_charge_1 = 1;
 					}
@@ -2556,13 +2560,13 @@ namespace SMAQC
 					//LINE COUNT IS NOT THE FIRST LINE
 
 					//FOR unique_cleavage_state_2_count IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN J]
-					if (cleavage_state == 2 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
+					if (cleavage_state == 2 && !Convert.ToString(m_MeasurementHash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
 					{
 						unique_cleavage_state_2_count += 1;
 					}
 
 					//FOR cleavage_state_2_charge_1 IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN K]
-					if (Convert.ToInt32(measurementhash["Charge"]) == 1 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
+					if (Convert.ToInt32(m_MeasurementHash["Charge"]) == 1 && !Convert.ToString(m_MeasurementHash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
 					{
 						cleavage_state_2_charge_1 += 1;
 					}
@@ -2570,7 +2574,7 @@ namespace SMAQC
 				}
 
 				//UPDATE PREVIOUS VALUES FOR NEXT LOOP
-				prv_peptide_sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
+				prv_peptide_sequence = Convert.ToString(m_MeasurementHash["Peptide_Sequence"]);
 			}
 
 			//SET ANSWER
@@ -2581,7 +2585,7 @@ namespace SMAQC
 		/// P_3: Ratio of semi-tryptic / fully tryptic peptides
 		/// </summary>
 		/// <returns></returns>
-		public String P_3()
+		public string P_3()
 		{
 			//BUILD RESULT_ID, UNIQUE_SEQ_TABLE
 			Dictionary<int, int> ResultID_to_Unique_Seq_ID_Table;
@@ -2593,13 +2597,13 @@ namespace SMAQC
 			Seq_ID_to_Cleavage_State_Table = GetSeqIDToCleavageStateTable();
 
 			//SET DB QUERY
-			DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log, Charge, temp_xt.Result_ID, Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State "
+			m_DBInterface.setQuery("SELECT Scan,Peptide_Expectation_Value_Log, Charge, temp_xt.Result_ID, Peptide_Sequence, temp_xt_seqtoproteinmap.Cleavage_State "
 				+ "FROM `temp_xt`, `temp_xt_resulttoseqmap` "
 				+ "JOIN `temp_xt_seqtoproteinmap` ON `temp_xt_resulttoseqmap`.Unique_Seq_ID=`temp_xt_seqtoproteinmap`.Unique_Seq_ID "
 				+ "WHERE temp_xt.Peptide_Expectation_Value_Log <= -2.00 "
 				+ "AND temp_xt.Result_ID=temp_xt_resulttoseqmap.Result_ID "
-				+ "AND temp_xt.random_id=" + r_id + " "
-				+ "AND temp_xt_resulttoseqmap.random_id=" + r_id + " "
+				+ "AND temp_xt.random_id=" + m_Random_ID + " "
+				+ "AND temp_xt_resulttoseqmap.random_id=" + m_Random_ID + " "
 				+ "GROUP BY temp_xt_resulttoseqmap.Result_ID "
 				+ "ORDER BY temp_xt.Peptide_Sequence, temp_xt.Group_ID;");
 
@@ -2609,23 +2613,23 @@ namespace SMAQC
 			int unique_cleavage_state_2_count = 0;                                                  //COLUMN J
 			int cleavage_state_2_charge_1 = 0;                                                      //COLUMN K
 			int line_count = 0;                                                                     //LINE COUNTER
-			String prv_peptide_sequence = "";                                                       //PRV PEPTIDE SEQUENCE
+			string prv_peptide_sequence = "";                                                       //PRV PEPTIDE SEQUENCE
 
 			//DECLARE FIELDS TO READ FROM
-			String[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge", "Result_ID", "Peptide_Sequence", "Cleavage_State" };
+			string[] fields = { "Scan", "Peptide_Expectation_Value_Log", "Charge", "Result_ID", "Peptide_Sequence", "Cleavage_State" };
 
 			//INIT READER
-			DBInterface.initReader();
+			m_DBInterface.initReader();
 
 			//LOOP READING + CLEARING HASH TABLE AS LONG AS THERE ARE ROWS TO READ FROM
-			while ((DBInterface.readLines(fields, ref measurementhash)) && (measurementhash.Count > 0))
+			while ((m_DBInterface.readLines(fields, ref m_MeasurementHash)) && (m_MeasurementHash.Count > 0))
 			{
 				int resultID;
 				int seqID;
 				int cleavage_state = 0;
 
 				// DETERMINE THE CLEAVAGE STATE
-				if (int.TryParse(measurementhash["Result_ID"].ToString(), out resultID))
+				if (int.TryParse(m_MeasurementHash["Result_ID"].ToString(), out resultID))
 				{
 					if (ResultID_to_Unique_Seq_ID_Table.TryGetValue(resultID, out seqID))
 					{
@@ -2660,7 +2664,7 @@ namespace SMAQC
 					}
 
 					//FOR cleavage_state_2_charge_1 [COLUMN K]
-					if (Convert.ToInt32(measurementhash["Charge"]) == 1)
+					if (Convert.ToInt32(m_MeasurementHash["Charge"]) == 1)
 					{
 						cleavage_state_2_charge_1 = 1;
 					}
@@ -2671,13 +2675,13 @@ namespace SMAQC
 					//LINE COUNT IS NOT THE FIRST LINE
 
 					//FOR unique_cleavage_state_2_count IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN J]
-					if (cleavage_state == 2 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
+					if (cleavage_state == 2 && !Convert.ToString(m_MeasurementHash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
 					{
 						unique_cleavage_state_2_count += 1;
 					}
 
 					//FOR cleavage_state_2_charge_1 IF CURRENT PEPTIDE SEQUENCE != PRV PEPTIDE SEQUENCE [COLUMN K]
-					if (Convert.ToInt32(measurementhash["Charge"]) == 1 && !Convert.ToString(measurementhash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
+					if (Convert.ToInt32(m_MeasurementHash["Charge"]) == 1 && !Convert.ToString(m_MeasurementHash["Peptide_Sequence"]).Equals(prv_peptide_sequence))
 					{
 						cleavage_state_2_charge_1 += 1;
 					}
@@ -2685,7 +2689,7 @@ namespace SMAQC
 				}
 
 				//UPDATE PREVIOUS VALUES FOR NEXT LOOP
-				prv_peptide_sequence = Convert.ToString(measurementhash["Peptide_Sequence"]);
+				prv_peptide_sequence = Convert.ToString(m_MeasurementHash["Peptide_Sequence"]);
 
 			}
 

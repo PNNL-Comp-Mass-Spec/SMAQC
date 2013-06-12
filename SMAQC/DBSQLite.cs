@@ -13,31 +13,39 @@ namespace SMAQC
     {
         //DECLARE VARIABLES
         private SQLiteConnection conn;                                                  //SQLITE CONNECTION
-        private String query;                                                           //QUERY TO RUN
+        private string query;                                                           //QUERY TO RUN
         private SQLiteDataReader reader;                                                //SQLITE READER
         private DBSQLiteTools SQLiteTools = new DBSQLiteTools();                        //CREATE DBSQLITE TOOLS OBJECT
 
 		private int errorMsgCount;
 		private Dictionary<string, int> dctErrorMessages;
 
+		SQLiteCommand m_PHRPInsertCommand;
+		Dictionary<string, int> m_PHRPFieldsForInsert;
+
+
 		//EVENT
 		public event DBWrapper.DBErrorEventHandler ErrorEvent;
 
         //CONSTRUCTOR
-        public DBSQLite(String datasource)
+        public DBSQLite(string datasource)
         {
 
-            //IF OUR SQLiteDB DOES NOT EXIST!
-            if (!File.Exists(datasource))
-            {
-                //CREATE IT + THE TABLES!
-                SQLiteTools.create_tables(datasource);
-            }
+            // Make sure the SQLiteDB exists and that it contains the correct tables
+			if (!File.Exists(datasource))
+			{
+				// Create the file, along with the tables
+				SQLiteTools.create_tables(datasource);
+			}
 
             conn = new SQLiteConnection("Data Source=" + datasource);
             
-            //OPEN DB CONN
+            // Open a connection to the database
             this.Open();
+
+			// Create any missing tables
+			SQLiteTools.create_missing_tables(conn);
+
         }
 
         //DESTRUCTOR
@@ -54,13 +62,13 @@ namespace SMAQC
         }
 
         //CLEAR DB TABLES
-        public void clearTempTables(int r_id, String[] db_tables)
+        public void clearTempTables(int random_id, string[] db_tables)
         {
             //LOOP THROUGH EACH TEMP TABLE
             for (int i = 0; i < db_tables.Length; i++)
             {
                 //CREATE QUERY
-                String temp_string = "DELETE FROM `" + db_tables[i] + "` WHERE random_id='" + r_id + "';";
+                string temp_string = "DELETE FROM `" + db_tables[i] + "` WHERE random_id='" + random_id + "';";
 
                 //SET QUERY
                 this.setQuery(temp_string);
@@ -125,10 +133,10 @@ namespace SMAQC
             conn.Open();
         }
 
-        public void BulkInsert(String insert_into_table, String file_to_read_from)
+        public void BulkInsert(string insert_into_table, string file_to_read_from)
         {
             //FETCH FIELDS
-            String[] fields = SQLiteBulkInsert_Fields(file_to_read_from);
+            List<string> fieldNames = SQLiteBulkInsert_Fields(file_to_read_from);
 
 			errorMsgCount = 0;
 			if (dctErrorMessages == null)
@@ -137,8 +145,8 @@ namespace SMAQC
 				dctErrorMessages.Clear();
 
             //BUILD SQL LINE
-            String sql = SQLiteBulkInsert_BuildSQL_Line(insert_into_table, fields);
-			string previousLine = string.Empty;
+            string sql = SQLiteBulkInsert_BuildSQL_Line(insert_into_table, fieldNames);
+			string previousLine = String.Empty;
 
 			using (SQLiteCommand mycommand = conn.CreateCommand())
 			{
@@ -154,7 +162,7 @@ namespace SMAQC
                     mycommand.CommandText = sql;
 
                     StreamReader file = new StreamReader(file_to_read_from);
-                    String line;
+                    string line;
                     int line_num = 0;
                     while ((line = file.ReadLine()) != null)
                     {
@@ -166,7 +174,7 @@ namespace SMAQC
                             continue;
                         }
 
-						if (string.Compare(line, previousLine) == 0)
+						if (String.Compare(line, previousLine) == 0)
 						{
 							// Duplicate line; skip it
 							continue;
@@ -174,13 +182,11 @@ namespace SMAQC
 						
                         //Console.WriteLine("LINE [{0}]", line);
                         //FETCH VALUES
-                        String[] values = SQLiteBulkInsert_TokenizeLine(line);
+                        string[] values = SQLiteBulkInsert_TokenizeLine(line);
 
                         //LOOP THROUGH FIELD LISTING + SET PARAMETERS
-                        for (int i = 0; i < fields.Length; i++)
+                        for (int i = 0; i < fieldNames.Count; i++)
                         {
-                            //THIS PART NOT NEEDED DUE TO SWITCHING TO 0 ... n INSTEAD OF FIELD LIST
-                            //fields[i] = SQLiteBulkInsert_CleanLine(fields[i]);
 
                             mycommand.Parameters.AddWithValue("@" + i, values[i]);
                         }
@@ -189,7 +195,7 @@ namespace SMAQC
 
 						ExecuteCommand(mycommand, line_num);
 
-						previousLine = string.Copy(line);
+						previousLine = String.Copy(line);
                         
                     }
                     //CLOSE FILE
@@ -201,15 +207,15 @@ namespace SMAQC
 				if (dctErrorMessages.Count > 0)
 				{
 					string msg;
-					string firstErrorMsg = string.Empty;
+					string firstErrorMsg = String.Empty;
 					int totalErrorRows = 0;
 
 					foreach (KeyValuePair<string, int> kvEntry in dctErrorMessages)
 					{
 						totalErrorRows += kvEntry.Value;
 						OnErrorEvent("Error message count = " + kvEntry.Value + " for '" + kvEntry.Key + "'");
-						if (string.IsNullOrEmpty(firstErrorMsg))
-							firstErrorMsg = string.Copy(kvEntry.Key);
+						if (String.IsNullOrEmpty(firstErrorMsg))
+							firstErrorMsg = String.Copy(kvEntry.Key);
 					}
 
 					msg = "Errors during BulkInsert from file " + System.IO.Path.GetFileName(file_to_read_from) + "; problem with " + totalErrorRows + " row";
@@ -255,9 +261,79 @@ namespace SMAQC
             reader = (SQLiteDataReader)QueryReader();
         }
 
-        //READ SINGLE DB ROW [DIFFERENT FROM readLines() as here we close reader afterwords]
+
+		public bool InitPHRPInsertCommand(out DbTransaction dbTrans)
+		{
+			m_PHRPFieldsForInsert = new Dictionary<string, int>();
+
+			m_PHRPInsertCommand = conn.CreateCommand();
+
+			List<string> fields = new List<string>();
+
+			fields.Add("instrument_id");
+			fields.Add("random_id");
+			fields.Add("Result_ID");
+			fields.Add("Scan");
+			fields.Add("CollisionMode");
+			fields.Add("Charge");
+			fields.Add("Peptide_MH");
+			fields.Add("Peptide_Sequence");
+			fields.Add("DelM_PPM");
+			fields.Add("MSGFSpecProb");
+			fields.Add("Unique_Seq_ID");
+			fields.Add("Cleavage_State");
+
+			m_PHRPInsertCommand.CommandText = SQLiteBulkInsert_BuildSQL_Line("temp_PSMs", fields);
+
+			for (int i = 0; i < fields.Count; i++)
+			{
+				m_PHRPFieldsForInsert.Add(fields[i], i);
+			}
+
+			errorMsgCount = 0;
+			if (dctErrorMessages == null)
+				dctErrorMessages = new Dictionary<string, int>();
+			else
+				dctErrorMessages.Clear();
+
+			using (SQLiteCommand mycommand = conn.CreateCommand())
+			{
+				mycommand.CommandText = "PRAGMA synchronous=OFF";
+				ExecuteCommand(mycommand, -1);
+			}
+
+			dbTrans = conn.BeginTransaction();
+
+			return true;
+
+		}
+
+		public void ExecutePHRPInsert(Dictionary<string, string> dctData, int line_num)
+		{
+			string dataValue;
+
+			m_PHRPInsertCommand.Parameters.Clear();
+
+			// Update insertCommand to have the data value for each field
+			foreach (KeyValuePair<string, int> item in m_PHRPFieldsForInsert)
+			{
+				if (!dctData.TryGetValue(item.Key, out dataValue))
+				{
+					dataValue = string.Empty;
+				}
+
+				m_PHRPInsertCommand.Parameters.AddWithValue("@" + item.Value, dataValue);
+			}
+
+			// Run the command
+			ExecuteCommand(m_PHRPInsertCommand, line_num);
+
+		}
+
+
+        //READ SINGLE DB ROW [DIFFERENT FROM readLines() as here we close reader afterward]
         //[RETURNS FALSE IF NO FURTHER ROWS TO READ]
-        public Boolean readSingleLine(String[] fields, ref Hashtable hash)
+        public Boolean readSingleLine(string[] fields, ref Hashtable hash)
         {
             //DECLARE VARIABLE
             Boolean status;
@@ -297,7 +373,7 @@ namespace SMAQC
         }
 
         //READ DB ROW(s) [RETURNS FALSE IF NO FURTHER ROWS TO READ]
-        public Boolean readLines(String[] fields, ref Hashtable hash)
+        public Boolean readLines(string[] fields, ref Hashtable hash)
         {
             //DECLARE VARIABLE
             Boolean status;
@@ -334,19 +410,19 @@ namespace SMAQC
             return true;
         }
 
-        String[] SQLiteBulkInsert_Fields(String filename)
+		List<string> SQLiteBulkInsert_Fields(string filename)
         {
             StreamReader file = new StreamReader(filename);
-            String line = file.ReadLine();
+            string line = file.ReadLine();
             file.Close();
 
             //SPLIT GIVEN DATA FILES BY TAB
-            char[] delimiters = new char[] { ',' };
+            char[] delimiters = new char[] { '\t' };
 
             //DO SPLIT OPERATION
-            string[] parts = line.Split(delimiters, StringSplitOptions.None);
+			List<string> parts = line.Split(delimiters, StringSplitOptions.None).ToList<string>();
 
-            for (int i = 0; i < parts.Length; i++)
+            for (int i = 0; i < parts.Count; i++)
             {
                 parts[i] = SQLiteBulkInsert_CleanFields(parts[i]);
             }
@@ -354,15 +430,15 @@ namespace SMAQC
             return parts;
         }
 
-        String[] SQLiteBulkInsert_TokenizeLine(String line)
+        string[] SQLiteBulkInsert_TokenizeLine(string line)
         {
             //SPLIT GIVEN DATA FILES BY TAB
-            char[] delimiters = new char[] { ',' };
+            char[] delimiters = new char[] { '\t' };
 
-            //IF LINE CONTAINS ",," WHICH MEANS == FIELD IS ALLOWED NULL [SCANSTATSEX FIX]
-            while (line.Contains(",,"))
+            //IF LINE CONTAINS "\t\t", THIS MEANS AN EMPTY FIELD; REPLACE WITH "\t \t"
+            while (line.Contains("\t\t"))
             {
-                line = line.Replace(",,", ", ,");
+                line = line.Replace("\t\t", "\t \t");
             }
 
             //DO SPLIT OPERATION
@@ -371,41 +447,41 @@ namespace SMAQC
             return parts;
         }
 
-        String SQLiteBulkInsert_BuildSQL_Line(String table, String[] parts)
+		string SQLiteBulkInsert_BuildSQL_Line(string table, List<string> fields)
         {
-            String sql = "";
+            System.Text.StringBuilder sbSql = new System.Text.StringBuilder();
 
             //BUILD BASE
-            sql += "INSERT INTO " + table + " (";
+            sbSql.Append("INSERT INTO " + table + " (");
 
             //BUILD COMMANDS
-            for (int i = 0; i < parts.Length; i++)
-            {
-                sql += "`" + parts[i] + "`,";
+			for (int i = 0; i < fields.Count; i++)
+			{
+				sbSql.Append("`" + fields[i] + "`");
+				if (i < fields.Count - 1)
+					sbSql.Append(",");					
             }
-            //THERE IS NOW AN EXTRA , FIND INDEX OF IT + REMOVE
-            sql = sql.Remove(sql.LastIndexOf(","));
 
             //ADD END OF COMMANDS
-            sql += ") VALUES (";
+            sbSql.Append(") VALUES (");
 
             //BUILD VALUE LIST
-            for (int i = 0; i < parts.Length; i++)
+            for (int i = 0; i < fields.Count; i++)
             {
-                sql += "@" + i + ",";
+                sbSql.Append("@" + i);
+				if (i < fields.Count - 1)
+					sbSql.Append(",");
             }
-            //THERE IS NOW AN EXTRA , FIND INDEX OF IT + REMOVE
-            sql = sql.Remove(sql.LastIndexOf(","));
 
             //ADD END OF VALUES
-            sql += ");";
+            sbSql.Append(");");
 
-            return sql;
+			return sbSql.ToString();
         }
 
-        String SQLiteBulkInsert_CleanFields(String field)
+        string SQLiteBulkInsert_CleanFields(string field)
         {
-            String field_line = field;
+            string field_line = field;
 
             //IF == SPACE
             if (field_line.Contains(" "))
@@ -429,7 +505,7 @@ namespace SMAQC
             return field_line;
         }
 
-        public String getDateTime()
+        public string getDateTime()
         {
             return "strftime('%Y-%m-%d %H:%M:%S','now', 'localtime')";
         }
@@ -442,6 +518,5 @@ namespace SMAQC
 			}
 		}
 
-
-    }
+	}
 }

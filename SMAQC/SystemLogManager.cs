@@ -10,8 +10,8 @@ namespace SMAQC
 	class SystemLogManager
 	{
 		ConcreteSubject s = new ConcreteSubject();
-		String applicationlog_filename = "";
-		List<String> applicationlog_records = new List<String>();
+		string applicationlog_filename = "";
+		List<string> applicationlog_records = new List<string>();
 
 		StreamWriter mApplicationLogFile;
 
@@ -74,7 +74,7 @@ namespace SMAQC
 		}
 
 		//ADD APPLICATION LOGS TO OUR LIST<>
-		public void addApplicationLog(String message)
+		public void addApplicationLog(string message)
 		{
 			//APPEND TO THE LOG FILE
 			//ADD TO RECORD LOG

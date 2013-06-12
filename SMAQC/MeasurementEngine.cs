@@ -9,21 +9,22 @@ namespace SMAQC
     class MeasurementEngine
     {
         //DECLARE VARIABLES
-        private List<Measurement> m_Measurements;
-        List<string> m_Measurements_list;
+        List<string> m_MeasurementsToRun;
         MeasurementFactory factory;
 		SystemLogManager m_SystemLogManager;
-        public Measurement m_Measurement;                                                        //CREATE MEASUREMENT OBJECT
+
+		// Properties
+		public bool UsingPHRP { get; set; }
 
         //CONSTRUCTOR
-		public MeasurementEngine(List<string> measurements_list, ref Measurement measurement, ref SystemLogManager systemLogManager)
+		public MeasurementEngine(List<string> lstMeasurementsToRun, ref Measurement measurement, ref SystemLogManager systemLogManager)
         {
             //SET VARIABLES
 			factory = new MeasurementFactory(ref measurement);
-            this.m_Measurements = new List<Measurement>();
-            this.m_Measurements_list = measurements_list;
-            this.m_Measurement = measurement;
+			this.m_MeasurementsToRun = lstMeasurementsToRun;            
 			this.m_SystemLogManager = systemLogManager;
+
+			this.UsingPHRP = false;
         }
 
         //DESTRUCTOR
@@ -40,28 +41,30 @@ namespace SMAQC
 			int iMeasurementsStarted = 0;
 			string sResult;
 
-            foreach (string element in m_Measurements_list)
+			factory.m_Measurement.UsingPHRP = this.UsingPHRP;
+
+            foreach (string measurementName in m_MeasurementsToRun)
             {
                 //Console.WriteLine("MeasurementEngine ELEMENT={0}", element);
 				dtStartTime = System.DateTime.UtcNow;
 				iMeasurementsStarted += 1;
-				percentComplete = iMeasurementsStarted / Convert.ToDouble(m_Measurements_list.Count) * 100.0;
+				percentComplete = iMeasurementsStarted / Convert.ToDouble(m_MeasurementsToRun.Count) * 100.0;
 
 				try
                 {
-					sResult = factory.buildMeasurement(element);
-					if (string.IsNullOrEmpty(sResult))
+					sResult = factory.buildMeasurement(measurementName);
+					if (String.IsNullOrEmpty(sResult))
 						sResult = "Null";
 
-                    resultstable.Add(element, sResult);
-					m_SystemLogManager.addApplicationLog((element + ":").PadRight(7) + " complete in " + System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0.00") + " seconds; " + percentComplete.ToString("0") + "% complete");
+                    resultstable.Add(measurementName, sResult);
+					m_SystemLogManager.addApplicationLog((measurementName + ":").PadRight(7) + " complete in " + System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0.00") + " seconds; " + percentComplete.ToString("0") + "% complete");
                 }
                 catch (Exception ex)
                 {
                     //THIS HAPPENS WHEN A MEASUREMENT FAILS ... STORE AS NULL!
-                    resultstable.Add(element, "Null");
+                    resultstable.Add(measurementName, "Null");
 					Console.WriteLine();
-					m_SystemLogManager.addApplicationLog(element + " failed: " + ex.Message);
+					m_SystemLogManager.addApplicationLog(measurementName + " failed: " + ex.Message);
                 }
             }
 

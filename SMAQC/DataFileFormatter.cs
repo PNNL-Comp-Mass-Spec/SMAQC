@@ -10,8 +10,8 @@ namespace SMAQC
     class DataFileFormatter
     {
         //DECLARE VARIABLES
-        private List<String> ValidFilesToReFormat = new List<String>();                     //LIST OF FILES THAT ARE VALID TO REFORMAT
-        private String[,] FieldList = new String[10, 30];                                   //LIST OF FIELDS
+        private List<string> ValidFilesToReFormat = new List<string>();                     //LIST OF FILES THAT ARE VALID TO REFORMAT
+        private string[,] FieldList = new string[10, 30];                                   //LIST OF FIELDS
 
 		private string mTempFilePath = "";
 
@@ -144,11 +144,11 @@ namespace SMAQC
 
         //THIS FUNCTION CHECKS EACH FILE TO SEE IF IT SHOULD BE RE-FORMATED AND THEN TAKES CARE OF IT
         //RETURNS FALSE == NO REBUILD || TRUE == REBUILD
-        public Boolean handleFile(String filename, String dataset)
+        public Boolean handleFile(string filename, string dataset)
         {
             //DECLARE VARIABLES
-            int ValidFilesToReFormat_id;                                        //THE ID OF THE FILE WE NOW NEED TO REFORMAT
-            List<int> ListFieldID = new List<int>();                    //HASH TABLE
+            int ValidFilesToReFormat_id;                                //THE ID OF THE FILE WE NOW NEED TO REFORMAT
+            List<int> ListFieldID = new List<int>();                    //HASH TABLE mapping observed column index to desired column index in DB (-1 means do not store in DB)
 
             //CHECK IF IS VALID FILE
             ValidFilesToReFormat_id = is_valid_file_to_reformat(filename, dataset);
@@ -200,6 +200,7 @@ namespace SMAQC
                 //IF COLUMN AND DATA MISMATCH
                 if (parts.Length != numOfColumns)
                 {
+					// Number of columns is not the expected number
                     //THIS NORMALLY HAPPENS ON SCANSTATSEX. NOTHING WE CAN DO DUE TO BAD TOOL. IGNORE LINE.
 
                     //NEXT LINE
@@ -248,7 +249,7 @@ namespace SMAQC
             file_write.Close();
         }
 
-        //THIS FUNCTION
+        // This function defines a mapping between the column index in the file vs. the column index to which the data should be written in the database
         /*
         1. IDENTIFIES USING ValidFilesToReFormat_id THE CORRECT [x][] ARRAY
         2. STORES VALUES IN HashFieldID IN FOLLOWING FORMAT, IF ValidFilesToReFormat_id=1
@@ -256,7 +257,7 @@ namespace SMAQC
             1. Find offset for each:: 'FT Analyzer Settings'=10, 'Conversion Parameter C'=14, 'Dataset'=0
             2. store in HashFieldID as [0]=10, [1]=14, [2]=0, ...all others == -1
         */
-        private int padHashTable(String file_to_load, ref List<int> ListFieldID, int ValidFilesToReFormat_id)
+        private int padHashTable(string file_to_load, ref List<int> ListFieldID, int ValidFilesToReFormat_id)
         {
             //DECLARE VARIABLES
             string line = "";
@@ -293,7 +294,7 @@ namespace SMAQC
                 }
                 else
                 {
-                    //NOT FOUND ... ADD -1
+                    //NOT FOUND ... ADD -1 to indicate we will skip this column
                     //Console.WriteLine("STORE i={0} && index={1}", i, index);
                     ListFieldID.Add(-1);
                 }
@@ -306,7 +307,7 @@ namespace SMAQC
         }
 
         //SEARCHES [id][x] FOR NAME ... IF FOUND RETURNS INDEX ... ELSE -1
-        private int findIndexOfColumnName(int ValidFilesToReFormat_id, String name)
+        private int findIndexOfColumnName(int ValidFilesToReFormat_id, string name)
         {
             //GET BOUND OF SECOND DIM
             int bound = FieldList.GetLength(1);
@@ -338,7 +339,7 @@ namespace SMAQC
         }
 
         //IS THIS A VALID FILE TO REFORMAT [CHECKS ValidFilesToReFormat LIST]
-        private int is_valid_file_to_reformat(String filename, String dataset)
+        private int is_valid_file_to_reformat(string filename, string dataset)
         {
             //STEP # 1 GET FILENAME WITHOUT EXTENSION
 			filename = System.IO.Path.GetFileNameWithoutExtension(filename);
@@ -360,7 +361,7 @@ namespace SMAQC
         }
 
         //FIELD CLEANER TO ENSURE DATABASE CONSISTANCY BY REMOVING SPACES, (,), / AND MORE FROM 2 DIM ARRAYS
-        private String[,] FieldCleaner2d(String[,] FieldList)
+        private string[,] FieldCleaner2d(string[,] FieldList)
         {
             //DECLARE VARIABLES
             int first_index = 0;
@@ -400,7 +401,7 @@ namespace SMAQC
         }
 
         //FIELD CLEANER TO ENSURE DATABASE CONSISTANCY BY REMOVING SPACES, (,), / AND MORE
-        private String[] FieldCleaner(String[] field_array)
+        private string[] FieldCleaner(string[] field_array)
         {
             //DECLARE VARIABLES
             int first_index = 0;
@@ -430,7 +431,7 @@ namespace SMAQC
         }
 
         //THIS FUNCTION RETURNS WHETHER OR NOT WE ARE CURRENTLY WORKING WITH _SCANSTATSEX.TXT
-        public Boolean ScanStatsExBugFixer(String file_to_load)
+        public Boolean ScanStatsExBugFixer(string file_to_load)
         {
             int value = file_to_load.IndexOf("_ScanStatsEx.txt", StringComparison.OrdinalIgnoreCase);
 

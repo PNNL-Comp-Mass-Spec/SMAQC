@@ -12,12 +12,12 @@ namespace SMAQC
         //DECLARE VARIABLES
         private DBWrapper DBWrapper;                                                                //REF DB INTERFACE OBJECT
         private Boolean first_use;                                                                  //IS THE FIRST USE?
-        private String SMAQC_VERSION;                                                               //SMAQC VERSION
-        private String SMAQC_BUILD_DATE;                                                            //SMAQC BUILD DATE
-        private String[] fields;                                                                    //SMAQC FIELDS
+        private string SMAQC_VERSION;                                                               //SMAQC VERSION
+        private string SMAQC_BUILD_DATE;                                                            //SMAQC BUILD DATE
+        private string[] fields;                                                                    //SMAQC FIELDS
 
         //CONSTRUCTOR
-        public OutputFileManager(ref DBWrapper DBWrapper, String ProgVersion, String ProgBuildDate, String[] ProgFields)
+        public OutputFileManager(ref DBWrapper DBWrapper, string ProgVersion, string ProgBuildDate, string[] ProgFields)
         {
             this.DBWrapper = DBWrapper;
             first_use = true;
@@ -33,7 +33,7 @@ namespace SMAQC
         }
 
         //SAVE DATA HANDLER
-        public void SaveData(String dataset, String filename, int scan_id, int dataset_number)
+        public void SaveData(string dataset, string filename, int scan_id, int dataset_number)
         {
             //IF THIS IS THE FIRST USE CREATE FILE + WRITE TO IT
             if (first_use)
@@ -52,7 +52,7 @@ namespace SMAQC
         }
 
         //CREATE THE FILE + ADD METRICS FOR FIRST TIME USE
-        private int CreateOutputFileForFirstTimeUse(String dataset, String filename, int scan_id, int dataset_number)
+        private int CreateOutputFileForFirstTimeUse(string dataset, string filename, int scan_id, int dataset_number)
         {
             //DECLARE VARIABLES
             Hashtable scandata = new Hashtable();                                             //HASH TABLE FOR SCAN RESULTS
@@ -74,7 +74,7 @@ namespace SMAQC
             int count = scandata.Count;
 
             //LINE TO SAVE TO
-            String line = "";
+            string line = "";
 
             //ENSURE THERE IS DATA!
             if (count > 0)
@@ -145,7 +145,7 @@ namespace SMAQC
         }
 
         //APPEND ADDITIONAL MEASUREMENT DATA TO OUTPUT FILE
-        private int AppendAdditionalMeasurementsToOutputFile(String dataset, String filename, int scan_id, int dataset_number)
+        private int AppendAdditionalMeasurementsToOutputFile(string dataset, string filename, int scan_id, int dataset_number)
         {
             //DECLARE VARIABLES
             Hashtable scandata = new Hashtable();                                             //HASH TABLE FOR SCAN RESULTS
@@ -167,7 +167,7 @@ namespace SMAQC
             int count = scandata.Count;
 
             //LINE TO SAVE TO
-            String line = "";
+            string line = "";
 
             //ENSURE THERE IS DATA!
             if (count > 0)
