@@ -26,7 +26,7 @@ namespace SMAQC
 
         //DECLARE VARIABLES
         DBInterface dbConn = null;
-        public string[] db_tables = { "temp_scanstats", "temp_scanstatsex", "temp_sicstats", "temp_xt", "temp_xt_resulttoseqmap", "temp_xt_seqtoproteinmap" };
+        public string[] db_tables = { "temp_scanstats", "temp_scanstatsex", "temp_sicstats", "temp_xt", "temp_xt_resulttoseqmap", "temp_xt_seqtoproteinmap", "temp_PSMs"};
 		private bool mShowQueryText;
 
 		private eDBTypeConstants m_DBType = eDBTypeConstants.Unknown;
@@ -121,10 +121,24 @@ namespace SMAQC
         {
         }
 
-        //CLEAR DB TABLES
-        public void clearTempTables(int random_id)
+		/// <summary>
+		/// Clear DB Temp Tables for all data
+		/// </summary>
+		/// <param name="random_id"></param>
+		/// <param name="db_tables"></param>
+		public void ClearTempTables()
+		{
+			dbConn.ClearTempTables(db_tables);
+		}
+
+		/// <summary>
+		/// Clear DB Temp Tables for all data
+		/// </summary>
+		/// <param name="random_id"></param>
+		/// <param name="db_tables"></param>
+		public void ClearTempTables(int random_id)
         {
-            dbConn.clearTempTables(random_id, db_tables);
+			dbConn.ClearTempTables(db_tables, random_id);
         }
 
         //SET QUERY
@@ -161,7 +175,7 @@ namespace SMAQC
         //FOR QUERIES SUCH AS INSERT/DELETE/UPDATE
         public Boolean QueryNonQuery()
         {
-            //DECLARE VARIABLE
+            
             Boolean status = false;
 
             //UPDATE STATUS + RUN QUERY
@@ -186,34 +200,26 @@ namespace SMAQC
 
         //READ SINGLE DB ROW [DIFFERENT FROM readLines() as here we close reader afterward]
         //[RETURNS FALSE IF NO FURTHER ROWS TO READ]
-        public Boolean readSingleLine(string[] fields, ref Hashtable hash)
+		public Boolean readSingleLine(string[] fields, ref Dictionary<string, string> dctData)
         {
-            //DECLARE VARIABLE
             Boolean status = false;
 
-            //BLANK HASH
-            hash.Clear();
+			dctData.Clear();
 
-            //READ + UPDATE STATUS
-            status = dbConn.readSingleLine(fields, ref hash);
+			status = dbConn.readSingleLine(fields, ref dctData);
 
-            //RETURN TRUE SINCE READ == OK
             return status;
         }
 
         //READ DB ROW(s) [RETURNS FALSE IF NO FURTHER ROWS TO READ]
-        public Boolean readLines(string[] fields, ref Hashtable hash)
+		public Boolean readLines(string[] fields, ref Dictionary<string, string> dctData)
         {
-            //DECLARE VARIABLE
             Boolean status = false;
 
-            //BLANK HASH
-            hash.Clear();
+			dctData.Clear();
 
-            //READ + UPDATE STATUS
-            status = dbConn.readLines(fields, ref hash);
+			status = dbConn.readLines(fields, ref dctData);
  
-            //RETURN TRUE SINCE READ == OK
             return true;
         }
 

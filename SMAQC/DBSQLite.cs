@@ -61,20 +61,53 @@ namespace SMAQC
             }
         }
 
-        //CLEAR DB TABLES
-        public void clearTempTables(int random_id, string[] db_tables)
+		/// <summary>
+		/// Clear DB Temp Tables for all data
+		/// </summary>
+		/// <param name="random_id"></param>
+		/// <param name="db_tables"></param>
+		public void ClearTempTables(string[] db_tables)
+		{
+			//LOOP THROUGH EACH TEMP TABLE
+			for (int i = 0; i < db_tables.Length; i++)
+			{
+				if (DBSQLiteTools.TableExists(conn, db_tables[i]))
+				{
+					//CREATE QUERY
+					string temp_string = "DELETE FROM " + db_tables[i] + ";";
+
+					//SET QUERY
+					this.setQuery(temp_string);
+
+					//CALL QUERY FUNCTION
+					this.QueryNonQuery();
+				}
+
+			}
+		}
+
+		/// <summary>
+		/// Clear DB Temp Tables for given Random_ID value
+		/// </summary>
+		/// <param name="random_id"></param>
+		/// <param name="db_tables"></param>
+        public void ClearTempTables(string[] db_tables, int random_id)
         {
             //LOOP THROUGH EACH TEMP TABLE
             for (int i = 0; i < db_tables.Length; i++)
             {
-                //CREATE QUERY
-                string temp_string = "DELETE FROM `" + db_tables[i] + "` WHERE random_id='" + random_id + "';";
+				if (DBSQLiteTools.TableExists(conn, db_tables[i]))
+				{
+					//CREATE QUERY
+					string temp_string = "DELETE FROM " + db_tables[i] + " WHERE random_id='" + random_id + "';";
 
-                //SET QUERY
-                this.setQuery(temp_string);
+					//SET QUERY
+					this.setQuery(temp_string);
 
-                //CALL QUERY FUNCTION
-                this.QueryNonQuery();
+					//CALL QUERY FUNCTION
+					this.QueryNonQuery();
+				}
+              
             }
         }
 
@@ -278,6 +311,7 @@ namespace SMAQC
 			fields.Add("Charge");
 			fields.Add("Peptide_MH");
 			fields.Add("Peptide_Sequence");
+			fields.Add("DelM_Da");
 			fields.Add("DelM_PPM");
 			fields.Add("MSGFSpecProb");
 			fields.Add("Unique_Seq_ID");
@@ -333,9 +367,9 @@ namespace SMAQC
 
         //READ SINGLE DB ROW [DIFFERENT FROM readLines() as here we close reader afterward]
         //[RETURNS FALSE IF NO FURTHER ROWS TO READ]
-        public Boolean readSingleLine(string[] fields, ref Hashtable hash)
+		public Boolean readSingleLine(string[] fields, ref Dictionary<string, string> dctData)
         {
-            //DECLARE VARIABLE
+            
             Boolean status;
 
             //READ LINE
@@ -357,7 +391,7 @@ namespace SMAQC
                 try
                 {
                     int value = reader.GetOrdinal(fields[i]);
-                    hash.Add(fields[i], reader.GetValue(value).ToString() );
+					dctData.Add(fields[i], reader.GetValue(value).ToString());
                 }
                 catch (System.Data.SqlTypes.SqlNullValueException)
                 {
@@ -373,9 +407,9 @@ namespace SMAQC
         }
 
         //READ DB ROW(s) [RETURNS FALSE IF NO FURTHER ROWS TO READ]
-        public Boolean readLines(string[] fields, ref Hashtable hash)
+		public Boolean readLines(string[] fields, ref Dictionary<string, string> dctData)
         {
-            //DECLARE VARIABLE
+            
             Boolean status;
 
             //READ LINE
@@ -398,7 +432,7 @@ namespace SMAQC
                 try
                 {
                     int value = reader.GetOrdinal(fields[i]);
-                    hash.Add(fields[i], reader.GetValue(value).ToString());
+					dctData.Add(fields[i], reader.GetValue(value).ToString());
                 }
                 catch (System.Data.SqlTypes.SqlNullValueException)
                 {
@@ -406,7 +440,6 @@ namespace SMAQC
                 }
             }
 
-            //RETURN TRUE SINCE READ == OK
             return true;
         }
 

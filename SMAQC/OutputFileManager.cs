@@ -55,23 +55,23 @@ namespace SMAQC
         private int CreateOutputFileForFirstTimeUse(string dataset, string filename, int scan_id, int dataset_number)
         {
             //DECLARE VARIABLES
-            Hashtable scandata = new Hashtable();                                             //HASH TABLE FOR SCAN RESULTS
-            SortedDictionary<string, string> d = new SortedDictionary<string, string>();
+			Dictionary<string, string> dctResults = new Dictionary<string, string>();                                             // SCAN RESULTS
+            SortedDictionary<string, string> dctValidResults = new SortedDictionary<string, string>();
 
             //CALCULATE RELATIVE RESULT_ID
             int result_id = scan_id + dataset_number;
 
             //SET QUERY TO RETRIEVE SCAN RESULTS
-            DBWrapper.setQuery("SELECT * FROM `scan_results` WHERE `result_id`='" + result_id + "' LIMIT 1;");
+            DBWrapper.setQuery("SELECT * FROM scan_results WHERE result_id='" + result_id + "' LIMIT 1;");
 
             //INIT READER
             DBWrapper.initReader();
 
             //READ IT INTO OUR HASH TABLE
-            DBWrapper.readSingleLine(fields, ref scandata);
+			DBWrapper.readSingleLine(fields, ref dctResults);
 
             //GET COUNT
-            int count = scandata.Count;
+			int count = dctResults.Count;
 
             //LINE TO SAVE TO
             string line = "";
@@ -86,30 +86,30 @@ namespace SMAQC
                 line += "-----------------------------------------------------------\r\n";
                 line += "SMAQC Version: " + SMAQC_VERSION + "\r\n";
                 line += "Results from Scan ID: " + scan_id + "\r\n";
-                line += "Instrument ID: " + scandata["instrument_id"] + "\r\n";
-                line += "Scan Date: " + scandata["scan_date"] + "\r\n";
+				line += "Instrument ID: " + dctResults["instrument_id"] + "\r\n";
+				line += "Scan Date: " + dctResults["scan_date"] + "\r\n";
                 line += "[Data]\r\n";
                 line += "Dataset, Measurement Name, Measurement Value\r\n";
 
                 //REMOVE FROM HASH TABLE
-                scandata.Remove("instrument_id");
-                scandata.Remove("scan_date");
-                scandata.Remove("scan_id");
-                scandata.Remove("random_id");
+				dctResults.Remove("instrument_id");
+				dctResults.Remove("scan_date");
+				dctResults.Remove("scan_id");
+				dctResults.Remove("random_id");
 
                 //LOOP THROUGH ALL THAT SHOULD BE LEFT [OUR MEASUREMENTS]
-                foreach (string key in scandata.Keys)
+				foreach (string key in dctResults.Keys)
                 {
                     //ENSURE THAT ALL KEYS HAVE DATA [THIS IS REALLY A FIX FOR SQLITE DUE TO NOT SUPPORTING NULLS PROPERLY]
-                    if (!scandata[key].Equals(""))
+					if (!string.IsNullOrEmpty(dctResults[key]))
                     {
                         //ADD TO SORTED DICTIONARY
-                        d.Add(Convert.ToString(key), Convert.ToString(scandata[key]));
+						dctValidResults.Add(key, dctResults[key]);
                     }
                 }
 
                 //LOOP THROUGH EACH SORTED DICTIONARY
-                foreach (var pair in d)
+                foreach (var pair in dctValidResults)
                 {
                     //ADD:: Dataset, Measurement Name,
                     //line += String.Format("" + dataset + ", " + pair.Key + ", " + pair.Value + "\r\n");
@@ -148,23 +148,23 @@ namespace SMAQC
         private int AppendAdditionalMeasurementsToOutputFile(string dataset, string filename, int scan_id, int dataset_number)
         {
             //DECLARE VARIABLES
-            Hashtable scandata = new Hashtable();                                             //HASH TABLE FOR SCAN RESULTS
-            SortedDictionary<string, string> d = new SortedDictionary<string, string>();
+			Dictionary<string, string> dctResults = new Dictionary<string, string>();                                             //HASH TABLE FOR SCAN RESULTS
+            SortedDictionary<string, string> dctValidResults = new SortedDictionary<string, string>();
 
             //CALCULATE RELATIVE RESULT_ID
             int result_id = scan_id + dataset_number;
 
             //SET QUERY TO RETRIEVE SCAN RESULTS
-            DBWrapper.setQuery("SELECT * FROM `scan_results` WHERE `result_id`='" + result_id + "' LIMIT 1;");
+            DBWrapper.setQuery("SELECT * FROM scan_results WHERE result_id='" + result_id + "' LIMIT 1;");
 
             //INIT READER
             DBWrapper.initReader();
 
             //READ IT INTO OUR HASH TABLE
-            DBWrapper.readSingleLine(fields, ref scandata);
+			DBWrapper.readSingleLine(fields, ref dctResults);
 
             //GET COUNT
-            int count = scandata.Count;
+			int count = dctResults.Count;
 
             //LINE TO SAVE TO
             string line = "";
@@ -176,24 +176,24 @@ namespace SMAQC
                 StreamWriter file = File.AppendText(filename);// new System.IO.StreamWriter(filename);
 
                 //REMOVE FROM HASH TABLE
-                scandata.Remove("instrument_id");
-                scandata.Remove("scan_date");
-                scandata.Remove("scan_id");
-                scandata.Remove("random_id");
+				dctResults.Remove("instrument_id");
+				dctResults.Remove("scan_date");
+				dctResults.Remove("scan_id");
+				dctResults.Remove("random_id");
 
                 //LOOP THROUGH ALL THAT SHOULD BE LEFT [OUR MEASUREMENTS]
-                foreach (string key in scandata.Keys)
+				foreach (string key in dctResults.Keys)
                 {
                     //ENSURE THAT ALL KEYS HAVE DATA [THIS IS REALLY A FIX FOR SQLITE DUE TO NOT SUPPORTING NULLS PROPERLY]
-                    if (!scandata[key].Equals(""))
+					if (!string.IsNullOrEmpty(dctResults[key]))
                     {
                         //ADD TO SORTED DICTIONARY
-                        d.Add(Convert.ToString(key), Convert.ToString(scandata[key]));
+						dctValidResults.Add(key, dctResults[key]);
                     }
                 }
 
                 //LOOP THROUGH EACH SORTED DICTIONARY
-                foreach (var pair in d)
+                foreach (var pair in dctValidResults)
                 {
                     //ADD:: Dataset, Measurement Name,
                     //line += String.Format("" + dataset + ", " + pair.Key + ", " + pair.Value + "\r\n");

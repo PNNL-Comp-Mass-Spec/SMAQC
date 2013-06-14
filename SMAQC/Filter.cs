@@ -257,11 +257,18 @@ namespace SMAQC
 
 					dctData.Add("Peptide_MH", PHRPReader.clsPeptideMassCalculator.ConvoluteMass(objCurrentPSM.PeptideMonoisotopicMass, 0, 1).ToString("0.00000"));
 					dctData.Add("Peptide_Sequence", objCurrentPSM.Peptide);
-					dctData.Add("DelM_PPM", objCurrentPSM.MassErrorPPM);
-					dctData.Add("MSGFSpecProb", objCurrentPSM.MSGFSpecProb);
-					dctData.Add("Unique_Seq_ID", objCurrentPSM.SeqID.ToString());
-					dctData.Add("Cleavage_State", objCurrentPSM.CleavageState.ToString());
 
+					dctData.Add("DelM_Da", objCurrentPSM.MassErrorDa);
+					dctData.Add("DelM_PPM", objCurrentPSM.MassErrorPPM);
+					
+					double msgfSpecProb;
+					if (double.TryParse(objCurrentPSM.MSGFSpecProb, out msgfSpecProb))
+						dctData.Add("MSGFSpecProb", objCurrentPSM.MSGFSpecProb);
+					else
+						dctData.Add("MSGFSpecProb", "1");
+
+					dctData.Add("Unique_Seq_ID", objCurrentPSM.SeqID.ToString());
+					dctData.Add("Cleavage_State", ((int)objCurrentPSM.CleavageState).ToString());
 
 					mDBWrapper.ExecutePHRPInsertCommand(dctData, line_num);
 			

@@ -12,8 +12,13 @@ namespace SMAQC
 {
 	class Smaqc
 	{
+		protected const bool USE_PHRP = true;
+
+		protected const bool WIPE_TEMP_DATA_AT_START = true;
+		protected const bool KEEP_TEMP_DATA_AT_END = false;
+
 		//DECLARE VARIABLES
-		public static DBWrapper DBWrapper;                                                              //CREATE DB INTERFACE OBJECT
+		public static DBWrapper m_DBWrapper;                                                              //CREATE DB INTERFACE OBJECT
 		public static Aggregate m_Aggregate;                                                            //CREATE AGGREGATE OBJECT
 		public static Measurement m_Measurement;                                                        //CREATE MEASUREMENT OBJECT
 		public static Filter m_Filter;                                                                  //CREATE FILTER ENGINE OBJECT
@@ -21,14 +26,13 @@ namespace SMAQC
 		public static SystemLogManager m_SystemLogManager = new SystemLogManager();                     //SYSTEM LOG MANAGER OBJECT
 		public static OutputFileManager m_OutputFileManager;                                            //OUTPUT MANAGER OBJECT
 
-		public static Hashtable configtable = new Hashtable();                                          //CONFIG HASH TABLE
-		public static Hashtable resultstable = new Hashtable();                                         //MEASUREMENT RESULTS HASH TABLE
-		public static Hashtable measurementsDict = new Hashtable();                                     //STORE MEASUREMENTS WE ARE RUNNING HERE
-		private static string appDirectoryPath = System.IO.Path.GetDirectoryName(GetAppPath());         //GET PATH TO SMAQC.exe [USEFUL IF NOT RUNNING IN SAME DIRECTORY]
+		public static Dictionary<string, string> m_Configtable = new Dictionary<string, string>();        //CONFIG OPTIONS
+
+		public static Dictionary<string, string> m_Results = new Dictionary<string, string>();			//MEASUREMENT RESULTS
 
 		//DECLARE VERSION, BUILD DATE, VALID FILE TABLES AND MEASUREMENT FIELDS
 		private static string SMAQC_VERSION = "1.2";
-		private static string SMAQC_BUILD_DATE = "June 7, 2013";
+		private static string SMAQC_BUILD_DATE = "June 13, 2013";
 
 		// Define the filename suffixes
 		private static string[] m_MasicFileNames = { "_scanstats", "_scanstatsex", "_sicstats" };
@@ -47,7 +51,7 @@ namespace SMAQC
 		{
 			//DECLARE VARIABLES
 			string sInputFolderPath;
-			string measurementsFile;
+			string sMeasurementsFile;
 			Random random = new Random();                                                           //TEMP RANDOM ID
 			string outputfile = "";                                                                 //FILE TO SAVE OUTPUT TO [IF SPECIFIED]
 			int random_id = random.Next();                                                          //GET THE RANDOM ID [.Next() REQUIRED FOR THIS]
@@ -55,7 +59,9 @@ namespace SMAQC
 			string dbFolderPath = "";
 			bool bSuccess;
 
-			bSuccess = ParseCommandLine(args, ref outputfile, ref instrument_id, ref dbFolderPath, out sInputFolderPath, out measurementsFile);
+			List<string> lstMeasurementsToRun;
+
+			bSuccess = ParseCommandLine(args, ref outputfile, ref instrument_id, ref dbFolderPath, out sInputFolderPath, out sMeasurementsFile);
 			if (!bSuccess)
 				NotifyError("Error parsing the command line arguments", 5);
 
@@ -81,33 +87,55 @@ namespace SMAQC
 				//LOAD CONFIG INTO HASH TABLE
 				loadConfig();
 
-				//BUILD MEASUREMENT LIST
-				loadMeasurements(measurementsFile);
-
 				//FETCH LIST<STRING> OF ALL MEASUREMENT FUNCTIONS TO RUN
-				List<string> lstMeasurementsToRun = measurementsToRun(sInputFolderPath, measurementsFile);
+				lstMeasurementsToRun = LoadMeasurementInfoFile(sInputFolderPath, sMeasurementsFile);
 
 				try
 				{
 
 					DBWrapper.eDBTypeConstants dbType = DBWrapper.eDBTypeConstants.SQLite;
 
-					if (configtable["dbtype"].ToString().Equals("MySQL", StringComparison.OrdinalIgnoreCase))
+					if (m_Configtable["dbtype"].Equals("MySQL", StringComparison.OrdinalIgnoreCase))
 						dbType = SMAQC.DBWrapper.eDBTypeConstants.MySql;
 
 					//CREATE CONNECTIONS
-					DBWrapper = new DBWrapper(configtable["dbhost"].ToString(), configtable["dbuser"].ToString(),
-										configtable["dbpass"].ToString(), configtable["dbname"].ToString(),
+					m_DBWrapper = new DBWrapper(m_Configtable["dbhost"], m_Configtable["dbuser"],
+										m_Configtable["dbpass"], m_Configtable["dbname"],
 										dbType, dbFolderPath);
 
-					DBWrapper.ShowQueryText = true;
+					m_DBWrapper.ShowQueryText = false;
+
+					if (WIPE_TEMP_DATA_AT_START)
+						m_DBWrapper.ClearTempTables();
 
 					//DB OBJECT
 					m_Aggregate = new Aggregate(sInputFolderPath);																	// AGGREGATE OBJECT
-					m_Measurement = new Measurement(random_id, ref DBWrapper);															// MEASUREMENT LIST OBJECT
+					m_Measurement = new Measurement(random_id, ref m_DBWrapper);															// MEASUREMENT LIST OBJECT
 					m_MeasurementEngine = new MeasurementEngine(lstMeasurementsToRun, ref m_Measurement, ref m_SystemLogManager);      // MEASUREMENT ENGINE OBJECT
-					m_Filter = new Filter(ref DBWrapper, instrument_id, random_id, ref m_SystemLogManager);                              // FILTER OBJECT
-					m_OutputFileManager = new OutputFileManager(ref DBWrapper, SMAQC_VERSION, SMAQC_BUILD_DATE, fields);			// OUTPUTFILE MANAGER OBJECT
+					m_Filter = new Filter(ref m_DBWrapper, instrument_id, random_id, ref m_SystemLogManager);                              // FILTER OBJECT
+					m_OutputFileManager = new OutputFileManager(ref m_DBWrapper, SMAQC_VERSION, SMAQC_BUILD_DATE, fields);			// OUTPUTFILE MANAGER OBJECT
+
+					try
+					{
+						ProcessDatasets(sInputFolderPath, outputfile, random_id, instrument_id, lstMeasurementsToRun);
+					}
+					catch (Exception ex)
+					{
+						NotifyError("Error finding datasets to process: " + ex.Message, 9);
+					}
+
+					try
+					{
+						//OUTPUT A SMAQC ANALYSIS COMPLETE MESSAGE [MENTOR REQUIREMENT]
+						m_SystemLogManager.addApplicationLog("SMAQC analysis complete");
+
+						//CLOSE THE APPLICATION LOG
+						m_SystemLogManager.CloseLogFile();
+					}
+					catch (Exception ex)
+					{
+						NotifyError("Error closing the log file: " + ex.Message, 10);
+					}
 
 				}
 				catch (Exception ex)
@@ -121,28 +149,6 @@ namespace SMAQC
 				NotifyError("Error initializing loading configuration: " + ex.Message, 8);
 			}
 
-
-			try
-			{
-				ProcessDatasets(sInputFolderPath, outputfile, random_id, instrument_id);
-			}
-			catch (Exception ex)
-			{
-				NotifyError("Error finding datasets to process: " + ex.Message, 9);
-			}
-
-			try
-			{
-				//OUTPUT A SMAQC ANALYSIS COMPLETE MESSAGE [MENTOR REQUIREMENT]
-				m_SystemLogManager.addApplicationLog("SMAQC analysis complete");
-
-				//CLOSE THE APPLICATION LOG
-				m_SystemLogManager.CloseLogFile();
-			}
-			catch (Exception ex)
-			{
-				NotifyError("Error closing the log file: " + ex.Message, 10);
-			}
 
 		}
 
@@ -158,7 +164,7 @@ namespace SMAQC
 			Environment.Exit(exitCode);
 
 		}
-		private static void ProcessDatasets(string sInputFolderPath, string outputfile, int random_id, string instrument_id)
+		private static void ProcessDatasets(string sInputFolderPath, string outputfile, int random_id, string instrument_id, List<string> lstMeasurementsToRun)
 		{
 
 			//FETCH FILE LISTING OF VALID FILES WE NEED TO PARSE
@@ -188,12 +194,10 @@ namespace SMAQC
 					//SET DATASET
 					m_Aggregate.setDataset(datasetName);
 
-					bool UsingPHRP = false;
-
 					List<string> MasicFileList = m_Aggregate.getMasicFileImportList(datasetName, "*.txt");
 
 					List<string> XTandemFileList;
-					if (UsingPHRP)
+					if (USE_PHRP)
 						XTandemFileList = new List<string>();
 					else
 						XTandemFileList = m_Aggregate.getXTandemFileImportList(datasetName, "*.txt");
@@ -245,7 +249,7 @@ namespace SMAQC
 						}
 					}
 
-					if (!UsingPHRP && XTandemFileList.Count < 3)
+					if (!USE_PHRP && XTandemFileList.Count < 3)
 					{
 
 						m_SystemLogManager.addApplicationLog("Required X!Tandem data files not found in " + sInputFolderPath);
@@ -284,7 +288,7 @@ namespace SMAQC
 					//LOOP THROUGH EACH FILE IN FileList, CREATE TEMP FILE, REWRITE TO ADD ADDITIONAL COLUMNS (AND ONLY HAVE THE DESIRED COLUMNS) AND BULK INSERT INTO DB
 					m_SystemLogManager.addApplicationLog("Parsing and Inserting Data into DB Temp Tables");
 
-					if (UsingPHRP)
+					if (USE_PHRP)
 					{
 						// Load data using PHRP
 						m_Filter.LoadFilesUsingPHRP(sInputFolderPath, datasetName);
@@ -303,26 +307,25 @@ namespace SMAQC
 					m_SystemLogManager.addApplicationLog("Now running Measurements on " + datasetName);
 
 					//RUN MEASUREMENT ENGINE
-					m_MeasurementEngine.UsingPHRP = UsingPHRP;
+					m_MeasurementEngine.UsingPHRP = USE_PHRP;
 
-					resultstable = m_MeasurementEngine.run();
+					m_Results = m_MeasurementEngine.run();
 
 					//ADD TO SCAN RESULTS
 					m_SystemLogManager.addApplicationLog("Saving Scan Results");
-					add_scan_results(instrument_id, random_id, result_id);
+					add_scan_results(instrument_id, random_id, result_id, lstMeasurementsToRun);
 
 					//CLEAR TEMP TABLES
-					bool KeepTempData = true;
-					if (!KeepTempData)
+					if (!KEEP_TEMP_DATA_AT_END)
 					{
-						DBWrapper.clearTempTables(random_id);
+						m_DBWrapper.ClearTempTables(random_id);
 					}
 
 					//IF OPTIONAL OUTPUTFILE IS PASSED WE WRITE TO FILE
 					if (!String.IsNullOrEmpty(outputfile))
 					{
 						//WRITE TO FILE
-						m_OutputFileManager.SaveData(datasetName, outputfile, Convert.ToInt32(configtable["scan_id"]), datasetNumber);
+						m_OutputFileManager.SaveData(datasetName, outputfile, Convert.ToInt32(m_Configtable["scan_id"]), datasetNumber);
 
 						//SAVE TO LOG
 						m_SystemLogManager.addApplicationLog("Scan output has been saved to " + outputfile);
@@ -330,10 +333,10 @@ namespace SMAQC
 					else
 					{
 						//DONE SO PRINT END MSG
-						m_SystemLogManager.addApplicationLog("Scan result saved to SQLite DB (Scan ID=" + configtable["scan_id"] + ")");
+						m_SystemLogManager.addApplicationLog("Scan result saved to SQLite DB (Scan ID=" + m_Configtable["scan_id"] + ")");
 					}
 
-					resultstable.Clear();
+					m_Results.Clear();
 
 				}
 				catch (Exception ex)
@@ -346,7 +349,7 @@ namespace SMAQC
 			}
 		}
 
-		private static bool ParseCommandLine(string[] args, ref string outputfile, ref string instrument_id, ref string dbFolderPath, out string path_to_scan_files, out string measurementsFile)
+		private static bool ParseCommandLine(string[] args, ref string outputfile, ref string instrument_id, ref string dbFolderPath, out string path_to_scan_files, out string sMeasurementsFile)
 		{
 
 			//IF NO ARGUMENTS PASSED | INCORRECT AMOUNT
@@ -381,7 +384,7 @@ namespace SMAQC
 			//SET VARIABLES BASED ON ARGUMENTS
 			instrument_id = args[1];
 			path_to_scan_files = args[3];
-			measurementsFile = args[5];
+			sMeasurementsFile = args[5];
 
 			if (String.IsNullOrEmpty(instrument_id))
 			{
@@ -393,7 +396,7 @@ namespace SMAQC
 				NotifyError("Path to datasets is empty; unable to continue", 3);
 			}
 
-			if (String.IsNullOrEmpty(measurementsFile))
+			if (String.IsNullOrEmpty(sMeasurementsFile))
 			{
 				NotifyError("Measurements file path is empty; unable to continue", 4);
 			}
@@ -418,7 +421,7 @@ namespace SMAQC
 			Console.WriteLine();
 			Console.WriteLine("Instrument ID: ".PadRight(20) + instrument_id);
 			Console.WriteLine("Path to datasets: ".PadRight(20) + path_to_scan_files);
-			Console.WriteLine("Measurements file: ".PadRight(20) + measurementsFile);
+			Console.WriteLine("Measurements file: ".PadRight(20) + sMeasurementsFile);
 			if (!String.IsNullOrEmpty(outputfile))
 				Console.WriteLine("Text results file: ".PadRight(20) + outputfile);
 			Console.WriteLine("SQLite DB folder: ".PadRight(20) + dbFolderPath);
@@ -429,40 +432,40 @@ namespace SMAQC
 		}
 
 		//FUNCTION INSERTS INTO SCAN_RESULTS
-		static void add_scan_results(string instrument_id, int random_id, int result_id)
+		static void add_scan_results(string instrument_id, int random_id, int result_id, List<string> lstMeasurementsToRun)
 		{
-			//DECLARE VARIABLE
+			
 			string scan_results_query = "";
 
-			//REMOVE SCAN ID [NEEDED AS IF USING MULTIPLE DATASETS PROGRAM WILL CRASH DUE TO DUPLICATE HASH KEY]
-			configtable.Remove("scan_id");
+			//REMOVE SCAN ID [NEEDED AS IF USING MULTIPLE DATASETS PROGRAM WILL CRASH DUE TO DUPLICATE KEY]
+			m_Configtable.Remove("scan_id");
 
 			//BUILD SCAN RESULTS QUERY
-			scan_results_query = build_scan_results_query(instrument_id, random_id, result_id);
+			scan_results_query = build_scan_results_query(instrument_id, random_id, result_id, lstMeasurementsToRun);
 
 			//SET QUERY TO STORE DATA TO SCAN_STATS
-			DBWrapper.setQuery(scan_results_query);
+			m_DBWrapper.setQuery(scan_results_query);
 
 			//EXECUTE QUERY
-			DBWrapper.QueryNonQuery();
+			m_DBWrapper.QueryNonQuery();
 
 			//SET SCAN_ID
-			configtable.Add("scan_id", result_id);
+			m_Configtable.Add("scan_id", result_id.ToString());
 		}
 
 		//BUILD SCAN_RESULTS INSERT QUERY
-		static string build_scan_results_query(string instrument_id, int random_id, int result_id)
+		static string build_scan_results_query(string instrument_id, int random_id, int result_id, List<string> lstMeasurementsToRun)
 		{
 			//DECLARE VARIABLES
 			string scan_results_query = "";
 
 			//HEAD OF RESULTS STRING QUERY
-			scan_results_query = "INSERT INTO scan_results ( `scan_id`, `instrument_id`, `random_id`, `scan_date`";
+			scan_results_query = "INSERT INTO scan_results ( scan_id, instrument_id, random_id, scan_date";
 
 			//BUILD METRICS FIELDS [, `C_1A` ...]
-			foreach (string key in measurementsDict.Keys)
+			foreach (string item in lstMeasurementsToRun)
 			{
-				scan_results_query += ", `" + measurementsDict[key] + "`";
+				scan_results_query += ", `" + item + "`";
 			}
 			scan_results_query += ") VALUES (";
 
@@ -472,12 +475,12 @@ namespace SMAQC
 			scan_results_query += "'" + random_id + "',";
 
 			//BUILD DATE STRINGS
-			scan_results_query += DBWrapper.getDateTime();// +",";
+			scan_results_query += m_DBWrapper.getDateTime();// +",";
 
 			//BUILD METRICS VALUE LIST ["'" + resultstable["C_1A"] + "',"]
-			foreach (string key in measurementsDict.Keys)
+			foreach (string item in lstMeasurementsToRun)
 			{
-				scan_results_query += ", '" + resultstable[measurementsDict[key]] + "'";
+				scan_results_query += ", '" + m_Results[item] + "'";
 				//Console.WriteLine("KEY=[{0}] -- VALUE=[{1}]", key, resultstable[measurementsDict[key]]);
 			}
 
@@ -492,30 +495,27 @@ namespace SMAQC
 		static int determine_result_id()
 		{
 			//DECLARE VARIABLES
-			Hashtable temp_hashtable = new Hashtable();
+			Dictionary<string, string> dctMostRecentEntry = new Dictionary<string, string>();
 			int result_id = 0;
 
 			//SET QUERY
-			DBWrapper.setQuery("SELECT result_id FROM `scan_results` ORDER BY result_id DESC;");
-			//DBWrapper.setQuery("SELECT Auto_increment as result_id FROM information_schema.tables WHERE table_name='scan_results';"); //NOT WORK FOR SQLITE
+			m_DBWrapper.setQuery("SELECT Max(result_id) AS result_id FROM scan_results;");
 
 			//INIT READER
-			DBWrapper.initReader();
+			m_DBWrapper.initReader();
 
 			//DECLARE FIELDS TO READ FROM
 			string[] fields = { "result_id" };
 
-			//READ LINE + STORE RESULT_ID IN OUR temp_hashtable [HASHTABLE]
-			DBWrapper.readSingleLine(fields, ref temp_hashtable);
+			//READ LINE
+			m_DBWrapper.readSingleLine(fields, ref dctMostRecentEntry);
 
-			//SET RESULT_ID
-			result_id = Convert.ToInt32(temp_hashtable["result_id"]) + 1;
-			//result_id = Convert.ToInt32(temp_hashtable["result_id"]);//NOT WORK FOR SQLITE
+			//DETERMINE NEXT RESULT_ID
+			if (int.TryParse(dctMostRecentEntry["result_id"], out result_id))
+				result_id++;
+			else
+				result_id = 1;			
 
-			//CLEAR HASH TABLE
-			temp_hashtable.Clear();
-
-			//RETURN + INC BY ONE [AS THAT WOULD BE THE NEXT VALUE]
 			return result_id;
 		}
 
@@ -525,7 +525,10 @@ namespace SMAQC
 			//DECLARE VARIABLES
 			string[] xml_variables = { "dbhost", "dbuser", "dbpass", "dbname", "dbtype" };
 			string attribute = "value";
-			string configFilePath = System.IO.Path.Combine(appDirectoryPath, "config.xml");
+
+			string configFilePath = System.IO.Path.GetDirectoryName(GetAppPath());
+			configFilePath = System.IO.Path.Combine(configFilePath, "config.xml");
+
 			FileStream configFile = null;
 
 			//OPEN XML DOC + INIT PARSER
@@ -555,7 +558,7 @@ namespace SMAQC
 					parser.MoveToAttribute(attribute);
 
 					//ADD TO HASH TABLE
-					configtable.Add(xml_variables[i], parser.Value);
+					m_Configtable.Add(xml_variables[i], parser.Value);
 				}
 			}
 
@@ -563,69 +566,46 @@ namespace SMAQC
 			parser.Close();
 		}
 
-		//THIS FUNCTION READS OUR MEASUREMENTS FILE ... THEN ADDS TO A DICTIONARY TO SO KNOW EACH MEASUREMENT THAT IS BEING RUN
-		//USED FOR BUILDING SQL QUERIES TO SAVE RESULTS
-		static void loadMeasurements(string measurementsFilePath)
+		/// <summary>
+		/// Determine the names of the measurements that should be run
+		/// </summary>
+		/// <param name="path_to_scan_files"></param>
+		/// <param name="measurementsToRunFile"></param>
+		/// <returns></returns>
+		static List<string> LoadMeasurementInfoFile(string path_to_scan_files, string measurementsToRunFile)
 		{
-			//DECLARE VARIABLES
-			FileStream measurementsFile = null;
-			System.IO.FileInfo fiMeasurementsFile = new System.IO.FileInfo(measurementsFilePath);
+			FileStream fsMeasurementsFile = null;
+			List<string> lstMeasurementsToRun = new List<string>();
+			System.IO.FileInfo fiMeasurementsToRunFile = new System.IO.FileInfo(measurementsToRunFile);
 
-			//OPEN XML DOC + INIT PARSER
-			List<string> measurements = new List<string>();
+			if (!fiMeasurementsToRunFile.Exists)
+			{
+				NotifyError("Error:: Measurements file not found at : " + measurementsToRunFile, 13);
+			}
 
 			try
 			{
-				measurementsFile = File.Open(fiMeasurementsFile.FullName, FileMode.Open);
+				fsMeasurementsFile = File.Open(fiMeasurementsToRunFile.FullName, FileMode.Open);
 			}
 			catch (FileNotFoundException ex)
 			{
-				NotifyError("Error:: Could not open measurements file (" + measurementsFilePath + "): " + ex.Message, 13);
+				NotifyError("Error:: Could not open measurements file (" + measurementsToRunFile + "): " + ex.Message, 13);
 			}
 
-			XmlTextReader parser = new XmlTextReader(measurementsFile);
+			XmlTextReader parser = new XmlTextReader(fsMeasurementsFile);
 
 			//LOOP THROUGH ENTIRE XML FILE
 			while (parser.ReadToFollowing("measurement"))
 			{
 				parser.MoveToAttribute("name");
-				measurementsDict.Add(parser.Value, parser.Value);
-			}
-
-			//CLOSE
-			parser.Close();
-		}
-
-		//THIS IS OUR XML READER. TAKES TWO ARGUEMENTS, PATH TO DIR WITH FILES (NO TRAILING /) AND THE MEASUREMENTS FILE
-		//IT THEN RETURNS A LIST<STRING> OF ALL OUR FUNCTION NAMES TO RUN
-		static List<string> measurementsToRun(string path_to_scan_files, string measurementsToRunFile)
-		{
-			List<string> measurements = new List<string>();
-			FileStream configFile = null;                   //SET TO NULL SO VS NOT DETECT ERROR
-
-			//TRY TO OPEN FILE
-			try
-			{
-				configFile = File.Open(measurementsToRunFile, FileMode.Open);
-			}
-			catch (FileNotFoundException ex)
-			{
-				NotifyError("Could not find file: " + ex.Message, 14);
-			}
-			XmlTextReader parser = new XmlTextReader(configFile);
-
-			//LOOP THROUGH ENTIRE XML FILE
-			while (parser.ReadToFollowing("measurement"))
-			{
-				parser.MoveToAttribute("name");
-				measurements.Add(parser.Value);
+				lstMeasurementsToRun.Add(parser.Value);
 			}
 
 			//CLOSE
 			parser.Close();
 
 			//RETURN OUR LIST
-			return measurements;
+			return lstMeasurementsToRun;
 		}
 
 		static protected string GetAppPath()

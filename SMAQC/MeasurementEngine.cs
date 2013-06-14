@@ -33,9 +33,9 @@ namespace SMAQC
         }
 
         //RUN MEASUREMENTS
-        public Hashtable run()
+		public Dictionary<string, string> run()
         {
-            Hashtable resultstable = new Hashtable();                                         //MEASUREMENT RESULTS HASH TABLE
+			Dictionary<string, string> dctResults = new Dictionary<string, string>();                                         //MEASUREMENT RESULTS TABLE
 			System.DateTime dtStartTime;
 			double percentComplete;
 			int iMeasurementsStarted = 0;
@@ -56,13 +56,13 @@ namespace SMAQC
 					if (String.IsNullOrEmpty(sResult))
 						sResult = "Null";
 
-                    resultstable.Add(measurementName, sResult);
+                    dctResults.Add(measurementName, sResult);
 					m_SystemLogManager.addApplicationLog((measurementName + ":").PadRight(7) + " complete in " + System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0.00") + " seconds; " + percentComplete.ToString("0") + "% complete");
                 }
                 catch (Exception ex)
                 {
                     //THIS HAPPENS WHEN A MEASUREMENT FAILS ... STORE AS NULL!
-                    resultstable.Add(measurementName, "Null");
+                    dctResults.Add(measurementName, "Null");
 					Console.WriteLine();
 					m_SystemLogManager.addApplicationLog(measurementName + " failed: " + ex.Message);
                 }
@@ -71,7 +71,7 @@ namespace SMAQC
             //CLEAR MEASUREMENTS
             factory.cleanMeasurements();
 
-            return resultstable;
+            return dctResults;
         }
 
     }

@@ -292,7 +292,7 @@ namespace SMAQC
                         + "[b_score] FLOAT NOT NULL,"
                         + "[b_ions] FLOAT NOT NULL,"
                         + "[Delta_Mass] FLOAT NOT NULL,"
-                        + "[Peptide_Intensity_Log] FLOAT NOT NULL,"
+                        + "[Peptide_Intensity_Log] FLOAT NOT NULL,"						
                         + "[DelM_PPM] FLOAT NULL"
                         + ")";
 					break;
@@ -329,6 +329,7 @@ namespace SMAQC
 						+ "[Charge] INTEGER NOT NULL,"
 						+ "[Peptide_MH] FLOAT NOT NULL,"
 						+ "[Peptide_Sequence] varchar(124) NOT NULL,"
+						+ "[DelM_Da] FLOAT NULL,"
 						+ "[DelM_PPM] FLOAT NULL,"
 						+ "[MSGFSpecProb] FLOAT NULL, "
 						+ "[Unique_Seq_ID] INTEGER NOT NULL,"
@@ -344,7 +345,7 @@ namespace SMAQC
 
 		}
 
-		protected bool TableExists(SQLiteConnection conn, string tableName)
+		public static bool TableExists(SQLiteConnection conn, string tableName)
 		{
 			using (SQLiteCommand cmd = conn.CreateCommand())
 			{

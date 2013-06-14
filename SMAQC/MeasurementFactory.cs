@@ -24,7 +24,7 @@ namespace SMAQC
 
         public string buildMeasurement(string measurement)
         {
-            //DECLARE VARIABLE
+            
             string result;
 
             //CONVERT STRING TO FUNCTION USING REFLECTION
@@ -39,7 +39,7 @@ namespace SMAQC
         public void cleanMeasurements()
         {
             //CALL CLEAR STORAGE TO CLEAR HASH TABLES
-            m_Measurement.clearStorage();
+			m_Measurement.ClearStorage();
         }
     }
 }
