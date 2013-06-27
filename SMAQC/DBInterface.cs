@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-#if (!MySqlMissing == true)
-using MySql.Data.MySqlClient;
-#endif
 using System.Data.SQLite;
 using System.Collections;
 
@@ -16,9 +13,7 @@ namespace SMAQC
 		void ClearTempTables(string[] db_tables, int random_id);
 
         void setQuery(string temp);
-        //MySqlDataReader QueryReader();
-        //SQLiteDataReader QueryReader();
-        Object QueryReader();
+        SQLiteDataReader QueryReader();
         Boolean QueryNonQuery();
         void QueryScalar();
         void Open();

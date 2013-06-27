@@ -48,7 +48,7 @@ namespace SMAQC
 		}
 
 		//CREATE BULK INSERT COMPATIBLE FILE
-		public void parse_and_filter(string temp_file, string file_to_load, DBWrapper.eDBTypeConstants dbType)
+		public void parse_and_filter(string temp_file, string file_to_load)
 		{
 			//DECLARE VARIABLES
 			string line;
@@ -57,10 +57,7 @@ namespace SMAQC
 
 			char newDelimiter;
 
-			if (dbType == DBWrapper.eDBTypeConstants.MySql)
-				newDelimiter = ',';
-			else
-				newDelimiter = '\t';
+			newDelimiter = '\t';
 
 			//OPEN TEMP srInFile
 			System.IO.StreamWriter swOutFile = new System.IO.StreamWriter(temp_file);
@@ -163,8 +160,7 @@ namespace SMAQC
 
 					// PARSE + FORMAT FILE CORRECTLY FOR BULK INSERT QUERIES
 					// Will add columns instrument_id and random_id
-					// Will change the column delimiter to a comma only if using MySql
-					parse_and_filter(temp_file, file_info, mDBWrapper.DBType);
+					parse_and_filter(temp_file, file_info);
 
 
 					//WE NOW HAVE A ACCESS TO valid_file_tables[j] which starts with the prefix '_'

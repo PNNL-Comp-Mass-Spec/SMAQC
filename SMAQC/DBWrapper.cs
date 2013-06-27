@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-#if (!MySqlMissing)
-using MySql.Data.MySqlClient;
-#endif
 using System.Collections;
 using System.Data;
 using System.IO;
@@ -18,23 +15,10 @@ namespace SMAQC
 		public delegate void DBErrorEventHandler(string errorMessage);
 		public event DBWrapper.DBErrorEventHandler ErrorEvent;
 
-		public enum eDBTypeConstants {
-			Unknown = 0,
-			SQLite = 1,
-			MySql = 2
-		}
-
         //DECLARE VARIABLES
         DBInterface dbConn = null;
         public string[] db_tables = { "temp_scanstats", "temp_scanstatsex", "temp_sicstats", "temp_xt", "temp_xt_resulttoseqmap", "temp_xt_seqtoproteinmap", "temp_PSMs"};
 		private bool mShowQueryText;
-
-		private eDBTypeConstants m_DBType = eDBTypeConstants.Unknown;
-
-#if (!MySqlMissing)
-		//MySqlDataReader reader;                                 //READ POINTER
-        IDataReader reader;
-#endif
 
 		#region "Properties"
 
@@ -50,66 +34,16 @@ namespace SMAQC
 			}
 		}
 
-		public eDBTypeConstants DBType
-		{
-			get { 
-				return m_DBType; 
-			}
-		}
-
 		#endregion
 
 		//CONSTRUCTOR
-		public DBWrapper(string host, string user, string pass, string db, eDBTypeConstants dbtype, string dbFolderPath)
+		public DBWrapper(string host, string user, string pass, string db, string dbFolderPath)
         {
             //GET PATH TO DB [NEEDED FOR SQLite SO WE SAVE IN CORRECT LOCATION]
 			string dbPath = System.IO.Path.Combine(dbFolderPath, "SMAQC.s3db");
 
-            if (dbtype == eDBTypeConstants.MySql)
-            {
-                //CREATE DB CONN
-                try
-				{
-#if (!MySqlMissing)
-                    dbConn = new DBMySQL(host, user, pass, db);
-#else
-					Console.WriteLine("Error: MySQL support is not enabled in this version of SMAQC.");
-					System.Threading.Thread.Sleep(2000);
-					Environment.Exit(1);
-#endif
-                }
-                catch
-                {
-                    Console.WriteLine("Error: You do not have MySQL NET Connector Installed on your Machine!");
-					System.Threading.Thread.Sleep(2000);
-                    Environment.Exit(1);
-                }
-
-				m_DBType = eDBTypeConstants.MySql;
-
-            }
-            else if(dbtype == eDBTypeConstants.SQLite)
-            {
-                //CREATE DB CONN
-                //try
-                //{
-                    dbConn = new DBSQLite(dbPath);
-                //}
-                //catch
-                //{
-                //    Console.WriteLine("Error: You do not have SQLite Library Installed on your Machine!");
-				//    System.Threading.Thread.Sleep(2000);
-                //    Environment.Exit(1);
-                //}
-
-					m_DBType = eDBTypeConstants.SQLite;
-            }
-            else
-            {
-                Console.WriteLine("Invalid DBType! config.xml only supports 'MySQL' or 'SQLite'!");
-				System.Threading.Thread.Sleep(2000);
-                Environment.Exit(1);
-            }
+            //CREATE DB CONN
+            dbConn = new DBSQLite(dbPath);
 
 			// Attach the event handler
 			dbConn.ErrorEvent +=new DBErrorEventHandler(dbConn_ErrorEvent);
@@ -160,17 +94,11 @@ namespace SMAQC
             }
         }
 
-        //BULK MYSQL INSERT
+        //BULK INSERT
         public void BulkInsert(string insert_into_table, string file_to_read_from)
         {
             dbConn.BulkInsert(insert_into_table, file_to_read_from);
         }
-
-        //FOR QUERIES THAT RETURN ROWS
-        //public Object QueryReader()
-        //{
-            //return dbConn.QueryReader();
-        //}
 
         //FOR QUERIES SUCH AS INSERT/DELETE/UPDATE
         public Boolean QueryNonQuery()
@@ -192,7 +120,7 @@ namespace SMAQC
             return status;
         }
 
-        //INIT MYSQL READER [WHENEVER WE WANT TO READ A ROW]
+        //INIT READER [WHENEVER WE WANT TO READ A ROW]
         public void initReader()
         {
             dbConn.initReader();

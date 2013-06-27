@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SMAQC", "SMAQC\SMAQC.csproj", "{029031AD-177A-4275-A15E-1630E7F9B5A8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SMAQC", "SMAQC\SMAQC.csproj", "{A36C960B-110B-425C-B3AF-3CC485ADFF77}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -9,10 +9,10 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{029031AD-177A-4275-A15E-1630E7F9B5A8}.Debug|x86.ActiveCfg = Debug|x86
-		{029031AD-177A-4275-A15E-1630E7F9B5A8}.Debug|x86.Build.0 = Debug|x86
-		{029031AD-177A-4275-A15E-1630E7F9B5A8}.Release|x86.ActiveCfg = Release|x86
-		{029031AD-177A-4275-A15E-1630E7F9B5A8}.Release|x86.Build.0 = Release|x86
+		{A36C960B-110B-425C-B3AF-3CC485ADFF77}.Debug|x86.ActiveCfg = Debug|x86
+		{A36C960B-110B-425C-B3AF-3CC485ADFF77}.Debug|x86.Build.0 = Debug|x86
+		{A36C960B-110B-425C-B3AF-3CC485ADFF77}.Release|x86.ActiveCfg = Release|x86
+		{A36C960B-110B-425C-B3AF-3CC485ADFF77}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

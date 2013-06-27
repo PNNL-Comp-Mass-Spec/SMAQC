@@ -31,12 +31,12 @@ namespace SMAQC
 		//CREATE OUR APPLICATION LOG FILENAME
 		public void createApplicationLog()
 		{
-			applicationlog_filename = "SMAQC-log_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".txt";
+			applicationlog_filename = "SMAQC-log_" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt";
 
 			try
 			{
 				//CREATE FILE
-				mApplicationLogFile = new StreamWriter(new System.IO.FileStream(applicationlog_filename, FileMode.Create, FileAccess.Write, FileShare.Read));
+				mApplicationLogFile = new StreamWriter(new System.IO.FileStream(applicationlog_filename, FileMode.Append, FileAccess.Write, FileShare.Read));
 				mApplicationLogFile.AutoFlush = true;
 			}
 			catch (Exception ex)

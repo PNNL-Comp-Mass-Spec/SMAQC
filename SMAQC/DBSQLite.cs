@@ -118,8 +118,7 @@ namespace SMAQC
         }
 
         //FOR QUERIES THAT RETURN ROWS
-        //public SQLiteDataReader QueryReader()
-        public Object QueryReader()
+        public SQLiteDataReader QueryReader()
         {
             SQLiteDataReader reader = null;
 
@@ -287,11 +286,11 @@ namespace SMAQC
 			return true;
 		}
 
-        //INIT MYSQL READER [WHENEVER WE WANT TO READ A ROW]
+        //INIT READER [WHENEVER WE WANT TO READ A ROW]
         public void initReader()
         {
             //CALL QUERY READER
-            reader = (SQLiteDataReader)QueryReader();
+            reader = QueryReader();
         }
 
 

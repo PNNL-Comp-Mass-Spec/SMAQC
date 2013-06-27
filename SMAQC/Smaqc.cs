@@ -15,7 +15,7 @@ namespace SMAQC
 		protected const bool USE_PHRP = true;
 
 		protected const bool WIPE_TEMP_DATA_AT_START = true;
-		protected const bool KEEP_TEMP_DATA_AT_END = false;
+		protected const bool KEEP_TEMP_DATA_AT_END = true;
 
 		//DECLARE VARIABLES
 		public static DBWrapper m_DBWrapper;                                                              //CREATE DB INTERFACE OBJECT
@@ -93,15 +93,9 @@ namespace SMAQC
 				try
 				{
 
-					DBWrapper.eDBTypeConstants dbType = DBWrapper.eDBTypeConstants.SQLite;
-
-					if (m_Configtable["dbtype"].Equals("MySQL", StringComparison.OrdinalIgnoreCase))
-						dbType = SMAQC.DBWrapper.eDBTypeConstants.MySql;
-
 					//CREATE CONNECTIONS
 					m_DBWrapper = new DBWrapper(m_Configtable["dbhost"], m_Configtable["dbuser"],
-										m_Configtable["dbpass"], m_Configtable["dbname"],
-										dbType, dbFolderPath);
+										m_Configtable["dbpass"], m_Configtable["dbname"], dbFolderPath);
 
 					m_DBWrapper.ShowQueryText = false;
 
@@ -523,7 +517,7 @@ namespace SMAQC
 		static void loadConfig()
 		{
 			//DECLARE VARIABLES
-			string[] xml_variables = { "dbhost", "dbuser", "dbpass", "dbname", "dbtype" };
+			string[] xml_variables = { "dbhost", "dbuser", "dbpass", "dbname" };
 			string attribute = "value";
 
 			string configFilePath = System.IO.Path.GetDirectoryName(GetAppPath());
