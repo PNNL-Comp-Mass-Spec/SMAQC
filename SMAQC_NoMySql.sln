@@ -12,6 +12,7 @@ Global
 		{A36C960B-110B-425C-B3AF-3CC485ADFF77}.Debug|x86.ActiveCfg = Debug|x86
 		{A36C960B-110B-425C-B3AF-3CC485ADFF77}.Debug|x86.Build.0 = Debug|x86
 		{A36C960B-110B-425C-B3AF-3CC485ADFF77}.Release|x86.ActiveCfg = Release|x86
+		{A36C960B-110B-425C-B3AF-3CC485ADFF77}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
