@@ -85,7 +85,7 @@ namespace SMAQC
                 line += "SMAQC SCANNER RESULTS\r\n";
                 line += "-----------------------------------------------------------\r\n";
                 line += "SMAQC Version: " + SMAQC_VERSION + "\r\n";
-                line += "Results from Scan ID: " + scan_id + "\r\n";
+                // line += "Results from Scan ID: " + scan_id + "\r\n";
 				line += "Instrument ID: " + dctResults["instrument_id"] + "\r\n";
 				line += "Scan Date: " + dctResults["scan_date"] + "\r\n";
                 line += "[Data]\r\n";

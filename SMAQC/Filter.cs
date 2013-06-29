@@ -231,44 +231,89 @@ namespace SMAQC
 				System.Data.Common.DbTransaction dbTrans;
 				mDBWrapper.InitPHRPInsertCommand(out dbTrans);
 
-				Dictionary<string, string> dctData = new Dictionary<string, string>();
+				Dictionary<string, string> dctBestPeptide = new Dictionary<string, string>();
+				dctBestPeptide.Clear();
+
+				int intBestPeptideScan = -1;
+				int intBestPeptideCharge = -1;
+				double dblBestPeptideScore = 100;
 
 				int line_num = 0;
+				int prev_scan = 0;
+				int prev_charge = 0;
+				string prev_peptide = string.Empty;
 
 				Console.WriteLine("Populating database using PHRP");
+
+				// Read the data using PHRP Reader
+				// Only store the best scoring peptide for each scan/charge combo
 
 				while (oPHRPReader.MoveNext())
 				{
 					PHRPReader.clsPSM objCurrentPSM = oPHRPReader.CurrentPSM;
 					line_num += 1;
 
-					dctData.Clear();
+					string strCurrentPeptide = string.Empty;
+					string strPrefix = string.Empty;
+					string strSuffix = string.Empty;
 
-					dctData.Add("instrument_id", instrument_id.ToString());
-					dctData.Add("random_id", random_id.ToString());
-					dctData.Add("Result_ID", objCurrentPSM.ResultID.ToString());
-					dctData.Add("Scan", objCurrentPSM.ScanNumberStart.ToString());
-					dctData.Add("CollisionMode", objCurrentPSM.CollisionMode);
-					dctData.Add("Charge", objCurrentPSM.Charge.ToString());
+					PHRPReader.clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(objCurrentPSM.Peptide, ref strCurrentPeptide, ref strPrefix, ref strSuffix);
 
-					dctData.Add("Peptide_MH", PHRPReader.clsPeptideMassCalculator.ConvoluteMass(objCurrentPSM.PeptideMonoisotopicMass, 0, 1).ToString("0.00000"));
-					dctData.Add("Peptide_Sequence", objCurrentPSM.Peptide);
+					if (prev_scan == objCurrentPSM.ScanNumberStart && prev_charge == objCurrentPSM.Charge && prev_peptide == strCurrentPeptide)
+						// Skip this entry
+						continue;
 
-					dctData.Add("DelM_Da", objCurrentPSM.MassErrorDa);
-					dctData.Add("DelM_PPM", objCurrentPSM.MassErrorPPM);
+					if (intBestPeptideScan > 0 && !(intBestPeptideScan == objCurrentPSM.ScanNumberStart && intBestPeptideCharge == objCurrentPSM.Charge))
+					{
+						mDBWrapper.ExecutePHRPInsertCommand(dctBestPeptide, line_num);
+						intBestPeptideScan = -1;
+						intBestPeptideCharge = -1;
+						dblBestPeptideScore = 100;
+					}
+
+					Dictionary<string, string> dctCurrentPeptide = new Dictionary<string, string>();
+					dctCurrentPeptide.Clear();
+
+					dctCurrentPeptide.Add("instrument_id", instrument_id.ToString());
+					dctCurrentPeptide.Add("random_id", random_id.ToString());
+					dctCurrentPeptide.Add("Result_ID", objCurrentPSM.ResultID.ToString());
+					dctCurrentPeptide.Add("Scan", objCurrentPSM.ScanNumberStart.ToString());
+					dctCurrentPeptide.Add("CollisionMode", objCurrentPSM.CollisionMode);
+					dctCurrentPeptide.Add("Charge", objCurrentPSM.Charge.ToString());
+
+					dctCurrentPeptide.Add("Peptide_MH", PHRPReader.clsPeptideMassCalculator.ConvoluteMass(objCurrentPSM.PeptideMonoisotopicMass, 0, 1).ToString("0.00000"));
+					dctCurrentPeptide.Add("Peptide_Sequence", objCurrentPSM.Peptide);
+
+					dctCurrentPeptide.Add("DelM_Da", objCurrentPSM.MassErrorDa);
+					dctCurrentPeptide.Add("DelM_PPM", objCurrentPSM.MassErrorPPM);
 					
 					double msgfSpecProb;
 					if (double.TryParse(objCurrentPSM.MSGFSpecProb, out msgfSpecProb))
-						dctData.Add("MSGFSpecProb", objCurrentPSM.MSGFSpecProb);
+						dctCurrentPeptide.Add("MSGFSpecProb", objCurrentPSM.MSGFSpecProb);
 					else
-						dctData.Add("MSGFSpecProb", "1");
+						dctCurrentPeptide.Add("MSGFSpecProb", "1");
 
-					dctData.Add("Unique_Seq_ID", objCurrentPSM.SeqID.ToString());
-					dctData.Add("Cleavage_State", ((int)objCurrentPSM.CleavageState).ToString());
+					dctCurrentPeptide.Add("Unique_Seq_ID", objCurrentPSM.SeqID.ToString());
+					dctCurrentPeptide.Add("Cleavage_State", ((int)objCurrentPSM.CleavageState).ToString());
 
-					mDBWrapper.ExecutePHRPInsertCommand(dctData, line_num);
-			
+					if (intBestPeptideScan < 0 || msgfSpecProb < dblBestPeptideScore)
+					{
+						dctBestPeptide = dctCurrentPeptide;
 
+						intBestPeptideScan = objCurrentPSM.ScanNumberStart;
+						intBestPeptideCharge = objCurrentPSM.Charge; ;
+						dblBestPeptideScore = msgfSpecProb;
+					}
+
+					prev_scan = objCurrentPSM.ScanNumberStart;
+					prev_charge = objCurrentPSM.Charge;
+					prev_peptide = string.Copy(strCurrentPeptide);
+
+				}
+
+				if (intBestPeptideScan > 0)
+				{
+					mDBWrapper.ExecutePHRPInsertCommand(dctBestPeptide, line_num);
 				}
 
 				// Commit the transaction
