@@ -31,8 +31,8 @@ namespace SMAQC
 		public static Dictionary<string, string> m_Results = new Dictionary<string, string>();			//MEASUREMENT RESULTS
 
 		//DECLARE VERSION, BUILD DATE, VALID FILE TABLES AND MEASUREMENT FIELDS
-		private static string SMAQC_VERSION = "1.2";
-		private static string SMAQC_BUILD_DATE = "June 27, 2013";
+		private static string SMAQC_VERSION = "1.21";
+		private static string SMAQC_BUILD_DATE = "July 1, 2013";
 
 		// Define the filename suffixes
 		private static string[] m_MasicFileNames = { "_scanstats", "_scanstatsex", "_sicstats" };

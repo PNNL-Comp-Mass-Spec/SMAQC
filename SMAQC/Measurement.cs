@@ -1451,6 +1451,9 @@ namespace SMAQC
 			if (m_Cached_DelM == null)
 				Cache_MS1_5_Data();
 
+			if (m_Cached_DelM.Count == 0)
+				return "0";
+
 			//NOW CALCULATE MEDIAN
 			double median;
 			median = ComputeMedian(m_Cached_DelM);
@@ -1470,6 +1473,9 @@ namespace SMAQC
 				Cache_MS1_5_Data();
 
 			List<double> lstAbsDelM = new List<double>(m_Cached_DelM.Count);
+
+			if (m_Cached_DelM.Count == 0)
+				return "0";
 
 			foreach (double value in m_Cached_DelM)
 				lstAbsDelM.Add(Math.Abs(value));
@@ -1491,6 +1497,9 @@ namespace SMAQC
 			if (m_Cached_DelM_ppm == null)
 				Cache_MS1_5_Data();
 
+			if (m_Cached_DelM_ppm.Count == 0)
+				return "0";
+
 			//NOW CALCULATE MEDIAN
 			double median;
 			median = ComputeMedian(m_Cached_DelM_ppm);
@@ -1506,6 +1515,9 @@ namespace SMAQC
 		{
 			if (m_Cached_DelM_ppm == null)
 				Cache_MS1_5_Data();
+
+			if (m_Cached_DelM_ppm.Count == 0)
+				return "0";
 
 			// Sort the DelM_ppm values
 			m_Cached_DelM_ppm.Sort();
