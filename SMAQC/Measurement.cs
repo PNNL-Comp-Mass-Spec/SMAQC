@@ -1755,7 +1755,7 @@ namespace SMAQC
 		}
 
 		/// <summary>
-		/// MS2_4A: Fraction of all MS2 spectra identified; high abundance quartile (determined using MS1 intensity of identified peptides)
+		/// MS2_4A: Fraction of all MS2 spectra identified; low abundance quartile (determined using MS1 intensity of identified peptides)
 		/// </summary>
 		/// <returns></returns>
 		public string MS2_4A()
@@ -1797,7 +1797,7 @@ namespace SMAQC
 		}
 
 		/// <summary>
-		/// MS2_4D: Fraction of all MS2 spectra identified; low abundance quartile (determined using MS1 intensity of identified peptides)
+		/// MS2_4D: Fraction of all MS2 spectra identified; high abundance quartile (determined using MS1 intensity of identified peptides)
 		/// </summary>
 		/// <returns></returns>
 		public string MS2_4D()
@@ -1852,8 +1852,9 @@ namespace SMAQC
 			m_DBInterface.readSingleLine(fields1, ref m_MeasurementResults);
 			int scanCountMS2 = Convert.ToInt32(m_MeasurementResults["MS2ScanCount"]);                         //STORE TOTAL MS2 SCAN COUNT
 
-			//SET DB QUERY
-			//NOTE THAT WE SORT BY ASCENDING PeakMaxIntensity
+			// SET DB QUERY
+			// NOTE THAT WE SORT BY ASCENDING PeakMaxIntensity
+			// Thus, quartile 1 in m_Cached_MS2_4_Counts will have the lowest abundance peptides
 			if (UsingPHRP)
 				m_DBInterface.setQuery("SELECT temp_PSMs.Scan, temp_sicstats.PeakMaxIntensity, Min(temp_PSMs.MSGFSpecProb) AS Peptide_Score "
 					+ " FROM temp_PSMs, temp_sicstats"
@@ -1878,7 +1879,7 @@ namespace SMAQC
 				m_Cached_MS2_4_Counts.PassFilt.Add(i, 0);
 			}			
 
-			int scan_count = 1;									// RUNNING SCAN COUNT
+			int running_scan_count = 1;									// RUNNING SCAN COUNT
 
 			//DECLARE FIELDS TO READ FROM
 			string[] fields2 = { "Scan", "Peptide_Score", "PeakMaxIntensity" };
@@ -1901,33 +1902,37 @@ namespace SMAQC
 					passed_filter = true;
 				}
 
-				//IF SCAN IN FIRST QUARTILE
-				if (scan_count < (scanCountMS2 * 0.25))
+				// Compare the running count to scanCountMS2 to determine the quartile
+				if (running_scan_count < (scanCountMS2 * 0.25))
 				{
+					// 1st quartile
 					UpdateMS2_4_QuartileStats(1, passed_filter);
 				}
 
-				//IF SCAN IN SECOND QUARTILE
-				if (scan_count >= (scanCountMS2 * 0.25) && scan_count < (scanCountMS2 * 0.5))
+				if (running_scan_count >= (scanCountMS2 * 0.25) && running_scan_count < (scanCountMS2 * 0.5))
 				{
+					// 2nd quartile
 					UpdateMS2_4_QuartileStats(2, passed_filter);
 				}
 
-				//IF SCAN IN THIRD QUARTILE
-				if (scan_count >= (scanCountMS2 * 0.5) && scan_count < (scanCountMS2 * 0.75))
+				if (running_scan_count >= (scanCountMS2 * 0.5) && running_scan_count < (scanCountMS2 * 0.75))
 				{
+					// 3rd quartile
 					UpdateMS2_4_QuartileStats(3, passed_filter);
 				}
 
-				//IF SCAN IN FOURTH QUARTILE
-				if (scan_count >= (scanCountMS2 * 0.75))
+				if (running_scan_count >= (scanCountMS2 * 0.75))
 				{
+					// 4th quartile
 					UpdateMS2_4_QuartileStats(4, passed_filter);
 
 				}
 
-				scan_count++;
+				running_scan_count++;
 			}
+
+			if (running_scan_count > scanCountMS2 + 1 && running_scan_count > scanCountMS2 * 1.01)
+				Console.WriteLine("Possible bug in Cache_MS2_4_Data, running_scan_count >> scanCountMS2: " + running_scan_count + " vs. " + scanCountMS2);
 
 			m_MS2_4_Counts_Cached = true;
 

@@ -120,7 +120,7 @@ namespace SMAQC
 
 					try
 					{
-						//OUTPUT A SMAQC ANALYSIS COMPLETE MESSAGE [MENTOR REQUIREMENT]
+						//OUTPUT A SMAQC ANALYSIS COMPLETE MESSAGE
 						m_SystemLogManager.addApplicationLog("SMAQC analysis complete");
 
 						//CLOSE THE APPLICATION LOG
