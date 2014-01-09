@@ -317,7 +317,7 @@ namespace SMAQC
 						+ "[MSGFSpecProb] FLOAT NULL, "
 						+ "[Unique_Seq_ID] INTEGER NOT NULL,"
 						+ "[Cleavage_State] INTEGER NOT NULL,"
-						+ "[Phosphopeptide] BOOL NOT NULL"
+						+ "[Phosphopeptide] INTEGER NOT NULL"
 						+ ")";
 					break;
 

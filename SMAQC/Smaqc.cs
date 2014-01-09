@@ -27,7 +27,7 @@ namespace SMAQC
 
 		//DECLARE VERSION, BUILD DATE, VALID FILE TABLES AND MEASUREMENT FIELDS
 		private const string SMAQC_VERSION = "1.22";
-		private const string SMAQC_BUILD_DATE = "January 8, 2014";
+		private const string SMAQC_BUILD_DATE = "January 9, 2014";
 
 		// Define the filename suffixes
 		private static readonly string[] m_MasicFileNames = { "_scanstats", "_scanstatsex", "_sicstats" };
