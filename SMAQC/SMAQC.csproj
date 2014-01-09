@@ -75,6 +75,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Aggregate.cs" />
+    <Compile Include="clsParseCommandLine.cs" />
     <Compile Include="DataFileFormatter.cs" />
     <Compile Include="DBInterface.cs" />
     <Compile Include="DBSQLite.cs" />

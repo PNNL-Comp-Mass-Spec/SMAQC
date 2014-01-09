@@ -9,15 +9,15 @@ namespace SMAQC
         //DECLARE VARIABLES
         private readonly DBWrapper DBWrapper;                                                                //REF DB INTERFACE OBJECT
         private Boolean first_use;																			 //IS THE FIRST USE?
-        private readonly string SMAQC_VERSION;                                                               //SMAQC VERSION
-        private readonly string[] fields;                                                                    //SMAQC FIELDS
+        private readonly string smaqc_version;                                                               //SMAQC VERSION
+		private readonly List<string> fields;                                                                //SMAQC FIELDS
 
         //CONSTRUCTOR
-        public OutputFileManager(ref DBWrapper DBWrapper, string ProgVersion, string[] ProgFields)
+        public OutputFileManager(ref DBWrapper DBWrapper, string ProgVersion, List<string> ProgFields)
         {
             this.DBWrapper = DBWrapper;
             first_use = true;
-            SMAQC_VERSION = ProgVersion;
+            smaqc_version = ProgVersion;
             fields = ProgFields;
         }
 
@@ -57,7 +57,7 @@ namespace SMAQC
             DBWrapper.initReader();
 
             //READ IT INTO OUR HASH TABLE
-			DBWrapper.readSingleLine(fields, ref dctResults);
+			DBWrapper.readSingleLine(fields.ToArray(), ref dctResults);
 
             //GET COUNT
 			int count = dctResults.Count;
@@ -74,7 +74,7 @@ namespace SMAQC
 
 		            line += "SMAQC SCANNER RESULTS\r\n";
 		            line += "-----------------------------------------------------------\r\n";
-		            line += "SMAQC Version: " + SMAQC_VERSION + "\r\n";
+		            line += "SMAQC Version: " + smaqc_version + "\r\n";
 		            // line += "Results from Scan ID: " + scan_id + "\r\n";
 		            line += "Instrument ID: " + dctResults["instrument_id"] + "\r\n";
 		            line += "Scan Date: " + dctResults["scan_date"] + "\r\n";
@@ -148,7 +148,7 @@ namespace SMAQC
             DBWrapper.initReader();
 
             //READ IT INTO OUR HASH TABLE
-			DBWrapper.readSingleLine(fields, ref dctResults);
+			DBWrapper.readSingleLine(fields.ToArray(), ref dctResults);
 
             //GET COUNT
 			int count = dctResults.Count;

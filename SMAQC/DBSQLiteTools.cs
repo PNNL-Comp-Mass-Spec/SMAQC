@@ -155,7 +155,6 @@ namespace SMAQC
                         + "[MS1_2B] VARCHAR(255)  NULL,"
                         + "[MS1_3A] VARCHAR(255)  NULL,"
                         + "[MS1_3B] VARCHAR(255)  NULL,"
-                        + "[MS1_4A] VARCHAR(255)  NULL,"
                         + "[MS1_5A] VARCHAR(255)  NULL,"
                         + "[MS1_5B] VARCHAR(255)  NULL,"
                         + "[MS1_5C] VARCHAR(255)  NULL,"
