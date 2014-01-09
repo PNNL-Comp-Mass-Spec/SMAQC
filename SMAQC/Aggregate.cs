@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
 
 namespace SMAQC
@@ -11,12 +9,12 @@ namespace SMAQC
 		private const string SCAN_STATS_FILENAME_SUFFIX = "_ScanStats.txt";
 
         //DECLARE VARIABLES
-        private string m_DataFolder;                                            // DIRECTORY WE NEED TO SEARCH
-		
-		Dictionary<string, bool> MasicImportFiles;                              // LIST OF THE FILES TO IMPORT
-		Dictionary<string, bool> XTandemImportFiles;                              // LIST OF THE FILES TO IMPORT
+        private readonly string m_DataFolder;									// DIRECTORY WE NEED TO SEARCH
 
-        List<string> ValidDataSets = new List<string>();						// LIST OF VALID DATASETS
+	    readonly Dictionary<string, bool> MasicImportFiles;						// LIST OF THE FILES TO IMPORT
+	    readonly Dictionary<string, bool> XTandemImportFiles;                   // LIST OF THE FILES TO IMPORT
+
+	    readonly List<string> ValidDataSets = new List<string>();				// LIST OF VALID DATASETS
         private string m_CurrentDataset = "";									//CURRENT RUNNING DATASET
 
 
@@ -56,27 +54,27 @@ namespace SMAQC
         //THIS ENSURES THAT OUR TEMP FILE HAS BEEN DELETED IN SOME CASES IF IT IS NOT DUE TO PROGRAM CRASHING WE CAN HAVE PROBLEMS
         public void checkTempFileNotExist()
         {
-            string file = "temp.txt";
-            if (File.Exists(file))
+	        const string file = "temp.txt";
+	        if (File.Exists(file))
             {
                 File.Delete(file);
 
             }
         }
 
-        //THIS FUNCTION DETECTS THE NUMBER OF DATASETS THAT WE MUST CHECK [USEFUL IF FOLDER WE ARE SEARCHING HAS 2+ DIFFERENT DATA SETS IN THEM]
+	    //THIS FUNCTION DETECTS THE NUMBER OF DATASETS THAT WE MUST CHECK [USEFUL IF FOLDER WE ARE SEARCHING HAS 2+ DIFFERENT DATA SETS IN THEM]
 		// Performs check by looking for files ending in _ScanStats.txt
         public List<string> DetectDatasets()
         {
             //DECLARE VARIABLES
-            System.IO.FileInfo[] filePaths = null;                      //SET TO NULL AS IN TRY BLOCK OR WILL NOT COMPILE
+            FileInfo[] filePaths = null;                      //SET TO NULL AS IN TRY BLOCK OR WILL NOT COMPILE
 
 			ValidDataSets.Clear();
 
             try
             {
                 //GET LIST OF FILES IN SPECIFIED DIRECTORY MATCHING FILE_EXT
-				System.IO.DirectoryInfo fidir = new System.IO.DirectoryInfo(m_DataFolder);
+				var fidir = new DirectoryInfo(m_DataFolder);
 				filePaths = fidir.GetFiles("*" + SCAN_STATS_FILENAME_SUFFIX);
             }
             catch (DirectoryNotFoundException)
@@ -87,10 +85,10 @@ namespace SMAQC
             }
 
             //LOOP THROUGH ALL FILES IN SPECIFIED DIRECTORY
-            for (int i = 0; i < filePaths.Length; i++)
+            foreach (FileInfo fileName in filePaths)
             {
-				string dataSetName = filePaths[i].Name.Substring(0, filePaths[i].Name.Length - SCAN_STATS_FILENAME_SUFFIX.Length);
-				ValidDataSets.Add(dataSetName);
+				string dataSetName = fileName.Name.Substring(0, fileName.Name.Length - SCAN_STATS_FILENAME_SUFFIX.Length);
+	            ValidDataSets.Add(dataSetName);
             }
 
             return ValidDataSets;
@@ -116,7 +114,7 @@ namespace SMAQC
         protected List<string> getFileImportList(string dataset, string file_ext, Dictionary<string, bool> importFiles)
         {
             //DECLARE VARIABLES
-            List<string> FileArray = new List<string>();
+            var FileArray = new List<string>();
             string[] filePaths = null;                      //SET TO NULL AS IN TRY BLOCK OR WILL NOT COMPILE
 
             try
@@ -154,7 +152,7 @@ namespace SMAQC
         {
 
 			//GET FILENAME WITHOUT EXTENSION
-			filename = System.IO.Path.GetFileNameWithoutExtension(filename);
+			filename = Path.GetFileNameWithoutExtension(filename);
 
             //NOW CHECK FOR DATASET NAME IN FILENAME
             //IF FOUND A VALID FILE IN A CERTAIN DATASET
@@ -169,10 +167,10 @@ namespace SMAQC
         //KNOWN_DATASET IS FOR IF WE HAVE ALREADY SET A RUNNING DATASET
 		public Boolean is_valid_import_file(string filename, Dictionary<string, bool> importFiles)
         {
-			string fileType = String.Empty;
+			string fileType;
 
 			//GET FILENAME WITHOUT EXTENSION
-			filename = System.IO.Path.GetFileNameWithoutExtension(filename);
+			filename = Path.GetFileNameWithoutExtension(filename);
 
 			if (filename.ToLower().StartsWith(m_CurrentDataset.ToLower()))
 			{

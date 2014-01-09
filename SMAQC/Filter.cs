@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.IO;
 
 namespace SMAQC
@@ -13,23 +12,18 @@ namespace SMAQC
 		public string instrument_id;                                                                //INSTRUMENT ID
 		public int random_id;                                                                       //RANDOM ID
 		public DataFileFormatter DFF = new DataFileFormatter();                                     //DFF OBJECT
-		SystemLogManager m_SystemLogManager;
+		readonly SystemLogManager m_SystemLogManager;
 
 		//CONSTRUCTOR
 		public Filter(ref DBWrapper DBInterface, string instrument_id, int random_id, ref SystemLogManager systemLogManager)
 		{
-			this.mDBWrapper = DBInterface;
+			mDBWrapper = DBInterface;
 			this.instrument_id = instrument_id;
 			this.random_id = random_id;
-			this.m_SystemLogManager = systemLogManager;
+			m_SystemLogManager = systemLogManager;
 
 			// Attach the event handler
-			this.mDBWrapper.ErrorEvent += new DBWrapper.DBErrorEventHandler(DBWrapper_ErrorEvent);
-		}
-
-		//DESTRUCTOR
-		~Filter()
-		{
+			mDBWrapper.ErrorEvent += DBWrapper_ErrorEvent;
 		}
 
 		//THIS FUNCTION RETURNS WHETHER OR NOT WE ARE CURRENTLY WORKING WITH _SCANSTATSEX.TXT
@@ -51,76 +45,74 @@ namespace SMAQC
 		public void parse_and_filter(string temp_file, string file_to_load)
 		{
 			//DECLARE VARIABLES
-			string line;
 			int line_num = 0;
-			string query_info = "";
 
-			char newDelimiter;
-
-			newDelimiter = '\t';
+			const char newDelimiter = '\t';
 
 			//OPEN TEMP srInFile
-			System.IO.StreamWriter swOutFile = new System.IO.StreamWriter(temp_file);
-
-			//Console.WriteLine("WRITE TO: {0} ... LOAD FROM: {1}", temp_file, file_to_load);
-
-			StreamReader srInFile = new StreamReader(file_to_load);
-			while ((line = srInFile.ReadLine()) != null)
+			using (var swOutFile = new StreamWriter(temp_file))
 			{
-				//NEW LINE SO CLEAR QUERY_INFO
-				query_info = "";
 
-				//SPLIT GIVEN DATA FILES BY TAB
-				char[] delimiters = new char[] { '\t' };
+				//Console.WriteLine("WRITE TO: {0} ... LOAD FROM: {1}", temp_file, file_to_load);
 
-				//DO SPLIT OPERATION
-				string[] parts = line.Split(delimiters, StringSplitOptions.None);
-
-				//ADD INSTRUMENT ID + RANDOM ID
-				if (line_num == 0)
+				using (var srInFile = new StreamReader(file_to_load))
 				{
-					query_info += "instrument_id" + newDelimiter + "random_id" + newDelimiter;
-				}
-				else
-				{
-					query_info += instrument_id + newDelimiter + random_id + newDelimiter;
-				}
-
-				//LOOP THROUGH ALL FIELDS (FORMATING CORRECTLY ALSO)
-				for (int i = 0; i < parts.Length; i++)
-				{
-
-					if (parts[i].Equals("[PAD]"))
+					string line;
+					while ((line = srInFile.ReadLine()) != null)
 					{
-						query_info += newDelimiter;
-					}
-					else
-					{
-						//HERE WE SEE OUR CONTENT TO BE INSERTED
-						query_info += parts[i].Replace(newDelimiter, ';') + newDelimiter;
-					}
+						//NEW LINE SO CLEAR QUERY_INFO
+						string query_info = "";
 
-					//IF AT END ... REMOVE + APPEND
-					if (i == (parts.Length - 1))
-					{
-						//REMOVE END "," CHARACTER
-						query_info = query_info.Substring(0, query_info.Length - 1);
+						//SPLIT GIVEN DATA FILES BY TAB
+						var delimiters = new[] { '\t' };
 
-						//ADD \r\n
-						query_info += "\r\n";
+						//DO SPLIT OPERATION
+						string[] parts = line.Split(delimiters, StringSplitOptions.None);
+
+						//ADD INSTRUMENT ID + RANDOM ID
+						if (line_num == 0)
+						{
+							query_info += "instrument_id" + newDelimiter + "random_id" + newDelimiter;
+						}
+						else
+						{
+							query_info += instrument_id + newDelimiter + random_id + newDelimiter;
+						}
+
+						//LOOP THROUGH ALL FIELDS (FORMATING CORRECTLY ALSO)
+						for (int i = 0; i < parts.Length; i++)
+						{
+
+							if (parts[i].Equals("[PAD]"))
+							{
+								query_info += newDelimiter;
+							}
+							else
+							{
+								//HERE WE SEE OUR CONTENT TO BE INSERTED
+								query_info += parts[i].Replace(newDelimiter, ';') + newDelimiter;
+							}
+
+							//IF AT END ... REMOVE + APPEND
+							if (i == (parts.Length - 1))
+							{
+								//REMOVE END "," CHARACTER
+								query_info = query_info.Substring(0, query_info.Length - 1);
+
+								//ADD \r\n
+								query_info += "\r\n";
+							}
+						}
+
+						//WRITE RECORD LINE TO srInFile
+						swOutFile.Write(query_info);
+
+						//INCREMENT OUR LINE #
+						line_num++;
 					}
 				}
-
-				//WRITE RECORD LINE TO srInFile
-				swOutFile.Write(query_info);
-
-				//INCREMENT OUR LINE #
-				line_num++;
 			}
 
-			//CLOSE THE FILE HANDLES
-			swOutFile.Close();
-			srInFile.Close();
 		}
 
 		//THIS FUNCTION:
@@ -130,13 +122,12 @@ namespace SMAQC
 		//4. Calls our bulk insert function
 		public void LoadFilesAndInsertIntoDB(List<string> FileList, string[] valid_file_tables, string dataset)
 		{
-
 			//LOOP THROUGH EACH FILE
-			for (int i = 0; i < FileList.Count; i++)
+			foreach (string fileName in FileList)
 			{
 				//STORES THE FULL PATH TO FILE + TEMP FILE NAME
-				string file_info = String.Copy(FileList[i]);							//FILENAME WE WANT TO LOAD INTO DB
-				string temp_file = System.IO.Path.GetTempFileName();	//WRITE TO THIS FILE [TEMP FILE]
+				string file_info = String.Copy(fileName);				//FILENAME WE WANT TO LOAD INTO DB
+				string temp_file = Path.GetTempFileName();	//WRITE TO THIS FILE [TEMP FILE]
 				string query_table = "temp";							//USED AS PREFIX PORTION OF TABLE
 
 				//DETERMINE IF WE HAVE A TABLE TO INSERT INTO DEPENDING ON OUR INPUT FILENAME
@@ -174,12 +165,11 @@ namespace SMAQC
 				else
 				{
 					//NOT A VALID .TXT FILE FROM OUR LIST!
-					Console.WriteLine("ERROR, unrecognized file " + FileList[i]);
+					Console.WriteLine("ERROR, unrecognized file " + fileName);
 				}
 				//DELETE TEMP FILE
 				File.Delete(temp_file);
 			}
-
 		}
 
 		public bool LoadFilesUsingPHRP(string sInputFolderPath, string sDataset)
@@ -190,24 +180,25 @@ namespace SMAQC
 
 			if (string.IsNullOrEmpty(sInputFilePath))
 			{
-				throw new System.IO.FileNotFoundException("Valid input file not found for dataset " + sDataset + " in folder " + sInputFolderPath);
+				throw new FileNotFoundException("Valid input file not found for dataset " + sDataset + " in folder " + sInputFolderPath);
 			}
 
 			try
 			{
-				bool blnLoadModsAndSeqInfo = true;
-				bool blnLoadMSGFResults = true;
-				bool blnLoadScanStats = false;
+				const bool blnLoadModsAndSeqInfo = true;
+				const bool blnLoadMSGFResults = true;
+				const bool blnLoadScanStats = false;
 
-				PHRPReader.clsPHRPReader oPHRPReader;
-				oPHRPReader = new PHRPReader.clsPHRPReader(sInputFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.Unknown, blnLoadModsAndSeqInfo, blnLoadMSGFResults, blnLoadScanStats);
-				oPHRPReader.EchoMessagesToConsole = false;
-				oPHRPReader.SkipDuplicatePSMs = true;
+				var oPHRPReader = new PHRPReader.clsPHRPReader(sInputFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.Unknown, blnLoadModsAndSeqInfo, blnLoadMSGFResults, blnLoadScanStats)
+				{
+					EchoMessagesToConsole = false,
+					SkipDuplicatePSMs = true
+				};
 
 				// Attach the error handlers
-				oPHRPReader.MessageEvent += new PHRPReader.clsPHRPReader.MessageEventEventHandler(mPHRPReader_MessageEvent);
-				oPHRPReader.ErrorEvent += new PHRPReader.clsPHRPReader.ErrorEventEventHandler(mPHRPReader_ErrorEvent);
-				oPHRPReader.WarningEvent += new PHRPReader.clsPHRPReader.WarningEventEventHandler(mPHRPReader_WarningEvent);
+				oPHRPReader.MessageEvent += mPHRPReader_MessageEvent;
+				oPHRPReader.ErrorEvent += mPHRPReader_ErrorEvent;
+				oPHRPReader.WarningEvent += mPHRPReader_WarningEvent;
 
 				// Report any errors cached during instantiation of mPHRPReader
 				foreach (string strMessage in oPHRPReader.ErrorMessages.Distinct())
@@ -231,7 +222,7 @@ namespace SMAQC
 				System.Data.Common.DbTransaction dbTrans;
 				mDBWrapper.InitPHRPInsertCommand(out dbTrans);
 
-				Dictionary<string, string> dctBestPeptide = new Dictionary<string, string>();
+				var dctBestPeptide = new Dictionary<string, string>();
 				dctBestPeptide.Clear();
 
 				int intBestPeptideScan = -1;
@@ -271,10 +262,10 @@ namespace SMAQC
 						dblBestPeptideScore = 100;
 					}
 
-					Dictionary<string, string> dctCurrentPeptide = new Dictionary<string, string>();
+					var dctCurrentPeptide = new Dictionary<string, string>();
 					dctCurrentPeptide.Clear();
 
-					dctCurrentPeptide.Add("instrument_id", instrument_id.ToString());
+					dctCurrentPeptide.Add("instrument_id", instrument_id);
 					dctCurrentPeptide.Add("random_id", random_id.ToString());
 					dctCurrentPeptide.Add("Result_ID", objCurrentPSM.ResultID.ToString());
 					dctCurrentPeptide.Add("Scan", objCurrentPSM.ScanNumberStart.ToString());
@@ -286,7 +277,7 @@ namespace SMAQC
 
 					dctCurrentPeptide.Add("DelM_Da", objCurrentPSM.MassErrorDa);
 					dctCurrentPeptide.Add("DelM_PPM", objCurrentPSM.MassErrorPPM);
-					
+
 					double msgfSpecProb;
 					if (double.TryParse(objCurrentPSM.MSGFSpecProb, out msgfSpecProb))
 						dctCurrentPeptide.Add("MSGFSpecProb", objCurrentPSM.MSGFSpecProb);
@@ -296,12 +287,32 @@ namespace SMAQC
 					dctCurrentPeptide.Add("Unique_Seq_ID", objCurrentPSM.SeqID.ToString());
 					dctCurrentPeptide.Add("Cleavage_State", ((int)objCurrentPSM.CleavageState).ToString());
 
+					// Check whether this is a phosphopeptide
+					byte phosphoFlag = 0;
+					foreach (var modification in objCurrentPSM.ModifiedResidues)
+					{
+						if (modification.ModDefinition.MassCorrectionTag == "Phosph")
+						{
+							phosphoFlag = 1;
+							break;
+						}
+
+						if (Math.Abs(modification.ModDefinition.ModificationMass - 79.966331) < 0.075 &&
+							(modification.Residue == 'S' || modification.Residue == 'T' || modification.Residue == 'Y'))
+						{
+							phosphoFlag = 1;
+							break;
+						}
+					}
+
+					dctCurrentPeptide.Add("Phosphopeptide", phosphoFlag.ToString());
+
 					if (intBestPeptideScan < 0 || msgfSpecProb < dblBestPeptideScore)
 					{
 						dctBestPeptide = dctCurrentPeptide;
 
 						intBestPeptideScan = objCurrentPSM.ScanNumberStart;
-						intBestPeptideCharge = objCurrentPSM.Charge; ;
+						intBestPeptideCharge = objCurrentPSM.Charge;
 						dblBestPeptideScore = msgfSpecProb;
 					}
 
@@ -326,12 +337,12 @@ namespace SMAQC
 			return false;
 		}
 
-	
+
 		//FUNCTION WILL SEARCH THROUGH A FILE NAME, ENSURING IT IS A VALID TABLE EXTENSION AND RETURNING
 		//THE POSITION SO THAT IT CAN BE PASSED TO OUR DBINTERFACE/OTHER CLASSES FOR PROCESSING
 		public int return_file_table_position(string filename, string[] valid_file_tables)
 		{
-			string baseFilenameLCase = System.IO.Path.GetFileNameWithoutExtension(filename).ToLower();
+			string baseFilenameLCase = Path.GetFileNameWithoutExtension(filename).ToLower();
 
 			//LOOP THROUGH ALL VALID FILE/TABLE EXTENSIONS
 			for (int i = 0; i < valid_file_tables.Length; i++)

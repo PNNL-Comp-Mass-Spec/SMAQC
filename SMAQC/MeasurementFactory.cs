@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Runtime.Remoting;
-
+﻿
 namespace SMAQC
 {
     class MeasurementFactory
@@ -17,20 +12,12 @@ namespace SMAQC
             this.m_Measurement = m_Measurement;
         }
 
-        //DESTRUCTOR
-        ~MeasurementFactory()
-        {
-        }
-
         public string buildMeasurement(string measurement)
         {
-            
-            string result;
-
-            //CONVERT STRING TO FUNCTION USING REFLECTION
+	        //CONVERT STRING TO FUNCTION USING REFLECTION
             string methodName = measurement;
             System.Reflection.MethodInfo info = m_Measurement.GetType().GetMethod(methodName);
-            result = (string)info.Invoke(m_Measurement, null);
+            var result = (string)info.Invoke(m_Measurement, null);
 
             return result;
         }

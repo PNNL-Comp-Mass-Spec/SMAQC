@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Collections;
-using System.Data;
 using System.IO;
-using System.Reflection;
 
 namespace SMAQC
 {
@@ -13,10 +8,10 @@ namespace SMAQC
     {
 		//DELEGATE FUNCTION FOR ERROR EVENTS
 		public delegate void DBErrorEventHandler(string errorMessage);
-		public event DBWrapper.DBErrorEventHandler ErrorEvent;
+		public event DBErrorEventHandler ErrorEvent;
 
         //DECLARE VARIABLES
-        DBInterface dbConn = null;
+	    readonly DBInterface dbConn;
         public string[] db_tables = { "temp_scanstats", "temp_scanstatsex", "temp_sicstats", "temp_xt", "temp_xt_resulttoseqmap", "temp_xt_seqtoproteinmap", "temp_PSMs"};
 		private bool mShowQueryText;
 
@@ -37,10 +32,10 @@ namespace SMAQC
 		#endregion
 
 		//CONSTRUCTOR
-		public DBWrapper(string host, string user, string pass, string db, string dbFolderPath)
+		public DBWrapper(string dbFolderPath)
         {
             //GET PATH TO DB [NEEDED FOR SQLite SO WE SAVE IN CORRECT LOCATION]
-			string dbPath = System.IO.Path.Combine(dbFolderPath, "SMAQC.s3db");
+			string dbPath = Path.Combine(dbFolderPath, "SMAQC.s3db");
 
             //CREATE DB CONN
             dbConn = new DBSQLite(dbPath);

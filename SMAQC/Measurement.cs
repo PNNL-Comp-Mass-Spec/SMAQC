@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.IO;
 
 namespace SMAQC
 {
@@ -750,7 +747,7 @@ namespace SMAQC
 		public string DS_1B()
 		{
 			// Keys are the number of spectra that a peptide was observed in (passing filters) and values are the number of peptides identified by Key spectra</param>
-			
+
 			double result = 0;																		//SOLUTION
 
 			if (m_PeptideSamplingStats == null)
@@ -937,7 +934,7 @@ namespace SMAQC
 			{
 				if (m_Cached_PSM_Stats_by_Charge.TryGetValue(2, out psm_count_charge2))
 					result = psm_count_charge1 / (double)psm_count_charge2;
-			}			
+			}
 
 			//ROUND
 			return result.ToString("0.000000");
@@ -963,7 +960,7 @@ namespace SMAQC
 			{
 				if (m_Cached_PSM_Stats_by_Charge.TryGetValue(3, out psm_count_charge3))
 					result = psm_count_charge3 / (double)psm_count_charge2;
-			}			
+			}
 
 			//ROUND
 			return result.ToString("0.000000");
@@ -1026,7 +1023,7 @@ namespace SMAQC
 
 			//READ ROWS
 			while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
-			{				
+			{
 				if (int.TryParse(m_MeasurementResults["Charge"], out charge))
 				{
 					if (int.TryParse(m_MeasurementResults["PSMs"], out psm_count))
@@ -1124,7 +1121,7 @@ namespace SMAQC
 			//SET DB QUERY
 			m_DBInterface.setQuery("SELECT BasePeakSignalToNoiseRatio, TotalIonIntensity "
 				+ " FROM temp_scanstats"
-				+ " WHERE temp_scanstats.random_id=" + m_Random_ID 
+				+ " WHERE temp_scanstats.random_id=" + m_Random_ID
 				+ "   AND ScanType = 1 "
 				+ "   AND ScanNumber >= " + scanFirstPeptide
 				+ "   AND ScanNumber <= " + scanEndC2A);
@@ -1140,7 +1137,7 @@ namespace SMAQC
 
 			//READ ROWS
 			while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
-			{			
+			{
 				m_Cached_BasePeakSignalToNoiseRatio.Add(Convert.ToDouble(m_MeasurementResults["BasePeakSignalToNoiseRatio"]));
 				m_Cached_TotalIonIntensity.Add(Convert.ToDouble(m_MeasurementResults["TotalIonIntensity"]));
 			}
@@ -1246,10 +1243,10 @@ namespace SMAQC
 			if (MPI_list.Count > 0)
 			{
 				//CALCULATE FINAL VALUES
-				m_Cached_PeakMaxIntensity_5thPercentile = MPI_list.Min(); 
+				m_Cached_PeakMaxIntensity_5thPercentile = MPI_list.Min();
 				m_Cached_PeakMaxIntensity_95thPercentile = MPI_list.Max();
 			}
-		
+
 
 		}
 
@@ -1682,7 +1679,7 @@ namespace SMAQC
 			double median = 0.00;                                                               //STORE MEDIAN
 
 			//DECLARE FIELDS TO READ FROM
-			string[] fields = {"BasePeakSignalToNoiseRatio" };
+			string[] fields = { "BasePeakSignalToNoiseRatio" };
 
 			//INIT READER
 			m_DBInterface.initReader();
@@ -1763,7 +1760,7 @@ namespace SMAQC
 
 			if (!m_MS2_4_Counts_Cached)
 				Cache_MS2_4_Data();
-			
+
 			double result = Compute_MS2_4_Ratio(1);
 			return result.ToString("0.0000");
 		}
@@ -1877,7 +1874,7 @@ namespace SMAQC
 			{
 				m_Cached_MS2_4_Counts.ScanCount.Add(i, 0);
 				m_Cached_MS2_4_Counts.PassFilt.Add(i, 0);
-			}			
+			}
 
 			int running_scan_count = 1;									// RUNNING SCAN COUNT
 
@@ -1988,7 +1985,7 @@ namespace SMAQC
 			{
 				double peptideScore;
 				if (double.TryParse(m_MeasurementResults["Peptide_Score"], out peptideScore))
-				{					
+				{
 					Peptide_score_List.Add(peptideScore);
 				}
 			}
@@ -2036,7 +2033,7 @@ namespace SMAQC
 				//CALCULATE COLUMN C + ADD TO LIST
 				double peptideScore;
 				if (double.TryParse(m_MeasurementResults["Peptide_Score"], out peptideScore))
-				{					
+				{
 					Peptide_score_List.Add(peptideScore);
 				}
 			}
@@ -2054,13 +2051,21 @@ namespace SMAQC
 		/// <returns></returns>
 		public string P_2A()
 		{
+			return P_2A_Shared(phosphoPeptides: false);
+		}
+
+		protected string P_2A_Shared(bool phosphoPeptides)
+		{
 			//SET DB QUERY
+			
+
 			if (UsingPHRP)
 				m_DBInterface.setQuery("SELECT Cleavage_State, Count(*) AS Spectra "
 									+ " FROM ( SELECT Scan, Max(Cleavage_State) AS Cleavage_State "
 									+ "        FROM temp_PSMs "
 									+ "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
 									+ "          AND random_id=" + m_Random_ID
+									+ PhosphoFilter(phosphoPeptides)
 									+ "        GROUP BY Scan ) StatsQ "
 									+ " GROUP BY Cleavage_State;");
 
@@ -2078,7 +2083,7 @@ namespace SMAQC
 									+ " GROUP BY Cleavage_State;");
 
 			//DECLARE VARIABLES
-			Dictionary<int, int> dctPSMStats = new Dictionary<int, int>();
+			var dctPSMStats = new Dictionary<int, int>();
 
 			//DECLARE FIELDS TO READ FROM
 			string[] fields = { "Cleavage_State", "Spectra" };
@@ -2107,7 +2112,7 @@ namespace SMAQC
 		/// <returns></returns>
 		public string P_2B()
 		{
-			bool groupByCharge = true;
+			const bool groupByCharge = true;
 			Dictionary<int, int> dctPeptideStats = SummarizePSMs(groupByCharge);
 
 			// Lookup the number of fully tryptic peptides (Cleavage_State = 2)
@@ -2125,7 +2130,7 @@ namespace SMAQC
 		public string P_2C()
 		{
 
-			bool groupByCharge = false;
+			const bool groupByCharge = false;
 			Dictionary<int, int> dctPeptideStats = SummarizePSMs(groupByCharge);
 
 			// Lookup the number of fully tryptic peptides (Cleavage_State = 2)
@@ -2136,7 +2141,7 @@ namespace SMAQC
 				return "0";
 
 		}
-
+		
 		/// <summary>
 		/// P_3: Ratio of semi-tryptic / fully tryptic peptides
 		/// </summary>
@@ -2168,11 +2173,57 @@ namespace SMAQC
 		}
 
 		/// <summary>
+		/// Phos_2A: Number of tryptic phosphopeptides; total spectra count
+		/// </summary>
+		/// <returns></returns>
+		public string Phos_2A()
+		{
+			return P_2A_Shared(phosphoPeptides: true);
+		}
+
+		/// <summary>
+		/// Phos_2C: Number of tryptic phosphopeptides; unique peptide count
+		/// </summary>
+		/// <returns></returns>
+		public string Phos_2C()
+		{
+
+			Dictionary<int, int> dctPeptideStats = SummarizePSMs(groupByCharge: false, phosphoPeptides: true);
+
+			// Lookup the number of fully tryptic peptides (Cleavage_State = 2)
+			int peptideCount;
+			if (dctPeptideStats.TryGetValue(2, out peptideCount))
+				return peptideCount.ToString();
+			else
+				return "0";
+
+		}
+
+		protected string PhosphoFilter(bool phosphoPeptides)
+		{
+			if (phosphoPeptides)
+				return " AND Phosphopeptide = 1";
+			else
+				return "";
+		}
+
+		/// <summary>
 		/// Counts the number of fully, partially, and non-tryptic peptides
 		/// </summary>
 		/// <param name="groupByCharge">If true, then counts charges separately</param>
 		/// <returns></returns>
 		protected Dictionary<int, int> SummarizePSMs(bool groupByCharge)
+		{
+			return SummarizePSMs(groupByCharge, phosphoPeptides: false);
+		}
+
+		/// <summary>
+		/// Counts the number of fully, partially, and non-tryptic peptides
+		/// </summary>
+		/// <param name="groupByCharge">If true, then counts charges separately</param>
+		/// <param name="phosphoPeptides">If true, then only uses phosphopeptides (only valid if UsingPHRP=True)</param>
+		/// <returns></returns>
+		protected Dictionary<int, int> SummarizePSMs(bool groupByCharge, bool phosphoPeptides)
 		{
 			string chargeSql = String.Empty;
 
@@ -2186,27 +2237,33 @@ namespace SMAQC
 
 			//SET DB QUERY
 			if (UsingPHRP)
+			{
 				m_DBInterface.setQuery("SELECT Cleavage_State, Count(*) AS Peptides "
-									+ " FROM ( SELECT Unique_Seq_ID" + chargeSql + ", Max(Cleavage_State) AS Cleavage_State "
-									+ "        FROM temp_PSMs "
-									+ "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
-									+ "          AND random_id=" + m_Random_ID
-									+ "        GROUP BY Unique_Seq_ID" + chargeSql + " ) StatsQ "
-									+ " GROUP BY Cleavage_State;");
-
+				                    + " FROM ( SELECT Unique_Seq_ID" + chargeSql + ", Max(Cleavage_State) AS Cleavage_State "
+				                    + "        FROM temp_PSMs "
+				                    + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
+				                    + "          AND random_id=" + m_Random_ID
+				                    + PhosphoFilter(phosphoPeptides)
+				                    + " GROUP BY Unique_Seq_ID" + chargeSql + " ) StatsQ "
+					                + " GROUP BY Cleavage_State;");
+			}
 			else
+			{
 				m_DBInterface.setQuery("SELECT Cleavage_State, Count(*) AS Peptides "
-									+ " FROM ( SELECT temp_xt_resulttoseqmap.Unique_Seq_ID" + chargeSql + ", Max(temp_xt_seqtoproteinmap.cleavage_state) AS Cleavage_State "
-									+ "        FROM temp_xt "
-									+ "             INNER JOIN temp_xt_resulttoseqmap ON temp_xt.result_id = temp_xt_resulttoseqmap.result_id "
-									+ "             INNER JOIN temp_xt_seqtoproteinmap ON temp_xt_resulttoseqmap.unique_seq_id = temp_xt_seqtoproteinmap.unique_seq_id "
-									+ "        WHERE temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD
-									+ "          AND temp_xt.random_id=" + m_Random_ID
-									+ "          AND temp_xt_resulttoseqmap.random_id=" + m_Random_ID
-									+ "          AND temp_xt_seqtoproteinmap.random_id=" + m_Random_ID
-									+ "        GROUP BY temp_xt_resulttoseqmap.Unique_Seq_ID" + chargeSql + " ) StatsQ "
-									+ " GROUP BY Cleavage_State;");
-
+				                       + " FROM ( SELECT temp_xt_resulttoseqmap.Unique_Seq_ID" + chargeSql +
+				                       ", Max(temp_xt_seqtoproteinmap.cleavage_state) AS Cleavage_State "
+				                       + "        FROM temp_xt "
+				                       +
+				                       "             INNER JOIN temp_xt_resulttoseqmap ON temp_xt.result_id = temp_xt_resulttoseqmap.result_id "
+				                       +
+				                       "             INNER JOIN temp_xt_seqtoproteinmap ON temp_xt_resulttoseqmap.unique_seq_id = temp_xt_seqtoproteinmap.unique_seq_id "
+				                       + "        WHERE temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD
+				                       + "          AND temp_xt.random_id=" + m_Random_ID
+				                       + "          AND temp_xt_resulttoseqmap.random_id=" + m_Random_ID
+				                       + "          AND temp_xt_seqtoproteinmap.random_id=" + m_Random_ID
+				                       + "        GROUP BY temp_xt_resulttoseqmap.Unique_Seq_ID" + chargeSql + " ) StatsQ "
+				                       + " GROUP BY Cleavage_State;");
+			}
 			//DECLARE VARIABLES
 			Dictionary<int, int> dctPeptideStats = new Dictionary<int, int>();
 

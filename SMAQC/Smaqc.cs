@@ -1,12 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Data;
-using System.Data.SqlClient;
 using System.Xml;
-using System.Reflection;
-using System.Collections;
-using System.Data.SQLite;
 
 namespace SMAQC
 {
@@ -31,37 +26,34 @@ namespace SMAQC
 		public static Dictionary<string, string> m_Results = new Dictionary<string, string>();			//MEASUREMENT RESULTS
 
 		//DECLARE VERSION, BUILD DATE, VALID FILE TABLES AND MEASUREMENT FIELDS
-		private static string SMAQC_VERSION = "1.21";
-		private static string SMAQC_BUILD_DATE = "July 1, 2013";
+		private const string SMAQC_VERSION = "1.22";
+		private const string SMAQC_BUILD_DATE = "January 8, 2014";
 
 		// Define the filename suffixes
-		private static string[] m_MasicFileNames = { "_scanstats", "_scanstatsex", "_sicstats" };
+		private static readonly string[] m_MasicFileNames = { "_scanstats", "_scanstatsex", "_sicstats" };
 
 		// These filename suffixes will be deprecated once we switch to using PHRPReader
-		private static string[] m_XTandemFileNames = { "_xt", "_xt_resulttoseqmap", "_xt_seqtoproteinmap" };
+		private static readonly string[] m_XTandemFileNames = { "_xt", "_xt_resulttoseqmap", "_xt_seqtoproteinmap" };
 
-		private static string[] fields = { "instrument_id", "random_id", "scan_date", "C_1A", "C_1B", 
+		private static readonly string[] fields = { "instrument_id", "random_id", "scan_date", "C_1A", "C_1B", 
                                   "C_2A", "C_2B", "C_3A", "C_3B", "C_4A", "C_4B", "C_4C", "DS_1A", "DS_1B", "DS_2A", "DS_2B", 
                                   "DS_3A", "DS_3B", "IS_1A", "IS_1B", "IS_2", "IS_3A", "IS_3B", "IS_3C", "MS1_1", 
                                   "MS1_2A", "MS1_2B", "MS1_3A", "MS1_3B", "MS1_4A", "MS1_5A", "MS1_5B", "MS1_5C", 
                                   "MS1_5D", "MS2_1", "MS2_2", "MS2_3", "MS2_4A", "MS2_4B", "MS2_4C", "MS2_4D", "P_1A", 
-                                  "P_1B", "P_2A", "P_2B", "P_2C", "P_3" };
+                                  "P_1B", "P_2A", "P_2B", "P_2C", "P_3", "Phos_2A", "Phos_2C" };
 
 		static void Main(string[] args)
 		{
 			//DECLARE VARIABLES
 			string sInputFolderPath;
 			string sMeasurementsFile;
-			Random random = new Random();                                                           //TEMP RANDOM ID
-			string outputfile = "";                                                                 //FILE TO SAVE OUTPUT TO [IF SPECIFIED]
-			int random_id = random.Next();                                                          //GET THE RANDOM ID [.Next() REQUIRED FOR THIS]
-			string instrument_id = "";                                                              //INIT TO -1 BY DEFAULT
-			string dbFolderPath = "";
-			bool bSuccess;
+			var random = new Random();                                                         //TEMP RANDOM ID
+			string outputfile = "";                                                            //FILE TO SAVE OUTPUT TO [IF SPECIFIED]
+			int random_id = random.Next();                                                     //GET THE RANDOM ID [.Next() REQUIRED FOR THIS]
+			string instrument_id;                                                              //INIT TO -1 BY DEFAULT
+			string dbFolderPath;
 
-			List<string> lstMeasurementsToRun;
-
-			bSuccess = ParseCommandLine(args, ref outputfile, ref instrument_id, ref dbFolderPath, out sInputFolderPath, out sMeasurementsFile);
+			bool bSuccess = ParseCommandLine(args, ref outputfile, out instrument_id, out dbFolderPath, out sInputFolderPath, out sMeasurementsFile);
 			if (!bSuccess)
 				NotifyError("Error parsing the command line arguments", 5);
 
@@ -88,16 +80,20 @@ namespace SMAQC
 				loadConfig();
 
 				//FETCH LIST<STRING> OF ALL MEASUREMENT FUNCTIONS TO RUN
-				lstMeasurementsToRun = LoadMeasurementInfoFile(sInputFolderPath, sMeasurementsFile);
+				List<string> lstMeasurementsToRun = LoadMeasurementInfoFile(sMeasurementsFile);
 
 				try
 				{
 
 					//CREATE CONNECTIONS
-					m_DBWrapper = new DBWrapper(m_Configtable["dbhost"], m_Configtable["dbuser"],
-										m_Configtable["dbpass"], m_Configtable["dbname"], dbFolderPath);
 
-					m_DBWrapper.ShowQueryText = false;
+					// Old call:
+					//m_DBWrapper = new DBWrapper(m_Configtable["dbhost"], m_Configtable["dbuser"], m_Configtable["dbpass"], m_Configtable["dbname"], dbFolderPath);
+
+					m_DBWrapper = new DBWrapper(dbFolderPath)
+					{
+						ShowQueryText = false
+					};
 
 					if (WIPE_TEMP_DATA_AT_START)
 						m_DBWrapper.ClearTempTables();
@@ -107,7 +103,7 @@ namespace SMAQC
 					m_Measurement = new Measurement(random_id, ref m_DBWrapper);															// MEASUREMENT LIST OBJECT
 					m_MeasurementEngine = new MeasurementEngine(lstMeasurementsToRun, ref m_Measurement, ref m_SystemLogManager);      // MEASUREMENT ENGINE OBJECT
 					m_Filter = new Filter(ref m_DBWrapper, instrument_id, random_id, ref m_SystemLogManager);                              // FILTER OBJECT
-					m_OutputFileManager = new OutputFileManager(ref m_DBWrapper, SMAQC_VERSION, SMAQC_BUILD_DATE, fields);			// OUTPUTFILE MANAGER OBJECT
+					m_OutputFileManager = new OutputFileManager(ref m_DBWrapper, SMAQC_VERSION, fields);			// OUTPUTFILE MANAGER OBJECT
 
 					try
 					{
@@ -211,7 +207,7 @@ namespace SMAQC
 
 							foreach (string sFilePath in MasicFileList)
 							{
-								string sFileName = System.IO.Path.GetFileNameWithoutExtension(sFilePath);
+								string sFileName = Path.GetFileNameWithoutExtension(sFilePath);
 								if (sFileName.EndsWith(sSuffix, true, System.Globalization.CultureInfo.CurrentCulture))
 								{
 									bMatchFound = true;
@@ -255,7 +251,7 @@ namespace SMAQC
 
 							foreach (string sFilePath in XTandemFileList)
 							{
-								string sFileName = System.IO.Path.GetFileNameWithoutExtension(sFilePath);
+								string sFileName = Path.GetFileNameWithoutExtension(sFilePath);
 								if (sFileName.EndsWith(sSuffix, true, System.Globalization.CultureInfo.CurrentCulture))
 								{
 									bMatchFound = true;
@@ -343,7 +339,7 @@ namespace SMAQC
 			}
 		}
 
-		private static bool ParseCommandLine(string[] args, ref string outputfile, ref string instrument_id, ref string dbFolderPath, out string path_to_scan_files, out string sMeasurementsFile)
+		private static bool ParseCommandLine(string[] args, ref string outputfile, out string instrument_id, out string dbFolderPath, out string path_to_scan_files, out string sMeasurementsFile)
 		{
 
 			//IF NO ARGUMENTS PASSED | INCORRECT AMOUNT
@@ -408,7 +404,7 @@ namespace SMAQC
 			}
 			else
 			{
-				System.IO.FileInfo diAppFile = new System.IO.FileInfo(GetAppPath());
+				var diAppFile = new FileInfo(GetAppPath());
 				dbFolderPath = diAppFile.DirectoryName;
 			}
 
@@ -428,14 +424,11 @@ namespace SMAQC
 		//FUNCTION INSERTS INTO SCAN_RESULTS
 		static void add_scan_results(string instrument_id, int random_id, int result_id, List<string> lstMeasurementsToRun)
 		{
-			
-			string scan_results_query = "";
-
 			//REMOVE SCAN ID [NEEDED AS IF USING MULTIPLE DATASETS PROGRAM WILL CRASH DUE TO DUPLICATE KEY]
 			m_Configtable.Remove("scan_id");
 
 			//BUILD SCAN RESULTS QUERY
-			scan_results_query = build_scan_results_query(instrument_id, random_id, result_id, lstMeasurementsToRun);
+			string scan_results_query = build_scan_results_query(instrument_id, random_id, result_id, lstMeasurementsToRun);
 
 			//SET QUERY TO STORE DATA TO SCAN_STATS
 			m_DBWrapper.setQuery(scan_results_query);
@@ -451,10 +444,9 @@ namespace SMAQC
 		static string build_scan_results_query(string instrument_id, int random_id, int result_id, List<string> lstMeasurementsToRun)
 		{
 			//DECLARE VARIABLES
-			string scan_results_query = "";
 
 			//HEAD OF RESULTS STRING QUERY
-			scan_results_query = "INSERT INTO scan_results ( scan_id, instrument_id, random_id, scan_date";
+			string scan_results_query = "INSERT INTO scan_results ( scan_id, instrument_id, random_id, scan_date";
 
 			//BUILD METRICS FIELDS [, `C_1A` ...]
 			foreach (string item in lstMeasurementsToRun)
@@ -489,8 +481,8 @@ namespace SMAQC
 		static int determine_result_id()
 		{
 			//DECLARE VARIABLES
-			Dictionary<string, string> dctMostRecentEntry = new Dictionary<string, string>();
-			int result_id = 0;
+			var dctMostRecentEntry = new Dictionary<string, string>();
+			int result_id;
 
 			//SET QUERY
 			m_DBWrapper.setQuery("SELECT Max(result_id) AS result_id FROM scan_results;");
@@ -499,10 +491,10 @@ namespace SMAQC
 			m_DBWrapper.initReader();
 
 			//DECLARE FIELDS TO READ FROM
-			string[] fields = { "result_id" };
+			string[] field_array = { "result_id" };
 
 			//READ LINE
-			m_DBWrapper.readSingleLine(fields, ref dctMostRecentEntry);
+			m_DBWrapper.readSingleLine(field_array, ref dctMostRecentEntry);
 
 			//DETERMINE NEXT RESULT_ID
 			if (int.TryParse(dctMostRecentEntry["result_id"], out result_id))
@@ -518,16 +510,17 @@ namespace SMAQC
 		{
 			//DECLARE VARIABLES
 			string[] xml_variables = { "dbhost", "dbuser", "dbpass", "dbname" };
-			string attribute = "value";
+			const string attribute = "value";
 
-			string configFilePath = System.IO.Path.GetDirectoryName(GetAppPath());
-			configFilePath = System.IO.Path.Combine(configFilePath, "config.xml");
+			string configFilePath = Path.GetDirectoryName(GetAppPath());
+			if (string.IsNullOrWhiteSpace(configFilePath))
+				configFilePath = "";
 
-			FileStream configFile = null;
+			configFilePath = Path.Combine(configFilePath, "config.xml");
+
+			FileStream configFile;
 
 			//OPEN XML DOC + INIT PARSER
-			List<string> measurements = new List<string>();
-
 			try
 			{
 				configFile = File.Open(configFilePath, FileMode.Open);
@@ -535,15 +528,16 @@ namespace SMAQC
 			catch (FileNotFoundException ex)
 			{
 				NotifyError("Error:: Could not open config file (" + configFilePath + "): " + ex.Message, 12);
+				return;
 			}
 
-			XmlTextReader parser = new XmlTextReader(configFile);
+			var parser = new XmlTextReader(configFile);
 
 			//LOOP THROUGH EACH VARIABLE IN XML CONFIG
-			for (int i = 0; i < xml_variables.Length; i++)
+			foreach (string fieldName in xml_variables)
 			{
 				//FIND VARIABLE IF POSSIBLE
-				Boolean found = parser.ReadToFollowing(xml_variables[i]);
+				Boolean found = parser.ReadToFollowing(fieldName);
 
 				//IF VARIABLE IS IN XML FILE
 				if (found)
@@ -552,7 +546,7 @@ namespace SMAQC
 					parser.MoveToAttribute(attribute);
 
 					//ADD TO HASH TABLE
-					m_Configtable.Add(xml_variables[i], parser.Value);
+					m_Configtable.Add(fieldName, parser.Value);
 				}
 			}
 
@@ -563,14 +557,13 @@ namespace SMAQC
 		/// <summary>
 		/// Determine the names of the measurements that should be run
 		/// </summary>
-		/// <param name="path_to_scan_files"></param>
 		/// <param name="measurementsToRunFile"></param>
 		/// <returns></returns>
-		static List<string> LoadMeasurementInfoFile(string path_to_scan_files, string measurementsToRunFile)
+		static List<string> LoadMeasurementInfoFile(string measurementsToRunFile)
 		{
-			FileStream fsMeasurementsFile = null;
-			List<string> lstMeasurementsToRun = new List<string>();
-			System.IO.FileInfo fiMeasurementsToRunFile = new System.IO.FileInfo(measurementsToRunFile);
+			FileStream fsMeasurementsFile;
+			var lstMeasurementsToRun = new List<string>();
+			var fiMeasurementsToRunFile = new FileInfo(measurementsToRunFile);
 
 			if (!fiMeasurementsToRunFile.Exists)
 			{
@@ -584,9 +577,10 @@ namespace SMAQC
 			catch (FileNotFoundException ex)
 			{
 				NotifyError("Error:: Could not open measurements file (" + measurementsToRunFile + "): " + ex.Message, 13);
+				return new List<string>();
 			}
 
-			XmlTextReader parser = new XmlTextReader(fsMeasurementsFile);
+			var parser = new XmlTextReader(fsMeasurementsFile);
 
 			//LOOP THROUGH ENTIRE XML FILE
 			while (parser.ReadToFollowing("measurement"))

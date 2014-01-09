@@ -36,7 +36,7 @@ namespace SMAQC
 			try
 			{
 				//CREATE FILE
-				mApplicationLogFile = new StreamWriter(new System.IO.FileStream(applicationlog_filename, FileMode.Append, FileAccess.Write, FileShare.Read));
+				mApplicationLogFile = new StreamWriter(new FileStream(applicationlog_filename, FileMode.Append, FileAccess.Write, FileShare.Read));
 				mApplicationLogFile.AutoFlush = true;
 			}
 			catch (Exception ex)

@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Collections;
 using System.IO;
 
 namespace SMAQC
@@ -10,26 +7,18 @@ namespace SMAQC
     class OutputFileManager
     {
         //DECLARE VARIABLES
-        private DBWrapper DBWrapper;                                                                //REF DB INTERFACE OBJECT
-        private Boolean first_use;                                                                  //IS THE FIRST USE?
-        private string SMAQC_VERSION;                                                               //SMAQC VERSION
-        private string SMAQC_BUILD_DATE;                                                            //SMAQC BUILD DATE
-        private string[] fields;                                                                    //SMAQC FIELDS
+        private readonly DBWrapper DBWrapper;                                                                //REF DB INTERFACE OBJECT
+        private Boolean first_use;																			 //IS THE FIRST USE?
+        private readonly string SMAQC_VERSION;                                                               //SMAQC VERSION
+        private readonly string[] fields;                                                                    //SMAQC FIELDS
 
         //CONSTRUCTOR
-        public OutputFileManager(ref DBWrapper DBWrapper, string ProgVersion, string ProgBuildDate, string[] ProgFields)
+        public OutputFileManager(ref DBWrapper DBWrapper, string ProgVersion, string[] ProgFields)
         {
             this.DBWrapper = DBWrapper;
             first_use = true;
-            this.SMAQC_VERSION = ProgVersion;
-            this.SMAQC_BUILD_DATE = ProgBuildDate;
-            this.fields = ProgFields;
-        }
-
-        //DESTRUCTOR
-        ~OutputFileManager()
-        {
-
+            SMAQC_VERSION = ProgVersion;
+            fields = ProgFields;
         }
 
         //SAVE DATA HANDLER
@@ -52,11 +41,11 @@ namespace SMAQC
         }
 
         //CREATE THE FILE + ADD METRICS FOR FIRST TIME USE
-        private int CreateOutputFileForFirstTimeUse(string dataset, string filename, int scan_id, int dataset_number)
+        private void CreateOutputFileForFirstTimeUse(string dataset, string filename, int scan_id, int dataset_number)
         {
             //DECLARE VARIABLES
-			Dictionary<string, string> dctResults = new Dictionary<string, string>();                                             // SCAN RESULTS
-            SortedDictionary<string, string> dctValidResults = new SortedDictionary<string, string>();
+			var dctResults = new Dictionary<string, string>();                                             // SCAN RESULTS
+            var dctValidResults = new SortedDictionary<string, string>();
 
             //CALCULATE RELATIVE RESULT_ID
             int result_id = scan_id + dataset_number;
@@ -80,76 +69,74 @@ namespace SMAQC
             if (count > 0)
             {
                 //OPEN TEMP FILE
-                StreamWriter file = new System.IO.StreamWriter(filename);
+	            using (var file = new StreamWriter(filename))
+	            {
 
-                line += "SMAQC SCANNER RESULTS\r\n";
-                line += "-----------------------------------------------------------\r\n";
-                line += "SMAQC Version: " + SMAQC_VERSION + "\r\n";
-                // line += "Results from Scan ID: " + scan_id + "\r\n";
-				line += "Instrument ID: " + dctResults["instrument_id"] + "\r\n";
-				line += "Scan Date: " + dctResults["scan_date"] + "\r\n";
-                line += "[Data]\r\n";
-                line += "Dataset, Measurement Name, Measurement Value\r\n";
+		            line += "SMAQC SCANNER RESULTS\r\n";
+		            line += "-----------------------------------------------------------\r\n";
+		            line += "SMAQC Version: " + SMAQC_VERSION + "\r\n";
+		            // line += "Results from Scan ID: " + scan_id + "\r\n";
+		            line += "Instrument ID: " + dctResults["instrument_id"] + "\r\n";
+		            line += "Scan Date: " + dctResults["scan_date"] + "\r\n";
+		            line += "[Data]\r\n";
+		            line += "Dataset, Measurement Name, Measurement Value\r\n";
 
-                //REMOVE FROM HASH TABLE
-				dctResults.Remove("instrument_id");
-				dctResults.Remove("scan_date");
-				dctResults.Remove("scan_id");
-				dctResults.Remove("random_id");
+		            //REMOVE FROM HASH TABLE
+		            dctResults.Remove("instrument_id");
+		            dctResults.Remove("scan_date");
+		            dctResults.Remove("scan_id");
+		            dctResults.Remove("random_id");
 
-                //LOOP THROUGH ALL THAT SHOULD BE LEFT [OUR MEASUREMENTS]
-				foreach (string key in dctResults.Keys)
-                {
-                    //ENSURE THAT ALL KEYS HAVE DATA [THIS IS REALLY A FIX FOR SQLITE DUE TO NOT SUPPORTING NULLS PROPERLY]
-					if (!string.IsNullOrEmpty(dctResults[key]))
-                    {
-                        //ADD TO SORTED DICTIONARY
-						dctValidResults.Add(key, dctResults[key]);
-                    }
-                }
+		            //LOOP THROUGH ALL THAT SHOULD BE LEFT [OUR MEASUREMENTS]
+		            foreach (string key in dctResults.Keys)
+		            {
+			            //ENSURE THAT ALL KEYS HAVE DATA [THIS IS REALLY A FIX FOR SQLITE DUE TO NOT SUPPORTING NULLS PROPERLY]
+			            if (!string.IsNullOrEmpty(dctResults[key]))
+			            {
+				            //ADD TO SORTED DICTIONARY
+				            dctValidResults.Add(key, dctResults[key]);
+			            }
+		            }
 
-                //LOOP THROUGH EACH SORTED DICTIONARY
-                foreach (var pair in dctValidResults)
-                {
-                    //ADD:: Dataset, Measurement Name,
-                    //line += String.Format("" + dataset + ", " + pair.Key + ", " + pair.Value + "\r\n");
-                    line += String.Format("" + dataset + ", " + pair.Key + ",");
+		            //LOOP THROUGH EACH SORTED DICTIONARY
+		            foreach (var pair in dctValidResults)
+		            {
+			            //ADD:: Dataset, Measurement Name,
+			            //line += String.Format("" + dataset + ", " + pair.Key + ", " + pair.Value + "\r\n");
+			            line += String.Format("" + dataset + ", " + pair.Key + ",");
 
-                    //IF THERE IS A NON-NULL VALUE
-                    if (!pair.Value.Equals("Null"))
-                    {
-                        line += " " + pair.Value;
-                    }
+			            //IF THERE IS A NON-NULL VALUE
+			            if (!pair.Value.Equals("Null"))
+			            {
+				            line += " " + pair.Value;
+			            }
 
-                    //NOW ADD RETURN + NEWLINE CHAR
-                    line += "\r\n";
-                }
+			            //NOW ADD RETURN + NEWLINE CHAR
+			            line += "\r\n";
+		            }
 
-                //APPEND BLANK LINE
-                line += "\r\n";
+		            //APPEND BLANK LINE
+		            line += "\r\n";
 
-                //WRITE FILE
-                file.Write(line);
+		            //WRITE FILE
+		            file.Write(line);
 
-                //CLOSE FILE
-                file.Close();
+		            //CLOSE FILE
+	            }
             }
             else
             {
-                Console.WriteLine("Error: The scan id provided either does not exist, or has no results!");
-                return -1;
+	            Console.WriteLine("Error: The scan id provided either does not exist, or has no results!");
             }
-
-            //Console.WriteLine("LINE={0}", line);
-            return 0;
+	       
         }
 
         //APPEND ADDITIONAL MEASUREMENT DATA TO OUTPUT FILE
-        private int AppendAdditionalMeasurementsToOutputFile(string dataset, string filename, int scan_id, int dataset_number)
+        private void AppendAdditionalMeasurementsToOutputFile(string dataset, string filename, int scan_id, int dataset_number)
         {
             //DECLARE VARIABLES
-			Dictionary<string, string> dctResults = new Dictionary<string, string>();                                             //HASH TABLE FOR SCAN RESULTS
-            SortedDictionary<string, string> dctValidResults = new SortedDictionary<string, string>();
+			var dctResults = new Dictionary<string, string>();                                             //HASH TABLE FOR SCAN RESULTS
+            var dctValidResults = new SortedDictionary<string, string>();
 
             //CALCULATE RELATIVE RESULT_ID
             int result_id = scan_id + dataset_number;
@@ -173,7 +160,7 @@ namespace SMAQC
             if (count > 0)
             {
                 //OPEN TEMP FILE
-                StreamWriter file = File.AppendText(filename);// new System.IO.StreamWriter(filename);
+                StreamWriter file = File.AppendText(filename);// new StreamWriter(filename);
 
                 //REMOVE FROM HASH TABLE
 				dctResults.Remove("instrument_id");
@@ -221,12 +208,9 @@ namespace SMAQC
             }
             else
             {
-                Console.WriteLine("Error: The scan id provided either does not exist, or has no results!");
-                return -1;
+	            Console.WriteLine("Error: The scan id provided either does not exist, or has no results!");	            
             }
 
-            //Console.WriteLine("LINE={0}", line);
-            return 0;
         }
 
 

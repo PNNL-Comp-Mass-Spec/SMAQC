@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Collections;
 
 namespace SMAQC
 {
     class MeasurementEngine
     {
         //DECLARE VARIABLES
-        List<string> m_MeasurementsToRun;
-        MeasurementFactory factory;
-		SystemLogManager m_SystemLogManager;
+	    readonly List<string> m_MeasurementsToRun;
+	    readonly MeasurementFactory factory;
+	    readonly SystemLogManager m_SystemLogManager;
 
 		// Properties
 		public bool UsingPHRP { get; set; }
@@ -21,43 +18,35 @@ namespace SMAQC
         {
             //SET VARIABLES
 			factory = new MeasurementFactory(ref measurement);
-			this.m_MeasurementsToRun = lstMeasurementsToRun;            
-			this.m_SystemLogManager = systemLogManager;
+			m_MeasurementsToRun = lstMeasurementsToRun;            
+			m_SystemLogManager = systemLogManager;
 
-			this.UsingPHRP = false;
-        }
-
-        //DESTRUCTOR
-        ~MeasurementEngine()
-        {
+			UsingPHRP = false;
         }
 
         //RUN MEASUREMENTS
 		public Dictionary<string, string> run()
         {
-			Dictionary<string, string> dctResults = new Dictionary<string, string>();                                         //MEASUREMENT RESULTS TABLE
-			System.DateTime dtStartTime;
-			double percentComplete;
+			var dctResults = new Dictionary<string, string>();                                         //MEASUREMENT RESULTS TABLE
 			int iMeasurementsStarted = 0;
-			string sResult;
 
-			factory.m_Measurement.UsingPHRP = this.UsingPHRP;
+			factory.m_Measurement.UsingPHRP = UsingPHRP;
 
             foreach (string measurementName in m_MeasurementsToRun)
             {
                 //Console.WriteLine("MeasurementEngine ELEMENT={0}", element);
-				dtStartTime = System.DateTime.UtcNow;
+				DateTime dtStartTime = DateTime.UtcNow;
 				iMeasurementsStarted += 1;
-				percentComplete = iMeasurementsStarted / Convert.ToDouble(m_MeasurementsToRun.Count) * 100.0;
+				double percentComplete = iMeasurementsStarted / Convert.ToDouble(m_MeasurementsToRun.Count) * 100.0;
 
 				try
                 {
-					sResult = factory.buildMeasurement(measurementName);
+					string sResult = factory.buildMeasurement(measurementName);
 					if (String.IsNullOrEmpty(sResult))
 						sResult = "Null";
 
                     dctResults.Add(measurementName, sResult);
-					m_SystemLogManager.addApplicationLog((measurementName + ":").PadRight(7) + " complete in " + System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0.00") + " seconds; " + percentComplete.ToString("0") + "% complete");
+					m_SystemLogManager.addApplicationLog((measurementName + ":").PadRight(7) + " complete in " + DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0.00") + " seconds; " + percentComplete.ToString("0") + "% complete");
                 }
                 catch (Exception ex)
                 {

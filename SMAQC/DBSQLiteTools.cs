@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Data.SQLite;
+﻿using System.Data.SQLite;
 
 namespace SMAQC
 {
@@ -11,28 +7,13 @@ namespace SMAQC
         //DECLARE VARIABLES
         private SQLiteConnection conn;                                                  //SQLITE CONNECTION
 
-        //CONSTRUCTOR
-        public DBSQLiteTools()
-        {
-
-        }
-
-        //DESTRUCTOR
-        ~DBSQLiteTools()
-        {
-
-        }
-
         //CREATE TABLES
         public void create_tables(string datasource)
         {
             using (conn = new SQLiteConnection("Data Source=" + datasource))
             {
-                //CREATE CMD
-                SQLiteCommand cmd = new SQLiteCommand(conn);
-
                 //RUN CREATE CMD
-                using (cmd = conn.CreateCommand())
+                using (var cmd = conn.CreateCommand())
                 {
                     //OPEN DB
                     conn.Open();
@@ -118,11 +99,11 @@ namespace SMAQC
 
 		}
 
-		public void create_missing_tables(SQLiteConnection conn)
+		public void create_missing_tables(SQLiteConnection connection)
 		{
-			using (SQLiteCommand cmd = conn.CreateCommand())
+			using (SQLiteCommand cmd = connection.CreateCommand())
 			{
-				if (!TableExists(conn, "temp_PSMs"))
+				if (!TableExists(connection, "temp_PSMs"))
 				{
 					// PSMs returned by PHRPReader
 					cmd.CommandText = GetTableCreateSql("temp_PSMs");
@@ -186,12 +167,14 @@ namespace SMAQC
                         + "[MS2_4B] VARCHAR(255)  NULL,"
                         + "[MS2_4C] VARCHAR(255)  NULL,"
                         + "[MS2_4D] VARCHAR(255)  NULL,"
-                        + "[P_1A] VARCHAR(255)  NULL,"
-                        + "[P_1B] VARCHAR(255)  NULL,"
-                        + "[P_2A] VARCHAR(255)  NULL,"
-                        + "[P_2B] VARCHAR(255)  NULL,"
-                        + "[P_2C] VARCHAR(255)  NULL,"
-                        + "[P_3] VARCHAR(255)  NULL"
+                        + "[P_1A] VARCHAR(25)  NULL,"
+                        + "[P_1B] VARCHAR(25)  NULL,"
+                        + "[P_2A] VARCHAR(25)  NULL,"
+                        + "[P_2B] VARCHAR(25)  NULL,"
+                        + "[P_2C] VARCHAR(25)  NULL,"
+                        + "[P_3] VARCHAR(25)  NULL,"
+						+ "[Phos_2A] VARCHAR(25)  NULL,"
+						+ "[Phos_2C] VARCHAR(25)  NULL"
                         + ")";
 					break;
 
@@ -333,12 +316,11 @@ namespace SMAQC
 						+ "[DelM_PPM] FLOAT NULL,"
 						+ "[MSGFSpecProb] FLOAT NULL, "
 						+ "[Unique_Seq_ID] INTEGER NOT NULL,"
-						+ "[Cleavage_State] INTEGER NOT NULL"
+						+ "[Cleavage_State] INTEGER NOT NULL,"
+						+ "[Phosphopeptide] BOOL NOT NULL"
 						+ ")";
 					break;
 
-				default:
-					break;
 			}
 
 			return sql;
