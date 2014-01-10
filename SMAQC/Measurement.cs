@@ -21,23 +21,23 @@ namespace SMAQC
 		}
 
 		// CONSTANTS
-		int XTANDEM_LOG_EVALUE_THRESHOLD = -2;
-		double MSGF_SPECPROB_THRESHOLD = 1e-12;
+		private const int XTANDEM_LOG_EVALUE_THRESHOLD = -2;
+		public const double MSGF_SPECPROB_THRESHOLD = 1e-12;
 
 		// CREATE DB INTERFACE OBJECT
-		private DBWrapper m_DBInterface;
+		private readonly DBWrapper m_DBInterface;
 
 		// MEASUREMENT RESULTS
 		private Dictionary<string, string> m_MeasurementResults = new Dictionary<string, string>();
 
 		// RANDOM ID FOR TEMP TABLES
-		private int m_Random_ID;
+		private readonly int m_Random_ID;
 
 		// SOME MEASUREMENTS HAVE DATA REQUIRED BY OTHERS ... WILL BE STORED HERE
-		private Dictionary<string, double> m_ResultsStorage = new Dictionary<string, double>();
+		private readonly Dictionary<string, double> m_ResultsStorage = new Dictionary<string, double>();
 
 		// Cached data for computing median peak widths
-		bool m_MedianPeakWidthDataCached = false;
+		bool m_MedianPeakWidthDataCached;
 		List<int> m_MPWCached_BestScan;										// Best Scan Number for each peptide
 		Dictionary<int, double> m_MPWCached_FWHMinScans;					// Full width at half max, in scans; keys are FragScanNumbers
 		Dictionary<int, int> m_MPWCached_OptimalPeakApexScanNumber;			// Optimal peak apex scan number; keys are FragScanNumbers
@@ -67,7 +67,7 @@ namespace SMAQC
 		List<double> m_Cached_DelM_ppm;                                         // Delta mass, in ppm
 
 		// Cached data for MS4
-		bool m_MS2_4_Counts_Cached = false;
+		bool m_MS2_4_Counts_Cached;
 		udtMS2_4Counts m_Cached_MS2_4_Counts;
 
 		// Properties
@@ -77,8 +77,8 @@ namespace SMAQC
 		public Measurement(int random_id, ref DBWrapper DBInterface)
 		{
 			//CREATE CONNECTIONS
-			this.m_Random_ID = random_id;
-			this.m_DBInterface = DBInterface;
+			m_Random_ID = random_id;
+			m_DBInterface = DBInterface;
 			this.UsingPHRP = false;
 		}
 
@@ -92,7 +92,7 @@ namespace SMAQC
 		/// <summary>
 		/// Add (or update) entryName in mResultsStorage
 		/// </summary>
-		/// <param name="name"></param>
+		/// <param name="entryName"></param>
 		/// <param name="value"></param>
 		protected void AddUpdateResultsStorage(string entryName, double value)
 		{
@@ -142,8 +142,8 @@ namespace SMAQC
 
 			if (m_ResultsStorage.TryGetValue(entryName, out value))
 				return value;
-			else
-				return valueIfMissing;
+			
+			return valueIfMissing;
 		}
 
 		protected int GetStoredValueInt(string entryName, int valueIfMissing)
@@ -169,9 +169,7 @@ namespace SMAQC
 		/// <returns></returns>
 		public string C_1A()
 		{
-			bool countTailingPeptides = false;
-			return C_1_Shared(countTailingPeptides);
-
+			return C_1_Shared(countTailingPeptides:false);
 		}
 
 		/// <summary>
@@ -180,8 +178,7 @@ namespace SMAQC
 		/// <returns></returns>
 		public string C_1B()
 		{
-			bool countTailingPeptides = true;
-			return C_1_Shared(countTailingPeptides);
+			return C_1_Shared(countTailingPeptides:true);
 		}
 
 		/// <summary>
@@ -253,8 +250,8 @@ namespace SMAQC
 				double answer = psm_count_late_or_early / (double)psm_count_total;
 				return answer.ToString("0.000000");
 			}
-			else
-				return string.Empty;
+			
+			return string.Empty;
 		}
 
 		/// <summary>
@@ -289,10 +286,7 @@ namespace SMAQC
 										+ " ORDER BY Scan;");
 
 			// This list stores scan numbers and elution times for filter-passing peptides; duplicate scans are not allowed
-			SortedList<int, double> lstFilterPassingPeptides = new SortedList<int, double>();
-
-			int scanNumber;
-			double scanTime;
+			var lstFilterPassingPeptides = new SortedList<int, double>();
 
 			//DECLARE FIELDS TO READ FROM
 			string[] fields = { "Scan", "ScanNumber", "ScanTime1" };
@@ -303,10 +297,11 @@ namespace SMAQC
 			//READ ROWS
 			while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
 			{
-
 				// FILTER-PASSING PEPTIDE; Append to the dictionary
+				int scanNumber;
 				if (int.TryParse(m_MeasurementResults["ScanNumber"], out scanNumber))
 				{
+					double scanTime;
 					if (double.TryParse(m_MeasurementResults["ScanTime1"], out scanTime))
 					{
 
@@ -404,9 +399,7 @@ namespace SMAQC
 										+ " ORDER BY Scan;");
 
 			// This list keeps track of the scan numbers already processed so that we can avoid double-counting a scan number
-			SortedSet<int> lstScansWithFilterPassingIDs = new SortedSet<int>();
-
-			int scanNumber;
+			var lstScansWithFilterPassingIDs = new SortedSet<int>();
 
 			double timeMinutesC2A = GetStoredValue("C_2A_TIME_MINUTES", 0);
 			int scanStartC2A = GetStoredValueInt("C_2A_REGION_SCAN_START", 0);
@@ -421,8 +414,8 @@ namespace SMAQC
 			//READ ROWS
 			while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
 			{
-
 				// FILTER-PASSING PEPTIDE; Append to the dictionary
+				int scanNumber;
 				if (int.TryParse(m_MeasurementResults["ScanNumber"], out scanNumber))
 				{
 					if (scanNumber >= scanStartC2A && scanNumber <= scanEndC2A && !lstScansWithFilterPassingIDs.Contains(scanNumber))
@@ -430,7 +423,6 @@ namespace SMAQC
 						lstScansWithFilterPassingIDs.Add(scanNumber);
 					}
 				}
-
 			}
 
 			string answerText = string.Empty;
@@ -453,8 +445,8 @@ namespace SMAQC
 		/// <returns></returns>
 		public string C_3A()
 		{
-			double startScanRelative = 0;
-			double endScanRelative = 1;
+			const double startScanRelative = 0;
+			const double endScanRelative = 1;
 
 			//COMPUTE RESULT
 			return ComputeMedianPeakWidth(startScanRelative, endScanRelative);
@@ -466,8 +458,8 @@ namespace SMAQC
 		/// <returns></returns>
 		public string C_3B()
 		{
-			double startScanRelative = 0.25;
-			double endScanRelative = 0.75;
+			const double startScanRelative = 0.25;
+			const double endScanRelative = 0.75;
 
 			//COMPUTE RESULT
 			return ComputeMedianPeakWidth(startScanRelative, endScanRelative);
@@ -479,8 +471,8 @@ namespace SMAQC
 		/// <returns></returns>
 		public string C_4A()
 		{
-			double startScanRelative = 0.00;
-			double endScanRelative = 0.10;
+			const double startScanRelative = 0.00;
+			const double endScanRelative = 0.10;
 
 			//COMPUTE RESULT
 			return ComputeMedianPeakWidth(startScanRelative, endScanRelative);
@@ -492,8 +484,8 @@ namespace SMAQC
 		/// <returns></returns>
 		public string C_4B()
 		{
-			double startScanRelative = 0.90;
-			double endScanRelative = 1.00;
+			const double startScanRelative = 0.90;
+			const double endScanRelative = 1.00;
 
 			//COMPUTE RESULT
 			return ComputeMedianPeakWidth(startScanRelative, endScanRelative);
@@ -505,8 +497,8 @@ namespace SMAQC
 		/// <returns></returns>
 		public string C_4C()
 		{
-			double startScanRelative = 0.45;
-			double endScanRelative = 0.55;
+			const double startScanRelative = 0.45;
+			const double endScanRelative = 0.55;
 
 			//COMPUTE RESULT
 			return ComputeMedianPeakWidth(startScanRelative, endScanRelative);
@@ -515,7 +507,7 @@ namespace SMAQC
 		protected void Cache_MedianPeakWidth_Data()
 		{
 
-			List<udtPeptideEntry> lstPSMs = new List<udtPeptideEntry>();							// Cached, filter-passing peptide-spectrum matches
+			var lstPSMs = new List<udtPeptideEntry>();							// Cached, filter-passing peptide-spectrum matches
 
 			m_MPWCached_BestScan = new List<int>();										// Best Scan Number for each peptide
 			m_MPWCached_FWHMinScans = new Dictionary<int, double>();					// Full width at half max, in scans; keys are FragScanNumbers
@@ -549,7 +541,7 @@ namespace SMAQC
 
 				PHRPReader.clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(m_MeasurementResults["Peptide_Sequence"], ref peptideResidues, ref peptidePrefix, ref peptideSuffix);
 
-				udtPeptideEntry currentPeptide = new udtPeptideEntry();
+				var currentPeptide = new udtPeptideEntry();
 
 				if (int.TryParse(m_MeasurementResults["Scan"], out currentPeptide.Scan))
 				{
@@ -570,13 +562,15 @@ namespace SMAQC
 								orderby item.Peptide_Sequence, item.Charge, item.Scan
 								select item;
 
-			udtPeptideEntry previousPeptide = new udtPeptideEntry();
-			previousPeptide.Peptide_Sequence = string.Empty;
+			var previousPeptide = new udtPeptideEntry
+			{
+				Peptide_Sequence = string.Empty
+			};
 
 			// Parse the sorted data
 			foreach (var psm in lstPSMsSorted)
 			{
-				double Best_Score = 0;
+				double Best_Score;
 
 
 				//IF PREVIOUS PEPTIDE SEQUENCES == EACH OTHER && PREVIOUS CHARGES == EACH OTHER
@@ -648,9 +642,7 @@ namespace SMAQC
 
 		protected string ComputeMedianPeakWidth(double startScanRelative, double endScanRelative)
 		{
-
-			double median = 0.00;													//INIT MEDIAN
-			List<double> result = new List<double>();								//STORE RESULT FOR FINAL CALCULATION
+			var result = new List<double>();								//STORE RESULT FOR FINAL CALCULATION
 
 			if (!m_MedianPeakWidthDataCached)
 			{
@@ -696,7 +688,7 @@ namespace SMAQC
 			if (result.Count > 0)
 			{
 				//CALCULATE MEDIAN
-				median = ComputeMedian(result);
+				double median = ComputeMedian(result);													//INIT MEDIAN
 
 				//WE NOW HAVE RESULT ... NOW ROUND IT TO 2ND DIGIT
 				resultText = median.ToString("0.00");
@@ -826,7 +818,7 @@ namespace SMAQC
 		/// <returns></returns>
 		public string DS_2A()
 		{
-			int msLevel = 1;
+			const int msLevel = 1;
 			return DS_2_Shared(msLevel).ToString();
 		}
 
@@ -836,7 +828,7 @@ namespace SMAQC
 		/// <returns></returns>
 		public string DS_2B()
 		{
-			int msLevel = 2;
+			const int msLevel = 2;
 			return DS_2_Shared(msLevel).ToString();
 		}
 
@@ -854,7 +846,7 @@ namespace SMAQC
 				+ "   AND ScanNumber >= " + scanStartC2A
 				+ "   AND ScanNumber <= " + scanEndC2A);
 
-			int intScanCount = 0;
+			int intScanCount;
 
 			//DECLARE FIELDS TO READ FROM
 			string[] fields = { "ScanCount" };
@@ -887,8 +879,7 @@ namespace SMAQC
 									+ "   AND temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD);
 
 			//DECLARE VARIABLES
-			SortedSet<double> MZ_list = new SortedSet<double>();								// MZ List
-			double median = 0.00;                                                               //STORE MEDIAN
+			var MZ_list = new SortedSet<double>();								// MZ List
 
 			//DECLARE FIELDS TO READ FROM
 			string[] fields = { "Peptide_MH", "Charge" };
@@ -908,7 +899,7 @@ namespace SMAQC
 			}
 
 			// Compute the median
-			median = ComputeMedian(MZ_list.ToList());
+			double median = ComputeMedian(MZ_list.ToList());
 
 			//WE NOW HAVE RESULT ... NOW ROUND IT TO 4TH DIGIT       
 			return median.ToString("0.0000");
@@ -1009,10 +1000,6 @@ namespace SMAQC
 						+ "   AND Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD
 						+ " GROUP BY Charge;");
 
-			//DECLARE VARIABLES
-			int charge;
-			int psm_count;
-
 			//DECLARE FIELDS TO READ FROM
 			string[] fields = { "Charge", "PSMs" };
 
@@ -1024,8 +1011,10 @@ namespace SMAQC
 			//READ ROWS
 			while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
 			{
+				int charge;
 				if (int.TryParse(m_MeasurementResults["Charge"], out charge))
 				{
+					int psm_count;
 					if (int.TryParse(m_MeasurementResults["PSMs"], out psm_count))
 					{
 						if (!m_Cached_PSM_Stats_by_Charge.ContainsKey(charge))
@@ -1051,8 +1040,7 @@ namespace SMAQC
 				+ " ORDER BY temp_scanstats.ScanNumber;");
 
 			//DECLARE VARIABLES
-			List<double> lstValues = new List<double>();                            //FILTER LIST
-			double median = 0.00;                                                   //RESULT
+			var lstValues = new List<double>();                            //FILTER LIST
 
 			//DECLARE FIELDS TO READ FROM
 			string[] fields = { "Ion_Injection_Time" };
@@ -1067,7 +1055,7 @@ namespace SMAQC
 				lstValues.Add(Convert.ToDouble(m_MeasurementResults["Ion_Injection_Time"]));
 			}
 
-			median = ComputeMedian(lstValues);
+			double median = ComputeMedian(lstValues);
 
 			return Convert.ToString(median);
 		}
@@ -1098,13 +1086,11 @@ namespace SMAQC
 		/// <returns></returns>
 		public string MS1_2B()
 		{
-			double median = 0.00;                                               //RESULT
-
 			if (m_Cached_TotalIonIntensity == null)
 				Cache_MS1_2_Data();
 
 			//CALC MEDIAN OF COLUMN K
-			median = ComputeMedian(m_Cached_TotalIonIntensity);
+			double median = ComputeMedian(m_Cached_TotalIonIntensity);
 
 			//DIVIDE BY 1000
 			median = median / 1000;
@@ -1168,19 +1154,17 @@ namespace SMAQC
 		/// <returns></returns>
 		public string MS1_3B()
 		{
-			double median = 0.00;
-
 			if (m_Cached_MS1_3 == null)
 				Cache_MS1_3_Data();
 
 			//NOW CALCULATE MEDIAN
-			median = ComputeMedian(m_Cached_MS1_3);
+			double median = ComputeMedian(m_Cached_MS1_3);
 
 			//WE NOW HAVE RESULT
 			if (median > 100)
 				return median.ToString("0");
-			else
-				return median.ToString("0.0");
+			
+			return median.ToString("0.0");
 		}
 
 		protected void Cache_MS1_3_Data()
@@ -1204,7 +1188,7 @@ namespace SMAQC
 					+ " ORDER BY temp_sicstats.PeakMaxIntensity, temp_xt.Result_ID DESC;");
 
 			//DECLARE VARIABLES
-			List<double> MPI_list = new List<double>();                                                         //STORES MAX PEAK INTENSITY FOR 5-95%
+			var MPI_list = new List<double>();                                                         //STORES MAX PEAK INTENSITY FOR 5-95%
 
 			//DECLARE FIELDS TO READ FROM
 			string[] fields = { "PeakMaxIntensity" };
@@ -1256,8 +1240,7 @@ namespace SMAQC
 		/// <returns></returns>
 		public string DS_3A()
 		{
-			bool bottom50Pct = false;
-			return DS_3_Shared(bottom50Pct);
+			return DS_3_Shared(bottom50Pct:false);
 		}
 
 		/// <summary>
@@ -1266,8 +1249,7 @@ namespace SMAQC
 		/// <returns></returns>
 		public string DS_3B()
 		{
-			bool bottom50Pct = true;
-			return DS_3_Shared(bottom50Pct);
+			return DS_3_Shared(bottom50Pct:true);
 		}
 
 		protected void DS_3_CacheData()
@@ -1289,10 +1271,7 @@ namespace SMAQC
 					+ "   AND temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD);
 
 			//DECLARE VARIABLES
-			List<double> lstResult = new List<double>();                        // Ratio of PeakMaxIntensity over ParentIonIntensity
-
-			double parentIonIntensity = 0;
-			double ratioPeakMaxToParentIonIntensity = 0;
+			var lstResult = new List<double>();                        // Ratio of PeakMaxIntensity over ParentIonIntensity
 
 			//DECLARE FIELDS TO READ FROM
 			string[] fields = { "ParentIonIntensity", "PeakMaxIntensity" };
@@ -1305,7 +1284,8 @@ namespace SMAQC
 			{
 
 				// Compute the ratio of the PeakMaxIntensity over ParentIonIntensity
-				parentIonIntensity = Convert.ToDouble(m_MeasurementResults["ParentIonIntensity"]);
+				double parentIonIntensity = Convert.ToDouble(m_MeasurementResults["ParentIonIntensity"]);
+				double ratioPeakMaxToParentIonIntensity;
 				if (parentIonIntensity > 0)
 					ratioPeakMaxToParentIonIntensity = Convert.ToDouble(m_MeasurementResults["PeakMaxIntensity"]) / parentIonIntensity;
 				else
@@ -1350,7 +1330,7 @@ namespace SMAQC
 				DS_3_CacheData();
 			}
 
-			double median = 0.00;
+			double median;
 			if (bottom50Pct)
 				median = ComputeMedian(m_Cached_DS3_Bottom50pct);
 			else
@@ -1368,7 +1348,7 @@ namespace SMAQC
 		{
 			int countMS1Jump10x;
 			int countMS1Fall10x;
-			int foldThreshold = 10;
+			const int foldThreshold = 10;
 
 			IS_1_Shared(foldThreshold, out countMS1Jump10x, out countMS1Fall10x);
 			return Convert.ToString(countMS1Jump10x);
@@ -1382,7 +1362,7 @@ namespace SMAQC
 		{
 			int countMS1Jump10x;
 			int countMS1Fall10x;
-			int foldThreshold = 10;
+			const int foldThreshold = 10;
 
 			IS_1_Shared(foldThreshold, out countMS1Jump10x, out countMS1Fall10x);
 			return Convert.ToString(countMS1Fall10x);
@@ -1398,7 +1378,6 @@ namespace SMAQC
 
 			//DECLARE VARIABLES
 			double bpiPrevious = -1;
-			double bpiCurrent = 0;
 			countMS1Jump10x = 0;                                                          //STORE COUNT FOR IS_1A
 			countMS1Fall10x = 0;                                                          //STORE COUNT FOR IS_1B
 
@@ -1416,9 +1395,9 @@ namespace SMAQC
 			while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
 			{
 
-				bpiCurrent = Convert.ToDouble(m_MeasurementResults["BasePeakIntensity"]);
+				double bpiCurrent = Convert.ToDouble(m_MeasurementResults["BasePeakIntensity"]);
 
-				if (bpiPrevious != -1)
+				if (bpiPrevious > -1)
 				{
 					if (bpiCurrent > 0 && bpiPrevious / bpiCurrent > foldThreshold)
 					{
@@ -1452,8 +1431,7 @@ namespace SMAQC
 				return "0";
 
 			//NOW CALCULATE MEDIAN
-			double median;
-			median = ComputeMedian(m_Cached_DelM);
+			double median = ComputeMedian(m_Cached_DelM);
 
 			//WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
 			return median.ToString("0.000000");
@@ -1469,7 +1447,7 @@ namespace SMAQC
 			if (m_Cached_DelM == null)
 				Cache_MS1_5_Data();
 
-			List<double> lstAbsDelM = new List<double>(m_Cached_DelM.Count);
+			var lstAbsDelM = new List<double>(m_Cached_DelM.Count);
 
 			if (m_Cached_DelM.Count == 0)
 				return "0";
@@ -1478,8 +1456,7 @@ namespace SMAQC
 				lstAbsDelM.Add(Math.Abs(value));
 
 			//CALCULATE AVERAGE
-			double average;
-			average = lstAbsDelM.Average();
+			double average = lstAbsDelM.Average();
 
 			//WE NOW HAVE RESULT ... NOW ROUND IT TO 6th DIGIT
 			return average.ToString("0.000000");
@@ -1498,8 +1475,7 @@ namespace SMAQC
 				return "0";
 
 			//NOW CALCULATE MEDIAN
-			double median;
-			median = ComputeMedian(m_Cached_DelM_ppm);
+			double median = ComputeMedian(m_Cached_DelM_ppm);
 
 			return median.ToString("0.000");
 		}
@@ -1519,14 +1495,11 @@ namespace SMAQC
 			// Sort the DelM_ppm values
 			m_Cached_DelM_ppm.Sort();
 
-			List<double> lstInterquartilePPMErrors = new List<double>();                           //STORE ERRORS FROM PPMList [COLUMN M]
-			double median = 0.00;                                                               //INIT MEDIAN
-			int inter_quartile_start = 0;                                                       //REQUIRED FOR MEASUREMENT
-			int inter_quartile_end = 0;                                                         //REQUIRED FOR MEASUREMENT
+			var lstInterquartilePPMErrors = new List<double>();                          //STORE ERRORS FROM PPMList [COLUMN M]
 
 			//CALCULATE INTER_QUARTILE_START AND INTER_QUARTILE_END
-			inter_quartile_start = Convert.ToInt32(Math.Round(0.25 * Convert.ToDouble(m_Cached_DelM_ppm.Count)));
-			inter_quartile_end = Convert.ToInt32(Math.Round(0.75 * Convert.ToDouble(m_Cached_DelM_ppm.Count)));
+			int inter_quartile_start = Convert.ToInt32(Math.Round(0.25 * Convert.ToDouble(m_Cached_DelM_ppm.Count)));
+			int inter_quartile_end = Convert.ToInt32(Math.Round(0.75 * Convert.ToDouble(m_Cached_DelM_ppm.Count)));
 
 			//LOOP THROUGH EACH ITEM IN LIST
 			for (int i = 0; i < m_Cached_DelM_ppm.Count; i++)
@@ -1539,7 +1512,7 @@ namespace SMAQC
 			}
 
 			//NOW CALCULATE MEDIAN
-			median = ComputeMedian(lstInterquartilePPMErrors);
+			double median = ComputeMedian(lstInterquartilePPMErrors);
 
 			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3 DIGITS
 			return median.ToString("0.000");
@@ -1560,7 +1533,7 @@ namespace SMAQC
 						+ " AND temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD);
 
 			//DECLARE VARIABLES
-			double massC13 = 1.00335483;
+			const double massC13 = 1.00335483;
 
 			//DECLARE FIELDS TO READ FROM
 			string[] fields = { "Peptide_MH", "Charge", "MZ", "DelM_Da", "DelM_PPM" };
@@ -1632,8 +1605,7 @@ namespace SMAQC
 					+ "  AND temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD);
 
 			//DECLARE VARIABLES
-			List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN P]
-			double median = 0.00;                                                               //STORE MEDIAN
+			var FilterList = new List<double>();                                       //FILTERED LIST [COLUMN P]
 
 			//DECLARE FIELDS TO READ FROM
 			string[] fields = { "Ion_Injection_Time" };
@@ -1649,7 +1621,7 @@ namespace SMAQC
 			}
 
 			//NOW CALCULATE MEDIAN
-			median = ComputeMedian(FilterList);
+			double median = ComputeMedian(FilterList);
 
 			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT
 			return median.ToString("0.000");
@@ -1674,9 +1646,8 @@ namespace SMAQC
 					+ "  AND temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD);
 
 			//DECLARE VARIABLES
-			List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN H]
-			List<double> FinishedList = new List<double>();                                     //FINISHED LIST [COLUMN J]
-			double median = 0.00;                                                               //STORE MEDIAN
+			var FilterList = new List<double>();                                       //FILTERED LIST [COLUMN H]
+			var FinishedList = new List<double>();                                     //FINISHED LIST [COLUMN J]
 
 			//DECLARE FIELDS TO READ FROM
 			string[] fields = { "BasePeakSignalToNoiseRatio" };
@@ -1703,7 +1674,7 @@ namespace SMAQC
 			}
 
 			//NOW CALCULATE MEDIAN
-			median = ComputeMedian(FinishedList);
+			double median = ComputeMedian(FinishedList);
 
 			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3 DIGITS
 			return median.ToString("0.000");
@@ -1728,8 +1699,7 @@ namespace SMAQC
 					+ "  AND temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD);
 
 			//DECLARE VARIABLES
-			List<double> FilterList = new List<double>();                                       //FILTERED LIST [COLUMN M]
-			double median = 0.00;                                                               //STORE MEDIAN
+			var FilterList = new List<double>();                                       //FILTERED LIST [COLUMN M]
 
 			//DECLARE FIELDS TO READ FROM
 			string[] fields = { "IonCountRaw" };
@@ -1745,7 +1715,7 @@ namespace SMAQC
 			}
 
 			//NOW CALCULATE MEDIAN
-			median = ComputeMedian(FilterList);
+			double median = ComputeMedian(FilterList);
 
 			//WE NOW HAVE RESULT ... NOW ROUND IT TO THE NEAREST INTEGER
 			return median.ToString("0");
@@ -1809,7 +1779,7 @@ namespace SMAQC
 
 		protected double Compute_MS2_4_Ratio(int quartile)
 		{
-			int scanCountTotal = 0;
+			int scanCountTotal;
 			double result = 0;
 
 			if (m_Cached_MS2_4_Counts.ScanCount.TryGetValue(quartile, out scanCountTotal))
@@ -1971,8 +1941,7 @@ namespace SMAQC
 					+ " ORDER BY Scan;");
 
 			//DECLARE VARIABLES
-			List<double> Peptide_score_List = new List<double>();                          // Track X!Tandem Hyperscore or -Log10(MSGFSpecProb)
-			double median = 0.00;                                                          // INIT MEDIAN VALUE
+			var Peptide_score_List = new List<double>();                          // Track X!Tandem Hyperscore or -Log10(MSGFSpecProb)
 
 			//DECLARE FIELDS TO READ FROM
 			string[] fields = { "Scan", "Peptide_Score" };
@@ -1991,7 +1960,7 @@ namespace SMAQC
 			}
 
 			//NOW CALCULATE MEDIAN
-			median = ComputeMedian(Peptide_score_List);
+			double median = ComputeMedian(Peptide_score_List);
 
 			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT
 			return median.ToString("0.00");
@@ -2018,8 +1987,7 @@ namespace SMAQC
 					+ " ORDER BY Scan;");
 
 			//DECLARE VARIABLES
-			List<double> Peptide_score_List = new List<double>();                          // Track X!Tandem Peptide_Expectation_Value_Log or Log10(MSGFSpecProb)
-			double median = 0.00;                                                          // INIT MEDIAN VALUE
+			var Peptide_score_List = new List<double>();                          // Track X!Tandem Peptide_Expectation_Value_Log or Log10(MSGFSpecProb)
 
 			//DECLARE FIELDS TO READ FROM
 			string[] fields = { "Scan", "Peptide_Score" };
@@ -2039,7 +2007,7 @@ namespace SMAQC
 			}
 
 			//NOW CALCULATE MEDIAN
-			median = ComputeMedian(Peptide_score_List);
+			double median = ComputeMedian(Peptide_score_List);
 
 			//WE NOW HAVE RESULT ... NOW ROUND IT TO 3rd DIGIT           
 			return median.ToString("0.000");
@@ -2101,8 +2069,8 @@ namespace SMAQC
 			int spectraCount;
 			if (dctPSMStats.TryGetValue(2, out spectraCount))
 				return spectraCount.ToString();
-			else
-				return "0";
+			
+			return "0";
 
 		}
 
@@ -2119,8 +2087,8 @@ namespace SMAQC
 			int peptideCount;
 			if (dctPeptideStats.TryGetValue(2, out peptideCount))
 				return peptideCount.ToString();
-			else
-				return "0";
+			
+			return "0";
 		}
 
 		/// <summary>
@@ -2137,8 +2105,8 @@ namespace SMAQC
 			int peptideCount;
 			if (dctPeptideStats.TryGetValue(2, out peptideCount))
 				return peptideCount.ToString();
-			else
-				return "0";
+			
+			return "0";
 
 		}
 		
@@ -2149,8 +2117,7 @@ namespace SMAQC
 		public string P_3()
 		{
 
-			bool groupByCharge = false;
-			Dictionary<int, int> dctPeptideStats = SummarizePSMs(groupByCharge);
+			Dictionary<int, int> dctPeptideStats = SummarizePSMs(groupByCharge:false);
 
 			int peptideCountFullyTryptic;
 			int peptideCountSemiTryptic;
@@ -2194,8 +2161,8 @@ namespace SMAQC
 			int peptideCount;
 			if (dctPeptideStats.TryGetValue(2, out peptideCount))
 				return peptideCount.ToString();
-			else
-				return "0";
+			
+			return "0";
 
 		}
 
@@ -2203,8 +2170,8 @@ namespace SMAQC
 		{
 			if (phosphoPeptides)
 				return " AND Phosphopeptide = 1";
-			else
-				return "";
+			
+			return "";
 		}
 
 		/// <summary>
@@ -2265,7 +2232,7 @@ namespace SMAQC
 				                       + " GROUP BY Cleavage_State;");
 			}
 			//DECLARE VARIABLES
-			Dictionary<int, int> dctPeptideStats = new Dictionary<int, int>();
+			var dctPeptideStats = new Dictionary<int, int>();
 
 			//DECLARE FIELDS TO READ FROM
 			string[] fields = { "Cleavage_State", "Peptides" };

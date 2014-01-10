@@ -517,9 +517,10 @@ namespace SMAQC
 				Console.WriteLine();
 				Console.WriteLine("SMAQC reads the data from the _syn.txt file along with the parallel");
 				Console.WriteLine("text files created by PHRP.  It uses this information to compute peptide");
-				Console.WriteLine("count related metrics.  SMAQC also reads the data from the ");
-				Console.WriteLine("_ScanStats.txt, _SICstats.txt, and _ScanStatsEx.txt files created by");
-				Console.WriteLine("MASIC to determine chromatography and scan-related metrics.");
+				Console.WriteLine("count related metrics (peptides are filtered on MSGF_SpecProb");
+				Console.WriteLine("less than " + Measurement.MSGF_SPECPROB_THRESHOLD.ToString("0E+00") + "). SMAQC also reads the data from the _ScanStats.txt, ");
+				Console.WriteLine("_SICstats.txt, and _ScanStatsEx.txt files created by MASIC");
+				Console.WriteLine("to determine chromatography and scan-related metrics.");
 				Console.WriteLine();
 				Console.WriteLine("The quality metrics computed by SMAQC are based on the metrics proposed");
 				Console.WriteLine("by Rudnick and Stein, as described in \"Performance metrics for liquid ");

@@ -5,9 +5,10 @@ post-processed with the PeptideHitResultsProcessor (PHRP).
 
 SMAQC reads the data from the _syn.txt file along with the parallel
 text files created by PHRP.  It uses this information to compute peptide
-count related metrics.  SMAQC also reads the data from the
-_ScanStats.txt, _SICstats.txt, and _ScanStatsEx.txt files created by
-MASIC to determine chromatography and scan-related metrics.
+count related metrics (peptides are filtered on MSGF_SpecProb
+less than 1E-12). SMAQC also reads the data from the _ScanStats.txt,
+_SICstats.txt, and _ScanStatsEx.txt files created by MASIC
+to determine chromatography and scan-related metrics.
 
 The quality metrics computed by SMAQC are based on the metrics proposed
 by Rudnick and Stein, as described in "Performance metrics for liquid
