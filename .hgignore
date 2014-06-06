@@ -15,3 +15,6 @@ obj/*
 */DS?/*
 SMAQC/bin/Debug/SMAQC-log*
 SMAQC/bin/Job*
+.git/
+SMAQC/bin/*
+.gitignore
