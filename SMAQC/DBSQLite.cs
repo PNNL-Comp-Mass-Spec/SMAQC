@@ -36,7 +36,7 @@ namespace SMAQC
 				SQLiteTools.create_tables(datasource);
 			}
 
-            conn = new SQLiteConnection("Data Source=" + datasource);
+            conn = new SQLiteConnection("Data Source=" + datasource, true);
             
             // Open a connection to the database
             Open();
@@ -44,20 +44,7 @@ namespace SMAQC
 			// Create any missing tables
 			SQLiteTools.create_missing_tables(conn);
 
-        }
-
-        //DESTRUCTOR
-        ~DBSQLite()
-        {
-            try
-            {
-                conn.Close();
-            }
-            catch (NullReferenceException ex)
-            {
-				Console.WriteLine("Error closing the SQLite DB: " + ex.Message);
-            }
-        }
+        }       
 
 		/// <summary>
 		/// Clear DB Temp Tables for all data
@@ -66,12 +53,12 @@ namespace SMAQC
 		public void ClearTempTables(string[] db_tables)
 		{
 			//LOOP THROUGH EACH TEMP TABLE
-			foreach (string tableName in db_tables)
+			foreach (var tableName in db_tables)
 			{
 				if (DBSQLiteTools.TableExists(conn, tableName))
 				{
 					//CREATE QUERY
-					string temp_string = "DELETE FROM " + tableName + ";";
+					var temp_string = "DELETE FROM " + tableName + ";";
 
 					//SET QUERY
 					setQuery(temp_string);
@@ -90,12 +77,12 @@ namespace SMAQC
         public void ClearTempTables(string[] db_tables, int random_id)
 	    {
 		    //LOOP THROUGH EACH TEMP TABLE
-		    foreach (string tableName in db_tables)
+		    foreach (var tableName in db_tables)
 		    {
 			    if (DBSQLiteTools.TableExists(conn, tableName))
 			    {
 				    //CREATE QUERY
-					string temp_string = "DELETE FROM " + tableName + " WHERE random_id='" + random_id + "';";
+					var temp_string = "DELETE FROM " + tableName + " WHERE random_id='" + random_id + "';";
 
 				    //SET QUERY
 				    setQuery(temp_string);
@@ -166,10 +153,10 @@ namespace SMAQC
 				dctErrorMessages.Clear();
 
             //BUILD SQL LINE
-            string sql = SQLiteBulkInsert_BuildSQL_Line(insert_into_table, fieldNames);
-			string previousLine = String.Empty;
+            var sql = SQLiteBulkInsert_BuildSQL_Line(insert_into_table, fieldNames);
+			var previousLine = String.Empty;
 
-			using (SQLiteCommand mycommand = conn.CreateCommand())
+			using (var mycommand = conn.CreateCommand())
 			{
 				mycommand.CommandText = "PRAGMA synchronous=OFF";
 				ExecuteCommand(mycommand, -1);
@@ -177,7 +164,7 @@ namespace SMAQC
 
             using (DbTransaction dbTrans = conn.BeginTransaction())
             {
-                using (SQLiteCommand mycommand = conn.CreateCommand())
+                using (var mycommand = conn.CreateCommand())
                 {
 
                     mycommand.CommandText = sql;
@@ -185,7 +172,7 @@ namespace SMAQC
 	                using (var file = new StreamReader(file_to_read_from))
 	                {
 		                string line;
-		                int line_num = 0;
+		                var line_num = 0;
 		                while ((line = file.ReadLine()) != null)
 		                {
 			                line_num++;
@@ -207,7 +194,7 @@ namespace SMAQC
 			                string[] values = SQLiteBulkInsert_TokenizeLine(line);
 
 			                //LOOP THROUGH FIELD LISTING + SET PARAMETERS
-			                for (int i = 0; i < fieldNames.Count; i++)
+			                for (var i = 0; i < fieldNames.Count; i++)
 			                {
 
 				                mycommand.Parameters.AddWithValue("@" + i, values[i]);
@@ -227,8 +214,8 @@ namespace SMAQC
 
 				if (dctErrorMessages.Count > 0)
 				{
-					string firstErrorMsg = String.Empty;
-					int totalErrorRows = 0;
+					var firstErrorMsg = String.Empty;
+					var totalErrorRows = 0;
 
 					foreach (KeyValuePair<string, int> kvEntry in dctErrorMessages)
 					{
@@ -238,7 +225,7 @@ namespace SMAQC
 							firstErrorMsg = String.Copy(kvEntry.Key);
 					}
 
-					string msg = "Errors during BulkInsert from file " + Path.GetFileName(file_to_read_from) + "; problem with " + totalErrorRows + " row";
+					var msg = "Errors during BulkInsert from file " + Path.GetFileName(file_to_read_from) + "; problem with " + totalErrorRows + " row";
 					if (totalErrorRows != 1)
 						msg += "s";
 
@@ -257,7 +244,7 @@ namespace SMAQC
 			}
 			catch (Exception ex)
 			{
-				string msg = ex.Message.Replace("\r\n", ": ");
+				var msg = ex.Message.Replace("\r\n", ": ");
 
 				errorMsgCount = 1;
 				if (dctErrorMessages.TryGetValue(msg, out errorMsgCount))
@@ -308,7 +295,7 @@ namespace SMAQC
 
 			m_PHRPInsertCommand.CommandText = SQLiteBulkInsert_BuildSQL_Line("temp_PSMs", fields);
 
-			for (int i = 0; i < fields.Count; i++)
+			for (var i = 0; i < fields.Count; i++)
 			{
 				m_PHRPFieldsForInsert.Add(fields[i], i);
 			}
@@ -319,7 +306,7 @@ namespace SMAQC
 			else
 				dctErrorMessages.Clear();
 
-			using (SQLiteCommand mycommand = conn.CreateCommand())
+			using (var mycommand = conn.CreateCommand())
 			{
 				mycommand.CommandText = "PRAGMA synchronous=OFF";
 				ExecuteCommand(mycommand, -1);
@@ -358,7 +345,7 @@ namespace SMAQC
 		public Boolean readSingleLine(string[] fields, ref Dictionary<string, string> dctData)
         {
 			//READ LINE
-            bool status = reader.Read();
+            var status = reader.Read();
 
             //IF RETURNED FALSE ... NO ROWS TO RETURN
             if (!status)
@@ -371,11 +358,11 @@ namespace SMAQC
             }
 
             //DECLARE VARIABLES
-            foreach (string fieldName in fields)
+            foreach (var fieldName in fields)
             {
 	            try
 	            {
-					int value = reader.GetOrdinal(fieldName);
+					var value = reader.GetOrdinal(fieldName);
 					dctData.Add(fieldName, reader.GetValue(value).ToString());
 	            }
 	            catch (System.Data.SqlTypes.SqlNullValueException)
@@ -395,7 +382,7 @@ namespace SMAQC
 		public Boolean readLines(string[] fields, ref Dictionary<string, string> dctData)
         {
 			//READ LINE
-            bool status = reader.Read();
+            var status = reader.Read();
 
             //IF RETURNED FALSE ... NO ROWS TO RETURN
             if (!status)
@@ -408,12 +395,12 @@ namespace SMAQC
             }
 
             //DECLARE VARIABLES
-            foreach (string fieldName in fields)
+            foreach (var fieldName in fields)
             {
 	            //READ + STORE FIELD [Value, Result]
 	            try
 	            {
-					int value = reader.GetOrdinal(fieldName);
+					var value = reader.GetOrdinal(fieldName);
 					dctData.Add(fieldName, reader.GetValue(value).ToString());
 	            }
 	            catch (System.Data.SqlTypes.SqlNullValueException)
@@ -428,7 +415,7 @@ namespace SMAQC
 		List<string> SQLiteBulkInsert_Fields(string filename)
         {
             var file = new StreamReader(filename);
-            string line = file.ReadLine();
+            var line = file.ReadLine();
             file.Close();
 
 			if (string.IsNullOrWhiteSpace(line))
@@ -440,7 +427,8 @@ namespace SMAQC
             //DO SPLIT OPERATION
 			List<string> parts = line.Split(delimiters, StringSplitOptions.None).ToList();
 
-            for (int i = 0; i < parts.Count; i++)
+		    // Make sure the field names do not have spaces or parentheses in them
+            for (var i = 0; i < parts.Count; i++)
             {
                 parts[i] = SQLiteBulkInsert_CleanFields(parts[i]);
             }
@@ -473,7 +461,7 @@ namespace SMAQC
             sbSql.Append("INSERT INTO " + table + " (");
 
             //BUILD COMMANDS
-			for (int i = 0; i < fields.Count; i++)
+			for (var i = 0; i < fields.Count; i++)
 			{
 				sbSql.Append("`" + fields[i] + "`");
 				if (i < fields.Count - 1)
@@ -484,7 +472,7 @@ namespace SMAQC
             sbSql.Append(") VALUES (");
 
             //BUILD VALUE LIST
-            for (int i = 0; i < fields.Count; i++)
+            for (var i = 0; i < fields.Count; i++)
             {
                 sbSql.Append("@" + i);
 				if (i < fields.Count - 1)
@@ -497,9 +485,14 @@ namespace SMAQC
 			return sbSql.ToString();
         }
 
+        /// <summary>
+        /// Replace invalid characters in field names
+        /// </summary>
+        /// <param name="field"></param>
+        /// <returns></returns>
         string SQLiteBulkInsert_CleanFields(string field)
         {
-            string field_line = field;
+            var field_line = field;
 
             //IF == SPACE
             if (field_line.Contains(" "))
@@ -509,15 +502,15 @@ namespace SMAQC
             }
 
             //REPLACE ALL INSTANCES OF _(
-            while (field_line.IndexOf("_(") > 0)
+            while (field_line.Contains("_("))
             {
-                field_line = field_line.Remove(field_line.IndexOf("_("));
+                field_line = field_line.Remove(field_line.IndexOf("_(", StringComparison.Ordinal));
             }
 
             //REPLACE ALL INSTANCES OF (
-            while (field_line.IndexOf("(") > 0)
+            while (field_line.Contains("("))
             {
-                field_line = field_line.Remove(field_line.IndexOf("("));
+                field_line = field_line.Remove(field_line.IndexOf("(", StringComparison.Ordinal));
             }
 
             return field_line;

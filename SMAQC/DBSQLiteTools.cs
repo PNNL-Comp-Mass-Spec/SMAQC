@@ -10,7 +10,7 @@ namespace SMAQC
         //CREATE TABLES
         public void create_tables(string datasource)
         {
-            using (conn = new SQLiteConnection("Data Source=" + datasource))
+            using (conn = new SQLiteConnection("Data Source=" + datasource, true))
             {
                 //RUN CREATE CMD
                 using (var cmd = conn.CreateCommand())

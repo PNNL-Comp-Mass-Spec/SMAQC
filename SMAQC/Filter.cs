@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Text;
+using PHRPReader;
 
 namespace SMAQC
 {
@@ -29,7 +31,7 @@ namespace SMAQC
 		//THIS FUNCTION RETURNS WHETHER OR NOT WE ARE CURRENTLY WORKING WITH _SCANSTATSEX.TXT
 		public Boolean ScanStatsExBugFixer(string file_to_load)
 		{
-			int value = file_to_load.IndexOf("_ScanStatsEx.txt", StringComparison.OrdinalIgnoreCase);
+			var value = file_to_load.IndexOf("_ScanStatsEx.txt", StringComparison.OrdinalIgnoreCase);
 
 			//IF FOUND RETURN TRUE
 			if (value >= 0)
@@ -45,7 +47,7 @@ namespace SMAQC
 		public void parse_and_filter(string temp_file, string file_to_load)
 		{
 			//DECLARE VARIABLES
-			int line_num = 0;
+			var line_num = 0;
 
 			const char newDelimiter = '\t';
 
@@ -61,7 +63,7 @@ namespace SMAQC
 					while ((line = srInFile.ReadLine()) != null)
 					{
 						//NEW LINE SO CLEAR QUERY_INFO
-						string query_info = "";
+						var query_info = "";
 
 						//SPLIT GIVEN DATA FILES BY TAB
 						var delimiters = new[] { '\t' };
@@ -80,7 +82,7 @@ namespace SMAQC
 						}
 
 						//LOOP THROUGH ALL FIELDS (FORMATING CORRECTLY ALSO)
-						for (int i = 0; i < parts.Length; i++)
+						for (var i = 0; i < parts.Length; i++)
 						{
 
 							if (parts[i].Equals("[PAD]"))
@@ -123,15 +125,15 @@ namespace SMAQC
 		public void LoadFilesAndInsertIntoDB(List<string> FileList, string[] valid_file_tables, string dataset)
 		{
 			//LOOP THROUGH EACH FILE
-			foreach (string fileName in FileList)
+			foreach (var fileName in FileList)
 			{
 				//STORES THE FULL PATH TO FILE + TEMP FILE NAME
-				string file_info = String.Copy(fileName);				//FILENAME WE WANT TO LOAD INTO DB
-				string temp_file = Path.GetTempFileName();	//WRITE TO THIS FILE [TEMP FILE]
-				string query_table = "temp";							//USED AS PREFIX PORTION OF TABLE
+				var file_info = String.Copy(fileName);				//FILENAME WE WANT TO LOAD INTO DB
+				var temp_file = Path.GetTempFileName();	//WRITE TO THIS FILE [TEMP FILE]
+				var query_table = "temp";							//USED AS PREFIX PORTION OF TABLE
 
 				//DETERMINE IF WE HAVE A TABLE TO INSERT INTO DEPENDING ON OUR INPUT FILENAME
-				int j = return_file_table_position(file_info, valid_file_tables);
+				var j = return_file_table_position(file_info, valid_file_tables);
 
 				//IF VALID INSERT TABLE
 				if (j >= 0)
@@ -176,7 +178,7 @@ namespace SMAQC
 		{
 
 			// Look for a valid input file
-			string sInputFilePath = PHRPReader.clsPHRPReader.AutoDetermineBestInputFile(sInputFolderPath, sDataset);
+			var sInputFilePath = PHRPReader.clsPHRPReader.AutoDetermineBestInputFile(sInputFolderPath, sDataset);
 
 			if (string.IsNullOrEmpty(sInputFilePath))
 			{
@@ -201,14 +203,14 @@ namespace SMAQC
 				oPHRPReader.WarningEvent += mPHRPReader_WarningEvent;
 
 				// Report any errors cached during instantiation of mPHRPReader
-				foreach (string strMessage in oPHRPReader.ErrorMessages.Distinct())
+				foreach (var strMessage in oPHRPReader.ErrorMessages.Distinct())
 				{
 					m_SystemLogManager.addApplicationLog("Error: " + strMessage);
 					Console.WriteLine(strMessage);
 				}
 
 				// Report any warnings cached during instantiation of mPHRPReader
-				foreach (string strMessage in oPHRPReader.WarningMessages.Distinct())
+				foreach (var strMessage in oPHRPReader.WarningMessages.Distinct())
 				{
 					m_SystemLogManager.addApplicationLog("Warning: " + strMessage);
 					Console.WriteLine(strMessage);
@@ -222,46 +224,56 @@ namespace SMAQC
 				System.Data.Common.DbTransaction dbTrans;
 				mDBWrapper.InitPHRPInsertCommand(out dbTrans);
 
+                // Dictionary has key/value pairs of information about the best peptide for the scan
 				var dctBestPeptide = new Dictionary<string, string>();
 				dctBestPeptide.Clear();
 
-				int intBestPeptideScan = -1;
-				int intBestPeptideCharge = -1;
+                // Dictionary mapping normalized peptide sequences to NormalizedSeqID values
+                // The NormalizedSeqID values are custom-assigned by this class to keep track of peptide sequences 
+                //   on a basis where modifications are tracked but not mapped to specific residues
+                //   This is done so that peptides like PEPT*IDES and PEPTIDES* are counted as the same peptide
+			    var normalizedPeptides = new Dictionary<string, int>();
+
+				var intBestPeptideScan = -1;
+				var intBestPeptideCharge = -1;
 				double dblBestPeptideScore = 100;
 
-				int line_num = 0;
-				int prev_scan = 0;
-				int prev_charge = 0;
-				string prev_peptide = string.Empty;
+				var line_num = 0;
+				var prev_scan = 0;
+				var prev_charge = 0;
+				var prev_peptide = string.Empty;
 
 				Console.WriteLine("Populating database using PHRP");
 
 				// Read the data using PHRP Reader
 				// Only store the best scoring peptide for each scan/charge combo
+                // Furthermore, normalize peptide sequences so that modifications are not associated with specific residues
 
 				while (oPHRPReader.MoveNext())
 				{
-					PHRPReader.clsPSM objCurrentPSM = oPHRPReader.CurrentPSM;
+					var objCurrentPSM = oPHRPReader.CurrentPSM;
 					line_num += 1;
 
-					string strCurrentPeptide = string.Empty;
-					string strPrefix = string.Empty;
-					string strSuffix = string.Empty;
+					string strCurrentPeptide;
+					string strPrefix;
+					string strSuffix;
 
-					PHRPReader.clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(objCurrentPSM.Peptide, ref strCurrentPeptide, ref strPrefix, ref strSuffix);
+                    PHRPReader.clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(objCurrentPSM.Peptide, out strCurrentPeptide, out strPrefix, out strSuffix);
 
 					if (prev_scan == objCurrentPSM.ScanNumberStart && prev_charge == objCurrentPSM.Charge && prev_peptide == strCurrentPeptide)
-						// Skip this entry
+						// Skip this entry (same peptide, different protein)
 						continue;
 
 					if (intBestPeptideScan > 0 && !(intBestPeptideScan == objCurrentPSM.ScanNumberStart && intBestPeptideCharge == objCurrentPSM.Charge))
 					{
+                        // Store the cached peptide
 						mDBWrapper.ExecutePHRPInsertCommand(dctBestPeptide, line_num);
 						intBestPeptideScan = -1;
 						intBestPeptideCharge = -1;
 						dblBestPeptideScore = 100;
 					}
 
+                    // Dictionary has key/value pairs of information about the peptide
 					var dctCurrentPeptide = new Dictionary<string, string>();
 					dctCurrentPeptide.Clear();
 
@@ -284,10 +296,22 @@ namespace SMAQC
 					else
 						dctCurrentPeptide.Add("MSGFSpecProb", "1");
 
-					dctCurrentPeptide.Add("Unique_Seq_ID", objCurrentPSM.SeqID.ToString());
+                    var normalizedPeptide = NormalizeSequence(objCurrentPSM.PeptideCleanSequence, objCurrentPSM.ModifiedResidues);
+
+				    int normalizedSeqID;
+                    if (!normalizedPeptides.TryGetValue(normalizedPeptide, out normalizedSeqID))
+                    {
+                        normalizedSeqID = normalizedPeptides.Count + 1;
+                        normalizedPeptides.Add(normalizedPeptide, normalizedSeqID);
+                    }
+                    
+					// Note: previously stored objCurrentPSM.SeqID.ToString()
+                    // Now storing normalizedSeqID
+                    dctCurrentPeptide.Add("Unique_Seq_ID", normalizedSeqID.ToString());
+
 					dctCurrentPeptide.Add("Cleavage_State", ((int)objCurrentPSM.CleavageState).ToString());
 
-					// Check whether this is a phosphopeptide
+				    // Check whether this is a phosphopeptide
 					byte phosphoFlag = 0;
 					foreach (var modification in objCurrentPSM.ModifiedResidues)
 					{
@@ -324,6 +348,7 @@ namespace SMAQC
 
 				if (intBestPeptideScan > 0)
 				{
+                    // Store the cached peptide
 					mDBWrapper.ExecutePHRPInsertCommand(dctBestPeptide, line_num);
 				}
 
@@ -337,25 +362,47 @@ namespace SMAQC
 			return false;
 		}
 
+	    private string NormalizeSequence(string peptideCleanSequence, ICollection<clsAminoAcidModInfo> modifiedResidues)
+	    {
+	        if (modifiedResidues.Count == 0)
+                return peptideCleanSequence;
 
-		//FUNCTION WILL SEARCH THROUGH A FILE NAME, ENSURING IT IS A VALID TABLE EXTENSION AND RETURNING
+	        var sbModifications = new StringBuilder();
+
+	        foreach (var modEntry in modifiedResidues)
+	        {
+                if (string.IsNullOrEmpty(modEntry.ModDefinition.MassCorrectionTag))
+                    sbModifications.Append(modEntry.ModDefinition.ModificationSymbol);
+                else
+	                sbModifications.Append(modEntry.ModDefinition.MassCorrectionTag);
+	        }
+
+            return peptideCleanSequence + "_" + sbModifications.ToString();
+	    }
+
+
+	    //FUNCTION WILL SEARCH THROUGH A FILE NAME, ENSURING IT IS A VALID TABLE EXTENSION AND RETURNING
 		//THE POSITION SO THAT IT CAN BE PASSED TO OUR DBINTERFACE/OTHER CLASSES FOR PROCESSING
 		public int return_file_table_position(string filename, string[] valid_file_tables)
 		{
-			string baseFilenameLCase = Path.GetFileNameWithoutExtension(filename).ToLower();
+		    var baseName = Path.GetFileNameWithoutExtension(filename);
+            if (baseName != null)
+		    {
+                var baseFilenameLCase = baseName.ToLower();
 
-			//LOOP THROUGH ALL VALID FILE/TABLE EXTENSIONS
-			for (int i = 0; i < valid_file_tables.Length; i++)
-			{
-				if (baseFilenameLCase.EndsWith(valid_file_tables[i].ToLower()))
-				{
-					// Match found
-					//RETURN THE POSITION ID IN OUR FILE/TABLE LIST
-					return i;
-				}
+		        //LOOP THROUGH ALL VALID FILE/TABLE EXTENSIONS
+		        for (var i = 0; i < valid_file_tables.Length; i++)
+		        {
+		            if (baseFilenameLCase.EndsWith(valid_file_tables[i].ToLower()))
+		            {
+		                // Match found
+		                //RETURN THE POSITION ID IN OUR FILE/TABLE LIST
+		                return i;
+		            }
 
-			}
-			return -1;
+		        }
+		    }
+		    return -1;
 		}
 
 		#region "Error handlers"

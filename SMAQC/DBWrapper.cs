@@ -41,13 +41,8 @@ namespace SMAQC
             dbConn = new DBSQLite(dbPath);
 
 			// Attach the event handler
-			dbConn.ErrorEvent +=new DBErrorEventHandler(dbConn_ErrorEvent);
+			dbConn.ErrorEvent += new DBErrorEventHandler(dbConn_ErrorEvent);
 
-        }
-
-        //DESTRUCTOR
-        ~DBWrapper()
-        {
         }
 
 		/// <summary>

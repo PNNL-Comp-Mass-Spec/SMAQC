@@ -1,0 +1,35 @@
+SMAQC Change Log
+
+Version 1.1.5686; July 24, 2015
+	- When finding PSMs and unique peptide counts, now ignoring the position of modifications in peptides (though order still matters)
+		- For example, PEPT*IDES and PEPTIDES* are treated as the same peptide
+	- New PHRPReader that supports MSPathFinder results
+	- Update to System.Data.SQLite.dll v1.0.93
+	- Now compiling as AnyCPU
+
+Version 1.1.5122; January 9, 2014
+	- Now showing the MSGF_SpecProb filter threshold in the program syntax
+
+Version 1.1.5121; January 8, 2014
+	- Added metrics Phos_2A and Phos_2C
+
+Version 1.1.4930; July 1, 2013
+	- Bug fix for MS1_5B
+
+Version 1.1.4927; June 28, 2013
+	- Only retaining the best scoring peptide for each scan/charge combo
+
+Version 1.1.4925; June 26, 2013
+	- Optimized SQL statements
+
+Version 1.1.4912; June 13, 2013
+	- Now uses PHRPReader to load PSM Results
+
+Version 1.1.4885; May 17, 2013
+	- Fixed bug in MS1_5_Shared; now computing delta mass using monoisotopic mass instead of m/z
+
+Version 1.1.4653; September 27, 2012
+	- Now computing corrected DelM errors by adding/subtracting C13 (affects MS1_5 metrics)
+
+Version 1.0.4507; May 4, 2012
+	- Initial release of v1.1
