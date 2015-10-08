@@ -1,5 +1,12 @@
 SMAQC Change Log
 
+Version 1.1.5758; October 7, 2015
+	- Added 4 new metrics
+		- Keratin_2A: Total keratin peptides
+		- Keratin_2C: Unique keratin peptides
+		- P_4A: Fraction fully-Tryptic
+		- P_4B: Missed cleavage rate
+
 Version 1.1.5686; July 24, 2015
 	- When finding PSMs and unique peptide counts, now ignoring the position of modifications in peptides (though order still matters)
 		- For example, PEPT*IDES and PEPTIDES* are treated as the same peptide

@@ -3,29 +3,28 @@ namespace SMAQC
 {
     class MeasurementFactory
     {
-        //DECLARE VARIABLES
-        public Measurement m_Measurement;                                                        //CREATE MEASUREMENT OBJECT
+        
+        public Measurement m_Measurement;
 
-        //CONSTRUCTOR
+        // Constructor
         public MeasurementFactory(ref Measurement m_Measurement)
         {
             this.m_Measurement = m_Measurement;
         }
 
-        public string buildMeasurement(string measurement)
+        public string BuildMeasurement(string measurement)
         {
-	        //CONVERT STRING TO FUNCTION USING REFLECTION
-            string methodName = measurement;
-            System.Reflection.MethodInfo info = m_Measurement.GetType().GetMethod(methodName);
+	        // Convert measurement name to function using reflection
+            var methodName = measurement;
+            var info = m_Measurement.GetType().GetMethod(methodName);
             var result = (string)info.Invoke(m_Measurement, null);
 
             return result;
         }
 
-        //SOME MEASUREMENTS REQUIRE DATA TO BE SAVED. THIS FUNCTION IS CALLED AFTER THE END OF EACH DATASET RUN TO CLEAR THAT SAVED DATA
-        public void cleanMeasurements()
+        // Clear saved data
+        public void CleanMeasurements()
         {
-            //CALL CLEAR STORAGE TO CLEAR HASH TABLES
 			m_Measurement.ClearStorage();
         }
     }

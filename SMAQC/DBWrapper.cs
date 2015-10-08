@@ -6,63 +6,76 @@ namespace SMAQC
 {
     class DBWrapper
     {
-		//DELEGATE FUNCTION FOR ERROR EVENTS
-		public delegate void DBErrorEventHandler(string errorMessage);
-		public event DBErrorEventHandler ErrorEvent;
+        //DELEGATE FUNCTION FOR ERROR EVENTS
+        public delegate void DBErrorEventHandler(string errorMessage);
+        public event DBErrorEventHandler ErrorEvent;
 
         //DECLARE VARIABLES
-	    readonly DBInterface dbConn;
-        public string[] db_tables = { "temp_scanstats", "temp_scanstatsex", "temp_sicstats", "temp_xt", "temp_xt_resulttoseqmap", "temp_xt_seqtoproteinmap", "temp_PSMs"};
-		private bool mShowQueryText;
+        readonly DBInterface dbConn;
+        public string[] db_tables = { "temp_scanstats", "temp_scanstatsex", "temp_sicstats", "temp_xt", "temp_xt_resulttoseqmap", "temp_xt_seqtoproteinmap", "temp_PSMs" };
+        private bool mShowQueryText;
 
-		#region "Properties"
+        #region "Properties"
 
-		public bool ShowQueryText
-		{
-			get
-			{
-				return mShowQueryText;
-			}
-			set
-			{
-				mShowQueryText = value;
-			}
-		}
+        private string mCurrentQuery;
 
-		#endregion
+        /// <summary>
+        /// The most recent query Sql
+        /// </summary>
+        public string CurrentQuery
+        {
+            get
+            {
+                return mCurrentQuery;
+            }
+        }
 
-		//CONSTRUCTOR
-		public DBWrapper(string dbFolderPath)
+        public bool ShowQueryText
+        {
+            get
+            {
+                return mShowQueryText;
+            }
+            set
+            {
+                mShowQueryText = value;
+            }
+        }
+
+        #endregion
+
+        // Constructor
+        public DBWrapper(string dbFolderPath)
         {
             //GET PATH TO DB [NEEDED FOR SQLite SO WE SAVE IN CORRECT LOCATION]
-			string dbPath = Path.Combine(dbFolderPath, "SMAQC.s3db");
+            var dbPath = Path.Combine(dbFolderPath, "SMAQC.s3db");
 
             //CREATE DB CONN
             dbConn = new DBSQLite(dbPath);
 
-			// Attach the event handler
-			dbConn.ErrorEvent += new DBErrorEventHandler(dbConn_ErrorEvent);
+            // Verify that the required columns are present
 
+            // Attach the event handler
+            dbConn.ErrorEvent += new DBErrorEventHandler(dbConn_ErrorEvent);
+
+            mCurrentQuery = string.Empty;
         }
 
-		/// <summary>
-		/// Clear DB Temp Tables for all data
-		/// </summary>
-		/// <param name="random_id"></param>
-		/// <param name="db_tables"></param>
-		public void ClearTempTables()
-		{
-			dbConn.ClearTempTables(db_tables);
-		}
-
-		/// <summary>
-		/// Clear DB Temp Tables for all data
-		/// </summary>
-		/// <param name="random_id"></param>
-		/// <param name="db_tables"></param>
-		public void ClearTempTables(int random_id)
+        /// <summary>
+        /// Clear DB Temp Tables for all data
+        /// </summary>
+        public void ClearTempTables()
         {
-			dbConn.ClearTempTables(db_tables, random_id);
+            dbConn.ClearTempTables(db_tables);
+        }
+
+        /// <summary>
+        /// Clear DB Temp Tables for all data
+        /// </summary>
+        /// <param name="random_id"></param>
+        public void ClearTempTables(int random_id)
+        {
+            dbConn.ClearTempTables(db_tables, random_id);
         }
 
         //SET QUERY
@@ -70,17 +83,19 @@ namespace SMAQC
         {
             try
             {
+                mCurrentQuery = myquery;
+
                 dbConn.setQuery(myquery);
 
-				if (mShowQueryText)
-				{
-					Console.WriteLine();
-					Console.WriteLine(myquery);
-				}
+                if (mShowQueryText)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine(myquery);
+                }
             }
             catch (System.NullReferenceException ex)
             {
-				Console.WriteLine("Error setting the query text: " + ex.Message);
+                Console.WriteLine("Error setting the query text: " + ex.Message);
             }
         }
 
@@ -93,8 +108,8 @@ namespace SMAQC
         //FOR QUERIES SUCH AS INSERT/DELETE/UPDATE
         public Boolean QueryNonQuery()
         {
-            
-            Boolean status = false;
+
+            var status = false;
 
             //UPDATE STATUS + RUN QUERY
             try
@@ -103,7 +118,7 @@ namespace SMAQC
             }
             catch (System.NullReferenceException ex)
             {
-				Console.WriteLine("Error in QueryNonQuery: " + ex.Message);
+                Console.WriteLine("Error in QueryNonQuery: " + ex.Message);
             }
 
             //RETURN TRUE/FALSE
@@ -118,26 +133,26 @@ namespace SMAQC
 
         //READ SINGLE DB ROW [DIFFERENT FROM readLines() as here we close reader afterward]
         //[RETURNS FALSE IF NO FURTHER ROWS TO READ]
-		public Boolean readSingleLine(string[] fields, ref Dictionary<string, string> dctData)
+        public Boolean readSingleLine(string[] fields, ref Dictionary<string, string> dctData)
         {
-            Boolean status = false;
+            var status = false;
 
-			dctData.Clear();
+            dctData.Clear();
 
-			status = dbConn.readSingleLine(fields, ref dctData);
+            status = dbConn.readSingleLine(fields, ref dctData);
 
             return status;
         }
 
         //READ DB ROW(s) [RETURNS FALSE IF NO FURTHER ROWS TO READ]
-		public Boolean readLines(string[] fields, ref Dictionary<string, string> dctData)
+        public Boolean readLines(string[] fields, ref Dictionary<string, string> dctData)
         {
-            Boolean status = false;
+            var status = false;
 
-			dctData.Clear();
+            dctData.Clear();
 
-			status = dbConn.readLines(fields, ref dctData);
- 
+            status = dbConn.readLines(fields, ref dctData);
+
             return true;
         }
 
@@ -147,34 +162,33 @@ namespace SMAQC
             return dbConn.getDateTime();
         }
 
-		/// <summary>
-		/// Initialize the command for inserting PHRP data
-		/// </summary>
-		/// <param name="dctFieldsForInsert"></param>
-		/// <returns></returns>
-		public bool InitPHRPInsertCommand(out System.Data.Common.DbTransaction dbTrans)
-		{
-			return dbConn.InitPHRPInsertCommand(out dbTrans);
-		}
+        /// <summary>
+        /// Initialize the command for inserting PHRP data
+        /// </summary>
+        /// <param name="dbTrans"></param>
+        /// <returns></returns>
+        public bool InitPHRPInsertCommand(out System.Data.Common.DbTransaction dbTrans)
+        {
+            return dbConn.InitPHRPInsertCommand(out dbTrans);
+        }
 
-		/// <summary>
-		/// Add new PHRP data
-		/// </summary>
-		/// <param name="dctFieldsForInsert"></param>
-		/// <param name="dctData"></param>
-		/// <param name="line_num"></param>
-		public void ExecutePHRPInsertCommand( Dictionary<string, string> dctData, int line_num)
-		{
-			dbConn.ExecutePHRPInsert(dctData, line_num);
-		}
+        /// <summary>
+        /// Add new PHRP data
+        /// </summary>
+        /// <param name="dctData"></param>
+        /// <param name="line_num"></param>
+        public void ExecutePHRPInsertCommand(Dictionary<string, string> dctData, int line_num)
+        {
+            dbConn.ExecutePHRPInsert(dctData, line_num);
+        }
 
-		void dbConn_ErrorEvent(string errorMessage)
-		{
-			if (ErrorEvent != null)
-			{
-				ErrorEvent(errorMessage);
-			}
-		}
+        void dbConn_ErrorEvent(string errorMessage)
+        {
+            if (ErrorEvent != null)
+            {
+                ErrorEvent(errorMessage);
+            }
+        }
 
     }
 }

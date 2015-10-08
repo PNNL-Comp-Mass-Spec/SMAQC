@@ -33,7 +33,7 @@ namespace SMAQC
 			if (!File.Exists(datasource))
 			{
 				// Create the file, along with the tables
-				SQLiteTools.create_tables(datasource);
+				SQLiteTools.CreateTables(datasource);
 			}
 
             conn = new SQLiteConnection("Data Source=" + datasource, true);
@@ -41,7 +41,7 @@ namespace SMAQC
             // Open a connection to the database
             Open();
 
-			// Create any missing tables
+			// Create any missing tables and add any missing columns
 			SQLiteTools.create_missing_tables(conn);
 
         }       
@@ -144,7 +144,7 @@ namespace SMAQC
         public void BulkInsert(string insert_into_table, string file_to_read_from)
         {
             //FETCH FIELDS
-            List<string> fieldNames = SQLiteBulkInsert_Fields(file_to_read_from);
+            var fieldNames = SQLiteBulkInsert_Fields(file_to_read_from);
 
 			errorMsgCount = 0;
 			if (dctErrorMessages == null)
@@ -191,7 +191,7 @@ namespace SMAQC
 
 			                //Console.WriteLine("LINE [{0}]", line);
 			                //FETCH VALUES
-			                string[] values = SQLiteBulkInsert_TokenizeLine(line);
+			                var values = SQLiteBulkInsert_TokenizeLine(line);
 
 			                //LOOP THROUGH FIELD LISTING + SET PARAMETERS
 			                for (var i = 0; i < fieldNames.Count; i++)
@@ -217,7 +217,7 @@ namespace SMAQC
 					var firstErrorMsg = String.Empty;
 					var totalErrorRows = 0;
 
-					foreach (KeyValuePair<string, int> kvEntry in dctErrorMessages)
+					foreach (var kvEntry in dctErrorMessages)
 					{
 						totalErrorRows += kvEntry.Value;
 						OnErrorEvent("Error message count = " + kvEntry.Value + " for '" + kvEntry.Key + "'");
@@ -290,7 +290,9 @@ namespace SMAQC
 				"MSGFSpecProb",
 				"Unique_Seq_ID",
 				"Cleavage_State",
-				"Phosphopeptide"
+				"Phosphopeptide",
+                "Keratinpeptide",
+                "MissedCleavages"
 			};
 
 			m_PHRPInsertCommand.CommandText = SQLiteBulkInsert_BuildSQL_Line("temp_PSMs", fields);
@@ -323,7 +325,7 @@ namespace SMAQC
 			m_PHRPInsertCommand.Parameters.Clear();
 
 			// Update insertCommand to have the data value for each field
-			foreach (KeyValuePair<string, int> item in m_PHRPFieldsForInsert)
+			foreach (var item in m_PHRPFieldsForInsert)
 			{
 				string dataValue;
 				if (!dctData.TryGetValue(item.Key, out dataValue))
@@ -425,7 +427,7 @@ namespace SMAQC
             var delimiters = new[] { '\t' };
 
             //DO SPLIT OPERATION
-			List<string> parts = line.Split(delimiters, StringSplitOptions.None).ToList();
+			var parts = line.Split(delimiters, StringSplitOptions.None).ToList();
 
 		    // Make sure the field names do not have spaces or parentheses in them
             for (var i = 0; i < parts.Count; i++)
@@ -448,7 +450,7 @@ namespace SMAQC
             }
 
             //DO SPLIT OPERATION
-            string[] parts = line.Split(delimiters, StringSplitOptions.None);
+            var parts = line.Split(delimiters, StringSplitOptions.None);
 
             return parts;
         }

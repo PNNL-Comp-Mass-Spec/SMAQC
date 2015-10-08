@@ -1445,7 +1445,7 @@ PHRPReader
 	<param name="strInputFilePath">Input file path</param>
 	<param name="startupOptions">Startup Options, in particular LoadModsAndSeqInfo and mMaxProteinsPerPSM</param>
 	<remarks></remarks>
-</member><member name="M:PHRPReader.clsPHRPParserMSGFDB.DeterminePrecursorMassTolerance(PHRPReader.clsSearchEngineParameters,System.Double@)">
+</member><member name="M:PHRPReader.clsPHRPParserMSGFDB.DeterminePrecursorMassTolerance(PHRPReader.clsSearchEngineParameters,System.Double@,PHRPReader.clsPHRPReader.ePeptideHitResultType)">
 	<summary>
  Determines the precursor mass tolerance for either MSGF+ or MSPathFinder
  </summary>

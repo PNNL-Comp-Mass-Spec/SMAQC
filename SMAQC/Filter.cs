@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Net.Sockets;
 using System.Text;
 using PHRPReader;
 
@@ -9,14 +10,20 @@ namespace SMAQC
 {
 	class Filter
 	{
-		//DECLARE VARIABLES
+
 		public DBWrapper mDBWrapper;                                                                //CREATE DB INTERFACE OBJECT
 		public string instrument_id;                                                                //INSTRUMENT ID
 		public int random_id;                                                                       //RANDOM ID
 		public DataFileFormatter DFF = new DataFileFormatter();                                     //DFF OBJECT
 		readonly SystemLogManager m_SystemLogManager;
 
-		//CONSTRUCTOR
+		/// <summary>
+        /// Constructor
+		/// </summary>
+		/// <param name="DBInterface"></param>
+		/// <param name="instrument_id"></param>
+		/// <param name="random_id"></param>
+		/// <param name="systemLogManager"></param>
 		public Filter(ref DBWrapper DBInterface, string instrument_id, int random_id, ref SystemLogManager systemLogManager)
 		{
 			mDBWrapper = DBInterface;
@@ -28,123 +35,140 @@ namespace SMAQC
 			mDBWrapper.ErrorEvent += DBWrapper_ErrorEvent;
 		}
 
-		//THIS FUNCTION RETURNS WHETHER OR NOT WE ARE CURRENTLY WORKING WITH _SCANSTATSEX.TXT
+		/// <summary>
+        /// Returns true if processing the extended scan stats file (_ScanStatsEx.txt)
+		/// </summary>
+		/// <param name="file_to_load"></param>
+		/// <returns></returns>
 		public Boolean ScanStatsExBugFixer(string file_to_load)
 		{
 			var value = file_to_load.IndexOf("_ScanStatsEx.txt", StringComparison.OrdinalIgnoreCase);
 
-			//IF FOUND RETURN TRUE
 			if (value >= 0)
 			{
 				return true;
 			}
 
-			//ELSE RETURN FALSE
 			return false;
 		}
 
-		//CREATE BULK INSERT COMPATIBLE FILE
+		/// <summary>
+		/// Create a bulk-insert compatible file
+		/// </summary>
+		/// <param name="temp_file"></param>
+		/// <param name="file_to_load"></param>
 		public void parse_and_filter(string temp_file, string file_to_load)
 		{
-			//DECLARE VARIABLES
 			var line_num = 0;
 
 			const char newDelimiter = '\t';
 
-			//OPEN TEMP srInFile
+            // Split on tab characters
+            var delimiters = new[] { '\t' };
+
+			// Create the output file
 			using (var swOutFile = new StreamWriter(temp_file))
 			{
 
 				//Console.WriteLine("WRITE TO: {0} ... LOAD FROM: {1}", temp_file, file_to_load);
 
+                // Open the input file
 				using (var srInFile = new StreamReader(file_to_load))
 				{
-					string line;
-					while ((line = srInFile.ReadLine()) != null)
+					
+					while (!srInFile.EndOfStream)
 					{
-						//NEW LINE SO CLEAR QUERY_INFO
+					    var line = srInFile.ReadLine();
+
+					    if (string.IsNullOrEmpty(line))
+					        continue;
+
 						var query_info = "";
 
-						//SPLIT GIVEN DATA FILES BY TAB
-						var delimiters = new[] { '\t' };
-
-						//DO SPLIT OPERATION
-						string[] parts = line.Split(delimiters, StringSplitOptions.None);
-
-						//ADD INSTRUMENT ID + RANDOM ID
+						var parts = line.Split(delimiters, StringSplitOptions.None);
+						
 						if (line_num == 0)
 						{
+                            // Prepend the additional headers
 							query_info += "instrument_id" + newDelimiter + "random_id" + newDelimiter;
 						}
 						else
 						{
+                            // Prepend Instrument_ID and Random_ID
 							query_info += instrument_id + newDelimiter + random_id + newDelimiter;
 						}
 
-						//LOOP THROUGH ALL FIELDS (FORMATING CORRECTLY ALSO)
-						for (var i = 0; i < parts.Length; i++)
+						// Process the fields
+						foreach (var dataValue in parts)
 						{
-
-							if (parts[i].Equals("[PAD]"))
-							{
-								query_info += newDelimiter;
-							}
-							else
-							{
-								//HERE WE SEE OUR CONTENT TO BE INSERTED
-								query_info += parts[i].Replace(newDelimiter, ';') + newDelimiter;
-							}
-
-							//IF AT END ... REMOVE + APPEND
-							if (i == (parts.Length - 1))
-							{
-								//REMOVE END "," CHARACTER
-								query_info = query_info.Substring(0, query_info.Length - 1);
-
-								//ADD \r\n
-								query_info += "\r\n";
-							}
+                            if (dataValue.Equals("[PAD]"))
+						    {
+						        query_info += newDelimiter;
+						    }
+						    else
+						    {
+						        // Replace any tab characters with semicolons
+                                query_info += dataValue.Replace(newDelimiter, ';') + newDelimiter;
+						    }
 						}
 
-						//WRITE RECORD LINE TO srInFile
-						swOutFile.Write(query_info);
+					    if (!string.IsNullOrEmpty(query_info))
+					    {
+                            // Final column; remove the trailing tab character								
+                            query_info = query_info.Substring(0, query_info.Length - 1);
 
-						//INCREMENT OUR LINE #
+                            // Append a carriage return
+                            query_info += Environment.NewLine;
+
+                            // Write out the data line
+                            swOutFile.Write(query_info);
+					    }
+					   						
 						line_num++;
 					}
 				}
 			}
 
 		}
-
-		//THIS FUNCTION:
-		//1. LOOPS THROUGH A VALID FILE LIST
-		//2. Calls another function that loads that file and rewrites the \tab as ',' separated.
-		//3. From the filename, determines the correct table to insert into, appends temp
-		//4. Calls our bulk insert function
+	
+        /// <summary>
+        /// Loop through the file list, processing each file
+        /// </summary>
+        /// <param name="FileList"></param>
+        /// <param name="valid_file_tables"></param>
+        /// <param name="dataset"></param>
+        /// <remarks>
+        /// For each file:
+        ///   1. Calls another function that loads that file and rewrites the \tab as ',' separated.
+        ///   2. From the filename, determines the correct table to insert into, appends temp
+        ///   3. Calls our bulk insert function
+        /// </remarks>
 		public void LoadFilesAndInsertIntoDB(List<string> FileList, string[] valid_file_tables, string dataset)
 		{
-			//LOOP THROUGH EACH FILE
+			
 			foreach (var fileName in FileList)
 			{
-				//STORES THE FULL PATH TO FILE + TEMP FILE NAME
-				var file_info = String.Copy(fileName);				//FILENAME WE WANT TO LOAD INTO DB
-				var temp_file = Path.GetTempFileName();	//WRITE TO THIS FILE [TEMP FILE]
-				var query_table = "temp";							//USED AS PREFIX PORTION OF TABLE
+				
+				var file_info = String.Copy(fileName);
 
-				//DETERMINE IF WE HAVE A TABLE TO INSERT INTO DEPENDING ON OUR INPUT FILENAME
+                // Obtain a temp file
+				var temp_file = Path.GetTempFileName();
+
+				var query_table = "temp";
+
+                // Determine if we have a table to insert into depending on our input filename
 				var j = return_file_table_position(file_info, valid_file_tables);
 
-				//IF VALID INSERT TABLE
 				if (j >= 0)
 				{
+                    // Valid table
 
-					//DOES THIS FILE NEED TO BE REFORMATED [VARIABLE COLUMN SUPPORT]
+                    // Does this file need to be reformated [variable column support]
 					if (DFF.handleFile(file_info, dataset))
 					{
-						//YES
+						// Yes
 
-						//REBUILD [SAVE TO DFF.TempFilePath BY DEFAULT]
+						// Rebuild [SAVE TO DFF.TempFilePath BY DEFAULT]
 						//DFF.handleRebuild(FileList[i]);
 
 						//SET FILE_INFO TO OUR REBUILT FILE NOW
@@ -169,7 +193,8 @@ namespace SMAQC
 					//NOT A VALID .TXT FILE FROM OUR LIST!
 					Console.WriteLine("ERROR, unrecognized file " + fileName);
 				}
-				//DELETE TEMP FILE
+
+				// Delete the tempfile
 				File.Delete(temp_file);
 			}
 		}
@@ -328,8 +353,27 @@ namespace SMAQC
 							break;
 						}
 					}
-
 					dctCurrentPeptide.Add("Phosphopeptide", phosphoFlag.ToString());
+
+                    // Check whether this is a peptide from Keratin
+                    byte keratinFlag = 0;
+                    foreach (var protein in objCurrentPSM.Proteins)
+                    {
+                        switch (protein)
+                        {
+                            case "Contaminant_K2C1_HUMAN":
+                            case "Contaminant_K22E_HUMAN":
+                            case "Contaminant_K1C9_HUMAN":
+                            case "Contaminant_K1C10_HUMAN":
+                                keratinFlag = 1;
+                                break;                           
+                        }
+                    }
+                    dctCurrentPeptide.Add("Keratinpeptide", keratinFlag.ToString());
+
+                    // Store the number of missed cleavages
+                    dctCurrentPeptide.Add("MissedCleavages", objCurrentPSM.NumMissedCleavages.ToString());
+                    
 
 					if (intBestPeptideScan < 0 || msgfSpecProb < dblBestPeptideScore)
 					{

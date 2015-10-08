@@ -71,9 +71,6 @@ namespace SMAQC
         bool m_MS2_4_Counts_Cached;
         udtMS2_4Counts m_Cached_MS2_4_Counts;
 
-        // Properties
-        public bool UsingPHRP { get; set; }
-
         /// <summary>
         /// Constructor
         /// </summary>
@@ -83,7 +80,6 @@ namespace SMAQC
         {
             m_Random_ID = random_id;
             m_DBInterface = DBInterface;
-            UsingPHRP = false;
         }
 
         /// <summary>
@@ -161,10 +157,7 @@ namespace SMAQC
 
         protected bool PeptideScorePassesFilter(double peptideScore)
         {
-            if (UsingPHRP && peptideScore <= MSGF_SPECPROB_THRESHOLD)
-                return true;
-
-            if (!UsingPHRP && peptideScore <= XTANDEM_LOG_EVALUE_THRESHOLD)
+            if (peptideScore <= MSGF_SPECPROB_THRESHOLD)
                 return true;
 
             return false;
@@ -196,32 +189,19 @@ namespace SMAQC
         protected string C_1_Shared(bool countTailingPeptides)
         {
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber, t1.OptimalPeakApexScanNumber,"
-                                        + "    temp_scanstats.ScanTime as ScanTime1, t2.ScanTime as ScanTimePeakApex "
-                                        + " FROM temp_PSMs, temp_scanstats, temp_sicstats as t1 "
-                                        + "      INNER JOIN temp_scanstats as t2 on t1.OptimalPeakApexScanNumber=t2.ScanNumber "
-                                        + " WHERE temp_PSMs.Scan = t1.FragScanNumber "
-                                        + "  AND temp_PSMs.Scan = temp_scanstats.ScanNumber "
-                                        + "  AND temp_PSMs.random_id=" + m_Random_ID
-                                        + "  AND temp_scanstats.random_id=" + m_Random_ID
-                                        + "  AND t1.random_id=" + m_Random_ID
-                                        + "  AND t2.random_id=" + m_Random_ID
-                                        + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
-                                        + " ORDER BY Scan;");
-            else
-                m_DBInterface.setQuery("SELECT temp_xt.Scan, t1.FragScanNumber, t1.OptimalPeakApexScanNumber,"
-                                        + "    temp_scanstats.ScanTime as ScanTime1, t2.ScanTime as ScanTimePeakApex "
-                                        + " FROM temp_xt, temp_scanstats, temp_sicstats as t1 "
-                                        + "      INNER JOIN temp_scanstats as t2 on t1.OptimalPeakApexScanNumber=t2.ScanNumber "
-                                        + " WHERE temp_xt.Scan = t1.FragScanNumber "
-                                        + "  AND temp_xt.Scan = temp_scanstats.ScanNumber "
-                                        + "  AND temp_xt.random_id=" + m_Random_ID
-                                        + "  AND temp_scanstats.random_id=" + m_Random_ID
-                                        + "  AND t1.random_id=" + m_Random_ID
-                                        + "  AND t2.random_id=" + m_Random_ID
-                                        + "  AND temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD
-                                        + " ORDER BY Scan;");
+            m_DBInterface.setQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber, t1.OptimalPeakApexScanNumber,"
+                                    + "    temp_scanstats.ScanTime as ScanTime1, t2.ScanTime as ScanTimePeakApex "
+                                    + " FROM temp_PSMs, temp_scanstats, temp_sicstats as t1 "
+                                    + "      INNER JOIN temp_scanstats as t2 on t1.OptimalPeakApexScanNumber=t2.ScanNumber "
+                                    + " WHERE temp_PSMs.Scan = t1.FragScanNumber "
+                                    + "  AND temp_PSMs.Scan = temp_scanstats.ScanNumber "
+                                    + "  AND temp_PSMs.random_id=" + m_Random_ID
+                                    + "  AND temp_scanstats.random_id=" + m_Random_ID
+                                    + "  AND t1.random_id=" + m_Random_ID
+                                    + "  AND t2.random_id=" + m_Random_ID
+                                    + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
+                                    + " ORDER BY Scan;");
+            
 
             var psm_count_late_or_early = 0;
             var psm_count_total = 0;
@@ -266,28 +246,16 @@ namespace SMAQC
         public string C_2A()
         {
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber as ScanNumber,"
-                                        + "    temp_scanstats.ScanTime as ScanTime1 "
-                                        + " FROM temp_PSMs, temp_scanstats, temp_sicstats as t1 "
-                                        + " WHERE temp_PSMs.Scan = t1.FragScanNumber "
-                                        + "  AND temp_PSMs.Scan = temp_scanstats.ScanNumber "
-                                        + "  AND temp_PSMs.random_id=" + m_Random_ID
-                                        + "  AND temp_scanstats.random_id=" + m_Random_ID
-                                        + "  AND t1.random_id=" + m_Random_ID + " "
-                                        + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
-                                        + " ORDER BY Scan;");
-            else
-                m_DBInterface.setQuery("SELECT temp_xt.Scan, t1.FragScanNumber as ScanNumber,"
-                                        + "    temp_scanstats.ScanTime as ScanTime1 "
-                                        + " FROM temp_xt, temp_scanstats, temp_sicstats as t1 "
-                                        + " WHERE temp_xt.Scan = t1.FragScanNumber "
-                                        + "  AND temp_xt.Scan = temp_scanstats.ScanNumber "
-                                        + "  AND temp_xt.random_id=" + m_Random_ID
-                                        + "  AND temp_scanstats.random_id=" + m_Random_ID
-                                        + "  AND t1.random_id=" + m_Random_ID + " "
-                                        + "  AND temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD
-                                        + " ORDER BY Scan;");
+            m_DBInterface.setQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber as ScanNumber,"
+                                    + "    temp_scanstats.ScanTime as ScanTime1 "
+                                    + " FROM temp_PSMs, temp_scanstats, temp_sicstats as t1 "
+                                    + " WHERE temp_PSMs.Scan = t1.FragScanNumber "
+                                    + "  AND temp_PSMs.Scan = temp_scanstats.ScanNumber "
+                                    + "  AND temp_PSMs.random_id=" + m_Random_ID
+                                    + "  AND temp_scanstats.random_id=" + m_Random_ID
+                                    + "  AND t1.random_id=" + m_Random_ID + " "
+                                    + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
+                                    + " ORDER BY Scan;");
 
             // This list stores scan numbers and elution times for filter-passing peptides; duplicate scans are not allowed
             var lstFilterPassingPeptides = new SortedList<int, double>();
@@ -375,28 +343,16 @@ namespace SMAQC
         public string C_2B()
         {
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber as ScanNumber,"
-                                        + "    temp_scanstats.ScanTime as ScanTime1 "
-                                        + " FROM temp_PSMs, temp_scanstats, temp_sicstats as t1 "
-                                        + " WHERE temp_PSMs.Scan = t1.FragScanNumber "
-                                        + "  AND temp_PSMs.Scan = temp_scanstats.ScanNumber "
-                                        + "  AND temp_PSMs.random_id=" + m_Random_ID
-                                        + "  AND temp_scanstats.random_id=" + m_Random_ID
-                                        + "  AND t1.random_id=" + m_Random_ID
-                                        + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
-                                        + " ORDER BY Scan;");
-            else
-                m_DBInterface.setQuery("SELECT temp_xt.Scan, t1.FragScanNumber as ScanNumber,"
-                                        + "    temp_scanstats.ScanTime as ScanTime1 "
-                                        + " FROM temp_xt, temp_scanstats, temp_sicstats as t1 "
-                                        + " WHERE temp_xt.Scan = t1.FragScanNumber "
-                                        + "  AND temp_xt.Scan = temp_scanstats.ScanNumber "
-                                        + "  AND temp_xt.random_id=" + m_Random_ID
-                                        + "  AND temp_scanstats.random_id=" + m_Random_ID
-                                        + "  AND t1.random_id=" + m_Random_ID
-                                        + "  AND temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD
-                                        + " ORDER BY Scan;");
+            m_DBInterface.setQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber as ScanNumber,"
+                                    + "    temp_scanstats.ScanTime as ScanTime1 "
+                                    + " FROM temp_PSMs, temp_scanstats, temp_sicstats as t1 "
+                                    + " WHERE temp_PSMs.Scan = t1.FragScanNumber "
+                                    + "  AND temp_PSMs.Scan = temp_scanstats.ScanNumber "
+                                    + "  AND temp_PSMs.random_id=" + m_Random_ID
+                                    + "  AND temp_scanstats.random_id=" + m_Random_ID
+                                    + "  AND t1.random_id=" + m_Random_ID
+                                    + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
+                                    + " ORDER BY Scan;");
 
             // This list keeps track of the scan numbers already processed so that we can avoid double-counting a scan number
             var lstScansWithFilterPassingIDs = new SortedSet<int>();
@@ -511,14 +467,9 @@ namespace SMAQC
             m_MPWCached_OptimalPeakApexScanNumber = new Dictionary<int, int>();			// Optimal peak apex scan number; keys are FragScanNumbers
             m_MPWCached_ScanTime = new Dictionary<int, double>();						// Scan time for given scan number; keys are scan numbers
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT Scan, Charge, Peptide_Sequence, MSGFSpecProb AS Peptide_Score"
-                                    + " FROM temp_PSMs "
-                                    + " WHERE random_id=" + m_Random_ID);
-            else
-                m_DBInterface.setQuery("SELECT Scan, Charge, Peptide_Sequence, Peptide_Expectation_Value_Log AS Peptide_Score"
-                                    + " FROM temp_xt "
-                                    + " WHERE random_id=" + m_Random_ID);
+            m_DBInterface.setQuery("SELECT Scan, Charge, Peptide_Sequence, MSGFSpecProb AS Peptide_Score"
+                                + " FROM temp_PSMs "
+                                + " WHERE random_id=" + m_Random_ID);
 
             string[] fields1 = { "Scan", "Charge", "Peptide_Sequence", "Peptide_Score" };
 
@@ -755,28 +706,15 @@ namespace SMAQC
         protected void Cache_DS_1_Data()
         {
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT Spectra, Count(*) AS Peptides "
-                                    + " FROM ( SELECT Unique_Seq_ID, COUNT(*) AS Spectra "
-                                    + "        FROM ( SELECT Unique_Seq_ID, Scan "
-                                    + "               FROM temp_PSMs "
-                                    + "               WHERE random_id=" + m_Random_ID
-                                    + "                 AND MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
-                                    + "               GROUP BY Unique_Seq_ID, Scan ) DistinctQ "
-                                    + "        GROUP BY Unique_Seq_ID ) CountQ "
-                                    + " GROUP BY Spectra;");
-            else
-                m_DBInterface.setQuery("SELECT Spectra, Count(*) AS Peptides "
-                                    + " FROM ( SELECT Unique_Seq_ID, COUNT(*) AS Spectra "
-                                    + "        FROM ( SELECT Unique_Seq_ID, Scan "
-                                    + "               FROM temp_xt JOIN temp_xt_resulttoseqmap "
-                                    + "                      ON temp_xt.result_id = temp_xt_resulttoseqmap.result_id "
-                                    + "               WHERE temp_xt.random_id=" + m_Random_ID
-                                    + "                 AND temp_xt_resulttoseqmap.random_id=" + m_Random_ID
-                                    + "                 AND Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD
-                                    + "               GROUP BY Unique_Seq_ID, Scan ) DistinctQ "
-                                    + "        GROUP BY Unique_Seq_ID ) CountQ "
-                                    + " GROUP BY Spectra;");
+            m_DBInterface.setQuery("SELECT Spectra, Count(*) AS Peptides "
+                                + " FROM ( SELECT Unique_Seq_ID, COUNT(*) AS Spectra "
+                                + "        FROM ( SELECT Unique_Seq_ID, Scan "
+                                + "               FROM temp_PSMs "
+                                + "               WHERE random_id=" + m_Random_ID
+                                + "                 AND MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
+                                + "               GROUP BY Unique_Seq_ID, Scan ) DistinctQ "
+                                + "        GROUP BY Unique_Seq_ID ) CountQ "
+                                + " GROUP BY Spectra;");
 
             m_PeptideSamplingStats = new Dictionary<int, int>();
 
@@ -844,16 +782,10 @@ namespace SMAQC
         public string IS_2()
         {
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT Peptide_MH, Charge "
-                                    + " FROM temp_PSMs "
-                                    + " WHERE random_id=" + m_Random_ID
-                                    + "   AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
-            else
-                m_DBInterface.setQuery("SELECT Peptide_MH, Charge "
-                                    + " FROM temp_xt "
-                                    + " WHERE random_id=" + m_Random_ID
-                                    + "   AND temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD);
+            m_DBInterface.setQuery("SELECT Peptide_MH, Charge "
+                                + " FROM temp_PSMs "
+                                + " WHERE random_id=" + m_Random_ID
+                                + "   AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
 
             var MZ_list = new SortedSet<double>();
 
@@ -953,18 +885,11 @@ namespace SMAQC
         protected void Cache_IS3_Data()
         {
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT Charge, COUNT(*) AS PSMs "
-                        + " FROM temp_PSMs "
-                        + " WHERE random_id=" + m_Random_ID
-                        + "   AND MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
-                        + " GROUP BY Charge;");
-            else
-                m_DBInterface.setQuery("SELECT Charge, COUNT(*) AS PSMs "
-                        + " FROM temp_xt "
-                        + " WHERE random_id=" + m_Random_ID
-                        + "   AND Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD
-                        + " GROUP BY Charge;");
+            m_DBInterface.setQuery("SELECT Charge, COUNT(*) AS PSMs "
+                    + " FROM temp_PSMs "
+                    + " WHERE random_id=" + m_Random_ID
+                    + "   AND MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
+                    + " GROUP BY Charge;");
 
             string[] fields = { "Charge", "PSMs" };
 
@@ -1123,22 +1048,13 @@ namespace SMAQC
         protected void Cache_MS1_3_Data()
         {
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT temp_sicstats.PeakMaxIntensity"
-                    + " FROM temp_sicstats, temp_PSMs"
-                    + " WHERE temp_sicstats.FragScanNumber=temp_PSMs.Scan"
-                    + "   AND temp_sicstats.random_id=" + m_Random_ID
-                    + "   AND temp_PSMs.random_id=" + m_Random_ID
-                    + "   AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
-                    + " ORDER BY temp_sicstats.PeakMaxIntensity, temp_PSMs.Result_ID DESC;");
-            else
-                m_DBInterface.setQuery("SELECT temp_sicstats.PeakMaxIntensity"
-                    + " FROM temp_sicstats, temp_xt"
-                    + " WHERE temp_sicstats.FragScanNumber=temp_xt.Scan"
-                    + "   AND temp_sicstats.random_id=" + m_Random_ID
-                    + "   AND temp_xt.random_id=" + m_Random_ID
-                    + "   AND temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD
-                    + " ORDER BY temp_sicstats.PeakMaxIntensity, temp_xt.Result_ID DESC;");
+            m_DBInterface.setQuery("SELECT temp_sicstats.PeakMaxIntensity"
+                + " FROM temp_sicstats, temp_PSMs"
+                + " WHERE temp_sicstats.FragScanNumber=temp_PSMs.Scan"
+                + "   AND temp_sicstats.random_id=" + m_Random_ID
+                + "   AND temp_PSMs.random_id=" + m_Random_ID
+                + "   AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
+                + " ORDER BY temp_sicstats.PeakMaxIntensity, temp_PSMs.Result_ID DESC;");
 
             // This list stores the max peak intensity for 5-95%
             var MPI_list = new List<double>();
@@ -1205,20 +1121,12 @@ namespace SMAQC
         protected void DS_3_CacheData()
         {
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT ParentIonIntensity, PeakMaxIntensity"
-                    + " FROM temp_sicstats, temp_PSMs "
-                    + " WHERE temp_sicstats.FragScanNumber=temp_PSMs.Scan"
-                    + "   AND temp_sicstats.random_id=" + m_Random_ID
-                    + "   AND temp_PSMs.random_id=" + m_Random_ID
-                    + "   AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
-            else
-                m_DBInterface.setQuery("SELECT ParentIonIntensity, PeakMaxIntensity"
-                    + " FROM temp_sicstats, temp_xt "
-                    + " WHERE temp_sicstats.FragScanNumber=temp_xt.Scan"
-                    + "   AND temp_sicstats.random_id=" + m_Random_ID
-                    + "   AND temp_xt.random_id=" + m_Random_ID
-                    + "   AND temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD);
+            m_DBInterface.setQuery("SELECT ParentIonIntensity, PeakMaxIntensity"
+                + " FROM temp_sicstats, temp_PSMs "
+                + " WHERE temp_sicstats.FragScanNumber=temp_PSMs.Scan"
+                + "   AND temp_sicstats.random_id=" + m_Random_ID
+                + "   AND temp_PSMs.random_id=" + m_Random_ID
+                + "   AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
 
             // Ratio of PeakMaxIntensity over ParentIonIntensity
             var lstResult = new List<double>();
@@ -1475,16 +1383,10 @@ namespace SMAQC
         protected void Cache_MS1_5_Data()
         {
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT temp_PSMs.Peptide_MH, temp_PSMs.Charge, temp_sicstats.MZ, temp_PSMs.DelM_Da, temp_PSMs.DelM_PPM"
-                        + " FROM temp_PSMs, temp_sicstats"
-                        + " WHERE temp_sicstats.FragScanNumber=temp_PSMs.Scan AND temp_sicstats.random_id=" + m_Random_ID + " AND temp_PSMs.random_id=" + m_Random_ID
-                        + " AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
-            else
-                m_DBInterface.setQuery("SELECT temp_xt.Peptide_MH, temp_xt.Charge, temp_sicstats.MZ, 0 AS DelM_Da, temp_xt.DelM_PPM "
-                        + " FROM temp_xt, temp_sicstats"
-                        + " WHERE temp_sicstats.FragScanNumber=temp_xt.Scan AND temp_sicstats.random_id=" + m_Random_ID + " AND temp_xt.random_id=" + m_Random_ID
-                        + " AND temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD);
+            m_DBInterface.setQuery("SELECT temp_PSMs.Peptide_MH, temp_PSMs.Charge, temp_sicstats.MZ, temp_PSMs.DelM_Da, temp_PSMs.DelM_PPM"
+                    + " FROM temp_PSMs, temp_sicstats"
+                    + " WHERE temp_sicstats.FragScanNumber=temp_PSMs.Scan AND temp_sicstats.random_id=" + m_Random_ID + " AND temp_PSMs.random_id=" + m_Random_ID
+                    + " AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
 
             const double massC13 = 1.00335483;
 
@@ -1541,16 +1443,10 @@ namespace SMAQC
         public string MS2_1()
         {
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT temp_scanstatsex.Ion_Injection_Time "
-                    + " FROM temp_PSMs, temp_scanstatsex "
-                    + " WHERE temp_PSMs.Scan=temp_scanstatsex.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_scanstatsex.random_id=" + m_Random_ID
-                    + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
-            else
-                m_DBInterface.setQuery("SELECT  temp_scanstatsex.Ion_Injection_Time "
-                    + " FROM temp_xt, temp_scanstatsex "
-                    + " WHERE temp_xt.Scan=temp_scanstatsex.ScanNumber AND temp_xt.random_id=" + m_Random_ID + " AND temp_scanstatsex.random_id=" + m_Random_ID
-                    + "  AND temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD);
+            m_DBInterface.setQuery("SELECT temp_scanstatsex.Ion_Injection_Time "
+                + " FROM temp_PSMs, temp_scanstatsex "
+                + " WHERE temp_PSMs.Scan=temp_scanstatsex.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_scanstatsex.random_id=" + m_Random_ID
+                + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
 
             var FilterList = new List<double>();
 
@@ -1576,17 +1472,10 @@ namespace SMAQC
         public string MS2_2()
         {
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT temp_scanstats.BasePeakSignalToNoiseRatio "
-                    + " FROM temp_PSMs, temp_scanstats "
-                    + " WHERE temp_PSMs.Scan=temp_scanstats.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_scanstats.random_id=" + m_Random_ID
-                    + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
-            else
-                m_DBInterface.setQuery("SELECT temp_scanstats.BasePeakSignalToNoiseRatio "
-                    + " FROM temp_xt, temp_scanstats "
-                    + " WHERE temp_xt.Scan=temp_scanstats.ScanNumber AND temp_xt.random_id=" + m_Random_ID + " AND temp_scanstats.random_id=" + m_Random_ID
-                    + "  AND temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD);
-
+            m_DBInterface.setQuery("SELECT temp_scanstats.BasePeakSignalToNoiseRatio "
+                + " FROM temp_PSMs, temp_scanstats "
+                + " WHERE temp_PSMs.Scan=temp_scanstats.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_scanstats.random_id=" + m_Random_ID
+                + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
 
             var FilterList = new List<double>();
             var FinishedList = new List<double>();
@@ -1623,16 +1512,10 @@ namespace SMAQC
         public string MS2_3()
         {
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT temp_scanstats.IonCountRaw "
-                    + " FROM temp_PSMs, temp_scanstats "
-                    + " WHERE temp_PSMs.Scan=temp_scanstats.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_scanstats.random_id=" + m_Random_ID
-                    + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
-            else
-                m_DBInterface.setQuery("SELECT temp_scanstats.IonCountRaw "
-                    + " FROM temp_xt, temp_scanstats "
-                    + " WHERE temp_xt.Scan=temp_scanstats.ScanNumber AND temp_xt.random_id=" + m_Random_ID + " AND temp_scanstats.random_id=" + m_Random_ID
-                    + "  AND temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD);
+            m_DBInterface.setQuery("SELECT temp_scanstats.IonCountRaw "
+                + " FROM temp_PSMs, temp_scanstats "
+                + " WHERE temp_PSMs.Scan=temp_scanstats.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_scanstats.random_id=" + m_Random_ID
+                + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
 
             var FilterList = new List<double>();
 
@@ -1726,18 +1609,11 @@ namespace SMAQC
         protected void Cache_MS2_4_Data()
         {
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT COUNT(*) as MS2ScanCount "
-                    + " FROM (SELECT DISTINCT temp_PSMs.Scan, temp_sicstats.PeakMaxIntensity "
-                    + "       FROM temp_PSMs, temp_sicstats "
-                    + "       WHERE temp_PSMs.Scan=temp_sicstats.FragScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_sicstats.random_id=" + m_Random_ID
-                    + "      ) LookupQ;");
-            else
-                m_DBInterface.setQuery("SELECT COUNT(*) as MS2ScanCount "
-                    + " FROM (SELECT DISTINCT temp_xt.Scan, temp_sicstats.PeakMaxIntensity "
-                    + "       FROM temp_xt, temp_sicstats "
-                    + "       WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + m_Random_ID + " AND temp_sicstats.random_id=" + m_Random_ID
-                    + "      ) LookupQ;");
+            m_DBInterface.setQuery("SELECT COUNT(*) as MS2ScanCount "
+                + " FROM (SELECT DISTINCT temp_PSMs.Scan, temp_sicstats.PeakMaxIntensity "
+                + "       FROM temp_PSMs, temp_sicstats "
+                + "       WHERE temp_PSMs.Scan=temp_sicstats.FragScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_sicstats.random_id=" + m_Random_ID
+                + "      ) LookupQ;");
 
             string[] fields1 = { "MS2ScanCount" };
 
@@ -1749,18 +1625,11 @@ namespace SMAQC
             // Note that we sort by ascending PeakMaxIntensity
             // Thus, quartile 1 in m_Cached_MS2_4_Counts will have the lowest abundance peptides
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT temp_PSMs.Scan, temp_sicstats.PeakMaxIntensity, Min(temp_PSMs.MSGFSpecProb) AS Peptide_Score "
-                    + " FROM temp_PSMs, temp_sicstats"
-                    + " WHERE temp_PSMs.Scan=temp_sicstats.FragScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_sicstats.random_id=" + m_Random_ID
-                    + " GROUP BY temp_PSMs.Scan, temp_sicstats.PeakMaxIntensity "
-                    + " ORDER BY temp_sicstats.PeakMaxIntensity;");
-            else
-                m_DBInterface.setQuery("SELECT temp_xt.Scan, temp_sicstats.PeakMaxIntensity, Min(temp_xt.Peptide_Expectation_Value_Log) AS Peptide_Score"
-                    + " FROM temp_xt, temp_sicstats"
-                    + " WHERE temp_xt.Scan=temp_sicstats.FragScanNumber AND temp_xt.random_id=" + m_Random_ID + " AND temp_sicstats.random_id=" + m_Random_ID
-                    + " GROUP BY temp_xt.Scan, temp_sicstats.PeakMaxIntensity "
-                    + " ORDER BY temp_sicstats.PeakMaxIntensity;");
+            m_DBInterface.setQuery("SELECT temp_PSMs.Scan, temp_sicstats.PeakMaxIntensity, Min(temp_PSMs.MSGFSpecProb) AS Peptide_Score "
+                + " FROM temp_PSMs, temp_sicstats"
+                + " WHERE temp_PSMs.Scan=temp_sicstats.FragScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_sicstats.random_id=" + m_Random_ID
+                + " GROUP BY temp_PSMs.Scan, temp_sicstats.PeakMaxIntensity "
+                + " ORDER BY temp_sicstats.PeakMaxIntensity;");
 
             // Keys are quartile (1,2,3,4); values are the number of MS/MS scans in the quartile
             m_Cached_MS2_4_Counts.ScanCount = new Dictionary<int, int>();
@@ -1849,18 +1718,11 @@ namespace SMAQC
         public string P_1A()
         {
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT Scan, Max(-Log10(MSGFSpecProb)) AS Peptide_Score"
-                    + " FROM temp_PSMs "
-                    + " WHERE random_id=" + m_Random_ID
-                    + " GROUP BY Scan "
-                    + " ORDER BY Scan;");
-            else
-                m_DBInterface.setQuery("SELECT Scan, Max(Peptide_Hyperscore) AS Peptide_Score"
-                    + " FROM temp_xt "
-                    + " WHERE random_id=" + m_Random_ID
-                    + " GROUP BY Scan "
-                    + " ORDER BY Scan;");
+            m_DBInterface.setQuery("SELECT Scan, Max(-Log10(MSGFSpecProb)) AS Peptide_Score"
+                + " FROM temp_PSMs "
+                + " WHERE random_id=" + m_Random_ID
+                + " GROUP BY Scan "
+                + " ORDER BY Scan;");
 
             // Track X!Tandem Hyperscore or -Log10(MSGFSpecProb)
             var Peptide_score_List = new List<double>();
@@ -1891,18 +1753,11 @@ namespace SMAQC
         public string P_1B()
         {
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT Scan, Min(Log10(MSGFSpecProb)) AS Peptide_Score"
-                    + " FROM temp_PSMs "
-                    + " WHERE random_id=" + m_Random_ID
-                    + " GROUP BY Scan "
-                    + " ORDER BY Scan;");
-            else
-                m_DBInterface.setQuery("SELECT Scan, Min(Peptide_Expectation_Value_Log) AS Peptide_Score"
-                    + " FROM temp_xt "
-                    + " WHERE random_id=" + m_Random_ID
-                    + " GROUP BY Scan "
-                    + " ORDER BY Scan;");
+            m_DBInterface.setQuery("SELECT Scan, Min(Log10(MSGFSpecProb)) AS Peptide_Score"
+                + " FROM temp_PSMs "
+                + " WHERE random_id=" + m_Random_ID
+                + " GROUP BY Scan "
+                + " ORDER BY Scan;");
 
             // Track X!Tandem Peptide_Expectation_Value_Log or Log10(MSGFSpecProb)
             var Peptide_score_List = new List<double>();
@@ -1938,28 +1793,14 @@ namespace SMAQC
         protected string P_2A_Shared(bool phosphoPeptides)
         {
 
-            if (UsingPHRP)
-                m_DBInterface.setQuery("SELECT Cleavage_State, Count(*) AS Spectra "
-                                    + " FROM ( SELECT Scan, Max(Cleavage_State) AS Cleavage_State "
-                                    + "        FROM temp_PSMs "
-                                    + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
-                                    + "          AND random_id=" + m_Random_ID
-                                    + PhosphoFilter(phosphoPeptides)
-                                    + "        GROUP BY Scan ) StatsQ "
-                                    + " GROUP BY Cleavage_State;");
-
-            else
-                m_DBInterface.setQuery("SELECT Cleavage_State, Count(*) AS Spectra "
-                                    + " FROM ( SELECT temp_xt.Scan, Max(temp_xt_seqtoproteinmap.cleavage_state) AS Cleavage_State "
-                                    + "        FROM temp_xt "
-                                    + "             INNER JOIN temp_xt_resulttoseqmap ON temp_xt.result_id = temp_xt_resulttoseqmap.result_id "
-                                    + "             INNER JOIN temp_xt_seqtoproteinmap ON temp_xt_resulttoseqmap.unique_seq_id = temp_xt_seqtoproteinmap.unique_seq_id "
-                                    + "        WHERE temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD
-                                    + "          AND temp_xt.random_id=" + m_Random_ID
-                                    + "          AND temp_xt_resulttoseqmap.random_id=" + m_Random_ID
-                                    + "          AND temp_xt_seqtoproteinmap.random_id=" + m_Random_ID
-                                    + "        GROUP BY temp_xt.Scan ) StatsQ "
-                                    + " GROUP BY Cleavage_State;");
+            m_DBInterface.setQuery("SELECT Cleavage_State, Count(*) AS Spectra "
+                                + " FROM ( SELECT Scan, Max(Cleavage_State) AS Cleavage_State "
+                                + "        FROM temp_PSMs "
+                                + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
+                                + "          AND random_id=" + m_Random_ID
+                                + PhosphoFilter(phosphoPeptides)
+                                + "        GROUP BY Scan ) StatsQ "
+                                + " GROUP BY Cleavage_State;");
 
             var dctPSMStats = new Dictionary<int, int>();
 
@@ -1982,11 +1823,12 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// P_2B: Number of tryptic peptides; unique peptide & charge count
+        /// P_2B: Number of unique tryptic peptides; unique peptide & charge count
         /// </summary>
         /// <returns></returns>
         public string P_2B()
         {
+
             const bool groupByCharge = true;
             var dctPeptideStats = SummarizePSMs(groupByCharge);
 
@@ -1999,7 +1841,7 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// P_2C: Number of tryptic peptides; unique peptide count
+        /// P_2C: Number of unique tryptic peptides; unique peptide count
         /// </summary>
         /// <returns></returns>
         public string P_2C()
@@ -2018,7 +1860,7 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// P_3: Ratio of semi-tryptic / fully tryptic peptides
+        /// P_3: Ratio of unique semi-tryptic / fully tryptic peptides
         /// </summary>
         /// <returns></returns>
         public string P_3()
@@ -2041,6 +1883,67 @@ namespace SMAQC
             double answer = 0;
             if (peptideCountFullyTryptic > 0)
                 answer = peptideCountSemiTryptic / (double)peptideCountFullyTryptic;
+
+            // Round the result
+            return answer.ToString("0.000000");
+        }
+
+        /// <summary>
+        /// P_4A: Ratio of unique fully-tryptic / total unique peptides
+        /// </summary>
+        /// <returns></returns>
+        public string P_4A()
+        {
+
+            var dctPeptideStats = SummarizePSMs(groupByCharge: false);
+
+            int peptideCountFullyTryptic;
+
+            // Lookup the number of fully tryptic peptides (Cleavage_State = 2)
+            if (!dctPeptideStats.TryGetValue(2, out peptideCountFullyTryptic))
+                peptideCountFullyTryptic = 0;
+
+            // Obtain the total unique number of peptides
+            var peptideCountTotal = dctPeptideStats.Values.Sum();
+
+            // Compute the ratio of fully-tryptic / total peptides (unique counts)
+
+            double answer = 0;
+            if (peptideCountTotal > 0)
+                answer = peptideCountFullyTryptic / (double)peptideCountTotal;
+
+            // Round the result
+            return answer.ToString("0.000000");
+        }
+
+        /// <summary>
+        /// P_4B: Ratio of total missed cleavages (among unique peptides) / total unique peptides
+        /// </summary>
+        /// <returns></returns>
+        public string P_4B()
+        {
+
+            m_DBInterface.setQuery("SELECT Count(*) AS Peptides, SUM(MissedCleavages) as TotalMissedCleavages"
+                                   + " FROM ( SELECT Unique_Seq_ID, Max(MissedCleavages) AS MissedCleavages "
+                                   + "        FROM temp_PSMs "
+                                   + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
+                                   + "          AND random_id=" + m_Random_ID
+                                   + " GROUP BY Unique_Seq_ID ) StatsQ");
+
+            string[] fields = { "Peptides", "TotalMissedCleavages" };
+
+            m_DBInterface.initReader();
+
+            m_DBInterface.readSingleLine(fields, ref m_MeasurementResults);
+
+            var uniquePeptides = Convert.ToInt32(m_MeasurementResults["Peptides"]);
+            var totalMissedCleavages = Convert.ToInt32(m_MeasurementResults["TotalMissedCleavages"]);           
+
+            // Compute the ratio of total missed cleavagesc / total unique peptides
+
+            double answer = 0;
+            if (uniquePeptides > 0)
+                answer = totalMissedCleavages / (double)uniquePeptides;
 
             // Round the result
             return answer.ToString("0.000000");
@@ -2073,6 +1976,58 @@ namespace SMAQC
 
         }
 
+        /// <summary>
+        /// Keratin_2A: Number of keratin peptides; total spectra count
+        /// </summary>
+        /// <returns></returns>
+        public string Keratin_2A()
+        {
+            m_DBInterface.setQuery("SELECT Count(*) AS Spectra "
+                                   + " FROM ( SELECT Scan, Max(Cleavage_State) AS Cleavage_State "
+                                   + "        FROM temp_PSMs "
+                                   + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
+                                   + "          AND random_id=" + m_Random_ID
+                                   + "          AND Keratinpeptide = 1"
+                                   + "        GROUP BY Scan ) StatsQ "
+                                   + " WHERE Cleavage_State >= 1");
+                    
+            string[] fields = { "Spectra" };
+
+            m_DBInterface.initReader();
+            m_DBInterface.readSingleLine(fields, ref m_MeasurementResults);
+
+            var keratinCount = Convert.ToInt32(m_MeasurementResults["Spectra"]);
+
+            return keratinCount.ToString("0");
+        }
+
+        /// <summary>
+        /// Keratin_2C: Number of keratin peptides; unique peptide count
+        /// </summary>
+        /// <returns></returns>
+        public string Keratin_2C()
+        {
+
+            m_DBInterface.setQuery("SELECT Count(*) AS Peptides "
+                                   + " FROM ( SELECT Unique_Seq_ID, Max(Cleavage_State) AS Cleavage_State "
+                                   + "        FROM temp_PSMs "
+                                   + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
+                                   + "          AND random_id=" + m_Random_ID
+                                   + "          AND Keratinpeptide = 1"
+                                   + "        GROUP BY Unique_Seq_ID ) StatsQ "
+                                   + " WHERE Cleavage_State >= 1");
+
+            string[] fields = { "Peptides" };
+
+            m_DBInterface.initReader();
+            m_DBInterface.readSingleLine(fields, ref m_MeasurementResults);
+
+            var keratinCount = Convert.ToInt32(m_MeasurementResults["Peptides"]);
+
+            return keratinCount.ToString("0");
+
+        }
+
         protected string PhosphoFilter(bool phosphoPeptides)
         {
             if (phosphoPeptides)
@@ -2092,10 +2047,10 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// Counts the number of fully, partially, and non-tryptic peptides
+        /// Counts the number of unique fully, partially, and non-tryptic peptides
         /// </summary>
         /// <param name="groupByCharge">If true, then counts charges separately</param>
-        /// <param name="phosphoPeptides">If true, then only uses phosphopeptides (only valid if UsingPHRP=True)</param>
+        /// <param name="phosphoPeptides">If true, then only uses phosphopeptides</param>
         /// <returns></returns>
         protected Dictionary<int, int> SummarizePSMs(bool groupByCharge, bool phosphoPeptides)
         {
@@ -2103,40 +2058,17 @@ namespace SMAQC
 
             if (groupByCharge)
             {
-                if (UsingPHRP)
-                    chargeSql = ", Charge ";
-                else
-                    chargeSql = ", temp_xt.Charge ";
+                chargeSql = ", Charge ";
             }
 
-            if (UsingPHRP)
-            {
-                m_DBInterface.setQuery("SELECT Cleavage_State, Count(*) AS Peptides "
-                                    + " FROM ( SELECT Unique_Seq_ID" + chargeSql + ", Max(Cleavage_State) AS Cleavage_State "
-                                    + "        FROM temp_PSMs "
-                                    + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
-                                    + "          AND random_id=" + m_Random_ID
-                                    + PhosphoFilter(phosphoPeptides)
-                                    + " GROUP BY Unique_Seq_ID" + chargeSql + " ) StatsQ "
-                                    + " GROUP BY Cleavage_State;");
-            }
-            else
-            {
-                m_DBInterface.setQuery("SELECT Cleavage_State, Count(*) AS Peptides "
-                                       + " FROM ( SELECT temp_xt_resulttoseqmap.Unique_Seq_ID" + chargeSql +
-                                       ", Max(temp_xt_seqtoproteinmap.cleavage_state) AS Cleavage_State "
-                                       + "        FROM temp_xt "
-                                       +
-                                       "             INNER JOIN temp_xt_resulttoseqmap ON temp_xt.result_id = temp_xt_resulttoseqmap.result_id "
-                                       +
-                                       "             INNER JOIN temp_xt_seqtoproteinmap ON temp_xt_resulttoseqmap.unique_seq_id = temp_xt_seqtoproteinmap.unique_seq_id "
-                                       + "        WHERE temp_xt.Peptide_Expectation_Value_Log <= " + XTANDEM_LOG_EVALUE_THRESHOLD
-                                       + "          AND temp_xt.random_id=" + m_Random_ID
-                                       + "          AND temp_xt_resulttoseqmap.random_id=" + m_Random_ID
-                                       + "          AND temp_xt_seqtoproteinmap.random_id=" + m_Random_ID
-                                       + "        GROUP BY temp_xt_resulttoseqmap.Unique_Seq_ID" + chargeSql + " ) StatsQ "
-                                       + " GROUP BY Cleavage_State;");
-            }
+            m_DBInterface.setQuery("SELECT Cleavage_State, Count(*) AS Peptides "
+                                + " FROM ( SELECT Unique_Seq_ID" + chargeSql + ", Max(Cleavage_State) AS Cleavage_State "
+                                + "        FROM temp_PSMs "
+                                + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
+                                + "          AND random_id=" + m_Random_ID
+                                + PhosphoFilter(phosphoPeptides)
+                                + " GROUP BY Unique_Seq_ID" + chargeSql + " ) StatsQ "
+                                + " GROUP BY Cleavage_State;");
 
             var dctPeptideStats = new Dictionary<int, int>();
 

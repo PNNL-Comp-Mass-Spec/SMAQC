@@ -147,13 +147,13 @@ namespace SMAQC
 			var ListFieldID = new List<int>();                    //Maps observed column index to desired column index in DB (-1 means do not store the given column in the DB)
 
 			//CHECK IF IS VALID FILE
-			int ValidFilesToReFormat_id = is_valid_file_to_reformat(filename, dataset);
+			var ValidFilesToReFormat_id = is_valid_file_to_reformat(filename, dataset);
 
 			//IS THIS A FILE THAT NEEDS RE-FORMATING?
 			if (ValidFilesToReFormat_id >= 0)
 			{
 				//PAD HASH TABLE WITH POINTER TO CORRECT VALUES
-				int numOfColumns = padHashTable(filename, ref ListFieldID, ValidFilesToReFormat_id);
+				var numOfColumns = padHashTable(filename, ref ListFieldID, ValidFilesToReFormat_id);
 
 				// OBTAIN A TEMP FILE PATH
 				mTempFilePath = Path.GetTempFileName();
@@ -174,7 +174,7 @@ namespace SMAQC
 		private void rebuildFile(string filename, string save_to_filename, int numOfColumns, List<int> ListFieldID)
 		{
 			//DECLARE VARIABLES
-			int line_num = 0;
+			var line_num = 0;
 
 			//OPEN FILES USED FOR R/W
 			using (var file_read = new StreamReader(filename))
@@ -186,13 +186,13 @@ namespace SMAQC
 					while ((line = file_read.ReadLine()) != null)
 					{
 						//DECLARE NEW LINE
-						string line_temp = "";
+						var line_temp = "";
 
 						//SPLIT GIVEN DATA FILES BY TAB
 						var delimiters = new[] { '\t' };
 
 						//DO SPLIT OPERATION
-						string[] parts = line.Split(delimiters, StringSplitOptions.None);
+						var parts = line.Split(delimiters, StringSplitOptions.None);
 
 						//IF COLUMN AND DATA MISMATCH
 						if (parts.Length != numOfColumns)
@@ -220,7 +220,7 @@ namespace SMAQC
 						//NOW READING DATA LINES [ASSUMING LINE_NUM > 0]
 
 						//LOOP THROUGH EACH PART
-						for (int i = 0; i < parts.Length; i++)
+						for (var i = 0; i < parts.Length; i++)
 						{
 							//IF NOT AN ALLOWED FIELD IGNORE
 							if (ListFieldID[i] > -1)
@@ -259,7 +259,7 @@ namespace SMAQC
 			//OPEN + READ
 			using (var file = new StreamReader(file_to_load))
 			{
-				string line = file.ReadLine();
+				var line = file.ReadLine();
 
 				if (string.IsNullOrWhiteSpace(line))
 					return 0;
@@ -268,7 +268,7 @@ namespace SMAQC
 				var delimiters = new[] {'\t'};
 
 				//DO SPLIT OPERATION
-				string[] parts = line.Split(delimiters, StringSplitOptions.None);
+				var parts = line.Split(delimiters, StringSplitOptions.None);
 
 				//CLEAN FIELDS TO ENSURE CONSISTENCY
 				parts = FieldCleaner(parts);
@@ -277,10 +277,10 @@ namespace SMAQC
 				numOfcolumns = parts.Length;
 
 				//LOOP THROUGH EACH COLUMN
-				foreach (string column in parts)
+				foreach (var column in parts)
 				{
 					//SEARCH FOR COLUMN NAME THAT IS FOUND IN OUR FILE LINE
-					int index = findIndexOfColumnName(ValidFilesToReFormat_id, column);
+					var index = findIndexOfColumnName(ValidFilesToReFormat_id, column);
 
 					//IF FOUND [NOT -1]
 					if (index != -1)
@@ -306,9 +306,9 @@ namespace SMAQC
 		private int findIndexOfColumnName(int ValidFilesToReFormat_id, string name)
 		{
 			//GET BOUND OF SECOND DIM
-			int bound = FieldList.GetLength(1);
+			var bound = FieldList.GetLength(1);
 
-			for (int i = 0; i < bound; i++)
+			for (var i = 0; i < bound; i++)
 			{
 				//CHECK TO ENSURE THAT WE ARE NOT NULL
 				if (FieldList[ValidFilesToReFormat_id, i] == null)
@@ -347,7 +347,7 @@ namespace SMAQC
 			filename = filename.Substring(dataset.Length + 1);                  //RETURNS ScanStats, ScanStatsEx, ...
 
 			//LOOP THROUGH ALL VALID FILES THAT WE REFORMAT
-			for (int i = 0; i < ValidFilesToReFormat.Count; i++)
+			for (var i = 0; i < ValidFilesToReFormat.Count; i++)
 			{
 				//IF FOUND A MATCH
 				if (filename.Equals(ValidFilesToReFormat[i], StringComparison.OrdinalIgnoreCase))
@@ -363,22 +363,22 @@ namespace SMAQC
 		private string[,] FieldCleaner2d(string[,] field_array)
 		{
 			//DECLARE VARIABLES
-			int dim1 = field_array.GetLength(0); //[x][]
-			int dim2 = field_array.GetLength(1); //[][x]
+			var dim1 = field_array.GetLength(0); //[x][]
+			var dim2 = field_array.GetLength(1); //[][x]
 
 			//LOOP THROUGH FIRST DIMENSION
-			for (int j = 0; j < dim1; j++)
+			for (var j = 0; j < dim1; j++)
 			{
 				//LOOP THROUGH SECOND DIMENSION [STORES ALL FIELDS]
-				for (int i = 0; i < dim2; i++)
+				for (var i = 0; i < dim2; i++)
 				{
 					//IF NULL SKIP
 					if (field_array[j, i] == null)
 						continue;
 
 					//STEP #1 REMOVE (...)
-					int first_index = field_array[j, i].IndexOf(" (");
-					int last_index = field_array[j, i].IndexOf(")");
+					var first_index = field_array[j, i].IndexOf(" (");
+					var last_index = field_array[j, i].IndexOf(")");
 
 					//IF THERE IS A (...)
 					if (first_index > 0 && last_index > 0)
@@ -403,11 +403,11 @@ namespace SMAQC
 			//DECLARE VARIABLES
 
 			//LOOP THROUGH EACH FIELD
-			for (int i = 0; i < field_array.Length; i++)
+			for (var i = 0; i < field_array.Length; i++)
 			{
 				//STEP #1 REMOVE (...)
-				int first_index = field_array[i].IndexOf(" (");
-				int last_index = field_array[i].IndexOf(")");
+				var first_index = field_array[i].IndexOf(" (");
+				var last_index = field_array[i].IndexOf(")");
 
 				//IF THERE IS A (...)
 				if (first_index > 0 && last_index > first_index)
@@ -428,7 +428,7 @@ namespace SMAQC
 		//THIS FUNCTION RETURNS WHETHER OR NOT WE ARE CURRENTLY WORKING WITH _SCANSTATSEX.TXT
 		public Boolean ScanStatsExBugFixer(string file_to_load)
 		{
-			int value = file_to_load.IndexOf("_ScanStatsEx.txt", StringComparison.OrdinalIgnoreCase);
+			var value = file_to_load.IndexOf("_ScanStatsEx.txt", StringComparison.OrdinalIgnoreCase);
 
 			//IF FOUND RETURN TRUE
 			if (value >= 0)

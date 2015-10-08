@@ -1,129 +1,191 @@
-﻿using System.Data.SQLite;
+﻿using System.Collections.Generic;
+using System.Data.SQLite;
 
 namespace SMAQC
 {
     class DBSQLiteTools
     {
-        //DECLARE VARIABLES
+
         private SQLiteConnection conn;                                                  //SQLITE CONNECTION
 
-        //CREATE TABLES
-        public void create_tables(string datasource)
+        /// <summary>
+        /// Create the database tables
+        /// </summary>
+        /// <param name="datasource"></param>
+        public void CreateTables(string datasource)
         {
             using (conn = new SQLiteConnection("Data Source=" + datasource, true))
             {
-                //RUN CREATE CMD
+
                 using (var cmd = conn.CreateCommand())
                 {
-                    //OPEN DB
+
                     conn.Open();
 
-					// SMAQC results
+                    // SMAQC results
                     cmd.CommandText = GetTableCreateSql("scan_results");
                     cmd.ExecuteNonQuery();
 
-					// MASIC ScanStats
-					cmd.CommandText =GetTableCreateSql("temp_scanstats");
+                    // MASIC ScanStats
+                    cmd.CommandText = GetTableCreateSql("temp_scanstats");
                     cmd.ExecuteNonQuery();
 
-					// MASIC ScanStatsEx
-                    cmd.CommandText =GetTableCreateSql("temp_scanstatsex");
+                    // MASIC ScanStatsEx
+                    cmd.CommandText = GetTableCreateSql("temp_scanstatsex");
                     cmd.ExecuteNonQuery();
 
-					// MASIC SICStats
-                    cmd.CommandText =GetTableCreateSql("temp_sicstats");
+                    // MASIC SICStats
+                    cmd.CommandText = GetTableCreateSql("temp_sicstats");
                     cmd.ExecuteNonQuery();
 
                     // X!Tandem results
-                    cmd.CommandText =GetTableCreateSql("temp_xt");
+                    cmd.CommandText = GetTableCreateSql("temp_xt");
                     cmd.ExecuteNonQuery();
 
                     // ResultToSeqMap
-                    cmd.CommandText =GetTableCreateSql("temp_xt_resulttoseqmap");
+                    cmd.CommandText = GetTableCreateSql("temp_xt_resulttoseqmap");
                     cmd.ExecuteNonQuery();
 
                     // SeqToProteinMap
-					cmd.CommandText = GetTableCreateSql("temp_xt_seqtoproteinmap");
+                    cmd.CommandText = GetTableCreateSql("temp_xt_seqtoproteinmap");
                     cmd.ExecuteNonQuery();
 
-					// PSMs returned by PHRPReader
-					cmd.CommandText = GetTableCreateSql("temp_PSMs");
-					cmd.ExecuteNonQuery();				
+                    // PSMs returned by PHRPReader
+                    cmd.CommandText = GetTableCreateSql("temp_PSMs");
+                    cmd.ExecuteNonQuery();
 
-					// CREATE INDICES ON THE TABLES
-					CreateIndices(cmd);
+                    // CREATE INDICES ON THE TABLES
+                    CreateIndices(cmd);
 
-                    //CLOSE DB
                     conn.Close();
                 }
             }
         }
 
-		protected void CreateIndices(SQLiteCommand cmd)
-		{
-			CreateIndicesMasic(cmd);
-			CreateIndicesXTandem(cmd);
-			CreateIndicesPHRP(cmd);
-		}
+        protected void CreateIndices(SQLiteCommand cmd)
+        {
+            CreateIndicesMasic(cmd);
+            CreateIndicesXTandem(cmd);
+            CreateIndicesPHRP(cmd);
+        }
 
-		protected void CreateIndicesMasic(SQLiteCommand cmd)
-		{
-			RunSql(cmd, "CREATE UNIQUE INDEX pk_temp_ScanStats on temp_scanstats(random_id, ScanNumber)");
-			RunSql(cmd, "CREATE UNIQUE INDEX pk_temp_ScanStatsEx on temp_scanstatsex(random_id, ScanNumber)");
-			RunSql(cmd, "CREATE UNIQUE INDEX pk_temp_SicStats on temp_sicstats(random_id, ParentIonIndex, FragScanNumber)");
+        protected void CreateIndicesMasic(SQLiteCommand cmd)
+        {
+            RunSql(cmd, "CREATE UNIQUE INDEX pk_temp_ScanStats on temp_scanstats(random_id, ScanNumber)");
+            RunSql(cmd, "CREATE UNIQUE INDEX pk_temp_ScanStatsEx on temp_scanstatsex(random_id, ScanNumber)");
+            RunSql(cmd, "CREATE UNIQUE INDEX pk_temp_SicStats on temp_sicstats(random_id, ParentIonIndex, FragScanNumber)");
 
-			RunSql(cmd, "CREATE INDEX IX_temp_ScanStats on temp_scanstats(ScanNumber)");
+            RunSql(cmd, "CREATE INDEX IX_temp_ScanStats on temp_scanstats(ScanNumber)");
 
-			RunSql(cmd, "CREATE INDEX IX_temp_ScanStatsEx on temp_scanstatsex(ScanNumber)");
+            RunSql(cmd, "CREATE INDEX IX_temp_ScanStatsEx on temp_scanstatsex(ScanNumber)");
 
-			RunSql(cmd, "CREATE INDEX IX_temp_SicStats on temp_sicstats(ParentIonIndex)");
-			RunSql(cmd, "CREATE INDEX IX_temp_SicStats_FragScan on temp_sicstats(FragScanNumber)");
-			RunSql(cmd, "CREATE INDEX IX_temp_SicStats_PeakApexScan on temp_sicstats(OptimalPeakApexScanNumber)");
-		}
+            RunSql(cmd, "CREATE INDEX IX_temp_SicStats on temp_sicstats(ParentIonIndex)");
+            RunSql(cmd, "CREATE INDEX IX_temp_SicStats_FragScan on temp_sicstats(FragScanNumber)");
+            RunSql(cmd, "CREATE INDEX IX_temp_SicStats_PeakApexScan on temp_sicstats(OptimalPeakApexScanNumber)");
+        }
 
-		protected void CreateIndicesXTandem(SQLiteCommand cmd)
-		{
-			RunSql(cmd, "CREATE INDEX ix_temp_xt_Scan on temp_xt(Scan)");
-			RunSql(cmd, "CREATE INDEX ix_temp_xt_LogEValue on temp_xt(Peptide_Expectation_Value_Log)");
+        protected void CreateIndicesXTandem(SQLiteCommand cmd)
+        {
+            RunSql(cmd, "CREATE INDEX ix_temp_xt_Scan on temp_xt(Scan)");
+            RunSql(cmd, "CREATE INDEX ix_temp_xt_LogEValue on temp_xt(Peptide_Expectation_Value_Log)");
 
-			RunSql(cmd, "CREATE INDEX ix_temp_xt_resulttoseqmap_ResultID on temp_xt_resulttoseqmap(Result_ID)");
-			RunSql(cmd, "CREATE INDEX ix_temp_xt_resulttoseqmap_SeqID on temp_xt_resulttoseqmap(Unique_Seq_ID)");
+            RunSql(cmd, "CREATE INDEX ix_temp_xt_resulttoseqmap_ResultID on temp_xt_resulttoseqmap(Result_ID)");
+            RunSql(cmd, "CREATE INDEX ix_temp_xt_resulttoseqmap_SeqID on temp_xt_resulttoseqmap(Unique_Seq_ID)");
 
-			RunSql(cmd, "CREATE INDEX ix_temp_xt_seqtoproteinmap_SeqID on temp_xt_seqtoproteinmap(Unique_Seq_ID)");
-		}
+            RunSql(cmd, "CREATE INDEX ix_temp_xt_seqtoproteinmap_SeqID on temp_xt_seqtoproteinmap(Unique_Seq_ID)");
+        }
 
-		protected void CreateIndicesPHRP(SQLiteCommand cmd)
-		{
-			RunSql(cmd, "CREATE INDEX ix_temp_PSMs_Scan on temp_PSMs(Scan)");
-			RunSql(cmd, "CREATE INDEX ix_temp_PSMs_LogEValue on temp_PSMs(MSGFSpecProb)");
+        protected void CreateIndicesPHRP(SQLiteCommand cmd)
+        {
+            RunSql(cmd, "CREATE INDEX ix_temp_PSMs_Scan on temp_PSMs(Scan)");
+            RunSql(cmd, "CREATE INDEX ix_temp_PSMs_LogEValue on temp_PSMs(MSGFSpecProb)");
 
-		}
+        }
 
-		public void create_missing_tables(SQLiteConnection connection)
-		{
-			using (SQLiteCommand cmd = connection.CreateCommand())
-			{
-				if (!TableExists(connection, "temp_PSMs"))
-				{
-					// PSMs returned by PHRPReader
-					cmd.CommandText = GetTableCreateSql("temp_PSMs");
-					cmd.ExecuteNonQuery();
+        public void create_missing_tables(SQLiteConnection connection)
+        {
+            using (var cmd = connection.CreateCommand())
+            {
+                if (!TableExists(connection, "temp_PSMs"))
+                {
+                    // PSMs returned by PHRPReader
+                    cmd.CommandText = GetTableCreateSql("temp_PSMs");
+                    cmd.ExecuteNonQuery();
 
-					CreateIndicesPHRP(cmd);
-				}
-			}
+                    CreateIndicesPHRP(cmd);
+                }
 
-		
-		}
-	
-		protected string GetTableCreateSql(string tableName)
-		{
-			string sql = string.Empty;
+                if (!TableHasColumn(connection, "temp_PSMs", "Keratinpeptide"))
+                {
+                    var columnsToAdd = new List<string>
+                    {
+                        "Keratinpeptide",
+                        "MissedCleavages"
+                    };
 
-			switch (tableName)
-			{
-				case "scan_results":
-					sql = "CREATE TABLE [scan_results] ("
+                    AddColumnsToTable(connection, "temp_PSMs", columnsToAdd);
+                }
+
+
+                if (!TableHasColumn(connection, "scan_results", "Phos_2A"))
+                {
+                    var columnsToAdd = new List<string>
+                    {
+                        "Phos_2A",
+                        "Phos_2C"
+                    };
+
+                    AddColumnsToTable(connection, "scan_results", columnsToAdd);
+                }
+
+                if (!TableHasColumn(connection, "scan_results", "Keratin_2A"))
+                {
+                    var columnsToAdd = new List<string>
+                    {
+                        "Keratin_2A",
+                        "Keratin_2C",
+                        "P_4A",
+                        "P_4B"
+                    };
+
+                    AddColumnsToTable(connection, "scan_results", columnsToAdd);
+                }
+
+            } // End Using
+
+
+        }
+
+        private void AddColumnsToTable(SQLiteConnection dbConnection, string tableName, List<string> columnsToAdd, string columnType = "VARCHAR(25)", bool isNullable = true)
+        {
+            foreach (var columnName in columnsToAdd)
+            {
+                var sqlCommand = "ALTER TABLE '" + tableName + "' ADD COLUMN '" + columnName + "' " + columnType;
+
+                if (isNullable)
+                    sqlCommand += " NULL;";
+                else
+                    sqlCommand += " NOT NULL;";
+
+                using (
+                    var cmd = new SQLiteCommand(dbConnection)
+                    {
+                        CommandText = sqlCommand
+                    })
+                {
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        protected string GetTableCreateSql(string tableName)
+        {
+            var sql = string.Empty;
+
+            switch (tableName)
+            {
+                case "scan_results":
+                    sql = "CREATE TABLE [scan_results] ("
                         + "[result_id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
                         + "[scan_id] INTEGER NOT NULL,"
                         + "[instrument_id] VARCHAR(255) NOT NULL,"
@@ -172,13 +234,17 @@ namespace SMAQC
                         + "[P_2B] VARCHAR(25)  NULL,"
                         + "[P_2C] VARCHAR(25)  NULL,"
                         + "[P_3] VARCHAR(25)  NULL,"
-						+ "[Phos_2A] VARCHAR(25)  NULL,"
-						+ "[Phos_2C] VARCHAR(25)  NULL"
+                        + "[Phos_2A] VARCHAR(25)  NULL,"
+                        + "[Phos_2C] VARCHAR(25)  NULL"
+                        + "[Keratin_2A] VARCHAR(25)  NULL,"
+                        + "[Keratin_2C] VARCHAR(25)  NULL,"
+                        + "[P_4A] VARCHAR(25)  NULL,"
+                        + "[P_4B] VARCHAR(25)  NULL"
                         + ")";
-					break;
+                    break;
 
-				case "temp_scanstats":
-					sql = "CREATE TABLE [temp_scanstats] ("
+                case "temp_scanstats":
+                    sql = "CREATE TABLE [temp_scanstats] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Dataset] INTEGER NOT NULL,"
@@ -193,10 +259,10 @@ namespace SMAQC
                         + "[IonCountRaw] INTEGER NULL,"
                         + "[ScanTypeName] VARCHAR NULL"
                         + ")";
-					break;
+                    break;
 
-				case "temp_scanstatsex":
-					sql = "CREATE TABLE [temp_scanstatsex] ("
+                case "temp_scanstatsex":
+                    sql = "CREATE TABLE [temp_scanstatsex] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Dataset] INTEGER NOT NULL,"
@@ -221,10 +287,10 @@ namespace SMAQC
                         + "[Source_Voltage] FLOAT NULL,"
                         + "[Source_Current] FLOAT NULL"
                         + ")";
-					break;
+                    break;
 
-				case "temp_sicstats":
-					sql = "CREATE TABLE [temp_sicstats] ("
+                case "temp_sicstats":
+                    sql = "CREATE TABLE [temp_sicstats] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Dataset] INTEGER NOT NULL,"
@@ -253,10 +319,10 @@ namespace SMAQC
                         + "[PeakKSStat] FLOAT NOT NULL," //CHANGED FROM FLOAT TO VARCHAR() IN MYSQL
                         + "[StatMomentsDataCountUsed] INTEGER NOT NULL"
                         + ")";
-					break;
+                    break;
 
-				case "temp_xt":
-					sql = "CREATE TABLE [temp_xt] ("
+                case "temp_xt":
+                    sql = "CREATE TABLE [temp_xt] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Result_ID] INTEGER NOT NULL,"
@@ -274,22 +340,22 @@ namespace SMAQC
                         + "[b_score] FLOAT NOT NULL,"
                         + "[b_ions] FLOAT NOT NULL,"
                         + "[Delta_Mass] FLOAT NOT NULL,"
-                        + "[Peptide_Intensity_Log] FLOAT NOT NULL,"						
+                        + "[Peptide_Intensity_Log] FLOAT NOT NULL,"
                         + "[DelM_PPM] FLOAT NULL"
                         + ")";
-					break;
+                    break;
 
-				case "temp_xt_resulttoseqmap":
-					sql = "CREATE TABLE [temp_xt_resulttoseqmap] ("
+                case "temp_xt_resulttoseqmap":
+                    sql = "CREATE TABLE [temp_xt_resulttoseqmap] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Result_ID] INTEGER NOT NULL,"
                         + "[Unique_Seq_ID] INTEGER NOT NULL"
                         + ")";
-					break;
+                    break;
 
-				case "temp_xt_seqtoproteinmap":
-					sql = "CREATE TABLE [temp_xt_seqtoproteinmap] ("
+                case "temp_xt_seqtoproteinmap":
+                    sql = "CREATE TABLE [temp_xt_seqtoproteinmap] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Unique_Seq_ID] INTEGER NOT NULL,"
@@ -299,57 +365,77 @@ namespace SMAQC
                         + "[Protein_Expectation_Value_Log] FLOAT NOT NULL,"
                         + "[Protein_Intensity_Log] FLOAT NOT NULL"
                         + ")";
-					break;
+                    break;
 
-				case "temp_PSMs":
-					sql = "CREATE TABLE [temp_PSMs] ("
-						+ "[instrument_id] INTEGER NOT NULL,"
-						+ "[random_id] INTEGER NOT NULL,"
-						+ "[Result_ID] INTEGER NOT NULL,"
-						+ "[Scan] INTEGER NOT NULL,"
-						+ "[CollisionMode] varchar(64) NULL,"
-						+ "[Charge] INTEGER NOT NULL,"
-						+ "[Peptide_MH] FLOAT NOT NULL,"
-						+ "[Peptide_Sequence] varchar(124) NOT NULL,"
-						+ "[DelM_Da] FLOAT NULL,"
-						+ "[DelM_PPM] FLOAT NULL,"
-						+ "[MSGFSpecProb] FLOAT NULL, "
-						+ "[Unique_Seq_ID] INTEGER NOT NULL,"
-						+ "[Cleavage_State] INTEGER NOT NULL,"
-						+ "[Phosphopeptide] INTEGER NOT NULL"
-						+ ")";
-					break;
+                case "temp_PSMs":
+                    sql = "CREATE TABLE [temp_PSMs] ("
+                        + "[instrument_id] INTEGER NOT NULL,"
+                        + "[random_id] INTEGER NOT NULL,"
+                        + "[Result_ID] INTEGER NOT NULL,"
+                        + "[Scan] INTEGER NOT NULL,"
+                        + "[CollisionMode] varchar(64) NULL,"
+                        + "[Charge] INTEGER NOT NULL,"
+                        + "[Peptide_MH] FLOAT NOT NULL,"
+                        + "[Peptide_Sequence] varchar(124) NOT NULL,"
+                        + "[DelM_Da] FLOAT NULL,"
+                        + "[DelM_PPM] FLOAT NULL,"
+                        + "[MSGFSpecProb] FLOAT NULL, "
+                        + "[Unique_Seq_ID] INTEGER NOT NULL,"
+                        + "[Cleavage_State] INTEGER NOT NULL,"
+                        + "[Phosphopeptide] INTEGER NOT NULL,"
+                        + "[Keratinpeptide] INTEGER NOT NULL,"
+                        + "[MissedCleavages] INTEGER NOT NULL"
+                        + ")";
+                    break;
 
-			}
+            }
 
-			return sql;
+            return sql;
 
-		}
+        }
 
-		public static bool TableExists(SQLiteConnection conn, string tableName)
-		{
-			using (SQLiteCommand cmd = conn.CreateCommand())
-			{
-				cmd.CommandText = "SELECT COUNT(*) AS Tables FROM sqlite_master where type = 'table' and name = '" + tableName + "'";
-				
-				using (SQLiteDataReader reader = cmd.ExecuteReader())
-				{
-					if (reader.Read() && reader.GetInt32(0) > 0)
-					{
-						return true;
-					}
-				}
-		
-			}
+        public static bool TableExists(SQLiteConnection conn, string tableName)
+        {
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT COUNT(*) AS Tables FROM sqlite_master where type = 'table' and name = '" + tableName + "'";
 
-			return false;
-			
-		}
+                using (var reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read() && reader.GetInt32(0) > 0)
+                    {
+                        return true;
+                    }
+                }
 
-		protected void RunSql(SQLiteCommand cmd, string sql)
-		{
-			cmd.CommandText = sql;
-			cmd.ExecuteNonQuery();
-		}
+            }
+
+            return false;
+        }
+
+        public static bool TableHasColumn(SQLiteConnection conn, string tableName, string columnName)
+        {
+            bool hasColumn;
+
+            using (
+                var cmd = new SQLiteCommand(conn)
+                {
+                    CommandText = "Select * From '" + tableName + "' Limit 1;"
+                })
+            {
+                using (var reader = cmd.ExecuteReader())
+                {
+                    hasColumn = reader.GetOrdinal(columnName) >= 0;
+                }
+            }
+
+            return hasColumn;
+        }
+
+        protected void RunSql(SQLiteCommand cmd, string sql)
+        {
+            cmd.CommandText = sql;
+            cmd.ExecuteNonQuery();
+        }
     }
 }
