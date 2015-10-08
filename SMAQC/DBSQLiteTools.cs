@@ -235,7 +235,7 @@ namespace SMAQC
                         + "[P_2C] VARCHAR(25)  NULL,"
                         + "[P_3] VARCHAR(25)  NULL,"
                         + "[Phos_2A] VARCHAR(25)  NULL,"
-                        + "[Phos_2C] VARCHAR(25)  NULL"
+                        + "[Phos_2C] VARCHAR(25)  NULL,"
                         + "[Keratin_2A] VARCHAR(25)  NULL,"
                         + "[Keratin_2C] VARCHAR(25)  NULL,"
                         + "[P_4A] VARCHAR(25)  NULL,"
