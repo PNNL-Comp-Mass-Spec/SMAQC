@@ -373,7 +373,29 @@ namespace SMAQC
 
                     // Store the number of missed cleavages
                     dctCurrentPeptide.Add("MissedCleavages", objCurrentPSM.NumMissedCleavages.ToString());
-                    
+
+                    // Check whether this is a peptide from Trypsin
+                    byte trypsinFlag = 0;
+                    foreach (var protein in objCurrentPSM.Proteins)
+                    {
+                        if (protein.StartsWith("Contaminant_Trypa"))
+                        {
+                            trypsinFlag = 1;
+                            continue;
+                        }
+
+                        switch (protein)
+                        {
+                            case "Contaminant_TRYP_PIG":
+                            case "Contaminant_TRYP_BOVIN":
+                            case "Contaminant_CTRA_BOVIN":
+                            case "Contaminant_CTRB_BOVIN":
+                                trypsinFlag = 1;
+                                break;
+                        }
+
+                    }
+                    dctCurrentPeptide.Add("Trypsinpeptide", trypsinFlag.ToString());
 
 					if (intBestPeptideScan < 0 || msgfSpecProb < dblBestPeptideScore)
 					{

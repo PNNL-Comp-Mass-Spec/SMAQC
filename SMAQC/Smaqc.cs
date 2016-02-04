@@ -51,7 +51,7 @@ namespace SMAQC
         // Measurement results
 		public static Dictionary<string, string> m_Results = new Dictionary<string, string>();
 
-		private const string SMAQC_BUILD_DATE = "October 7, 2015";
+		private const string SMAQC_BUILD_DATE = "February 4, 2016";
 
 		// Define the filename suffixes
 		private static readonly string[] m_MasicFileNames = { "_scanstats", "_scanstatsex", "_sicstats" };
@@ -64,7 +64,7 @@ namespace SMAQC
                                   "MS1_2A", "MS1_2B", "MS1_3A", "MS1_3B", "MS1_5A", "MS1_5B", "MS1_5C", 
                                   "MS1_5D", "MS2_1", "MS2_2", "MS2_3", "MS2_4A", "MS2_4B", "MS2_4C", "MS2_4D", "P_1A", 
                                   "P_1B", "P_2A", "P_2B", "P_2C", "P_3", "Phos_2A", "Phos_2C", 
-                                  "Keratin_2A", "Keratin_2C", "P_4A", "P_4B" };
+                                  "Keratin_2A", "Keratin_2C", "P_4A", "P_4B", "Trypsin_2A", "Trypsin_2C" };
 
 		static int Main(string[] args)
 		{

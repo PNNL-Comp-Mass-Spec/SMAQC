@@ -126,6 +126,16 @@ namespace SMAQC
                     AddColumnsToTable(connection, "temp_PSMs", columnsToAdd);
                 }
 
+                if (!TableHasColumn(connection, "temp_PSMs", "Trypsinpeptide"))
+                {
+                    var columnsToAdd = new List<string>
+                    {
+                        "Trypsinpeptide"
+                    };
+
+                    AddColumnsToTable(connection, "temp_PSMs", columnsToAdd);
+                }
+
 
                 if (!TableHasColumn(connection, "scan_results", "Phos_2A"))
                 {
@@ -146,6 +156,17 @@ namespace SMAQC
                         "Keratin_2C",
                         "P_4A",
                         "P_4B"
+                    };
+
+                    AddColumnsToTable(connection, "scan_results", columnsToAdd);
+                }
+
+                if (!TableHasColumn(connection, "scan_results", "Trypsin_2A"))
+                {
+                    var columnsToAdd = new List<string>
+                    {
+                        "Trypsin_2A",
+                        "Trypsin_2C"
                     };
 
                     AddColumnsToTable(connection, "scan_results", columnsToAdd);
@@ -239,7 +260,9 @@ namespace SMAQC
                         + "[Keratin_2A] VARCHAR(25)  NULL,"
                         + "[Keratin_2C] VARCHAR(25)  NULL,"
                         + "[P_4A] VARCHAR(25)  NULL,"
-                        + "[P_4B] VARCHAR(25)  NULL"
+                        + "[P_4B] VARCHAR(25)  NULL,"
+                        + "[Trypsin_2A] VARCHAR(25)  NULL,"
+                        + "[Trypsin_2C] VARCHAR(25)  NULL"
                         + ")";
                     break;
 
@@ -384,7 +407,8 @@ namespace SMAQC
                         + "[Cleavage_State] INTEGER NOT NULL,"
                         + "[Phosphopeptide] INTEGER NOT NULL,"
                         + "[Keratinpeptide] INTEGER NOT NULL,"
-                        + "[MissedCleavages] INTEGER NOT NULL"
+                        + "[MissedCleavages] INTEGER NOT NULL,"
+                        + "[Trypsinpeptide] INTEGER NOT NULL"
                         + ")";
                     break;
 

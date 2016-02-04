@@ -1,35 +1,40 @@
 SMAQC Change Log
 
-Version 1.1.5758; October 7, 2015
+Version 1.2.5878; February 4, 2016
+	- Added 2 new metrics
+		- Trypsin_2A: Total PSMs from trypsin
+		- Trypsin_2C: Unique peptides from trypsin
+
+Version 1.2.5758; October 7, 2015
 	- Added 4 new metrics
-		- Keratin_2A: Total keratin peptides
+		- Keratin_2A: Total keratin PSMs
 		- Keratin_2C: Unique keratin peptides
 		- P_4A: Fraction fully-Tryptic
 		- P_4B: Missed cleavage rate
 
-Version 1.1.5686; July 24, 2015
+Version 1.2.5686; July 24, 2015
 	- When finding PSMs and unique peptide counts, now ignoring the position of modifications in peptides (though order still matters)
 		- For example, PEPT*IDES and PEPTIDES* are treated as the same peptide
 	- New PHRPReader that supports MSPathFinder results
 	- Update to System.Data.SQLite.dll v1.0.93
 	- Now compiling as AnyCPU
 
-Version 1.1.5122; January 9, 2014
+Version 1.2.5122; January 9, 2014
 	- Now showing the MSGF_SpecProb filter threshold in the program syntax
 
-Version 1.1.5121; January 8, 2014
+Version 1.2.5121; January 8, 2014
 	- Added metrics Phos_2A and Phos_2C
 
-Version 1.1.4930; July 1, 2013
+Version 1.2.4930; July 1, 2013
 	- Bug fix for MS1_5B
 
-Version 1.1.4927; June 28, 2013
+Version 1.2.4927; June 28, 2013
 	- Only retaining the best scoring peptide for each scan/charge combo
 
-Version 1.1.4925; June 26, 2013
+Version 1.2.4925; June 26, 2013
 	- Optimized SQL statements
 
-Version 1.1.4912; June 13, 2013
+Version 1.2.4912; June 13, 2013
 	- Now uses PHRPReader to load PSM Results
 
 Version 1.1.4885; May 17, 2013

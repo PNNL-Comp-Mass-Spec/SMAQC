@@ -292,7 +292,8 @@ namespace SMAQC
 				"Cleavage_State",
 				"Phosphopeptide",
                 "Keratinpeptide",
-                "MissedCleavages"
+                "MissedCleavages",
+                "Trypsinpeptide"
 			};
 
 			m_PHRPInsertCommand.CommandText = SQLiteBulkInsert_BuildSQL_Line("temp_PSMs", fields);

@@ -1989,7 +1989,7 @@ namespace SMAQC
                                    + "          AND random_id=" + m_Random_ID
                                    + "          AND Keratinpeptide = 1"
                                    + "        GROUP BY Scan ) StatsQ "
-                                   + " WHERE Cleavage_State >= 1");
+                                   + " WHERE Cleavage_State >= 0");
                     
             string[] fields = { "Spectra" };
 
@@ -2015,7 +2015,7 @@ namespace SMAQC
                                    + "          AND random_id=" + m_Random_ID
                                    + "          AND Keratinpeptide = 1"
                                    + "        GROUP BY Unique_Seq_ID ) StatsQ "
-                                   + " WHERE Cleavage_State >= 1");
+                                   + " WHERE Cleavage_State >= 0");
 
             string[] fields = { "Peptides" };
 
@@ -2025,6 +2025,58 @@ namespace SMAQC
             var keratinCount = Convert.ToInt32(m_MeasurementResults["Peptides"]);
 
             return keratinCount.ToString("0");
+
+        }
+
+        /// <summary>
+        /// Trypsin_2A: Number of peptides from trypsin; total spectra count
+        /// </summary>
+        /// <returns></returns>
+        public string Trypsin_2A()
+        {
+            m_DBInterface.setQuery("SELECT Count(*) AS Spectra "
+                                   + " FROM ( SELECT Scan, Max(Cleavage_State) AS Cleavage_State "
+                                   + "        FROM temp_PSMs "
+                                   + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
+                                   + "          AND random_id=" + m_Random_ID
+                                   + "          AND Trypsinpeptide = 1"
+                                   + "        GROUP BY Scan ) StatsQ "
+                                   + " WHERE Cleavage_State >= 0");
+
+            string[] fields = { "Spectra" };
+
+            m_DBInterface.initReader();
+            m_DBInterface.readSingleLine(fields, ref m_MeasurementResults);
+
+            var trypsinCount = Convert.ToInt32(m_MeasurementResults["Spectra"]);
+
+            return trypsinCount.ToString("0");
+        }
+
+        /// <summary>
+        /// Trypsin_2C: Number of peptides from trypsin; unique peptide count
+        /// </summary>
+        /// <returns></returns>
+        public string Trypsin_2C()
+        {
+
+            m_DBInterface.setQuery("SELECT Count(*) AS Peptides "
+                                   + " FROM ( SELECT Unique_Seq_ID, Max(Cleavage_State) AS Cleavage_State "
+                                   + "        FROM temp_PSMs "
+                                   + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
+                                   + "          AND random_id=" + m_Random_ID
+                                   + "          AND Trypsinpeptide = 1"
+                                   + "        GROUP BY Unique_Seq_ID ) StatsQ "
+                                   + " WHERE Cleavage_State >= 0");
+
+            string[] fields = { "Peptides" };
+
+            m_DBInterface.initReader();
+            m_DBInterface.readSingleLine(fields, ref m_MeasurementResults);
+
+            var trypsinCount = Convert.ToInt32(m_MeasurementResults["Peptides"]);
+
+            return trypsinCount.ToString("0");
 
         }
 

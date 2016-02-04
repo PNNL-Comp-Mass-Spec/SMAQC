@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("SMAQC")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("WSU")]
+[assembly: AssemblyCompany("Pacific Northwest National Lab")]
 [assembly: AssemblyProduct("SMAQC")]
-[assembly: AssemblyCopyright("Copyright © Microsoft 2011")]
+[assembly: AssemblyCopyright("PNNL")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
