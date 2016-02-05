@@ -58,13 +58,14 @@ namespace SMAQC
 
 		// Fields to track in the database
 		// Note that LoadMeasurementInfoFile uses this list to define the default metrics to run (skipping "instrument_id", "random_id", and "scan_date")
-		private static readonly List<string> m_Fields = new List<string> { "instrument_id", "random_id", "scan_date", "C_1A", "C_1B", 
-                                  "C_2A", "C_2B", "C_3A", "C_3B", "C_4A", "C_4B", "C_4C", "DS_1A", "DS_1B", "DS_2A", "DS_2B", 
-                                  "DS_3A", "DS_3B", "IS_1A", "IS_1B", "IS_2", "IS_3A", "IS_3B", "IS_3C", "MS1_1", 
-                                  "MS1_2A", "MS1_2B", "MS1_3A", "MS1_3B", "MS1_5A", "MS1_5B", "MS1_5C", 
-                                  "MS1_5D", "MS2_1", "MS2_2", "MS2_3", "MS2_4A", "MS2_4B", "MS2_4C", "MS2_4D", "P_1A", 
-                                  "P_1B", "P_2A", "P_2B", "P_2C", "P_3", "Phos_2A", "Phos_2C", 
-                                  "Keratin_2A", "Keratin_2C", "P_4A", "P_4B", "Trypsin_2A", "Trypsin_2C" };
+		private static readonly List<string> m_Fields = new List<string> { 
+            "instrument_id", "random_id", "scan_date", "C_1A", "C_1B", 
+            "C_2A", "C_2B", "C_3A", "C_3B", "C_4A", "C_4B", "C_4C", "DS_1A", "DS_1B", "DS_2A", "DS_2B", 
+            "DS_3A", "DS_3B", "IS_1A", "IS_1B", "IS_2", "IS_3A", "IS_3B", "IS_3C", "MS1_1", 
+            "MS1_2A", "MS1_2B", "MS1_3A", "MS1_3B", "MS1_5A", "MS1_5B", "MS1_5C", 
+            "MS1_5D", "MS2_1", "MS2_2", "MS2_3", "MS2_4A", "MS2_4B", "MS2_4C", "MS2_4D", "P_1A", 
+            "P_1B", "P_2A", "P_2B", "P_2C", "P_3", "Phos_2A", "Phos_2C", 
+            "Keratin_2A", "Keratin_2C", "P_4A", "P_4B", "Trypsin_2A", "Trypsin_2C"};
 
 		static int Main(string[] args)
 		{

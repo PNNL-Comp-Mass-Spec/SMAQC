@@ -1,12 +1,25 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data.SQLite;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace SMAQC
 {
     class DBSQLiteTools
     {
 
-        private SQLiteConnection conn;                                                  //SQLITE CONNECTION
+        private SQLiteConnection conn;
+
+        private readonly Regex mNonAlphanumericMatcher;
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public DBSQLiteTools()
+        {
+            mNonAlphanumericMatcher = new Regex("[^A-Z0-9]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        }
 
         /// <summary>
         /// Create the database tables
@@ -36,6 +49,10 @@ namespace SMAQC
 
                     // MASIC SICStats
                     cmd.CommandText = GetTableCreateSql("temp_sicstats");
+                    cmd.ExecuteNonQuery();
+
+                    // MASIC ReporterIons
+                    cmd.CommandText = GetTableCreateSql("temp_reporterions");
                     cmd.ExecuteNonQuery();
 
                     // X!Tandem results
@@ -70,36 +87,72 @@ namespace SMAQC
         }
 
         protected void CreateIndicesMasic(SQLiteCommand cmd)
+        {           
+            CreatePrimaryKey(cmd, "temp_scanstats", "random_id", "ScanNumber");
+            CreatePrimaryKey(cmd, "temp_scanstatsex", "random_id", "ScanNumber");
+            CreatePrimaryKey(cmd, "temp_sicstats", "random_id", "ParentIonIndex", "FragScanNumber");
+            
+            CreateIndex(cmd, "temp_scanstats", "ScanNumber");
+            CreateIndex(cmd, "temp_scanstatsex", "ScanNumber");
+
+            CreateIndex(cmd, "temp_sicstats", "ParentIonIndex");
+            CreateIndex(cmd, "temp_sicstats", "FragScanNumber");
+            CreateIndex(cmd, "temp_sicstats", "OptimalPeakApexScanNumber");
+
+            CreateIndicesReporterIons(cmd);
+
+        }
+
+        protected void CreateIndicesReporterIons(SQLiteCommand cmd)
         {
-            RunSql(cmd, "CREATE UNIQUE INDEX pk_temp_ScanStats on temp_scanstats(random_id, ScanNumber)");
-            RunSql(cmd, "CREATE UNIQUE INDEX pk_temp_ScanStatsEx on temp_scanstatsex(random_id, ScanNumber)");
-            RunSql(cmd, "CREATE UNIQUE INDEX pk_temp_SicStats on temp_sicstats(random_id, ParentIonIndex, FragScanNumber)");
-
-            RunSql(cmd, "CREATE INDEX IX_temp_ScanStats on temp_scanstats(ScanNumber)");
-
-            RunSql(cmd, "CREATE INDEX IX_temp_ScanStatsEx on temp_scanstatsex(ScanNumber)");
-
-            RunSql(cmd, "CREATE INDEX IX_temp_SicStats on temp_sicstats(ParentIonIndex)");
-            RunSql(cmd, "CREATE INDEX IX_temp_SicStats_FragScan on temp_sicstats(FragScanNumber)");
-            RunSql(cmd, "CREATE INDEX IX_temp_SicStats_PeakApexScan on temp_sicstats(OptimalPeakApexScanNumber)");
+            CreatePrimaryKey(cmd, "temp_reporterions", "random_id", "ScanNumber");
+            CreateIndex(cmd, "temp_reporterions", "ScanNumber");
         }
 
         protected void CreateIndicesXTandem(SQLiteCommand cmd)
         {
-            RunSql(cmd, "CREATE INDEX ix_temp_xt_Scan on temp_xt(Scan)");
-            RunSql(cmd, "CREATE INDEX ix_temp_xt_LogEValue on temp_xt(Peptide_Expectation_Value_Log)");
+            CreateIndex(cmd, "temp_xt", "Scan");
+            CreateIndex(cmd, "temp_xt", "Peptide_Expectation_Value_Log");
 
-            RunSql(cmd, "CREATE INDEX ix_temp_xt_resulttoseqmap_ResultID on temp_xt_resulttoseqmap(Result_ID)");
-            RunSql(cmd, "CREATE INDEX ix_temp_xt_resulttoseqmap_SeqID on temp_xt_resulttoseqmap(Unique_Seq_ID)");
+            CreateIndex(cmd, "temp_xt_resulttoseqmap", "Result_ID");
+            CreateIndex(cmd, "temp_xt_resulttoseqmap", "Unique_Seq_ID");
 
-            RunSql(cmd, "CREATE INDEX ix_temp_xt_seqtoproteinmap_SeqID on temp_xt_seqtoproteinmap(Unique_Seq_ID)");
+            CreateIndex(cmd, "temp_xt_seqtoproteinmap", "Unique_Seq_ID");
         }
 
         protected void CreateIndicesPHRP(SQLiteCommand cmd)
         {
-            RunSql(cmd, "CREATE INDEX ix_temp_PSMs_Scan on temp_PSMs(Scan)");
-            RunSql(cmd, "CREATE INDEX ix_temp_PSMs_LogEValue on temp_PSMs(MSGFSpecProb)");
+            CreateIndex(cmd, "temp_PSMs", "Scan");
+            CreateIndex(cmd, "temp_PSMs", "MSGFSpecProb");
+        }
 
+        private string AlphanumericOnly(string objectName)
+        {
+            var cleanName = mNonAlphanumericMatcher.Replace(objectName, "");
+            return cleanName;
+        }
+
+        private void CreatePrimaryKey(SQLiteCommand cmd, string tableName, string colName1, string colName2 = "", string colName3 = "")
+        {
+            var tableNameClean = AlphanumericOnly(tableName);
+
+            var colList = "[" + colName1 + "]";
+
+            if (!string.IsNullOrEmpty(colName2))
+                colList += ", [" + colName2 + "]";
+
+            if (!string.IsNullOrEmpty(colName3))
+                colList += ", [" + colName3 + "]";
+
+            RunSql(cmd, "CREATE UNIQUE INDEX pk_" + tableNameClean + " on [" + tableName + "] (" + colList + ")");
+        }
+
+        private void CreateIndex(SQLiteCommand cmd, string tableName, string columnName)
+        {
+            var tableNameClean = AlphanumericOnly(tableName);
+            var columnNameClean = AlphanumericOnly(columnName);
+
+            RunSql(cmd, "CREATE INDEX IX_" + tableNameClean + "_" + columnNameClean + " on [" + tableName + "] ([" + columnName + "])");
         }
 
         public void create_missing_tables(SQLiteConnection connection)
@@ -136,6 +189,14 @@ namespace SMAQC
                     AddColumnsToTable(connection, "temp_PSMs", columnsToAdd);
                 }
 
+                if (!TableExists(connection, "temp_reporterions"))
+                {
+                    // ReporterIons from MASIC
+                    cmd.CommandText = GetTableCreateSql("temp_reporterions");
+                    cmd.ExecuteNonQuery();
+
+                    CreateIndicesReporterIons(cmd);
+                }
 
                 if (!TableHasColumn(connection, "scan_results", "Phos_2A"))
                 {
@@ -177,7 +238,7 @@ namespace SMAQC
 
         }
 
-        private void AddColumnsToTable(SQLiteConnection dbConnection, string tableName, List<string> columnsToAdd, string columnType = "VARCHAR(25)", bool isNullable = true)
+        private void AddColumnsToTable(SQLiteConnection dbConnection, string tableName, List<string> columnsToAdd, string columnType = "VARCHAR", bool isNullable = true)
         {
             foreach (var columnName in columnsToAdd)
             {
@@ -206,63 +267,31 @@ namespace SMAQC
             switch (tableName)
             {
                 case "scan_results":
+
+                    // These are added to the table as VARCHAR NULL
+                    var metricNames = new List<string>
+                    {
+                        "C_1A", "C_1B", "C_2A", "C_2B", "C_3A", "C_3B", "C_4A", "C_4B", "C_4C", 
+                        "DS_1A", "DS_1B", "DS_2A", "DS_2B", "DS_3A", "DS_3B",
+                        "IS_1A", "IS_1B", "IS_2", "IS_3A", "IS_3B", "IS_3C", 
+                        "MS1_1", "MS1_2A", "MS1_2B", "MS1_3A", "MS1_3B", "MS1_5A", "MS1_5B", "MS1_5C", "MS1_5D", 
+                        "MS2_1", "MS2_2", "MS2_3", "MS2_4A", "MS2_4B", "MS2_4C", "MS2_4D",
+                        "P_1A", "P_1B", 
+                        "P_2A", "P_2B", "P_2C", 
+                        "P_3", 
+                        "Phos_2A", "Phos_2C", 
+                        "Keratin_2A", "Keratin_2C", 
+                        "P_4A", "P_4B", 
+                        "Trypsin_2A", "Trypsin_2C",
+                    };
+
                     sql = "CREATE TABLE [scan_results] ("
-                        + "[result_id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
-                        + "[scan_id] INTEGER NOT NULL,"
-                        + "[instrument_id] VARCHAR(255) NOT NULL,"
-                        + "[random_id] INTEGER  NOT NULL,"
-                        + "[scan_date] VARCHAR(255) NOT NULL,"
-                        + "[C_1A] VARCHAR(255)  NULL,"
-                        + "[C_1B] VARCHAR(255)  NULL,"
-                        + "[C_2A] VARCHAR(255)  NULL,"
-                        + "[C_2B] VARCHAR(255)  NULL,"
-                        + "[C_3A] VARCHAR(255)  NULL,"
-                        + "[C_3B] VARCHAR(255)  NULL,"
-                        + "[C_4A] VARCHAR(255)  NULL,"
-                        + "[C_4B] VARCHAR(255)  NULL,"
-                        + "[C_4C] VARCHAR(255)  NULL,"
-                        + "[DS_1A] VARCHAR(255)  NULL,"
-                        + "[DS_1B] VARCHAR(255)  NULL,"
-                        + "[DS_2A] VARCHAR(255)  NULL,"
-                        + "[DS_2B] VARCHAR(255)  NULL,"
-                        + "[DS_3A] VARCHAR(255)  NULL,"
-                        + "[DS_3B] VARCHAR(255)  NULL,"
-                        + "[IS_1A] VARCHAR(255)  NULL,"
-                        + "[IS_1B] VARCHAR(255)  NULL,"
-                        + "[IS_2] VARCHAR(255)  NULL,"
-                        + "[IS_3A] VARCHAR(255)  NULL,"
-                        + "[IS_3B] VARCHAR(255)  NULL,"
-                        + "[IS_3C] VARCHAR(255)  NULL,"
-                        + "[MS1_1] VARCHAR(255)  NULL,"
-                        + "[MS1_2A] VARCHAR(255)  NULL,"
-                        + "[MS1_2B] VARCHAR(255)  NULL,"
-                        + "[MS1_3A] VARCHAR(255)  NULL,"
-                        + "[MS1_3B] VARCHAR(255)  NULL,"
-                        + "[MS1_5A] VARCHAR(255)  NULL,"
-                        + "[MS1_5B] VARCHAR(255)  NULL,"
-                        + "[MS1_5C] VARCHAR(255)  NULL,"
-                        + "[MS1_5D] VARCHAR(255)  NULL,"
-                        + "[MS2_1] VARCHAR(255)  NULL,"
-                        + "[MS2_2] VARCHAR(255)  NULL,"
-                        + "[MS2_3] VARCHAR(255)  NULL,"
-                        + "[MS2_4A] VARCHAR(255)  NULL,"
-                        + "[MS2_4B] VARCHAR(255)  NULL,"
-                        + "[MS2_4C] VARCHAR(255)  NULL,"
-                        + "[MS2_4D] VARCHAR(255)  NULL,"
-                        + "[P_1A] VARCHAR(25)  NULL,"
-                        + "[P_1B] VARCHAR(25)  NULL,"
-                        + "[P_2A] VARCHAR(25)  NULL,"
-                        + "[P_2B] VARCHAR(25)  NULL,"
-                        + "[P_2C] VARCHAR(25)  NULL,"
-                        + "[P_3] VARCHAR(25)  NULL,"
-                        + "[Phos_2A] VARCHAR(25)  NULL,"
-                        + "[Phos_2C] VARCHAR(25)  NULL,"
-                        + "[Keratin_2A] VARCHAR(25)  NULL,"
-                        + "[Keratin_2C] VARCHAR(25)  NULL,"
-                        + "[P_4A] VARCHAR(25)  NULL,"
-                        + "[P_4B] VARCHAR(25)  NULL,"
-                        + "[Trypsin_2A] VARCHAR(25)  NULL,"
-                        + "[Trypsin_2C] VARCHAR(25)  NULL"
+                          + "[result_id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
+                          + "[scan_id] INTEGER NOT NULL,"
+                          + "[instrument_id] VARCHAR NOT NULL,"
+                          + "[random_id] INTEGER  NOT NULL,"
+                          + "[scan_date] VARCHAR NOT NULL,"
+                          + VarcharColumnNamesToSql(metricNames)                     
                         + ")";
                     break;
 
@@ -328,7 +357,7 @@ namespace SMAQC
                         + "[PeakScanEnd] INTEGER NOT NULL,"
                         + "[PeakScanMaxIntensity] INTEGER NOT NULL,"
                         + "[PeakMaxIntensity] FLOAT NOT NULL,"
-                        + "[PeakSignalToNoiseRatio] FLOAT NOT NULL," //CHANGED FROM FLOAT TO VARCHAR() IN MYSQL
+                        + "[PeakSignalToNoiseRatio] FLOAT NOT NULL,"
                         + "[FWHMInScans] INTEGER NOT NULL,"
                         + "[PeakArea] FLOAT NOT NULL,"
                         + "[ParentIonIntensity] FLOAT NOT NULL,"
@@ -339,8 +368,37 @@ namespace SMAQC
                         + "[CenterOfMassScan] INTEGER NOT NULL,"
                         + "[PeakStDev] FLOAT NOT NULL,"
                         + "[PeakSkew] FLOAT NOT NULL,"
-                        + "[PeakKSStat] FLOAT NOT NULL," //CHANGED FROM FLOAT TO VARCHAR() IN MYSQL
+                        + "[PeakKSStat] FLOAT NOT NULL,"
                         + "[StatMomentsDataCountUsed] INTEGER NOT NULL"
+                        + ")";
+                    break;
+
+                case "temp_reporterions":
+                    sql = "CREATE TABLE [temp_reporterions] ("
+                        + "[instrument_id] INTEGER NOT NULL,"
+                        + "[random_id] INTEGER NOT NULL,"
+                        + "[Dataset] INTEGER NOT NULL,"
+                        + "[ScanNumber] INTEGER NOT NULL,"
+                        + "[CollisionMode] VARCHAR NULL,"
+                        + "[ParentIonMZ] FLOAT NOT NULL,"
+                        + "[BasePeakIntensity] FLOAT NOT NULL,"
+                        + "[BasePeakMZ] FLOAT NOT NULL,"
+                        + "[ReporterIonIntensityMax] FLOAT NOT NULL,"
+                        + "[Ion_1] FLOAT NOT NULL,"
+                        + "[Ion_2] FLOAT NOT NULL,"
+                        + "[Ion_3] FLOAT NOT NULL,"
+                        + "[Ion_4] FLOAT NOT NULL,"
+                        + "[Ion_5] FLOAT NOT NULL,"
+                        + "[Ion_7] FLOAT NOT NULL,"
+                        + "[Ion_8] FLOAT NOT NULL,"
+                        + "[Ion_9] FLOAT NOT NULL,"
+                        + "[Ion_10] FLOAT NOT NULL,"
+                        + "[Ion_11] FLOAT NOT NULL,"
+                        + "[Ion_12] FLOAT NOT NULL,"
+                        + "[Ion_13] FLOAT NOT NULL,"
+                        + "[Ion_14] FLOAT NOT NULL,"
+                        + "[Ion_15] FLOAT NOT NULL,"
+                        + "[PctIntensityCorrection] FLOAT NOT NULL"
                         + ")";
                     break;
 
@@ -356,7 +414,7 @@ namespace SMAQC
                         + "[Peptide_Hyperscore] FLOAT NOT NULL,"
                         + "[Peptide_Expectation_Value_Log] FLOAT NOT NULL,"
                         + "[Multiple_Protein_Count] FLOAT NOT NULL,"
-                        + "[Peptide_Sequence] varchar(124) NOT NULL,"
+                        + "[Peptide_Sequence] VARCHAR NOT NULL,"
                         + "[DeltaCn2] FLOAT NOT NULL,"
                         + "[y_score] FLOAT NOT NULL,"
                         + "[y_ions] FLOAT NOT NULL,"
@@ -384,7 +442,7 @@ namespace SMAQC
                         + "[Unique_Seq_ID] INTEGER NOT NULL,"
                         + "[Cleavage_State] INTEGER NOT NULL,"
                         + "[Terminus_State] INTEGER NOT NULL,"
-                        + "[Protein_Name] varchar(45) NOT NULL,"
+                        + "[Protein_Name] VARCHAR NOT NULL,"
                         + "[Protein_Expectation_Value_Log] FLOAT NOT NULL,"
                         + "[Protein_Intensity_Log] FLOAT NOT NULL"
                         + ")";
@@ -396,10 +454,10 @@ namespace SMAQC
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Result_ID] INTEGER NOT NULL,"
                         + "[Scan] INTEGER NOT NULL,"
-                        + "[CollisionMode] varchar(64) NULL,"
+                        + "[CollisionMode] VARCHAR NULL,"
                         + "[Charge] INTEGER NOT NULL,"
                         + "[Peptide_MH] FLOAT NOT NULL,"
-                        + "[Peptide_Sequence] varchar(124) NOT NULL,"
+                        + "[Peptide_Sequence] VARCHAR NOT NULL,"
                         + "[DelM_Da] FLOAT NULL,"
                         + "[DelM_PPM] FLOAT NULL,"
                         + "[MSGFSpecProb] FLOAT NULL, "
@@ -416,6 +474,29 @@ namespace SMAQC
 
             return sql;
 
+        }
+
+        /// <summary>
+        /// Generate the SQL to create varchar columns on a table
+        /// </summary>
+        /// <param name="metricNames">List of column names</param>
+        /// <returns>
+        /// List of the form:
+        /// [Metric1] VARCHAR NULL, [Metric2] VARCHAR NULL, [Metric3] VARCHAR NULL
+        /// </returns>
+        private string VarcharColumnNamesToSql(IEnumerable<string> metricNames)
+        {
+            var columnList = new StringBuilder();
+
+            foreach (var metric in metricNames)
+            {
+                if (columnList.Length > 0)
+                    columnList.Append(",");
+
+                columnList.Append("[" + metric + "] VARCHAR NULL");
+            }
+
+            return columnList.ToString();
         }
 
         public static bool TableExists(SQLiteConnection conn, string tableName)
