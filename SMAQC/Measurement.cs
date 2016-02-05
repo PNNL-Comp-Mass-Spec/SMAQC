@@ -1437,7 +1437,7 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// MS2_1: Median MS2 ion injection time
+        /// MS2_1: Median MS2 ion injection time for identified peptides
         /// </summary>
         /// <returns></returns>
         public string MS2_1()

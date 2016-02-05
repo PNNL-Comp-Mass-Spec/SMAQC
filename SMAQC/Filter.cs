@@ -11,10 +11,10 @@ namespace SMAQC
 	class Filter
 	{
 
-		public DBWrapper mDBWrapper;                                                                //CREATE DB INTERFACE OBJECT
-		public string instrument_id;                                                                //INSTRUMENT ID
-		public int random_id;                                                                       //RANDOM ID
-		public DataFileFormatter DFF = new DataFileFormatter();                                     //DFF OBJECT
+		public DBWrapper mDBWrapper;                                                                // Create db interface object
+		public string instrument_id;                                                                // Instrument id
+		public int random_id;                                                                       // Random id
+		public DataFileFormatter DFF = new DataFileFormatter();                                     // Dff object
 		readonly SystemLogManager m_SystemLogManager;
 
 		/// <summary>
@@ -447,8 +447,8 @@ namespace SMAQC
 	    }
 
 
-	    //FUNCTION WILL SEARCH THROUGH A FILE NAME, ENSURING IT IS A VALID TABLE EXTENSION AND RETURNING
-		//THE POSITION SO THAT IT CAN BE PASSED TO OUR DBINTERFACE/OTHER CLASSES FOR PROCESSING
+	    // Function will search through a file name, ensuring it is a valid table extension and returning
+		// The position so that it can be passed to our dbinterface/other classes for processing
 		public int return_file_table_position(string filename, string[] valid_file_tables)
 		{
 		    var baseName = Path.GetFileNameWithoutExtension(filename);

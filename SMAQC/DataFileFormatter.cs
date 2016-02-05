@@ -6,16 +6,16 @@ namespace SMAQC
 {
 	class DataFileFormatter
 	{
-		//DECLARE VARIABLES
-		private readonly List<string> ValidFilesToReFormat = new List<string>();                     //LIST OF FILES THAT ARE VALID TO REFORMAT
-		private readonly string[,] FieldList = new string[10, 30];                                   //LIST OF FIELDS
+		// Declare variables
+		private readonly List<string> ValidFilesToReFormat = new List<string>();                     // List of files that are valid to reformat
+		private readonly string[,] FieldList = new string[10, 30];                                   // List of fields
 
 		private string mTempFilePath = "";
 
-		//CONSTRUCTOR
+		// Constructor
 		public DataFileFormatter()
 		{
-			//SET VALID FILES TO REFORMAT
+			// Set valid files to reformat
 			ValidFilesToReFormat.Add("ScanStats");
 			ValidFilesToReFormat.Add("ScanStatsEx");
 			ValidFilesToReFormat.Add("SICstats");
@@ -23,7 +23,7 @@ namespace SMAQC
 			ValidFilesToReFormat.Add("xt_ResultToSeqMap");
 			ValidFilesToReFormat.Add("xt_SeqToProteinMap");
 
-			//ScanStats Fields
+			// Scanstats fields
 			FieldList[0, 0] = "Dataset";
 			FieldList[0, 1] = "ScanNumber";
 			FieldList[0, 2] = "ScanTime";
@@ -36,7 +36,7 @@ namespace SMAQC
 			FieldList[0, 9] = "IonCountRaw";
 			FieldList[0, 10] = "ScanTypeName";
 
-			//ScanStatsEx FIELDS
+			// Scanstatsex fields
 			FieldList[1, 0] = "Dataset";
 			FieldList[1, 1] = "ScanNumber";
 			FieldList[1, 2] = "Ion Injection Time (ms)";
@@ -59,7 +59,7 @@ namespace SMAQC
 			FieldList[1, 19] = "Source Voltage (kV)";
 			FieldList[1, 20] = "Source Current (uA)";
 
-			//SICstats FIELDS
+			// Sicstats fields
 			FieldList[2, 0] = "Dataset";
 			FieldList[2, 1] = "ParentIonIndex";
 			FieldList[2, 2] = "MZ";
@@ -86,7 +86,7 @@ namespace SMAQC
 			FieldList[2, 23] = "PeakKSStat";
 			FieldList[2, 24] = "StatMomentsDataCountUsed";
 
-			//xt FIELDS
+			// Xt fields
 			FieldList[3, 0] = "Result_ID";
 			FieldList[3, 1] = "Group_ID";
 			FieldList[3, 2] = "Scan";
@@ -105,11 +105,11 @@ namespace SMAQC
 			FieldList[3, 15] = "Peptide_Intensity_Log(I)";
 			FieldList[3, 16] = "DelM_PPM";
 
-			//xt_ResultToSeqMap FIELDS
+			// Xt_resulttoseqmap fields
 			FieldList[4, 0] = "Result_ID";
 			FieldList[4, 1] = "Unique_Seq_ID";
 
-			//xt_SeqToProteinMap FIELDS
+			// Xt_seqtoproteinmap fields
 			FieldList[5, 0] = "Unique_Seq_ID";
 			FieldList[5, 1] = "Cleavage_State";
 			FieldList[5, 2] = "Terminus_State";
@@ -117,19 +117,19 @@ namespace SMAQC
 			FieldList[5, 4] = "Protein_Expectation_Value_Log(e)";
 			FieldList[5, 5] = "Protein_Intensity_Log(I)";
 
-			//CLEAN FIELDS FROM 2 DIM ARRAY
+			// Clean fields from 2 dim array
 			FieldList = FieldCleaner2d(FieldList);
 		}
 
-		//DESTRUCTOR
+		// Destructor
 		~DataFileFormatter()
 		{
-			//ENSURE TEMP FILE DOES NOT STILL EXIST
+			// Ensure temp file does not still exist
 			if (!String.IsNullOrEmpty(mTempFilePath) && File.Exists(mTempFilePath))
 				ensure_temp_file_removed(mTempFilePath);
 		}
 
-		// TempFilePath property
+		// Tempfilepath property
 		public string TempFilePath
 		{
 			get
@@ -139,103 +139,103 @@ namespace SMAQC
 		}
 
 
-		//THIS FUNCTION CHECKS EACH FILE TO SEE IF IT SHOULD BE RE-FORMATED AND THEN TAKES CARE OF IT
-		//RETURNS FALSE == NO REBUILD || TRUE == REBUILD
+		// This function checks each file to see if it should be re-formated and then takes care of it
+		// Returns false == no rebuild || true == rebuild
 		public Boolean handleFile(string filename, string dataset)
 		{
-			//DECLARE VARIABLES
-			var ListFieldID = new List<int>();                    //Maps observed column index to desired column index in DB (-1 means do not store the given column in the DB)
+			// Declare variables
+			var ListFieldID = new List<int>();                    // Maps observed column index to desired column index in db (-1 means do not store the given column in the db)
 
-			//CHECK IF IS VALID FILE
+			// Check if is valid file
 			var ValidFilesToReFormat_id = is_valid_file_to_reformat(filename, dataset);
 
-			//IS THIS A FILE THAT NEEDS RE-FORMATING?
+			// Is this a file that needs re-formating?
 			if (ValidFilesToReFormat_id >= 0)
 			{
-				//PAD HASH TABLE WITH POINTER TO CORRECT VALUES
+				// Pad hash table with pointer to correct values
 				var numOfColumns = padHashTable(filename, ref ListFieldID, ValidFilesToReFormat_id);
 
-				// OBTAIN A TEMP FILE PATH
+				// Obtain a temp file path
 				mTempFilePath = Path.GetTempFileName();
 
-				//CALL INTERNAL REBUILD FUNCTION
+				// Call internal rebuild function
 				rebuildFile(filename, mTempFilePath, numOfColumns, ListFieldID);
 
 				return true;
 			}
 
-			//CLEAR HASH TABLE
+			// Clear hash table
 			ListFieldID.Clear();
 
 			return false;
 		}
 
-		//REBUILD FILENAME USING PADDING TO ENSURE ALL FIELDS MATCH UP
+		// Rebuild filename using padding to ensure all fields match up
 		private void rebuildFile(string filename, string save_to_filename, int numOfColumns, List<int> ListFieldID)
 		{
-			//DECLARE VARIABLES
+			// Declare variables
 			var line_num = 0;
 
-			//OPEN FILES USED FOR R/W
+			// Open files used for r/w
 			using (var file_read = new StreamReader(filename))
 			{
 				using (var file_write = new StreamWriter(save_to_filename))
 				{
-					//LOOP THROUGH EACH LINE
+					// Loop through each line
 					string line;
 					while ((line = file_read.ReadLine()) != null)
 					{
-						//DECLARE NEW LINE
+						// Declare new line
 						var line_temp = "";
 
-						//SPLIT GIVEN DATA FILES BY TAB
+						// Split given data files by tab
 						var delimiters = new[] { '\t' };
 
-						//DO SPLIT OPERATION
+						// Do split operation
 						var parts = line.Split(delimiters, StringSplitOptions.None);
 
-						//IF COLUMN AND DATA MISMATCH
+						// If column and data mismatch
 						if (parts.Length != numOfColumns)
 						{
 							// Number of columns is not the expected number
-							//THIS NORMALLY HAPPENS ON SCANSTATSEX. NOTHING WE CAN DO DUE TO BAD TOOL. IGNORE LINE.
+							// This normally happens on scanstatsex. nothing we can do due to bad tool. ignore line.
 
-							//NEXT LINE
+							// Next line
 							continue;
 						}
 
-						//READING THE FIRST LINE ... SKIP IT AS NO LONGER NEEDED
+						// Reading the first line ... skip it as no longer needed
 						if (line_num == 0)
 						{
-							//CLEAN FIELDS TO ENSURE CONSISTENCY
+							// Clean fields to ensure consistency
 							parts = FieldCleaner(parts);
 
-							//INC
+							// Inc
 							line_num++;
 
-							//NEXT LINE
-							//continue;
+							// Next line
+							// Continue;
 						}
 
-						//NOW READING DATA LINES [ASSUMING LINE_NUM > 0]
+						// Now reading data lines [assuming line_num > 0]
 
-						//LOOP THROUGH EACH PART
+						// Loop through each part
 						for (var i = 0; i < parts.Length; i++)
 						{
-							//IF NOT AN ALLOWED FIELD IGNORE
+							// If not an allowed field ignore
 							if (ListFieldID[i] > -1)
 							{
 								if (line_temp.Length > 0)
 									line_temp += "\t";
 
-								//APPEND TO LINE_TEMP
+								// Append to line_temp
 								line_temp += parts[i];
 
 							}
 
 						}
 
-						//WRITE LINE
+						// Write line
 						file_write.WriteLine(line_temp);
 
 					}
@@ -253,10 +253,10 @@ namespace SMAQC
 		*/
 		private int padHashTable(string file_to_load, ref List<int> ListFieldID, int ValidFilesToReFormat_id)
 		{
-			//DECLARE VARIABLES
+			// Declare variables
 			int numOfcolumns;
 
-			//OPEN + READ
+			// Open + read
 			using (var file = new StreamReader(file_to_load))
 			{
 				var line = file.ReadLine();
@@ -264,35 +264,35 @@ namespace SMAQC
 				if (string.IsNullOrWhiteSpace(line))
 					return 0;
 
-				//SPLIT GIVEN DATA FILES BY TAB
+				// Split given data files by tab
 				var delimiters = new[] {'\t'};
 
-				//DO SPLIT OPERATION
+				// Do split operation
 				var parts = line.Split(delimiters, StringSplitOptions.None);
 
-				//CLEAN FIELDS TO ENSURE CONSISTENCY
+				// Clean fields to ensure consistency
 				parts = FieldCleaner(parts);
 
-				//SET numOfcolumns
+				// Set numofcolumns
 				numOfcolumns = parts.Length;
 
-				//LOOP THROUGH EACH COLUMN
+				// Loop through each column
 				foreach (var column in parts)
 				{
-					//SEARCH FOR COLUMN NAME THAT IS FOUND IN OUR FILE LINE
+					// Search for column name that is found in our file line
 					var index = findIndexOfColumnName(ValidFilesToReFormat_id, column);
 
-					//IF FOUND [NOT -1]
+					// If found [not -1]
 					if (index != -1)
 					{
-						//Console.WriteLine("STORE i={0} && index={1}", i, index);
-						//STORE INDEX OF OUR PART_ID AS INDEX VALUE AS PER FUNCTION REQUIREMENTS [SEE DETAILS ABOVE FUNC NAME]
+						// Console.writeline("store i={0} && index={1}", i, index);
+						// Store index of our part_id as index value as per function requirements [see details above func name]
 						ListFieldID.Add(index);
 					}
 					else
 					{
-						//NOT FOUND ... ADD -1 to indicate we will skip this column
-						//Console.WriteLine("STORE i={0} && index={1}", i, index);
+						// Not found ... add -1 to indicate we will skip this column
+						// Console.writeline("store i={0} && index={1}", i, index);
 						ListFieldID.Add(-1);
 					}
 				}
@@ -302,19 +302,19 @@ namespace SMAQC
 			return numOfcolumns;
 		}
 
-		//SEARCHES [id][x] FOR NAME ... IF FOUND RETURNS INDEX ... ELSE -1
+		// Searches [id][x] for name ... if found returns index ... else -1
 		private int findIndexOfColumnName(int ValidFilesToReFormat_id, string name)
 		{
-			//GET BOUND OF SECOND DIM
+			// Get bound of second dim
 			var bound = FieldList.GetLength(1);
 
 			for (var i = 0; i < bound; i++)
 			{
-				//CHECK TO ENSURE THAT WE ARE NOT NULL
+				// Check to ensure that we are not null
 				if (FieldList[ValidFilesToReFormat_id, i] == null)
 					break;
 
-				//IF FOUND NAME ... RETURN INDEX
+				// If found name ... return index
 				if (FieldList[ValidFilesToReFormat_id, i].Equals(name))
 				{
 					return i;
@@ -324,32 +324,32 @@ namespace SMAQC
 			return -1;
 		}
 
-		//ENSURE FILE HAS BEEN DELETED
+		// Ensure file has been deleted
 		private void ensure_temp_file_removed(string filePath)
 		{
-			//ENSURE TEMP FILE DOES NOT STILL EXIST
+			// Ensure temp file does not still exist
 			if (File.Exists(filePath))
 			{
 				File.Delete(filePath);
 			}
 		}
 
-		//IS THIS A VALID FILE TO REFORMAT [CHECKS ValidFilesToReFormat LIST]
+		// Is this a valid file to reformat [checks validfilestoreformat list]
 		private int is_valid_file_to_reformat(string filename, string dataset)
 		{
-			//STEP # 1 GET FILENAME WITHOUT EXTENSION
+			// Step # 1 get filename without extension
 			filename = Path.GetFileNameWithoutExtension(filename);
 
 			if (string.IsNullOrWhiteSpace(filename))
 				return -1;
 
-			//STEP # 3 NOW DO ACTUAL REMOVING OF DATA PREFIX
-			filename = filename.Substring(dataset.Length + 1);                  //RETURNS ScanStats, ScanStatsEx, ...
+			// Step # 3 now do actual removing of data prefix
+			filename = filename.Substring(dataset.Length + 1);                  // Returns scanstats, scanstatsex, ...
 
-			//LOOP THROUGH ALL VALID FILES THAT WE REFORMAT
+			// Loop through all valid files that we reformat
 			for (var i = 0; i < ValidFilesToReFormat.Count; i++)
 			{
-				//IF FOUND A MATCH
+				// If found a match
 				if (filename.Equals(ValidFilesToReFormat[i], StringComparison.OrdinalIgnoreCase))
 				{
 					return i;
@@ -359,37 +359,37 @@ namespace SMAQC
 			return -1;
 		}
 
-		//FIELD CLEANER TO ENSURE DATABASE CONSISTANCY BY REMOVING SPACES, (,), / AND MORE FROM 2 DIM ARRAYS
+		// Field cleaner to ensure database consistancy by removing spaces, (,), / and more from 2 dim arrays
 		private string[,] FieldCleaner2d(string[,] field_array)
 		{
-			//DECLARE VARIABLES
-			var dim1 = field_array.GetLength(0); //[x][]
-			var dim2 = field_array.GetLength(1); //[][x]
+			// Declare variables
+			var dim1 = field_array.GetLength(0); // [X][]
+			var dim2 = field_array.GetLength(1); // [][X]
 
-			//LOOP THROUGH FIRST DIMENSION
+			// Loop through first dimension
 			for (var j = 0; j < dim1; j++)
 			{
-				//LOOP THROUGH SECOND DIMENSION [STORES ALL FIELDS]
+				// Loop through second dimension [stores all fields]
 				for (var i = 0; i < dim2; i++)
 				{
-					//IF NULL SKIP
+					// If null skip
 					if (field_array[j, i] == null)
 						continue;
 
-					//STEP #1 REMOVE (...)
+					// Step #1 remove (...)
 					var first_index = field_array[j, i].IndexOf(" (");
 					var last_index = field_array[j, i].IndexOf(")");
 
-					//IF THERE IS A (...)
+					// If there is a (...)
 					if (first_index > 0 && last_index > 0)
 					{
 						field_array[j, i] = field_array[j, i].Remove(first_index, last_index - first_index + 1);
 					}
 
-					//STEP #2 REPLACE ALL " " WITH "_"
+					// Step #2 replace all " " with "_"
 					field_array[j, i] = field_array[j, i].Replace(" ", "_");
 
-					//STEP #3 REPLACE ALL "/" WITH "" [REQUIRED DUE TO THINGS LIKE SCANSTATSEX HAVING M/Z WHEN IT SHOULD BE MZ]
+					// Step #3 replace all "/" with "" [required due to things like scanstatsex having m/z when it should be mz]
 					field_array[j, i] = field_array[j, i].Replace("/", "");
 				}
 			}
@@ -397,46 +397,46 @@ namespace SMAQC
 			return field_array;
 		}
 
-		//FIELD CLEANER TO ENSURE DATABASE CONSISTANCY BY REMOVING SPACES, (,), / AND MORE
+		// Field cleaner to ensure database consistancy by removing spaces, (,), / and more
 		private string[] FieldCleaner(string[] field_array)
 		{
-			//DECLARE VARIABLES
+			// Declare variables
 
-			//LOOP THROUGH EACH FIELD
+			// Loop through each field
 			for (var i = 0; i < field_array.Length; i++)
 			{
-				//STEP #1 REMOVE (...)
+				// Step #1 remove (...)
 				var first_index = field_array[i].IndexOf(" (");
 				var last_index = field_array[i].IndexOf(")");
 
-				//IF THERE IS A (...)
+				// If there is a (...)
 				if (first_index > 0 && last_index > first_index)
 				{
 					field_array[i] = field_array[i].Remove(first_index, last_index - first_index + 1);
 				}
 
-				//STEP #2 REPLACE ALL " " WITH "_"
+				// Step #2 replace all " " with "_"
 				field_array[i] = field_array[i].Replace(" ", "_");
 
-				//STEP #3 REPLACE ALL "/" WITH "" [REQUIRED DUE TO THINGS LIKE SCANSTATSEX HAVING M/Z WHEN IT SHOULD BE MZ]
+				// Step #3 replace all "/" with "" [required due to things like scanstatsex having m/z when it should be mz]
 				field_array[i] = field_array[i].Replace("/", "");
 			}
 
 			return field_array;
 		}
 
-		//THIS FUNCTION RETURNS WHETHER OR NOT WE ARE CURRENTLY WORKING WITH _SCANSTATSEX.TXT
+		// This function returns whether or not we are currently working with _scanstatsex.txt
 		public Boolean ScanStatsExBugFixer(string file_to_load)
 		{
 			var value = file_to_load.IndexOf("_ScanStatsEx.txt", StringComparison.OrdinalIgnoreCase);
 
-			//IF FOUND RETURN TRUE
+			// If found return true
 			if (value >= 0)
 			{
 				return true;
 			}
 
-			//ELSE RETURN FALSE
+			// Else return false
 			return false;
 		}
 	}

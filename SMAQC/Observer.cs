@@ -19,7 +19,7 @@ namespace SMAQC
 
         public void Notify()
         {
-            foreach (Observer o in _observers)
+            foreach (var o in _observers)
             {
                 o.Update();
             }
@@ -41,23 +41,18 @@ namespace SMAQC
 
     class ConcreteObserver : Observer
     {
-        private string _name;
         private string _observerState;
         private ConcreteSubject _subject;
 
         // Constructor
-        public ConcreteObserver(ConcreteSubject subject, string name)
+        public ConcreteObserver(ConcreteSubject subject)
         {
-            this._subject = subject;
-            this._name = name;
-
+            _subject = subject;
         }
 
         public override void Update()
         {
             _observerState = _subject.SubjectState;
-            //PRINT MSG
-            //Console.WriteLine("Observer {0}'s new state is {1}",_name, _observerState);
             Console.WriteLine("{0}", _observerState);
         }
 

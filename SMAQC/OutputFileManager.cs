@@ -6,13 +6,13 @@ namespace SMAQC
 {
     class OutputFileManager
     {
-        //DECLARE VARIABLES
-        private readonly DBWrapper DBWrapper;                                                                //REF DB INTERFACE OBJECT
-        private Boolean first_use;																			 //IS THE FIRST USE?
-        private readonly string smaqc_version;                                                               //SMAQC VERSION
-		private readonly List<string> fields;                                                                //SMAQC FIELDS
+        // Declare variables
+        private readonly DBWrapper DBWrapper;                                                                // Ref db interface object
+        private Boolean first_use;																			 // Is the first use?
+        private readonly string smaqc_version;                                                               // Smaqc version
+		private readonly List<string> fields;                                                                // Smaqc fields
 
-        //CONSTRUCTOR
+        // Constructor
         public OutputFileManager(ref DBWrapper DBWrapper, string ProgVersion, List<string> ProgFields)
         {
             this.DBWrapper = DBWrapper;
@@ -21,107 +21,98 @@ namespace SMAQC
             fields = ProgFields;
         }
 
-        //SAVE DATA HANDLER
+        // Save data handler
         public void SaveData(string dataset, string filename, int scan_id, int dataset_number)
         {
-            //IF THIS IS THE FIRST USE CREATE FILE + WRITE TO IT
+            // If this is the first use create file + write to it
             if (first_use)
             {
-                //CREATE THE FILE + APPEND FIRST SET OF METRICS
+                // Create the file + append first set of metrics
                 CreateOutputFileForFirstTimeUse(dataset, filename, scan_id, dataset_number);
 
-                //SET FIRST_USE TO FALSE
+                // Set first_use to false
                 first_use = false;
             }
             else
             {
-                //APPEND TO THE FILE
+                // Append to the file
                 AppendAdditionalMeasurementsToOutputFile(dataset, filename, scan_id, dataset_number);
             }
         }
 
-        //CREATE THE FILE + ADD METRICS FOR FIRST TIME USE
+        // Create the file + add metrics for first time use
         private void CreateOutputFileForFirstTimeUse(string dataset, string filename, int scan_id, int dataset_number)
         {
-            //DECLARE VARIABLES
-			var dctResults = new Dictionary<string, string>();                                             // SCAN RESULTS
+            // Declare variables
+			var dctResults = new Dictionary<string, string>();                                             // Scan results
             var dctValidResults = new SortedDictionary<string, string>();
 
-            //CALCULATE RELATIVE RESULT_ID
-            int result_id = scan_id + dataset_number;
+            // Calculate relative result_id
+            var result_id = scan_id + dataset_number;
 
-            //SET QUERY TO RETRIEVE SCAN RESULTS
+            // Set query to retrieve scan results
             DBWrapper.setQuery("SELECT * FROM scan_results WHERE result_id='" + result_id + "' LIMIT 1;");
 
-            //INIT READER
+            // Init reader
             DBWrapper.initReader();
 
-            //READ IT INTO OUR HASH TABLE
+            // Read it into our hash table
 			DBWrapper.readSingleLine(fields.ToArray(), ref dctResults);
 
-            //GET COUNT
-			int count = dctResults.Count;
+            // Get count
+			var count = dctResults.Count;
 
-            //LINE TO SAVE TO
-            string line = "";
-
-            //ENSURE THERE IS DATA!
+            // Ensure there is data!
             if (count > 0)
             {
-                //OPEN TEMP FILE
+                // Open temp file
 	            using (var file = new StreamWriter(filename))
 	            {
 
-		            line += "SMAQC SCANNER RESULTS\r\n";
-		            line += "-----------------------------------------------------------\r\n";
-		            line += "SMAQC Version: " + smaqc_version + "\r\n";
-		            // line += "Results from Scan ID: " + scan_id + "\r\n";
-		            line += "Instrument ID: " + dctResults["instrument_id"] + "\r\n";
-		            line += "Scan Date: " + dctResults["scan_date"] + "\r\n";
-		            line += "[Data]\r\n";
-		            line += "Dataset, Measurement Name, Measurement Value\r\n";
+	                file.WriteLine("SMAQC SCANNER RESULTS");
+		            file.WriteLine("-----------------------------------------------------------");
+		            file.WriteLine("SMAQC Version: " + smaqc_version + "");
+		            // file.WriteLine("results from scan id: " + scan_id + "");
+		            file.WriteLine("Instrument ID: " + dctResults["instrument_id"] + "");
+		            file.WriteLine("Scan Date: " + dctResults["scan_date"] + "");
+		            file.WriteLine("[Data]");
+                    file.WriteLine("Dataset, Measurement Name, Measurement Value");
 
-		            //REMOVE FROM HASH TABLE
+		            // Remove from hash table
 		            dctResults.Remove("instrument_id");
 		            dctResults.Remove("scan_date");
 		            dctResults.Remove("scan_id");
 		            dctResults.Remove("random_id");
 
-		            //LOOP THROUGH ALL THAT SHOULD BE LEFT [OUR MEASUREMENTS]
-		            foreach (string key in dctResults.Keys)
+		            // Loop through all that should be left [our measurements]
+		            foreach (var key in dctResults.Keys)
 		            {
-			            //ENSURE THAT ALL KEYS HAVE DATA [THIS IS REALLY A FIX FOR SQLITE DUE TO NOT SUPPORTING NULLS PROPERLY]
+			            // Ensure that all keys have data [this is really a fix for sqlite due to not supporting nulls properly]
 			            if (!string.IsNullOrEmpty(dctResults[key]))
 			            {
-				            //ADD TO SORTED DICTIONARY
+				            // Add to sorted dictionary
 				            dctValidResults.Add(key, dctResults[key]);
 			            }
 		            }
 
-		            //LOOP THROUGH EACH SORTED DICTIONARY
+		            // Loop through each sorted dictionary
 		            foreach (var pair in dctValidResults)
 		            {
-			            //ADD:: Dataset, Measurement Name,
-			            //line += String.Format("" + dataset + ", " + pair.Key + ", " + pair.Value + "\r\n");
-			            line += String.Format("" + dataset + ", " + pair.Key + ",");
+			            // Add: dataset, measurement name,
 
-			            //IF THERE IS A NON-NULL VALUE
+			            var outLine = String.Format("" + dataset + ", " + pair.Key + ",");
+
+			            // If there is a non-null value
 			            if (!pair.Value.Equals("Null"))
 			            {
-				            line += " " + pair.Value;
+				            outLine += " " + pair.Value;
 			            }
 
-			            //NOW ADD RETURN + NEWLINE CHAR
-			            line += "\r\n";
+		                file.WriteLine(outLine);
 		            }
 
-		            //APPEND BLANK LINE
-		            line += "\r\n";
-
-		            //WRITE FILE
-		            file.Write(line);
-
-		            //CLOSE FILE
+	                file.WriteLine();
+		            // Close file
 	            }
             }
             else
@@ -131,79 +122,68 @@ namespace SMAQC
 	       
         }
 
-        //APPEND ADDITIONAL MEASUREMENT DATA TO OUTPUT FILE
+        // Append additional measurement data to output file
         private void AppendAdditionalMeasurementsToOutputFile(string dataset, string filename, int scan_id, int dataset_number)
         {
-            //DECLARE VARIABLES
-			var dctResults = new Dictionary<string, string>();                                             //HASH TABLE FOR SCAN RESULTS
+            // Declare variables
+			var dctResults = new Dictionary<string, string>();                                             // Hash table for scan results
             var dctValidResults = new SortedDictionary<string, string>();
 
-            //CALCULATE RELATIVE RESULT_ID
-            int result_id = scan_id + dataset_number;
+            // Calculate relative result_id
+            var result_id = scan_id + dataset_number;
 
-            //SET QUERY TO RETRIEVE SCAN RESULTS
+            // Set query to retrieve scan results
             DBWrapper.setQuery("SELECT * FROM scan_results WHERE result_id='" + result_id + "' LIMIT 1;");
 
-            //INIT READER
+            // Init reader
             DBWrapper.initReader();
 
-            //READ IT INTO OUR HASH TABLE
+            // Read it into our hash table
 			DBWrapper.readSingleLine(fields.ToArray(), ref dctResults);
 
-            //GET COUNT
-			int count = dctResults.Count;
+            // Get count
+			var count = dctResults.Count;
 
-            //LINE TO SAVE TO
-            string line = "";
-
-            //ENSURE THERE IS DATA!
+            // Ensure there is data!
             if (count > 0)
             {
-                //OPEN TEMP FILE
-                StreamWriter file = File.AppendText(filename);// new StreamWriter(filename);
+                // Open temp file
+                var file = File.AppendText(filename);
 
-                //REMOVE FROM HASH TABLE
+                // Remove from hash table
 				dctResults.Remove("instrument_id");
 				dctResults.Remove("scan_date");
 				dctResults.Remove("scan_id");
 				dctResults.Remove("random_id");
 
-                //LOOP THROUGH ALL THAT SHOULD BE LEFT [OUR MEASUREMENTS]
-				foreach (string key in dctResults.Keys)
+                // Loop through all that should be left [our measurements]
+				foreach (var key in dctResults.Keys)
                 {
-                    //ENSURE THAT ALL KEYS HAVE DATA [THIS IS REALLY A FIX FOR SQLITE DUE TO NOT SUPPORTING NULLS PROPERLY]
+                    // Ensure that all keys have data [this is really a fix for sqlite due to not supporting nulls properly]
 					if (!string.IsNullOrEmpty(dctResults[key]))
                     {
-                        //ADD TO SORTED DICTIONARY
+                        // Add to sorted dictionary
 						dctValidResults.Add(key, dctResults[key]);
                     }
                 }
 
-                //LOOP THROUGH EACH SORTED DICTIONARY
+                // Loop through each sorted dictionary
                 foreach (var pair in dctValidResults)
                 {
-                    //ADD:: Dataset, Measurement Name,
-                    //line += String.Format("" + dataset + ", " + pair.Key + ", " + pair.Value + "\r\n");
-                    line += String.Format("" + dataset + ", " + pair.Key + ",");
+                    // Add: dataset, measurement name,
+                    var outLine = String.Format("" + dataset + ", " + pair.Key + ",");
 
-                    //IF THERE IS A NON-NULL VALUE
+                    // If there is a non-null value
                     if (!pair.Value.Equals("Null"))
                     {
-                        line += " " + pair.Value;
+                        outLine += " " + pair.Value;
                     }
 
-                    //NOW ADD RETURN + NEWLINE CHAR
-                    line += "\r\n";
+                    file.WriteLine(outLine);
                 }
 
+                file.WriteLine();
 
-                //APPEND BLANK LINE
-                line += "\r\n";
-
-                //WRITE FILE
-                file.Write(line);
-
-                //CLOSE FILE
                 file.Close();
             }
             else

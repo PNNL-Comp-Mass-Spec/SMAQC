@@ -9,11 +9,11 @@ namespace SMAQC
 {
     class DBSQLite : DBInterface
     {
-        //DECLARE VARIABLES
-        private readonly SQLiteConnection conn;                                                  //SQLITE CONNECTION
-        private string query;                                                           //QUERY TO RUN
-        private SQLiteDataReader reader;                                                //SQLITE READER
-        private readonly DBSQLiteTools SQLiteTools = new DBSQLiteTools();                        //CREATE DBSQLITE TOOLS OBJECT
+        // Declare variables
+        private readonly SQLiteConnection conn;                                                  // Sqlite connection
+        private string query;                                                           // Query to run
+        private SQLiteDataReader reader;                                                // Sqlite reader
+        private readonly DBSQLiteTools SQLiteTools = new DBSQLiteTools();                        // Create dbsqlite tools object
 
 		private int errorMsgCount;
 		private Dictionary<string, int> dctErrorMessages;
@@ -22,14 +22,14 @@ namespace SMAQC
 		Dictionary<string, int> m_PHRPFieldsForInsert;
 
 
-		//EVENT
+		// Event
 		public event DBWrapper.DBErrorEventHandler ErrorEvent;
 
-        //CONSTRUCTOR
+        // Constructor
         public DBSQLite(string datasource)
         {
 
-            // Make sure the SQLiteDB exists and that it contains the correct tables
+            // Make sure the sqlitedb exists and that it contains the correct tables
 			if (!File.Exists(datasource))
 			{
 				// Create the file, along with the tables
@@ -46,48 +46,48 @@ namespace SMAQC
 
         }       
 
-		/// <summary>
-		/// Clear DB Temp Tables for all data
-		/// </summary>
-		/// <param name="db_tables"></param>
+		// / <Summary>
+		// / Clear db temp tables for all data
+		// / </Summary>
+		// / <Param name="db_tables"></param>
 		public void ClearTempTables(string[] db_tables)
 		{
-			//LOOP THROUGH EACH TEMP TABLE
+			// Loop through each temp table
 			foreach (var tableName in db_tables)
 			{
 				if (DBSQLiteTools.TableExists(conn, tableName))
 				{
-					//CREATE QUERY
+					// Create query
 					var temp_string = "DELETE FROM " + tableName + ";";
 
-					//SET QUERY
+					// Set query
 					setQuery(temp_string);
 
-					//CALL QUERY FUNCTION
+					// Call query function
 					QueryNonQuery();
 				}
 			}
 		}
 
-	    /// <summary>
-		/// Clear DB Temp Tables for given Random_ID value
-		/// </summary>
-		/// <param name="random_id"></param>
-		/// <param name="db_tables"></param>
+	    // / <Summary>
+		// / Clear db temp tables for given random_id value
+		// / </Summary>
+		// / <Param name="random_id"></param>
+		// / <Param name="db_tables"></param>
         public void ClearTempTables(string[] db_tables, int random_id)
 	    {
-		    //LOOP THROUGH EACH TEMP TABLE
+		    // Loop through each temp table
 		    foreach (var tableName in db_tables)
 		    {
 			    if (DBSQLiteTools.TableExists(conn, tableName))
 			    {
-				    //CREATE QUERY
+				    // Create query
 					var temp_string = "DELETE FROM " + tableName + " WHERE random_id='" + random_id + "';";
 
-				    //SET QUERY
+				    // Set query
 				    setQuery(temp_string);
 
-				    //CALL QUERY FUNCTION
+				    // Call query function
 				    QueryNonQuery();
 			    }
 		    }
@@ -95,11 +95,11 @@ namespace SMAQC
 
 	    public void setQuery(string myquery)
         {
-            //SET QUERY TO PARAM
+            // Set query to param
             query = myquery;
         }
 
-        //FOR QUERIES THAT RETURN ROWS
+        // For queries that return rows
         public SQLiteDataReader QueryReader()
         {
             var cmd = new SQLiteCommand(conn)
@@ -111,7 +111,7 @@ namespace SMAQC
             return dbReader;
         }
 
-        //FOR QUERIES SUCH AS INSERT/DELETE/UPDATE
+        // For queries such as insert/delete/update
         public Boolean QueryNonQuery()
         {            
             var cmd = new SQLiteCommand(conn)
@@ -123,7 +123,7 @@ namespace SMAQC
             return true;
         }
 
-        //FOR QUERIES THAT RETURN A SINGLE VALUE
+        // For queries that return a single value
         public void QueryScalar()
         {
             var cmd = new SQLiteCommand(conn)
@@ -134,16 +134,16 @@ namespace SMAQC
 
         }
 
-        //THIS FUNCTION OPENS A CONNECTION TO THE DB
+        // This function opens a connection to the db
         public void Open()
         {
-            //OPEN SQLite CONN
+            // Open sqlite conn
             conn.Open();
         }
 
         public void BulkInsert(string insert_into_table, string file_to_read_from)
         {
-            //FETCH FIELDS
+            // Fetch fields
             var fieldNames = SQLiteBulkInsert_Fields(file_to_read_from);
 
 			errorMsgCount = 0;
@@ -152,7 +152,7 @@ namespace SMAQC
 			else
 				dctErrorMessages.Clear();
 
-            //BUILD SQL LINE
+            // Build sql line
             var sql = SQLiteBulkInsert_BuildSQL_Line(insert_into_table, fieldNames);
 			var previousLine = String.Empty;
 
@@ -179,7 +179,7 @@ namespace SMAQC
 
 			                if (line_num == 1)
 			                {
-				                // HEADER LINE, SKIP IT
+				                // Header line, skip it
 				                continue;
 			                }
 
@@ -189,18 +189,18 @@ namespace SMAQC
 				                continue;
 			                }
 
-			                //Console.WriteLine("LINE [{0}]", line);
-			                //FETCH VALUES
+			                // Console.writeline("line [{0}]", line);
+			                // Fetch values
 			                var values = SQLiteBulkInsert_TokenizeLine(line);
 
-			                //LOOP THROUGH FIELD LISTING + SET PARAMETERS
+			                // Loop through field listing + set parameters
 			                for (var i = 0; i < fieldNames.Count; i++)
 			                {
 
 				                mycommand.Parameters.AddWithValue("@" + i, values[i]);
 			                }
 
-			                //NOW THAT ALL FIELDS + VALUES ARE IN OUR SYSTEM
+			                // Now that all fields + values are in our system
 
 			                ExecuteCommand(mycommand, line_num);
 
@@ -244,7 +244,7 @@ namespace SMAQC
 			}
 			catch (Exception ex)
 			{
-				var msg = ex.Message.Replace("\r\n", ": ");
+				var msg = ex.Message.Replace(Environment.NewLine, ": ");
 
 				errorMsgCount = 1;
 				if (dctErrorMessages.TryGetValue(msg, out errorMsgCount))
@@ -261,10 +261,10 @@ namespace SMAQC
 			return true;
 		}
 
-        //INIT READER [WHENEVER WE WANT TO READ A ROW]
+        // Init reader [whenever we want to read a row]
         public void initReader()
         {
-            //CALL QUERY READER
+            // Call query reader
             reader = QueryReader();
         }
 
@@ -325,7 +325,7 @@ namespace SMAQC
 		{
 			m_PHRPInsertCommand.Parameters.Clear();
 
-			// Update insertCommand to have the data value for each field
+			// Update insertcommand to have the data value for each field
 			foreach (var item in m_PHRPFieldsForInsert)
 			{
 				string dataValue;
@@ -343,24 +343,24 @@ namespace SMAQC
 		}
 
 
-        //READ SINGLE DB ROW [DIFFERENT FROM readLines() as here we close reader afterward]
-        //[RETURNS FALSE IF NO FURTHER ROWS TO READ]
+        // Read single db row [different from readlines() as here we close reader afterward]
+        // [Returns false if no further rows to read]
 		public Boolean readSingleLine(string[] fields, ref Dictionary<string, string> dctData)
         {
-			//READ LINE
+			// Read line
             var status = reader.Read();
 
-            //IF RETURNED FALSE ... NO ROWS TO RETURN
+            // If returned false ... no rows to return
             if (!status)
             {
-                //CLOSE READER
+                // Close reader
                 reader.Close();
 
-                //RETURN FALSE AS NO MORE TO READ
+                // Return false as no more to read
                 return false;
             }
 
-            //DECLARE VARIABLES
+            // Declare variables
             foreach (var fieldName in fields)
             {
 	            try
@@ -374,33 +374,33 @@ namespace SMAQC
 	            }
             }
 
-			//CLOSE READER
+			// Close reader
             reader.Close();
 
-            //RETURN TRUE SINCE READ == OK
+            // Return true since read == ok
             return true;
         }
 
-        //READ DB ROW(s) [RETURNS FALSE IF NO FURTHER ROWS TO READ]
+        // Read db row(s) [returns false if no further rows to read]
 		public Boolean readLines(string[] fields, ref Dictionary<string, string> dctData)
         {
-			//READ LINE
+			// Read line
             var status = reader.Read();
 
-            //IF RETURNED FALSE ... NO ROWS TO RETURN
+            // If returned false ... no rows to return
             if (!status)
             {
-                //CLOSE READER
+                // Close reader
                 reader.Close();
 
-                //RETURN FALSE AS NO MORE TO READ
+                // Return false as no more to read
                 return false;
             }
 
-            //DECLARE VARIABLES
+            // Declare variables
             foreach (var fieldName in fields)
             {
-	            //READ + STORE FIELD [Value, Result]
+	            // Read + store field [value, result]
 	            try
 	            {
 					var value = reader.GetOrdinal(fieldName);
@@ -424,10 +424,10 @@ namespace SMAQC
 			if (string.IsNullOrWhiteSpace(line))
 				return new List<string>();
 
-            //SPLIT GIVEN DATA FILES BY TAB
+            // Split given data files by tab
             var delimiters = new[] { '\t' };
 
-            //DO SPLIT OPERATION
+            // Do split operation
 			var parts = line.Split(delimiters, StringSplitOptions.None).ToList();
 
 		    // Make sure the field names do not have spaces or parentheses in them
@@ -441,16 +441,16 @@ namespace SMAQC
 
         string[] SQLiteBulkInsert_TokenizeLine(string line)
         {
-            //SPLIT GIVEN DATA FILES BY TAB
+            // Split given data files by tab
             var delimiters = new[] { '\t' };
 
-            //IF LINE CONTAINS "\t\t", THIS MEANS AN EMPTY FIELD; REPLACE WITH "\t \t"
+            // If line contains "\t\t", this means an empty field; replace with "\t \t"
             while (line.Contains("\t\t"))
             {
                 line = line.Replace("\t\t", "\t \t");
             }
 
-            //DO SPLIT OPERATION
+            // Do split operation
             var parts = line.Split(delimiters, StringSplitOptions.None);
 
             return parts;
@@ -460,10 +460,10 @@ namespace SMAQC
         {
             var sbSql = new System.Text.StringBuilder();
 
-            //BUILD BASE
+            // Build base
             sbSql.Append("INSERT INTO " + table + " (");
 
-            //BUILD COMMANDS
+            // Build commands
 			for (var i = 0; i < fields.Count; i++)
 			{
 				sbSql.Append("`" + fields[i] + "`");
@@ -471,10 +471,10 @@ namespace SMAQC
 					sbSql.Append(",");					
             }
 
-            //ADD END OF COMMANDS
+            // Add end of commands
             sbSql.Append(") VALUES (");
 
-            //BUILD VALUE LIST
+            // Build value list
             for (var i = 0; i < fields.Count; i++)
             {
                 sbSql.Append("@" + i);
@@ -482,35 +482,35 @@ namespace SMAQC
 					sbSql.Append(",");
             }
 
-            //ADD END OF VALUES
+            // Add end of values
             sbSql.Append(");");
 
 			return sbSql.ToString();
         }
 
-        /// <summary>
-        /// Replace invalid characters in field names
-        /// </summary>
-        /// <param name="field"></param>
-        /// <returns></returns>
+        // / <Summary>
+        // / Replace invalid characters in field names
+        // / </Summary>
+        // / <Param name="field"></param>
+        // / <Returns></returns>
         string SQLiteBulkInsert_CleanFields(string field)
         {
             var field_line = field;
 
-            //IF == SPACE
+            // If == space
             if (field_line.Contains(" "))
             {
-                //REPLACE BLANKS WITH _
+                // Replace blanks with _
                 field_line = field_line.Replace(" ", "_");
             }
 
-            //REPLACE ALL INSTANCES OF _(
+            // Replace all instances of _(
             while (field_line.Contains("_("))
             {
                 field_line = field_line.Remove(field_line.IndexOf("_(", StringComparison.Ordinal));
             }
 
-            //REPLACE ALL INSTANCES OF (
+            // Replace all instances of (
             while (field_line.Contains("("))
             {
                 field_line = field_line.Remove(field_line.IndexOf("(", StringComparison.Ordinal));

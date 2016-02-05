@@ -10,28 +10,28 @@ namespace SMAQC
 {
     class DBMySQL : DBInterface
     {
-        public Boolean db_open = false;             //IS DB OPEN?
-        public string dbinfo;                       //DB INFO
-        public MySqlConnection conn = null;                //DB CONN VARIABLE
+        public Boolean db_open = false;             // Is db open?
+        public string dbinfo;                       // Db info
+        public MySqlConnection conn = null;                // Db conn variable
         MySqlDataReader reader;
-        string query;                               //QUERY TO BE EXECUTED
+        string query;                               // Query to be executed
 
-        //CONSTRUCTOR
+        // Constructor
         public DBMySQL(string dbhost, string dbuser, string dbpass, string dbname)
         {
-            //SET DB INFO
+            // Set db info
             dbinfo = "server=" + dbhost + ";database=" + dbname + ";uid=" + dbuser + ";password=" + dbpass;
 
-            //OPEN DB CONN
+            // Open db conn
             this.Open();
 
-            //Console.WriteLine("MySQLDB() CONSTRUCTOR ({0})", dbinfo);
+            // Console.writeline("mysqldb() constructor ({0})", dbinfo);
         }
 
-        //DESTRUCTOR
+        // Destructor
         ~DBMySQL()
         {
-            //Console.WriteLine("MySQLDB() DE-CONSTRUCTOR");
+            // Console.writeline("mysqldb() de-constructor");
             try
             {
                 conn.Close();
@@ -41,31 +41,31 @@ namespace SMAQC
             }
         }
 
-        //CLEAR DB TABLES
+        // Clear db tables
         public void clearTempTables(int r_id, String[] db_tables)
         {
-            //LOOP THROUGH EACH TEMP TABLE
+            // Loop through each temp table
             for (int i = 0; i < db_tables.Length; i++)
             {
-                //CREATE QUERY
+                // Create query
                 String temp_string = "TRUNCATE `" + db_tables[i] + "`;";
 
-                //SET QUERY
+                // Set query
                 this.setQuery(temp_string);
 
-                //CALL QUERY FUNCTION
+                // Call query function
                 this.QueryNonQuery();
             }
         }
 
         public void setQuery(string myquery)
         {
-            //SET QUERY TO PARAM
+            // Set query to param
             query = myquery; 
         }
 
-        //FOR QUERIES THAT RETURN ROWS
-        //public MySqlDataReader QueryReader()
+        // For queries that return rows
+        // Public mysqldatareader queryreader()
         public Object QueryReader()
         {
             MySqlDataReader reader = null;
@@ -94,7 +94,7 @@ namespace SMAQC
             return reader;
         }
 
-        //FOR QUERIES SUCH AS INSERT/DELETE/UPDATE
+        // For queries such as insert/delete/update
         public Boolean QueryNonQuery()
         {
             MySqlCommand cmd = null;
@@ -127,7 +127,7 @@ namespace SMAQC
                 return true;
         }
 
-        //FOR QUERIES THAT RETURN A SINGLE VALUE
+        // For queries that return a single value
         public void QueryScalar()
         {
             try
@@ -150,18 +150,18 @@ namespace SMAQC
                         Console.WriteLine("QUERY FAILED! " + "[" + query + "]" + ex.Number);
                         break;
                 }
-                //EXIT AS CANNOT CONTINUE
+                // Exit as cannot continue
                 Environment.Exit(1);
             }
         }
 
-        //THIS FUNCTION OPENS A CONNECTION TO THE DB
+        // This function opens a connection to the db
         public void Open()
         {
             conn = new MySqlConnection(dbinfo);
             try
             {
-                conn.Open(); // connection must be openned for command
+                conn.Open(); // Connection must be openned for command
             }
             catch (MySql.Data.MySqlClient.MySqlException ex)
             {
@@ -187,17 +187,17 @@ namespace SMAQC
                         Console.WriteLine("Server Invalid DB Name!");
                         break;
                 }
-                //EXIT AS CANNOT CONTINUE
+                // Exit as cannot continue
                 Environment.Exit(1);
             }
         }
 
         public void BulkInsert(String insert_into_table, String file_to_read_from)
         {
-            //FETCH FIELDS
+            // Fetch fields
             String[] fields = SQLiteBulkInsert_Fields(file_to_read_from);
 
-            //BUILD SQL LINE
+            // Build sql line
             String sql = SQLiteBulkInsert_BuildSQL_Line(insert_into_table, fields);
 
             using (MySqlTransaction dbTrans = conn.BeginTransaction())
@@ -211,41 +211,41 @@ namespace SMAQC
                     int line_num = 0;
                     while ((line = file.ReadLine()) != null)
                     {
-                        //CHECK IF FIELD LISTING LINE #
+                        // Check if field listing line #
                         if (line_num == 0)
                         {
                             line_num++;
-                            continue;//SKIP THIS LINE AS WE DO NOT WANT THE FIELD LISTING
+                            continue;// Skip this line as we do not want the field listing
                         }
 
 
-                        //Console.WriteLine("START LINE [{0}]", line);
-                        //Console.WriteLine("SQL=[{0}]", mycommand.CommandText);
-                        //FETCH VALUES
+                        // Console.writeline("start line [{0}]", line);
+                        // Console.writeline("sql=[{0}]", mycommand.commandtext);
+                        // Fetch values
                         String[] values = SQLiteBulkInsert_TokenizeLine(line);
 
 
                         
 
-                        //LOOP THROUGH FIELD LISTING + SET PARAMETERS
+                        // Loop through field listing + set parameters
                         for (int i = 0; i < fields.Length; i++)
                         {
-                            //THIS PART NOT NEEDED DUE TO SWITCHING TO 0 ... n INSTEAD OF FIELD LIST
-                            //fields[i] = SQLiteBulkInsert_CleanLine(fields[i]);
-                            //Console.WriteLine("@{0} && values[i]={1}", i, values[i]);
+                            // This part not needed due to switching to 0 ... n instead of field list
+                            // Fields[i] = sqlitebulkinsert_cleanline(fields[i]);
+                            // Console.writeline("@{0} && values[i]={1}", i, values[i]);
                             mycommand.Parameters.AddWithValue("@" + i, values[i]);
                         }
 
 
 
-                        //Console.WriteLine("END LINE");
+                        // Console.writeline("end line");
 
-                        //NOW THAT ALL FIELDS + VALUES ARE IN OUR SYSTEM
+                        // Now that all fields + values are in our system
                         mycommand.ExecuteNonQuery();
 
                         mycommand.Parameters.Clear();
                     }
-                    //CLOSE FILE
+                    // Close file
                     file.Close();
                 }
                 dbTrans.Commit();
@@ -259,40 +259,40 @@ namespace SMAQC
             bl.FieldTerminator = ",";
             bl.LineTerminator = "\r\n";
             bl.FileName = file_to_read_from;
-            bl.NumberOfLinesToSkip = 1; //1 AS WE NEED TO SKIP OVER FIELD LISTS
+            bl.NumberOfLinesToSkip = 1; // 1 As we need to skip over field lists
             var inserted = bl.Load();
-            //Console.WriteLine(inserted + " rows inserted.");
+            // Console.writeline(inserted + " rows inserted.");
             */
         }
 
-        //INIT MYSQL READER [WHENEVER WE WANT TO READ A ROW]
+        // Init mysql reader [whenever we want to read a row]
         public void initReader()
         {
-            //CALL QUERY READER
+            // Call query reader
             reader = (MySqlDataReader)QueryReader();
         }
 
-        //READ SINGLE DB ROW [DIFFERENT FROM readLines() as here we close reader afterwords]
-        //[RETURNS FALSE IF NO FURTHER ROWS TO READ]
+        // Read single db row [different from readlines() as here we close reader afterwords]
+        // [Returns false if no further rows to read]
         public Boolean readSingleLine(String[] fields, ref Hashtable hash)
         {
-            //DECLARE VARIABLE
+            // Declare variable
             Boolean status;
 
-            //READ LINE
+            // Read line
             status = reader.Read();
 
-            //IF RETURNED FALSE ... NO ROWS TO RETURN
+            // If returned false ... no rows to return
             if (!status)
             {
-                //CLOSE READER
+                // Close reader
                 reader.Close();
 
-                //RETURN FALSE AS NO MORE TO READ
+                // Return false as no more to read
                 return false;
             }
 
-            //DECLARE VARIABLES
+            // Declare variables
             for (int i = 0; i < fields.Length; i++)
             {
                 try
@@ -305,36 +305,36 @@ namespace SMAQC
                 }
             }
 
-            //CLOSE READER
+            // Close reader
             reader.Close();
 
-            //RETURN TRUE SINCE READ == OK
+            // Return true since read == ok
             return true;
         }
 
-        //READ DB ROW(s) [RETURNS FALSE IF NO FURTHER ROWS TO READ]
+        // Read db row(s) [returns false if no further rows to read]
         public Boolean readLines(String[] fields, ref Hashtable hash)
         {
-            //DECLARE VARIABLE
+            // Declare variable
             Boolean status;
 
-            //READ LINE
+            // Read line
             status = reader.Read();
 
-            //IF RETURNED FALSE ... NO ROWS TO RETURN
+            // If returned false ... no rows to return
             if (!status)
             {
-                //CLOSE READER
+                // Close reader
                 reader.Close();
 
-                //RETURN FALSE AS NO MORE TO READ
+                // Return false as no more to read
                 return false;
             }
 
-            //DECLARE VARIABLES
+            // Declare variables
             for (int i = 0; i < fields.Length; i++)
             {
-                //READ + STORE FIELD [Value, Result]
+                // Read + store field [value, result]
                 try
                 {
                     hash.Add(fields[i], reader.GetString(fields[i]));
@@ -345,7 +345,7 @@ namespace SMAQC
                 }
             }
 
-            //RETURN TRUE SINCE READ == OK
+            // Return true since read == ok
             return true;
         }
 
@@ -355,10 +355,10 @@ namespace SMAQC
             String line = file.ReadLine();
             file.Close();
 
-            //SPLIT GIVEN DATA FILES BY TAB
+            // Split given data files by tab
             char[] delimiters = new char[] { ',' };
 
-            //DO SPLIT OPERATION
+            // Do split operation
             string[] parts = line.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
 
             for (int i = 0; i < parts.Length; i++)
@@ -371,16 +371,16 @@ namespace SMAQC
 
         String[] SQLiteBulkInsert_TokenizeLine(String line)
         {
-            //SPLIT GIVEN DATA FILES BY TAB
+            // Split given data files by tab
             char[] delimiters = new char[] { ',' };
 
-            //IF LINE CONTAINS ",," WHICH MEANS == FIELD IS ALLOWED NULL [SCANSTATSEX FIX]
+            // If line contains ",," which means == field is allowed null [scanstatsex fix]
             while (line.Contains(",,"))
             {
                 line = line.Replace(",,", ", ,");
             }
 
-            //DO SPLIT OPERATION
+            // Do split operation
             string[] parts = line.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
 
             return parts;
@@ -390,29 +390,29 @@ namespace SMAQC
         {
             String sql = "";
 
-            //BUILD BASE
+            // Build base
             sql += "INSERT INTO " + table + " (";
 
-            //BUILD COMMANDS
+            // Build commands
             for (int i = 0; i < parts.Length; i++)
             {
                 sql += "`" + parts[i] + "`,";
             }
-            //THERE IS NOW AN EXTRA , FIND INDEX OF IT + REMOVE
+            // There is now an extra , find index of it + remove
             sql = sql.Remove(sql.LastIndexOf(","));
 
-            //ADD END OF COMMANDS
+            // Add end of commands
             sql += ") VALUES (";
 
-            //BUILD VALUE LIST
+            // Build value list
             for (int i = 0; i < parts.Length; i++)
             {
                 sql += "@" + i + ",";
             }
-            //THERE IS NOW AN EXTRA , FIND INDEX OF IT + REMOVE
+            // There is now an extra , find index of it + remove
             sql = sql.Remove(sql.LastIndexOf(","));
 
-            //ADD END OF VALUES
+            // Add end of values
             sql += ");";
             return sql;
         }
@@ -421,20 +421,20 @@ namespace SMAQC
         {
             String field_line = field;
 
-            //IF == SPACE
+            // If == space
             if (field_line.Contains(" "))
             {
-                //REPLACE BLANKS WITH _
+                // Replace blanks with _
                 field_line = field_line.Replace(" ", "_");
             }
 
-            //REPLACE ALL INSTANCES OF _(
+            // Replace all instances of _(
             while (field_line.IndexOf("_(") > 0)
             {
                 field_line = field_line.Remove(field_line.IndexOf("_("));
             }
 
-            //REPLACE ALL INSTANCES OF (
+            // Replace all instances of (
             while (field_line.IndexOf("(") > 0)
             {
                 field_line = field_line.Remove(field_line.IndexOf("("));

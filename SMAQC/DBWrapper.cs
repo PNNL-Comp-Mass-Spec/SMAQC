@@ -6,11 +6,11 @@ namespace SMAQC
 {
     class DBWrapper
     {
-        //DELEGATE FUNCTION FOR ERROR EVENTS
+        // Delegate function for error events
         public delegate void DBErrorEventHandler(string errorMessage);
         public event DBErrorEventHandler ErrorEvent;
 
-        //DECLARE VARIABLES
+        // Declare variables
         readonly DBInterface dbConn;
         public string[] db_tables = { "temp_scanstats", "temp_scanstatsex", "temp_sicstats", "temp_xt", "temp_xt_resulttoseqmap", "temp_xt_seqtoproteinmap", "temp_PSMs" };
         private bool mShowQueryText;
@@ -19,9 +19,9 @@ namespace SMAQC
 
         private string mCurrentQuery;
 
-        /// <summary>
-        /// The most recent query Sql
-        /// </summary>
+        // / <Summary>
+        // / The most recent query sql
+        // / </Summary>
         public string CurrentQuery
         {
             get
@@ -47,10 +47,10 @@ namespace SMAQC
         // Constructor
         public DBWrapper(string dbFolderPath)
         {
-            //GET PATH TO DB [NEEDED FOR SQLite SO WE SAVE IN CORRECT LOCATION]
+            // Get path to db [needed for sqlite so we save in correct location]
             var dbPath = Path.Combine(dbFolderPath, "SMAQC.s3db");
 
-            //CREATE DB CONN
+            // Create db conn
             dbConn = new DBSQLite(dbPath);
 
             // Verify that the required columns are present
@@ -61,24 +61,24 @@ namespace SMAQC
             mCurrentQuery = string.Empty;
         }
 
-        /// <summary>
-        /// Clear DB Temp Tables for all data
-        /// </summary>
+        // / <Summary>
+        // / Clear db temp tables for all data
+        // / </Summary>
         public void ClearTempTables()
         {
             dbConn.ClearTempTables(db_tables);
         }
 
-        /// <summary>
-        /// Clear DB Temp Tables for all data
-        /// </summary>
-        /// <param name="random_id"></param>
+        // / <Summary>
+        // / Clear db temp tables for all data
+        // / </Summary>
+        // / <Param name="random_id"></param>
         public void ClearTempTables(int random_id)
         {
             dbConn.ClearTempTables(db_tables, random_id);
         }
 
-        //SET QUERY
+        // Set query
         public void setQuery(string myquery)
         {
             try
@@ -99,19 +99,19 @@ namespace SMAQC
             }
         }
 
-        //BULK INSERT
+        // Bulk insert
         public void BulkInsert(string insert_into_table, string file_to_read_from)
         {
             dbConn.BulkInsert(insert_into_table, file_to_read_from);
         }
 
-        //FOR QUERIES SUCH AS INSERT/DELETE/UPDATE
+        // For queries such as insert/delete/update
         public Boolean QueryNonQuery()
         {
 
             var status = false;
 
-            //UPDATE STATUS + RUN QUERY
+            // Update status + run query
             try
             {
                 status = dbConn.QueryNonQuery();
@@ -121,18 +121,18 @@ namespace SMAQC
                 Console.WriteLine("Error in QueryNonQuery: " + ex.Message);
             }
 
-            //RETURN TRUE/FALSE
+            // Return true/false
             return status;
         }
 
-        //INIT READER [WHENEVER WE WANT TO READ A ROW]
+        // Init reader [whenever we want to read a row]
         public void initReader()
         {
             dbConn.initReader();
         }
 
-        //READ SINGLE DB ROW [DIFFERENT FROM readLines() as here we close reader afterward]
-        //[RETURNS FALSE IF NO FURTHER ROWS TO READ]
+        // Read single db row [different from readlines() as here we close reader afterward]
+        // [Returns false if no further rows to read]
         public Boolean readSingleLine(string[] fields, ref Dictionary<string, string> dctData)
         {
             var status = false;
@@ -144,7 +144,7 @@ namespace SMAQC
             return status;
         }
 
-        //READ DB ROW(s) [RETURNS FALSE IF NO FURTHER ROWS TO READ]
+        // Read db row(s) [returns false if no further rows to read]
         public Boolean readLines(string[] fields, ref Dictionary<string, string> dctData)
         {
             var status = false;
@@ -156,27 +156,27 @@ namespace SMAQC
             return true;
         }
 
-        //GET THE DB GETDATE() FOR OUR DB'S AS STRING
+        // Get the db getdate() for our db's as string
         public string getDateTime()
         {
             return dbConn.getDateTime();
         }
 
-        /// <summary>
-        /// Initialize the command for inserting PHRP data
-        /// </summary>
-        /// <param name="dbTrans"></param>
-        /// <returns></returns>
+        // / <Summary>
+        // / Initialize the command for inserting phrp data
+        // / </Summary>
+        // / <Param name="dbtrans"></param>
+        // / <Returns></returns>
         public bool InitPHRPInsertCommand(out System.Data.Common.DbTransaction dbTrans)
         {
             return dbConn.InitPHRPInsertCommand(out dbTrans);
         }
 
-        /// <summary>
-        /// Add new PHRP data
-        /// </summary>
-        /// <param name="dctData"></param>
-        /// <param name="line_num"></param>
+        // / <Summary>
+        // / Add new phrp data
+        // / </Summary>
+        // / <Param name="dctdata"></param>
+        // / <Param name="line_num"></param>
         public void ExecutePHRPInsertCommand(Dictionary<string, string> dctData, int line_num)
         {
             dbConn.ExecutePHRPInsert(dctData, line_num);
