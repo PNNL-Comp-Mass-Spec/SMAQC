@@ -709,6 +709,12 @@ namespace SMAQC
 							{
 								parser.MoveToAttribute("name");
 								lstMeasurementsToRun.Add(parser.Value);
+
+							    if (parser.Value.Equals("*", StringComparison.InvariantCulture))
+							    {
+							        useDefaultMetrics = true;
+							        break;
+							    }
 							}
 
 						}

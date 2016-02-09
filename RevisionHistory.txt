@@ -6,6 +6,7 @@ Version 1.2.5882; February 8, 2016
 		- MS2_RepIon_1Missing: Number of Filter-passing PSMs for which one Reporter Ion was not observed
 		- MS2_RepIon_2Missing: Number of Filter-passing PSMs for which one Reporter Ion was not observed
 		- MS2_RepIon_31Missing: Number of Filter-passing PSMs for which one Reporter Ion was not observed
+	- In the XML file listing the measurements to run, metric name * now means to compute all of the metrics
 
 Version 1.2.5878; February 4, 2016
 	- Added 2 new metrics
