@@ -40,7 +40,7 @@ namespace SMAQC
 				try
                 {
 					var sResult = factory.BuildMeasurement(measurementName);
-					if (String.IsNullOrEmpty(sResult))
+                    if (string.IsNullOrEmpty(sResult))
 						sResult = "Null";
 
                     dctResults.Add(measurementName, sResult);

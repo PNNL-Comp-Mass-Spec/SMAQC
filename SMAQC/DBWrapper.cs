@@ -106,7 +106,7 @@ namespace SMAQC
         }
 
         // For queries such as insert/delete/update
-        public Boolean QueryNonQuery()
+        public bool QueryNonQuery()
         {
 
             var status = false;
@@ -133,7 +133,7 @@ namespace SMAQC
 
         // Read single db row [different from readlines() as here we close reader afterward]
         // [Returns false if no further rows to read]
-        public Boolean readSingleLine(string[] fields, ref Dictionary<string, string> dctData)
+        public bool readSingleLine(string[] fields, ref Dictionary<string, string> dctData)
         {
             var status = false;
 
@@ -145,7 +145,7 @@ namespace SMAQC
         }
 
         // Read db row(s) [returns false if no further rows to read]
-        public Boolean readLines(string[] fields, ref Dictionary<string, string> dctData)
+        public bool readLines(string[] fields, ref Dictionary<string, string> dctData)
         {
             var status = false;
 
@@ -160,6 +160,16 @@ namespace SMAQC
         public string getDateTime()
         {
             return dbConn.getDateTime();
+        }
+
+        /// <summary>
+        /// Return the columns defined for the given table
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <returns></returns>
+        public List<string> GetTableColumns(string tableName)
+        {
+            return dbConn.GetTableColumns(tableName);
         }
 
         // / <Summary>

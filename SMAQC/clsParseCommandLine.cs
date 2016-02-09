@@ -609,7 +609,7 @@ namespace ExtensionMethods
 		/// <param name="str"></param>
 		/// <param name="ch"></param>
 		/// <returns>True if str starts with ch</returns>
-		public static bool StartsWith(this String str, char ch)
+		public static bool StartsWith(this string str, char ch)
 		{
 			if (!string.IsNullOrEmpty(str))
 			{
@@ -625,7 +625,7 @@ namespace ExtensionMethods
 		/// <param name="str"></param>
 		/// <param name="ch"></param>
 		/// <returns>True if str ends with ch</returns>
-		public static bool EndsWith(this String str, char ch)
+		public static bool EndsWith(this string str, char ch)
 		{
 			if (!string.IsNullOrEmpty(str))
 			{

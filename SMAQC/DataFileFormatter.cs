@@ -125,7 +125,7 @@ namespace SMAQC
 		~DataFileFormatter()
 		{
 			// Ensure temp file does not still exist
-			if (!String.IsNullOrEmpty(mTempFilePath) && File.Exists(mTempFilePath))
+            if (!string.IsNullOrEmpty(mTempFilePath) && File.Exists(mTempFilePath))
 				ensure_temp_file_removed(mTempFilePath);
 		}
 
@@ -141,7 +141,7 @@ namespace SMAQC
 
 		// This function checks each file to see if it should be re-formated and then takes care of it
 		// Returns false == no rebuild || true == rebuild
-		public Boolean handleFile(string filename, string dataset)
+		public bool handleFile(string filename, string dataset)
 		{
 			// Declare variables
 			var ListFieldID = new List<int>();                    // Maps observed column index to desired column index in db (-1 means do not store the given column in the db)
@@ -426,7 +426,7 @@ namespace SMAQC
 		}
 
 		// This function returns whether or not we are currently working with _scanstatsex.txt
-		public Boolean ScanStatsExBugFixer(string file_to_load)
+		public bool ScanStatsExBugFixer(string file_to_load)
 		{
 			var value = file_to_load.IndexOf("_ScanStatsEx.txt", StringComparison.OrdinalIgnoreCase);
 

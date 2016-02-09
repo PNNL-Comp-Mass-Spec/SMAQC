@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 
 namespace SMAQC
 {
@@ -21,6 +22,15 @@ namespace SMAQC
             public Dictionary<int, int> PassFilt;		// Keys are quartile (1,2,3,4); values are the number of confidently identified MS/MS scans in the quartile
         }
 
+        private enum eCachedResult
+        {
+            ScanFirstFilterPassingPeptide = 0,
+            C2A_RegionScanStart = 1,
+            C2A_RegionScanEnd = 2,
+            C2A_TimeMinutes = 3,
+            ReporterIonNoiseThreshold = 4
+        }
+
         // Constants
         private const int XTANDEM_LOG_EVALUE_THRESHOLD = -2;
         public const double MSGF_SPECPROB_THRESHOLD = 1e-12;
@@ -35,7 +45,7 @@ namespace SMAQC
         private readonly int m_Random_ID;
 
         // Some measurements have data required by others ... will be stored here
-        private readonly Dictionary<string, double> m_ResultsStorage = new Dictionary<string, double>();
+        private readonly Dictionary<eCachedResult, double> m_ResultsStorage = new Dictionary<eCachedResult, double>();
 
         // Cached data for computing median peak widths
         bool m_MedianPeakWidthDataCached;
@@ -71,6 +81,9 @@ namespace SMAQC
         bool m_MS2_4_Counts_Cached;
         udtMS2_4Counts m_Cached_MS2_4_Counts;
 
+        // Cached data for the ReporterIon metrics
+        private List<string> mReporterIonColumns;
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -94,14 +107,14 @@ namespace SMAQC
         /// <summary>
         /// Add (or update) entryName in mResultsStorage
         /// </summary>
-        /// <param name="entryName"></param>
+        /// <param name="entryType"></param>
         /// <param name="value"></param>
-        protected void AddUpdateResultsStorage(string entryName, double value)
+        private void AddUpdateResultsStorage(eCachedResult entryType, double value)
         {
-            if (m_ResultsStorage.ContainsKey(entryName))
-                m_ResultsStorage[entryName] = value;
+            if (m_ResultsStorage.ContainsKey(entryType))
+                m_ResultsStorage[entryType] = value;
             else
-                m_ResultsStorage.Add(entryName, value);
+                m_ResultsStorage.Add(entryType, value);            
         }
 
         /// <summary>
@@ -113,7 +126,7 @@ namespace SMAQC
             m_ResultsStorage.Clear();
         }
 
-        protected double ComputeMedian(List<double> values)
+        private double ComputeMedian(List<double> values)
         {
             if (values.Count == 0)
                 return 0;
@@ -139,23 +152,24 @@ namespace SMAQC
                 return (values[pos] + values[pos + 1]) / 2;
             }
         }
-        protected double GetStoredValue(string entryName, double valueIfMissing)
+
+        private double GetStoredValue(eCachedResult entryType, double valueIfMissing)
         {
             double value;
 
-            if (m_ResultsStorage.TryGetValue(entryName, out value))
+            if (m_ResultsStorage.TryGetValue(entryType, out value))
                 return value;
 
             return valueIfMissing;
         }
 
-        protected int GetStoredValueInt(string entryName, int valueIfMissing)
+        private int GetStoredValueInt(eCachedResult entryType, int valueIfMissing)
         {
-            var value = GetStoredValue(entryName, valueIfMissing);
+            var value = GetStoredValue(entryType, valueIfMissing);
             return (int)value;
         }
 
-        protected bool PeptideScorePassesFilter(double peptideScore)
+        private bool PeptideScorePassesFilter(double peptideScore)
         {
             if (peptideScore <= MSGF_SPECPROB_THRESHOLD)
                 return true;
@@ -186,7 +200,7 @@ namespace SMAQC
         /// </summary>
         /// <param name="countTailingPeptides">False means to count early eluting peptides; True means to count late-eluting peptides</param>
         /// <returns></returns>
-        protected string C_1_Shared(bool countTailingPeptides)
+        private string C_1_Shared(bool countTailingPeptides)
         {
 
             m_DBInterface.setQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber, t1.OptimalPeakApexScanNumber,"
@@ -321,18 +335,18 @@ namespace SMAQC
             {
                 // Add to global list for use with MS_2A/B
                 // SCAN_FIRST_FILTER_PASSING_PEPTIDE is the scan number of the first filter-passing peptide
-                AddUpdateResultsStorage("SCAN_FIRST_FILTER_PASSING_PEPTIDE", lstFilterPassingPeptides.Keys.Min());
+                AddUpdateResultsStorage(eCachedResult.ScanFirstFilterPassingPeptide, lstFilterPassingPeptides.Keys.Min());
             }
 
             // Cache the scan numbers at the start and end of the intequartile region
-            AddUpdateResultsStorage("C_2A_REGION_SCAN_START", C2AScanStart);
-            AddUpdateResultsStorage("C_2A_REGION_SCAN_END", C2AScanEnd);
+            AddUpdateResultsStorage(eCachedResult.C2A_RegionScanStart, C2AScanStart);
+            AddUpdateResultsStorage(eCachedResult.C2A_RegionScanEnd, C2AScanEnd);
 
-            var answer = C2AScanTimeEnd - C2AScanTimeStart;
+            var timeMinutes = C2AScanTimeEnd - C2AScanTimeStart;
 
-            AddUpdateResultsStorage("C_2A_TIME_MINUTES", answer);
+            AddUpdateResultsStorage(eCachedResult.C2A_TimeMinutes, timeMinutes);
 
-            return answer.ToString("0.0000");
+            return timeMinutes.ToString("0.0000");
         }
 
 
@@ -357,9 +371,9 @@ namespace SMAQC
             // This list keeps track of the scan numbers already processed so that we can avoid double-counting a scan number
             var lstScansWithFilterPassingIDs = new SortedSet<int>();
 
-            var timeMinutesC2A = GetStoredValue("C_2A_TIME_MINUTES", 0);
-            var scanStartC2A = GetStoredValueInt("C_2A_REGION_SCAN_START", 0);
-            var scanEndC2A = GetStoredValueInt("C_2A_REGION_SCAN_END", 0);
+            var timeMinutesC2A = GetStoredValue(eCachedResult.C2A_TimeMinutes, 0);
+            var scanStartC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanStart, 0);
+            var scanEndC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanEnd, 0);
 
             string[] fields = { "Scan", "ScanNumber", "ScanTime1" };
 
@@ -457,7 +471,7 @@ namespace SMAQC
             return ComputeMedianPeakWidth(startScanRelative, endScanRelative);
         }
 
-        protected void Cache_MedianPeakWidth_Data()
+        private void Cache_MedianPeakWidth_Data()
         {
 
             var lstPSMs = new List<udtPeptideEntry>();							// Cached, filter-passing peptide-spectrum matches
@@ -577,7 +591,7 @@ namespace SMAQC
 
         }
 
-        protected string ComputeMedianPeakWidth(double startScanRelative, double endScanRelative)
+        private string ComputeMedianPeakWidth(double startScanRelative, double endScanRelative)
         {
             var result = new List<double>();
 
@@ -703,7 +717,7 @@ namespace SMAQC
         /// <summary>
         /// Computes stats on the number of spectra by which each peptide was identified
         /// </summary>
-        protected void Cache_DS_1_Data()
+        private void Cache_DS_1_Data()
         {
 
             m_DBInterface.setQuery("SELECT Spectra, Count(*) AS Peptides "
@@ -752,11 +766,11 @@ namespace SMAQC
             return DS_2_Shared(msLevel).ToString();
         }
 
-        protected int DS_2_Shared(int msLevel)
+        private int DS_2_Shared(int msLevel)
         {
 
-            var scanStartC2A = GetStoredValueInt("C_2A_REGION_SCAN_START", 0);
-            var scanEndC2A = GetStoredValueInt("C_2A_REGION_SCAN_END", 0);
+            var scanStartC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanStart, 0);
+            var scanEndC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanEnd, 0);
 
             m_DBInterface.setQuery("SELECT COUNT(*) AS ScanCount "
                 + " FROM temp_scanstats "
@@ -882,7 +896,7 @@ namespace SMAQC
             return result.ToString("0.000000");
         }
 
-        protected void Cache_IS3_Data()
+        private void Cache_IS3_Data()
         {
 
             m_DBInterface.setQuery("SELECT Charge, COUNT(*) AS PSMs "
@@ -981,11 +995,11 @@ namespace SMAQC
             return Convert.ToString(median, CultureInfo.InvariantCulture);
         }
 
-        protected void Cache_MS1_2_Data()
+        private void Cache_MS1_2_Data()
         {
 
-            var scanFirstPeptide = GetStoredValueInt("SCAN_FIRST_FILTER_PASSING_PEPTIDE", 0);
-            var scanEndC2A = GetStoredValueInt("C_2A_REGION_SCAN_END", 0);
+            var scanFirstPeptide = GetStoredValueInt(eCachedResult.ScanFirstFilterPassingPeptide, 0);
+            var scanEndC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanEnd, 0);
 
             m_DBInterface.setQuery("SELECT BasePeakSignalToNoiseRatio, TotalIonIntensity "
                 + " FROM temp_scanstats"
@@ -1045,7 +1059,7 @@ namespace SMAQC
             return median.ToString("0.0");
         }
 
-        protected void Cache_MS1_3_Data()
+        private void Cache_MS1_3_Data()
         {
 
             m_DBInterface.setQuery("SELECT temp_sicstats.PeakMaxIntensity"
@@ -1118,7 +1132,7 @@ namespace SMAQC
             return DS_3_Shared(bottom50Pct: true);
         }
 
-        protected void DS_3_CacheData()
+        private void DS_3_CacheData()
         {
 
             m_DBInterface.setQuery("SELECT ParentIonIntensity, PeakMaxIntensity"
@@ -1180,7 +1194,7 @@ namespace SMAQC
         /// </summary>
         /// <param name="bottom50Pct">Set to true to limit to the bottom 50% of peptides by abundance</param>
         /// <returns></returns>
-        protected string DS_3_Shared(bool bottom50Pct)
+        private string DS_3_Shared(bool bottom50Pct)
         {
             if (m_Cached_DS3 == null)
             {
@@ -1225,7 +1239,7 @@ namespace SMAQC
             return Convert.ToString(countMS1Fall10x);
         }
 
-        protected void IS_1_Shared(int foldThreshold, out int countMS1Jump10x, out int countMS1Fall10x)
+        private void IS_1_Shared(int foldThreshold, out int countMS1Jump10x, out int countMS1Fall10x)
         {
 
             m_DBInterface.setQuery("SELECT ScanNumber, BasePeakIntensity  "
@@ -1380,7 +1394,7 @@ namespace SMAQC
             return median.ToString("0.000");
         }
 
-        protected void Cache_MS1_5_Data()
+        private void Cache_MS1_5_Data()
         {
 
             m_DBInterface.setQuery("SELECT temp_PSMs.Peptide_MH, temp_PSMs.Charge, temp_sicstats.MZ, temp_PSMs.DelM_Da, temp_PSMs.DelM_PPM"
@@ -1590,7 +1604,7 @@ namespace SMAQC
 
         }
 
-        protected double Compute_MS2_4_Ratio(int quartile)
+        private double Compute_MS2_4_Ratio(int quartile)
         {
             int scanCountTotal;
             double result = 0;
@@ -1606,7 +1620,7 @@ namespace SMAQC
             return result;
         }
 
-        protected void Cache_MS2_4_Data()
+        private void Cache_MS2_4_Data()
         {
 
             m_DBInterface.setQuery("SELECT COUNT(*) as MS2ScanCount "
@@ -1696,7 +1710,7 @@ namespace SMAQC
 
         }
 
-        protected void UpdateMS2_4_QuartileStats(int quartile, bool passed_filter)
+        private void UpdateMS2_4_QuartileStats(int quartile, bool passed_filter)
         {
 
             /*
@@ -1790,7 +1804,7 @@ namespace SMAQC
             return P_2A_Shared(phosphoPeptides: false);
         }
 
-        protected string P_2A_Shared(bool phosphoPeptides)
+        private string P_2A_Shared(bool phosphoPeptides)
         {
 
             m_DBInterface.setQuery("SELECT Cleavage_State, Count(*) AS Spectra "
@@ -2080,7 +2094,7 @@ namespace SMAQC
 
         }
 
-        protected string PhosphoFilter(bool phosphoPeptides)
+        private string PhosphoFilter(bool phosphoPeptides)
         {
             if (phosphoPeptides)
                 return " AND Phosphopeptide = 1";
@@ -2093,7 +2107,7 @@ namespace SMAQC
         /// </summary>
         /// <param name="groupByCharge">If true, then counts charges separately</param>
         /// <returns></returns>
-        protected Dictionary<int, int> SummarizePSMs(bool groupByCharge)
+        private Dictionary<int, int> SummarizePSMs(bool groupByCharge)
         {
             return SummarizePSMs(groupByCharge, phosphoPeptides: false);
         }
@@ -2104,9 +2118,9 @@ namespace SMAQC
         /// <param name="groupByCharge">If true, then counts charges separately</param>
         /// <param name="phosphoPeptides">If true, then only uses phosphopeptides</param>
         /// <returns></returns>
-        protected Dictionary<int, int> SummarizePSMs(bool groupByCharge, bool phosphoPeptides)
+        private Dictionary<int, int> SummarizePSMs(bool groupByCharge, bool phosphoPeptides)
         {
-            var chargeSql = String.Empty;
+            var chargeSql = string.Empty;
 
             if (groupByCharge)
             {

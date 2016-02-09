@@ -40,7 +40,7 @@ namespace SMAQC
 		/// </summary>
 		/// <param name="file_to_load"></param>
 		/// <returns></returns>
-		public Boolean ScanStatsExBugFixer(string file_to_load)
+		public bool ScanStatsExBugFixer(string file_to_load)
 		{
 			var value = file_to_load.IndexOf("_ScanStatsEx.txt", StringComparison.OrdinalIgnoreCase);
 
@@ -148,8 +148,8 @@ namespace SMAQC
 			
 			foreach (var fileName in FileList)
 			{
-				
-				var file_info = String.Copy(fileName);
+
+                var file_info = string.Copy(fileName);
 
                 // Obtain a temp file
 				var temp_file = Path.GetTempFileName();
