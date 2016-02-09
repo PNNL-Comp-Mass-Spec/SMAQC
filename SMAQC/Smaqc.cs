@@ -51,10 +51,10 @@ namespace SMAQC
         // Measurement results
 		public static Dictionary<string, string> m_Results = new Dictionary<string, string>();
 
-		private const string SMAQC_BUILD_DATE = "February 4, 2016";
+		private const string SMAQC_BUILD_DATE = "February 8, 2016";
 
 		// Define the filename suffixes
-		private static readonly string[] m_MasicFileNames = { "_scanstats", "_scanstatsex", "_sicstats" };
+		private static readonly string[] m_MasicFileNames = { "_scanstats", "_scanstatsex", "_sicstats", "_reporterions" };
 
 		// Fields to track in the database
 		// Note that LoadMeasurementInfoFile uses this list to define the default metrics to run (skipping "instrument_id", "random_id", and "scan_date")
@@ -65,7 +65,8 @@ namespace SMAQC
             "MS1_2A", "MS1_2B", "MS1_3A", "MS1_3B", "MS1_5A", "MS1_5B", "MS1_5C", 
             "MS1_5D", "MS2_1", "MS2_2", "MS2_3", "MS2_4A", "MS2_4B", "MS2_4C", "MS2_4D", "P_1A", 
             "P_1B", "P_2A", "P_2B", "P_2C", "P_3", "Phos_2A", "Phos_2C", 
-            "Keratin_2A", "Keratin_2C", "P_4A", "P_4B", "Trypsin_2A", "Trypsin_2C"};
+            "Keratin_2A", "Keratin_2C", "P_4A", "P_4B", "Trypsin_2A", "Trypsin_2C",
+            "MS2_RepIon_All", "MS2_RepIon_1Missing", "MS2_RepIon_2Missing", "MS2_RepIon_3Missing"};
 
 		static int Main(string[] args)
 		{
@@ -102,7 +103,7 @@ namespace SMAQC
 				Console.WriteLine("Using default metrics");
 			else
 				Console.WriteLine("Measurements file: ".PadRight(20) + m_Options.MeasurementsFile);
-			if (!String.IsNullOrEmpty(m_Options.OutputFilePath))
+            if (!string.IsNullOrEmpty(m_Options.OutputFilePath))
 				Console.WriteLine("Text results file: ".PadRight(20) + m_Options.OutputFilePath);
 			Console.WriteLine("SQLite DB folder: ".PadRight(20) + m_Options.DBFolderPath);
 			Console.WriteLine();
@@ -280,7 +281,6 @@ namespace SMAQC
 					// Load the MASIC data
 					m_Filter.LoadFilesAndInsertIntoDB(MasicFileList, m_MasicFileNames, datasetName);
 
-
 					// Run the measurements
 					m_SystemLogManager.addApplicationLog("Now running Measurements on " + datasetName);
 
@@ -314,6 +314,7 @@ namespace SMAQC
 				catch (Exception ex)
 				{
 					m_SystemLogManager.addApplicationLog("Error processing dataset " + datasetName + ": " + ex.Message);
+				    Console.WriteLine(ex.StackTrace);
 					return 5;
 				}
 

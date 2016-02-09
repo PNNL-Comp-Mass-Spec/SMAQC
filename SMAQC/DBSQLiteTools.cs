@@ -233,6 +233,20 @@ namespace SMAQC
                     AddColumnsToTable(connection, "scan_results", columnsToAdd);
                 }
 
+                if (!TableHasColumn(connection, "scan_results", "MS2_RepIon_All"))
+                {
+                    var columnsToAdd = new List<string>
+                    {
+                        "MS2_RepIon_All",
+                        "MS2_RepIon_1Missing",
+                        "MS2_RepIon_2Missing",
+                        "MS2_RepIon_3Missing",
+                    };
+
+                    AddColumnsToTable(connection, "scan_results", columnsToAdd);
+                }
+                
+
             } // End Using
 
 
@@ -283,6 +297,7 @@ namespace SMAQC
                         "Keratin_2A", "Keratin_2C", 
                         "P_4A", "P_4B", 
                         "Trypsin_2A", "Trypsin_2C",
+                        "MS2_RepIon_All", "MS2_RepIon_1Missing", "MS2_RepIon_2Missing", "MS2_RepIon_3Missing"
                     };
 
                     sql = "CREATE TABLE [scan_results] ("
@@ -379,26 +394,36 @@ namespace SMAQC
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Dataset] INTEGER NOT NULL,"
                         + "[ScanNumber] INTEGER NOT NULL,"
-                        + "[CollisionMode] VARCHAR NULL,"
+                        + "[Collision_Mode] VARCHAR NULL,"
                         + "[ParentIonMZ] FLOAT NOT NULL,"
                         + "[BasePeakIntensity] FLOAT NOT NULL,"
                         + "[BasePeakMZ] FLOAT NOT NULL,"
                         + "[ReporterIonIntensityMax] FLOAT NOT NULL,"
-                        + "[Ion_1] FLOAT NOT NULL,"
-                        + "[Ion_2] FLOAT NOT NULL,"
-                        + "[Ion_3] FLOAT NOT NULL,"
-                        + "[Ion_4] FLOAT NOT NULL,"
-                        + "[Ion_5] FLOAT NOT NULL,"
-                        + "[Ion_7] FLOAT NOT NULL,"
-                        + "[Ion_8] FLOAT NOT NULL,"
-                        + "[Ion_9] FLOAT NOT NULL,"
-                        + "[Ion_10] FLOAT NOT NULL,"
-                        + "[Ion_11] FLOAT NOT NULL,"
-                        + "[Ion_12] FLOAT NOT NULL,"
-                        + "[Ion_13] FLOAT NOT NULL,"
-                        + "[Ion_14] FLOAT NOT NULL,"
-                        + "[Ion_15] FLOAT NOT NULL,"
-                        + "[PctIntensityCorrection] FLOAT NOT NULL"
+                        // + "[Ion_101] FLOAT NULL,"       // ETD iTRAQ Ion
+                        // + "[Ion_102] FLOAT NULL,"       // ETD iTRAQ Ion
+                        // + "[Ion_104] FLOAT NULL,"       // ETD iTRAQ Ion
+
+
+                        + "[Ion_113] FLOAT NULL,"       // 8-plex iTRAQ Ion
+                        + "[Ion_114] FLOAT NULL,"       // 4-plex and 8-plex iTRAQ Ion
+                        + "[Ion_115] FLOAT NULL,"       // 4-plex and 8-plex iTRAQ Ion
+                        + "[Ion_116] FLOAT NULL,"       // 4-plex and 8-plex iTRAQ Ion
+                        + "[Ion_117] FLOAT NULL,"       // 4-plex and 8-plex iTRAQ Ion
+                        + "[Ion_118] FLOAT NULL,"       // iTRAQ Ion
+                        + "[Ion_119] FLOAT NULL,"       // iTRAQ Ion
+                        + "[Ion_120] FLOAT NULL,"       // iTRAQ Ion
+                        + "[Ion_121] FLOAT NULL,"       // iTRAQ Ion
+                        + "[Ion_126.128] FLOAT NULL,"   // TMT Ion (TMT6 and TMT10)
+                        + "[Ion_127.125] FLOAT NULL,"   // TMT Ion (TMT10)
+                        + "[Ion_127.131] FLOAT NULL,"   // TMT Ion (TMT6 and TMT10)
+                        + "[Ion_128.128] FLOAT NULL,"   // TMT Ion (TMT10)
+                        + "[Ion_128.134] FLOAT NULL,"   // TMT Ion (TMT6 and TMT10)
+                        + "[Ion_129.131] FLOAT NULL,"   // TMT Ion (TMT10)
+                        + "[Ion_129.138] FLOAT NULL,"   // TMT Ion (TMT6 and TMT10)
+                        + "[Ion_130.135] FLOAT NULL,"   // TMT Ion (TMT10)
+                        + "[Ion_130.141] FLOAT NULL,"   // TMT Ion (TMT6 and TMT10)
+                        + "[Ion_131.138] FLOAT NULL,"   // TMT Ion (TMT6 and TMT10)
+                        + "[Weighted_Avg_Pct_Intensity_Correction] FLOAT NOT NULL"
                         + ")";
                     break;
 

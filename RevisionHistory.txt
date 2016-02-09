@@ -1,5 +1,12 @@
 SMAQC Change Log
 
+Version 1.2.5882; February 8, 2016
+	- Added 4 new metrics
+		- MS2_RepIon_All: Number of Filter-passing PSMs for which all of the Reporter Ions were seen
+		- MS2_RepIon_1Missing: Number of Filter-passing PSMs for which one Reporter Ion was not observed
+		- MS2_RepIon_2Missing: Number of Filter-passing PSMs for which one Reporter Ion was not observed
+		- MS2_RepIon_31Missing: Number of Filter-passing PSMs for which one Reporter Ion was not observed
+
 Version 1.2.5878; February 4, 2016
 	- Added 2 new metrics
 		- Trypsin_2A: Total PSMs from trypsin

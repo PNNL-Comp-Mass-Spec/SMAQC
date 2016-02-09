@@ -28,12 +28,13 @@ namespace SMAQC
             MasicImportFiles = new Dictionary<string, bool>(StringComparer.CurrentCultureIgnoreCase);
 			XTandemImportFiles = new Dictionary<string, bool>(StringComparer.CurrentCultureIgnoreCase);
 
-			// Masic files (scanstats and sicstats are required)
+            // Masic files (scanstats and sicstats are required, ScanStatsEx and ReporterIons are optional)
             MasicImportFiles.Add("ScanStats", true);
             MasicImportFiles.Add("ScanStatsEx", false);
             MasicImportFiles.Add("SICstats", true);
+            MasicImportFiles.Add("ReporterIons", false);
 
-			// X!tandem files (only use this if not using phrp reader)
+			// X!tandem files (only use this if not using PHRP Reader)
             XTandemImportFiles.Add("xt", true);
 			XTandemImportFiles.Add("xt_ResultToSeqMap", true);
 			XTandemImportFiles.Add("xt_SeqToProteinMap", true);
@@ -148,7 +149,7 @@ namespace SMAQC
         }
 
         // This function verifies if a filename is in our dataset list
-        public Boolean is_valid_dataset_file(string dataset, string filename)
+        public bool is_valid_dataset_file(string dataset, string filename)
         {
 
 			// Get filename without extension
@@ -165,7 +166,7 @@ namespace SMAQC
 
         // This function verifies if a filename is in our import list
         // Known_dataset is for if we have already set a running dataset
-		public Boolean is_valid_import_file(string filename, Dictionary<string, bool> importFiles)
+		public bool is_valid_import_file(string filename, Dictionary<string, bool> importFiles)
         {
 			string fileType;
 

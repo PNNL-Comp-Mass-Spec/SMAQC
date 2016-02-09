@@ -2094,6 +2094,208 @@ namespace SMAQC
 
         }
 
+        /// <summary>
+        /// MS2_RepIon_All: Number of Filter-passing PSMs for which all of the Reporter Ions were seen
+        /// </summary>
+        /// <returns></returns>
+        public string MS2_RepIon_All()
+        {
+            var psmCount = MS2_RepIon_Lookup(0);
+            return psmCount.ToString("0");
+        }
+
+        /// <summary>
+        /// MS2_RepIon_1Missing: Number of Filter-passing PSMs for which one Reporter Ion was not observed
+        /// </summary>
+        /// <returns></returns>
+        public string MS2_RepIon_1Missing()
+        {
+            var psmCount = MS2_RepIon_Lookup(1);
+            return psmCount.ToString("0");
+        }
+
+        /// <summary>
+        /// MS2_RepIon_2Missing: Number of Filter-passing PSMs for which two Reporter Ions were not observed
+        /// </summary>
+        /// <returns></returns>
+        public string MS2_RepIon_2Missing()
+        {
+            var psmCount = MS2_RepIon_Lookup(2);
+            return psmCount.ToString("0");
+        }
+
+        /// <summary>
+        /// MS2_RepIon_3Missing: Number of Filter-passing PSMs for which three Reporter Ions were not observed
+        /// </summary>
+        /// <returns></returns>
+        public string MS2_RepIon_3Missing()
+        {
+            var psmCount = MS2_RepIon_Lookup(3);
+            return psmCount.ToString("0");
+        }
+
+        private int MS2_RepIon_Lookup(int numMissingReporterIons)
+        {
+            // Determine the reporter ion mode by looking for non-null values
+            // a) Make a list of all of the "Ion_" columns in table temp_reporterions
+            // b) Find the columns with at least one non-null value
+            //    - Compute the average of all non-zero values
+            //    - Define MinimumThreshold = GlobalAverage / 1000
+            // c) Now query those columns to determine the number of columns with data >= MinimumThreshold
+
+            var ionColumns = DetermineReporterIonColumns();
+            if (ionColumns.Count == 0)
+                return 0;
+
+            // Compute the average of all of the non-zero-values
+            var threshold = ComputeReporterIonNoiseThreshold(ionColumns);
+
+            // Determine the number of PSMs where all of the reporter ions were seen
+            var reporterIonObsCount = ionColumns.Count - numMissingReporterIons;
+            var psmCount = CountPSMsWithNumObservedReporterIons(ionColumns, threshold, reporterIonObsCount);
+
+            return psmCount;
+        }
+
+        private double ComputeReporterIonNoiseThreshold(List<string> ionColumns)
+        {
+            var cachedThreshold = GetStoredValue(eCachedResult.ReporterIonNoiseThreshold, -1);
+            if (cachedThreshold > -1)
+                return cachedThreshold;
+
+            var sbSql = new StringBuilder();
+
+            foreach (var column in ionColumns)
+            {
+                if (sbSql.Length == 0)
+                    sbSql.Append("SELECT ");
+                else
+                    sbSql.Append(", ");
+
+                sbSql.Append("SUM (IfNull([" + column + "], 0)) AS [" + column + "_Sum], ");
+                sbSql.Append("SUM (CASE WHEN IfNull([" + column + "], 0) = 0 Then 0 Else 1 End) AS [" + column + "_Count]");
+            }
+
+            sbSql.Append(" FROM temp_reporterions");
+            sbSql.Append(" WHERE random_id=" + m_Random_ID);            
+
+            m_DBInterface.setQuery(sbSql.ToString());
+
+            var fields = (from item in ionColumns select item + "_Sum").ToList();
+            fields.AddRange((from item in ionColumns select item + "_Count").ToList());
+
+            m_DBInterface.initReader();
+            m_DBInterface.readSingleLine(fields.ToArray(), ref m_MeasurementResults);
+
+            var overallSum = 0.0;
+            var overallCount = 0;
+
+            foreach (var column in ionColumns)
+            {
+                var columnSum = Convert.ToDouble(m_MeasurementResults[column + "_Sum"]);
+                var columnCount = Convert.ToInt32(m_MeasurementResults[column + "_Count"]);
+
+                overallSum += columnSum;
+                overallCount += columnCount;
+            }
+
+            if (overallCount > 0)
+            {
+                var nonZeroAverage = overallSum / (double)overallCount;
+                var noiseThreshold = nonZeroAverage / 1000.0;
+
+                AddUpdateResultsStorage(eCachedResult.ReporterIonNoiseThreshold, noiseThreshold);
+                return noiseThreshold;
+            }
+
+            AddUpdateResultsStorage(eCachedResult.ReporterIonNoiseThreshold, 0);
+            return 0;
+        }
+
+        private int CountPSMsWithNumObservedReporterIons(List<string> ionColumns, double threshold, int reporterIonObsCount)
+        {
+            var sbSql = new StringBuilder();
+            var thresholdText = threshold.ToString("0.000");
+
+            foreach (var column in ionColumns)
+            {
+                if (sbSql.Length == 0)
+                    sbSql.Append("SELECT ");
+                else
+                    sbSql.Append(" + ");
+
+                sbSql.Append("CASE WHEN [" + column + "] > " + thresholdText + " Then 1 Else 0 End");
+            }
+
+            sbSql.Append(" AS ReporterIonCount");
+            sbSql.Append(" FROM temp_reporterions INNER JOIN ");
+            sbSql.Append("   temp_psms ON temp_reporterions.ScanNumber = temp_PSMs.scan AND " +
+                         "   temp_reporterions.random_id = temp_PSMs.random_id ");
+            sbSql.Append(" WHERE temp_PSMs.random_id=" + m_Random_ID);
+            sbSql.Append("   AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
+
+            var sql = " SELECT COUNT(*) AS PSMs" +
+                      " FROM (" + sbSql + ") AS FilterQ" +
+                      " WHERE ReporterIonCount = " + reporterIonObsCount;
+
+            m_DBInterface.setQuery(sql);
+
+            string[] fields = { "PSMs" };
+
+            m_DBInterface.initReader();
+            m_DBInterface.readSingleLine(fields.ToArray(), ref m_MeasurementResults);
+
+            var psmCount = Convert.ToInt32(m_MeasurementResults["PSMs"]);
+            return psmCount;
+
+        }
+        
+        private List<string> DetermineReporterIonColumns()
+        {
+            if (mReporterIonColumns != null)
+                return mReporterIonColumns;
+
+            var columnList = m_DBInterface.GetTableColumns("temp_reporterions");
+            var ionColumns = columnList.Where(column => column.StartsWith("Ion_")).ToList();
+
+            var sbSql = new StringBuilder();
+
+            foreach (var column in ionColumns)
+            {
+                if (sbSql.Length == 0)
+                    sbSql.Append("SELECT ");
+                else
+                    sbSql.Append(", ");
+
+                sbSql.Append("SUM (CASE WHEN [" + column + "] IS NULL Then 0 Else 1 End) AS [" + column + "]");
+            }
+
+            sbSql.Append(" FROM temp_reporterions");
+            sbSql.Append(" WHERE random_id=" + m_Random_ID);
+
+            m_DBInterface.setQuery(sbSql.ToString());
+
+            var fields = ionColumns.ToArray();
+
+            m_DBInterface.initReader();
+            m_DBInterface.readSingleLine(fields, ref m_MeasurementResults);
+
+            var ionColumnsToUse = new List<string>();
+            foreach (var column in ionColumns)
+            {
+                if (!string.IsNullOrWhiteSpace(m_MeasurementResults[column]))
+                {
+                    var nonNullCount = Convert.ToInt32(m_MeasurementResults[column]);
+                    if (nonNullCount > 0)
+                        ionColumnsToUse.Add(column);
+                }
+            }
+
+            mReporterIonColumns = ionColumnsToUse;
+
+            return mReporterIonColumns;
+        }
+
         private string PhosphoFilter(bool phosphoPeptides)
         {
             if (phosphoPeptides)

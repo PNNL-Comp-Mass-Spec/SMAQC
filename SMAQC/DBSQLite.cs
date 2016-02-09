@@ -10,10 +10,10 @@ namespace SMAQC
     class DBSQLite : DBInterface
     {
         // Declare variables
-        private readonly SQLiteConnection conn;                                                  // Sqlite connection
+        private readonly SQLiteConnection conn;                                          // Sqlite connection
         private string query;                                                           // Query to run
         private SQLiteDataReader reader;                                                // Sqlite reader
-        private readonly DBSQLiteTools SQLiteTools = new DBSQLiteTools();                        // Create dbsqlite tools object
+        private readonly DBSQLiteTools SQLiteTools = new DBSQLiteTools();               // Create dbsqlite tools object
 
 		private int errorMsgCount;
 		private Dictionary<string, int> dctErrorMessages;
@@ -112,7 +112,7 @@ namespace SMAQC
         }
 
         // For queries such as insert/delete/update
-        public Boolean QueryNonQuery()
+        public bool QueryNonQuery()
         {            
             var cmd = new SQLiteCommand(conn)
             {
@@ -154,7 +154,7 @@ namespace SMAQC
 
             // Build sql line
             var sql = SQLiteBulkInsert_BuildSQL_Line(insert_into_table, fieldNames);
-			var previousLine = String.Empty;
+			var previousLine = string.Empty;
 
 			using (var mycommand = conn.CreateCommand())
 			{
@@ -183,7 +183,7 @@ namespace SMAQC
 				                continue;
 			                }
 
-			                if (String.CompareOrdinal(line, previousLine) == 0)
+                            if (string.CompareOrdinal(line, previousLine) == 0)
 			                {
 				                // Duplicate line; skip it
 				                continue;
@@ -204,7 +204,7 @@ namespace SMAQC
 
 			                ExecuteCommand(mycommand, line_num);
 
-			                previousLine = String.Copy(line);
+                            previousLine = string.Copy(line);
 
 		                }
 	                }
@@ -214,15 +214,15 @@ namespace SMAQC
 
 				if (dctErrorMessages.Count > 0)
 				{
-					var firstErrorMsg = String.Empty;
+					var firstErrorMsg = string.Empty;
 					var totalErrorRows = 0;
 
 					foreach (var kvEntry in dctErrorMessages)
 					{
 						totalErrorRows += kvEntry.Value;
 						OnErrorEvent("Error message count = " + kvEntry.Value + " for '" + kvEntry.Key + "'");
-						if (String.IsNullOrEmpty(firstErrorMsg))
-							firstErrorMsg = String.Copy(kvEntry.Key);
+                        if (string.IsNullOrEmpty(firstErrorMsg))
+							firstErrorMsg = string.Copy(kvEntry.Key);
 					}
 
 					var msg = "Errors during BulkInsert from file " + Path.GetFileName(file_to_read_from) + "; problem with " + totalErrorRows + " row";
@@ -260,6 +260,31 @@ namespace SMAQC
 
 			return true;
 		}
+
+        /// <summary>
+        /// Return the columns defined for the given table
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <returns></returns>
+        public List<string> GetTableColumns(string tableName)
+        {
+            var columns = new List<string>();
+
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT * FROM [" + tableName + "] LIMIT 1";
+
+                using (var sqlReader = cmd.ExecuteReader())
+                {
+                    for (var i = 0; i < sqlReader.FieldCount; i++)
+                    {
+                        columns.Add(sqlReader.GetName(i));
+                    }
+                }
+            }
+
+            return columns;
+        }
 
         // Init reader [whenever we want to read a row]
         public void initReader()
@@ -345,7 +370,7 @@ namespace SMAQC
 
         // Read single db row [different from readlines() as here we close reader afterward]
         // [Returns false if no further rows to read]
-		public Boolean readSingleLine(string[] fields, ref Dictionary<string, string> dctData)
+		public bool readSingleLine(string[] fields, ref Dictionary<string, string> dctData)
         {
 			// Read line
             var status = reader.Read();
@@ -382,7 +407,7 @@ namespace SMAQC
         }
 
         // Read db row(s) [returns false if no further rows to read]
-		public Boolean readLines(string[] fields, ref Dictionary<string, string> dctData)
+		public bool readLines(string[] fields, ref Dictionary<string, string> dctData)
         {
 			// Read line
             var status = reader.Read();
