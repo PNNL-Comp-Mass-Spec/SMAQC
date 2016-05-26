@@ -377,8 +377,8 @@ namespace SMAQC
 						continue;
 
 					// Step #1 remove (...)
-					var first_index = field_array[j, i].IndexOf(" (");
-					var last_index = field_array[j, i].IndexOf(")");
+					var first_index = field_array[j, i].IndexOf(" (", StringComparison.Ordinal);
+					var last_index = field_array[j, i].IndexOf(")", StringComparison.Ordinal);
 
 					// If there is a (...)
 					if (first_index > 0 && last_index > 0)
@@ -406,8 +406,8 @@ namespace SMAQC
 			for (var i = 0; i < field_array.Length; i++)
 			{
 				// Step #1 remove (...)
-				var first_index = field_array[i].IndexOf(" (");
-				var last_index = field_array[i].IndexOf(")");
+				var first_index = field_array[i].IndexOf(" (", StringComparison.Ordinal);
+				var last_index = field_array[i].IndexOf(")", StringComparison.Ordinal);
 
 				// If there is a (...)
 				if (first_index > 0 && last_index > first_index)

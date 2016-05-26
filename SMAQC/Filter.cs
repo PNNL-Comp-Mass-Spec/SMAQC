@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Data.Common;
 using System.IO;
-using System.Net.Sockets;
+using System.Linq;
 using System.Text;
 using PHRPReader;
 
@@ -203,7 +203,7 @@ namespace SMAQC
 		{
 
 			// Look for a valid input file
-			var sInputFilePath = PHRPReader.clsPHRPReader.AutoDetermineBestInputFile(sInputFolderPath, sDataset);
+			var sInputFilePath = clsPHRPReader.AutoDetermineBestInputFile(sInputFolderPath, sDataset);
 
 			if (string.IsNullOrEmpty(sInputFilePath))
 			{
@@ -216,7 +216,7 @@ namespace SMAQC
 				const bool blnLoadMSGFResults = true;
 				const bool blnLoadScanStats = false;
 
-				var oPHRPReader = new PHRPReader.clsPHRPReader(sInputFilePath, PHRPReader.clsPHRPReader.ePeptideHitResultType.Unknown, blnLoadModsAndSeqInfo, blnLoadMSGFResults, blnLoadScanStats)
+				var oPHRPReader = new clsPHRPReader(sInputFilePath, clsPHRPReader.ePeptideHitResultType.Unknown, blnLoadModsAndSeqInfo, blnLoadMSGFResults, blnLoadScanStats)
 				{
 					EchoMessagesToConsole = false,
 					SkipDuplicatePSMs = true
@@ -246,7 +246,7 @@ namespace SMAQC
 				oPHRPReader.ClearErrors();
 				oPHRPReader.ClearWarnings();
 
-				System.Data.Common.DbTransaction dbTrans;
+				DbTransaction dbTrans;
 				mDBWrapper.InitPHRPInsertCommand(out dbTrans);
 
                 // Dictionary has key/value pairs of information about the best peptide for the scan
@@ -283,7 +283,7 @@ namespace SMAQC
 					string strPrefix;
 					string strSuffix;
 
-                    PHRPReader.clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(objCurrentPSM.Peptide, out strCurrentPeptide, out strPrefix, out strSuffix);
+                    clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(objCurrentPSM.Peptide, out strCurrentPeptide, out strPrefix, out strSuffix);
 
 					if (prev_scan == objCurrentPSM.ScanNumberStart && prev_charge == objCurrentPSM.Charge && prev_peptide == strCurrentPeptide)
 						// Skip this entry (same peptide, different protein)
@@ -309,7 +309,7 @@ namespace SMAQC
 					dctCurrentPeptide.Add("CollisionMode", objCurrentPSM.CollisionMode);
 					dctCurrentPeptide.Add("Charge", objCurrentPSM.Charge.ToString());
 
-					dctCurrentPeptide.Add("Peptide_MH", PHRPReader.clsPeptideMassCalculator.ConvoluteMass(objCurrentPSM.PeptideMonoisotopicMass, 0, 1).ToString("0.00000"));
+					dctCurrentPeptide.Add("Peptide_MH", clsPeptideMassCalculator.ConvoluteMass(objCurrentPSM.PeptideMonoisotopicMass, 0, 1).ToString("0.00000"));
 					dctCurrentPeptide.Add("Peptide_Sequence", objCurrentPSM.Peptide);
 
 					dctCurrentPeptide.Add("DelM_Da", objCurrentPSM.MassErrorDa);
@@ -443,7 +443,7 @@ namespace SMAQC
 	                sbModifications.Append(modEntry.ModDefinition.MassCorrectionTag);
 	        }
 
-            return peptideCleanSequence + "_" + sbModifications.ToString();
+            return peptideCleanSequence + "_" + sbModifications;
 	    }
 
 

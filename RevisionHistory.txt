@@ -1,5 +1,9 @@
 SMAQC Change Log
 
+Version 1.2.5990; May 26, 2016
+	- New versions of PHRPReader and ThermoRawFileReader
+	- Update to .NET 4.5.1
+
 Version 1.2.5882; February 8, 2016
 	- Added 4 new metrics
 		- MS2_RepIon_All: Number of Filter-passing PSMs for which all of the Reporter Ions were seen

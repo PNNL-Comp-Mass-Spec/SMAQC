@@ -56,7 +56,7 @@ namespace SMAQC
             // Verify that the required columns are present
 
             // Attach the event handler
-            dbConn.ErrorEvent += new DBErrorEventHandler(dbConn_ErrorEvent);
+            dbConn.ErrorEvent += dbConn_ErrorEvent;
 
             mCurrentQuery = string.Empty;
         }
@@ -93,7 +93,7 @@ namespace SMAQC
                     Console.WriteLine(myquery);
                 }
             }
-            catch (System.NullReferenceException ex)
+            catch (NullReferenceException ex)
             {
                 Console.WriteLine("Error setting the query text: " + ex.Message);
             }
@@ -116,7 +116,7 @@ namespace SMAQC
             {
                 status = dbConn.QueryNonQuery();
             }
-            catch (System.NullReferenceException ex)
+            catch (NullReferenceException ex)
             {
                 Console.WriteLine("Error in QueryNonQuery: " + ex.Message);
             }
@@ -135,11 +135,9 @@ namespace SMAQC
         // [Returns false if no further rows to read]
         public bool readSingleLine(string[] fields, ref Dictionary<string, string> dctData)
         {
-            var status = false;
-
             dctData.Clear();
 
-            status = dbConn.readSingleLine(fields, ref dctData);
+            var status = dbConn.readSingleLine(fields, ref dctData);
 
             return status;
         }
@@ -147,11 +145,9 @@ namespace SMAQC
         // Read db row(s) [returns false if no further rows to read]
         public bool readLines(string[] fields, ref Dictionary<string, string> dctData)
         {
-            var status = false;
-
             dctData.Clear();
 
-            status = dbConn.readLines(fields, ref dctData);
+            var status = dbConn.readLines(fields, ref dctData);
 
             return true;
         }

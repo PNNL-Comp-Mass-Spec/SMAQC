@@ -51,7 +51,7 @@ namespace SMAQC
         // Measurement results
 		public static Dictionary<string, string> m_Results = new Dictionary<string, string>();
 
-		private const string SMAQC_BUILD_DATE = "February 8, 2016";
+		private const string SMAQC_BUILD_DATE = "May 26, 2016";
 
 		// Define the filename suffixes
 		private static readonly string[] m_MasicFileNames = { "_scanstats", "_scanstatsex", "_sicstats", "_reporterions" };
@@ -241,7 +241,7 @@ namespace SMAQC
 							foreach (var sFilePath in MasicFileList)
 							{
 								var sFileName = Path.GetFileNameWithoutExtension(sFilePath);
-								if (sFileName.EndsWith(sSuffix, true, System.Globalization.CultureInfo.CurrentCulture))
+								if (sFileName != null && sFileName.EndsWith(sSuffix, true, System.Globalization.CultureInfo.CurrentCulture))
 								{
 									bMatchFound = true;
 									break;
@@ -426,12 +426,11 @@ namespace SMAQC
 		private static void ShowErrorMessage(string strTitle, IEnumerable<string> items)
 		{
 			const string strSeparator = "------------------------------------------------------------------------------";
-			string strMessage = null;
 
-			Console.WriteLine();
+		    Console.WriteLine();
 			Console.WriteLine(strSeparator);
 			Console.WriteLine(strTitle);
-			strMessage = strTitle + ":";
+			var strMessage = strTitle + ":";
 
 			foreach (var item in items)
 			{

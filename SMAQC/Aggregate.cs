@@ -86,9 +86,9 @@ namespace SMAQC
             }
 
             // Loop through all files in specified directory
-            foreach (FileInfo fileName in filePaths)
+            foreach (var fileName in filePaths)
             {
-				string dataSetName = fileName.Name.Substring(0, fileName.Name.Length - SCAN_STATS_FILENAME_SUFFIX.Length);
+				var dataSetName = fileName.Name.Substring(0, fileName.Name.Length - SCAN_STATS_FILENAME_SUFFIX.Length);
 	            ValidDataSets.Add(dataSetName);
             }
 
@@ -131,18 +131,19 @@ namespace SMAQC
             }
 
             // Loop through all files in specified directory
-            for (int i = 0; i < filePaths.Length; i++)
+            for (var i = 0; i < filePaths.Length; i++)
             {
-                // If the file is in our list
-				if (is_valid_import_file(filePaths[i], importFiles))
+                if (!is_valid_import_file(filePaths[i], importFiles))
                 {
-                    // Ensure file is a valid dataset file
-                    if (is_valid_dataset_file(dataset, filePaths[i]))
-                    {
-                        // Save to filearray
-                        FileArray.Add(filePaths[i]);
-                        // Console.writeline("file {0}:: {1} -- ({2})", i, filepaths[i], index);
-                    }
+                    continue;
+                }
+
+                // Ensure file is a valid dataset file
+                if (is_valid_dataset_file(dataset, filePaths[i]))
+                {
+                    // Save to filearray
+                    FileArray.Add(filePaths[i]);
+                    // Console.writeline("file {0}:: {1} -- ({2})", i, filepaths[i], index);
                 }
             }
             return FileArray;
@@ -157,7 +158,7 @@ namespace SMAQC
 
             // Now check for dataset name in filename
             // If found a valid file in a certain dataset
-			if (filename.ToLower().StartsWith(dataset.ToLower()))
+			if (filename != null && filename.ToLower().StartsWith(dataset.ToLower()))
             {
                 return true;
             }
@@ -173,7 +174,7 @@ namespace SMAQC
 			// Get filename without extension
 			filename = Path.GetFileNameWithoutExtension(filename);
 
-			if (filename.ToLower().StartsWith(m_CurrentDataset.ToLower()))
+			if (filename != null && filename.ToLower().StartsWith(m_CurrentDataset.ToLower()))
 			{
 				// Set to filename type[xt, scanstats, etc]
 				fileType = filename.Substring(m_CurrentDataset.Length + 1);
