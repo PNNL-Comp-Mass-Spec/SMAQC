@@ -134,7 +134,13 @@
     </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(SolutionDir)dll\ThermoRawFileReaderDLL.dll" "$(TargetDir)" /d /y</PostBuildEvent>
+    <PostBuildEvent>xcopy "$(SolutionDir)dll\ThermoRawFileReaderDLL.dll" "$(TargetDir)" /d /y
+
+if exist "$(TargetDir)SQLite.Interop.dll" (del "$(TargetDir)SQLite.Interop.dll")
+if not exist "$(TargetDir)x86" mkdir "$(TargetDir)x86"
+if not exist "$(TargetDir)x64" mkdir "$(TargetDir)x64"
+xcopy "$(SolutionDir)dll\x86\*" "$(TargetDir)x86\" /D /Y
+xcopy "$(SolutionDir)dll\x64\*" "$(TargetDir)x64\" /D /Y</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
