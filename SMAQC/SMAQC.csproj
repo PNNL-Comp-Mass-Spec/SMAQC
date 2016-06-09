@@ -73,6 +73,10 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="ThermoRawFileReader, Version=2.0.6003.31298, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\dll\ThermoRawFileReader.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Aggregate.cs" />
@@ -134,7 +138,7 @@
     </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(SolutionDir)dll\ThermoRawFileReaderDLL.dll" "$(TargetDir)" /d /y
+    <PostBuildEvent>xcopy "$(SolutionDir)dll\ThermoRawFileReader.dll" "$(TargetDir)" /d /y
 
 if exist "$(TargetDir)SQLite.Interop.dll" (del "$(TargetDir)SQLite.Interop.dll")
 if not exist "$(TargetDir)x86" mkdir "$(TargetDir)x86"
