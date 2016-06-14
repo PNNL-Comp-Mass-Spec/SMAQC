@@ -1,5 +1,8 @@
 SMAQC Change Log
 
+Version 1.2.6008; June 13, 2016
+	- New version of PHRPReader.dll that does not depend on ThermoRawFileReader.dll
+
 Version 1.2.6003; June 8, 2016
 	- Replaced ThermoRawFileReaderDLL.dll with ThermoRawFileReader.dll
 
