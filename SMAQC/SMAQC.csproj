@@ -134,9 +134,7 @@
     </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(SolutionDir)dll\ThermoRawFileReader.dll" "$(TargetDir)" /d /y
-
-if exist "$(TargetDir)SQLite.Interop.dll" (del "$(TargetDir)SQLite.Interop.dll")
+    <PostBuildEvent>if exist "$(TargetDir)SQLite.Interop.dll" (del "$(TargetDir)SQLite.Interop.dll")
 if not exist "$(TargetDir)x86" mkdir "$(TargetDir)x86"
 if not exist "$(TargetDir)x64" mkdir "$(TargetDir)x64"
 xcopy "$(SolutionDir)dll\x86\*" "$(TargetDir)x86\" /D /Y
