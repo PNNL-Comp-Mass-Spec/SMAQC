@@ -46,14 +46,15 @@ namespace SMAQC
         protected static udtOptions m_Options;
 
         // Configuration options
-        public static Dictionary<string, string> m_Configtable = new Dictionary<string, string>();
+        public static readonly Dictionary<string, string> m_Configtable = new Dictionary<string, string>();
 
         // Measurement results
         public static Dictionary<string, string> m_Results = new Dictionary<string, string>();
 
-        private const string SMAQC_BUILD_DATE = "June 13, 2016";
+        private const string SMAQC_BUILD_DATE = "September 26, 2016";
 
         // Define the filename suffixes
+        // These names need to be lowercase
         private static readonly string[] m_MasicFileNames = { "_scanstats", "_scanstatsex", "_sicstats", "_reporterions" };
 
         // Fields to track in the database
@@ -151,7 +152,7 @@ namespace SMAQC
                     {
                         var errorCode = ProcessDatasets(random_id, lstMeasurementsToRun);
                         if (errorCode != 0)
-                            return errorCode;
+                             return errorCode;
                     }
                     catch (Exception ex)
                     {
@@ -226,51 +227,91 @@ namespace SMAQC
                     var MasicFileList = m_Aggregate.getMasicFileImportList(datasetName, "*.txt");
 
                     // Ensure that the MASIC files exist
-                    if (MasicFileList.Count < 3)
+                    var scanStatsMissing = false;
+                    var sicStatsMissing = false;
+                    var scanStatsExMissing = false;
+                    var reporterIonsMissing = false;
+
+                    // Find the missing files
+                    foreach (var sSuffix in m_MasicFileNames)
                     {
-                        // Missing files
-                        m_SystemLogManager.addApplicationLog("Required MASIC data files not found in " + m_Options.InputFolderPath);
+                        var bMatchFound = false;
 
-                        var bScanStatsExMissing = false;
-
-                        // Find the missing files
-                        foreach (var sSuffix in m_MasicFileNames)
+                        foreach (var sFilePath in MasicFileList)
                         {
-                            var bMatchFound = false;
-
-                            foreach (var sFilePath in MasicFileList)
+                            var sFileName = Path.GetFileNameWithoutExtension(sFilePath);
+                            if (sFileName != null && sFileName.EndsWith(sSuffix, true, System.Globalization.CultureInfo.CurrentCulture))
                             {
-                                var sFileName = Path.GetFileNameWithoutExtension(sFilePath);
-                                if (sFileName != null && sFileName.EndsWith(sSuffix, true, System.Globalization.CultureInfo.CurrentCulture))
-                                {
-                                    bMatchFound = true;
-                                    break;
-                                }
+                                bMatchFound = true;
+                                break;
                             }
-
-                            if (!bMatchFound)
-                            {
-                                if (sSuffix == "_scanstatsex")
-                                    bScanStatsExMissing = true;
-                                else
-                                    m_SystemLogManager.addApplicationLog("  Missing file: " + datasetName + sSuffix + ".txt");
-                            }
-
                         }
 
-                        if (MasicFileList.Count == 2 && bScanStatsExMissing)
-                            // The only missing file is the _ScanStatsEx file; that's OK
-                            m_SystemLogManager.addApplicationLog("Did not find file " + datasetName + "_ScanStatsEx.txt; metrics MS1_1 and MS2_1 will not be computed");
-                        else
+                        if (!bMatchFound)
                         {
-                            m_SystemLogManager.addApplicationLog("Exiting...");
-
-                            //CLOSE THE APPLICATION LOG
-                            m_SystemLogManager.CloseLogFile();
-                            return 11;
+                            if (sSuffix == "_scanstats")
+                            {
+                                scanStatsMissing = true;
+                            }
+                            else
+                            if (sSuffix == "_scanstatsex")
+                            {
+                                scanStatsExMissing = true;
+                            }
+                            else
+                            if (sSuffix == "_sicstats")
+                            {
+                                sicStatsMissing = true;
+                            }
+                            else
+                            if (sSuffix == "_reporterions")
+                            {
+                                reporterIonsMissing = true;
+                            }
+                            else
+                            {
+                                m_SystemLogManager.addApplicationLog("  Missing unrecognized file: " + datasetName + sSuffix + ".txt");
+                            }
                         }
+
                     }
 
+                    if (scanStatsMissing || sicStatsMissing)
+                    {
+                        // Missing required files
+                        m_SystemLogManager.addApplicationLog("Required MASIC data files not found in " +
+                                                             m_Options.InputFolderPath);
+                    }
+
+                    if (scanStatsMissing)
+                    {
+                        m_SystemLogManager.addApplicationLog("  Missing file: " + datasetName + "_ScanStats.txt");
+                        m_SystemLogManager.addApplicationLog("Exiting...");
+                        m_SystemLogManager.CloseLogFile();
+                        return 11;
+                    }
+
+                    if (sicStatsMissing)
+                    {
+                        m_SystemLogManager.addApplicationLog("  Missing file: " + datasetName + "_SicStats.txt");
+                        m_SystemLogManager.addApplicationLog("Exiting...");
+                        m_SystemLogManager.CloseLogFile();
+                        return 12;
+                    }
+
+                    if (scanStatsExMissing)
+                    {
+                        // _ScanStatsEx.txt is missing; that's OK
+                        m_SystemLogManager.addApplicationLog("Did not find file " + datasetName +
+                                                                "_ScanStatsEx.txt; metrics MS1_1 and MS2_1 will not be computed");
+                    }
+
+                    if (reporterIonsMissing)
+                    {
+                        // _ReporterIons.txt is missing; that's OK
+                        m_SystemLogManager.addApplicationLog("Did not find file " + datasetName +
+                                                                "_ReporterIons.txt; MS2_RepIon metrics will not be computed");
+                    }
 
                     // Load the data and store in the database
                     m_SystemLogManager.addApplicationLog("Parsing and Inserting Data into DB Temp Tables");
@@ -324,7 +365,7 @@ namespace SMAQC
             return 0;
         }
 
-        static protected string GetAppPath()
+        protected static string GetAppPath()
         {
             return System.Reflection.Assembly.GetExecutingAssembly().Location;
         }
