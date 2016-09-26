@@ -4,6 +4,7 @@ using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using PHRPReader;
 
 namespace SMAQC
@@ -134,7 +135,7 @@ namespace SMAQC
         /// <summary>
         /// Loop through the file list, processing each file
         /// </summary>
-        /// <param name="FileList"></param>
+        /// <param name="fileList"></param>
         /// <param name="valid_file_tables"></param>
         /// <param name="dataset"></param>
         /// <remarks>
@@ -143,10 +144,10 @@ namespace SMAQC
         ///   2. From the filename, determines the correct table to insert into, appends temp
         ///   3. Calls our bulk insert function
         /// </remarks>
-		public void LoadFilesAndInsertIntoDB(List<string> FileList, string[] valid_file_tables, string dataset)
+		public void LoadFilesAndInsertIntoDB(List<string> fileList, string[] valid_file_tables, string dataset)
 		{
 			
-			foreach (var fileName in FileList)
+			foreach (var fileName in fileList)
 			{
 
                 var file_info = string.Copy(fileName);
@@ -270,11 +271,27 @@ namespace SMAQC
 
 				Console.WriteLine("Populating database using PHRP");
 
-				// Read the data using PHRP Reader
-				// Only store the best scoring peptide for each scan/charge combo
+                // Regex to match keratin proteins, including 
+                //   K1C9_HUMAN, K1C10_HUMAN, K1CI_HUMAN
+                //   K2C1_HUMAN, K2C1B_HUMAN, K2C3_HUMAN, K2C6C_HUMAN, K2C71_HUMAN
+                //   K22E_HUMAN and K22O_HUMAN
+                //   Contaminant_K2C1_HUMAN
+                //   Contaminant_K22E_HUMAN
+                //   Contaminant_K1C9_HUMAN
+                //   Contaminant_K1C10_HUMAN
+                var reKeratinProtein = new Regex(@"(K[1-2]C\d+[A-K]*|K22[E,O]|K1CI)_HUMAN", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                // Regex to match trypsin proteins, including
+                //   TRYP_PIG, sp|TRYP_PIG, Contaminant_TRYP_PIG, Cntm_P00761|TRYP_PIG
+                //   Contaminant_TRYP_BOVIN and gi|136425|sp|P00760|TRYP_BOVIN
+                //   Contaminant_Trypa
+                var reTrypsinProtein = new Regex(@"(TRYP_(PIG|BOVIN)|Contaminant_Trypa)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                // Read the data using PHRP Reader
+                // Only store the best scoring peptide for each scan/charge combo
                 // Furthermore, normalize peptide sequences so that modifications are not associated with specific residues
 
-				while (oPHRPReader.MoveNext())
+                while (oPHRPReader.MoveNext())
 				{
 					var objCurrentPSM = oPHRPReader.CurrentPSM;
 					line_num += 1;
@@ -357,43 +374,20 @@ namespace SMAQC
 
                     // Check whether this is a peptide from Keratin
                     byte keratinFlag = 0;
-                    foreach (var protein in objCurrentPSM.Proteins)
+                    if (objCurrentPSM.Proteins.Any(protein => reKeratinProtein.IsMatch(protein)))
                     {
-                        switch (protein)
-                        {
-                            case "Contaminant_K2C1_HUMAN":
-                            case "Contaminant_K22E_HUMAN":
-                            case "Contaminant_K1C9_HUMAN":
-                            case "Contaminant_K1C10_HUMAN":
-                                keratinFlag = 1;
-                                break;                           
-                        }
+                        keratinFlag = 1;
                     }
                     dctCurrentPeptide.Add("Keratinpeptide", keratinFlag.ToString());
 
                     // Store the number of missed cleavages
                     dctCurrentPeptide.Add("MissedCleavages", objCurrentPSM.NumMissedCleavages.ToString());
 
-                    // Check whether this is a peptide from Trypsin
+                    // Check whether this is a peptide from trypsin or trypsinogen
                     byte trypsinFlag = 0;
-                    foreach (var protein in objCurrentPSM.Proteins)
+                    if (objCurrentPSM.Proteins.Any(protein => reTrypsinProtein.IsMatch(protein)))
                     {
-                        if (protein.StartsWith("Contaminant_Trypa"))
-                        {
-                            trypsinFlag = 1;
-                            continue;
-                        }
-
-                        switch (protein)
-                        {
-                            case "Contaminant_TRYP_PIG":
-                            case "Contaminant_TRYP_BOVIN":
-                            case "Contaminant_CTRA_BOVIN":
-                            case "Contaminant_CTRB_BOVIN":
-                                trypsinFlag = 1;
-                                break;
-                        }
-
+                        trypsinFlag = 1;
                     }
                     dctCurrentPeptide.Add("Trypsinpeptide", trypsinFlag.ToString());
 
