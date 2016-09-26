@@ -12,11 +12,11 @@ namespace SMAQC
 	class Filter
 	{
 
-		public DBWrapper mDBWrapper;                                                                // Create db interface object
-		public string instrument_id;                                                                // Instrument id
-		public int random_id;                                                                       // Random id
-		public DataFileFormatter DFF = new DataFileFormatter();                                     // Dff object
-		readonly SystemLogManager m_SystemLogManager;
+		public readonly DBWrapper mDBWrapper;                                                                // Create db interface object
+		public readonly string instrument_id;                                                                // Instrument id
+		public readonly int random_id;                                                                       // Random id
+		public readonly DataFileFormatter DFF = new DataFileFormatter();                                     // Dff object
+		private readonly SystemLogManager m_SystemLogManager;
 
 		/// <summary>
         /// Constructor

@@ -6,9 +6,9 @@ using System.Xml;
 
 namespace SMAQC
 {
-    class Smaqc
+    internal static class Smaqc
     {
-        protected struct udtOptions
+        private struct udtOptions
         {
             public string InputFolderPath;
             public string Instrument_id;
@@ -26,8 +26,8 @@ namespace SMAQC
             }
         }
 
-        protected const bool WIPE_TEMP_DATA_AT_START = true;
-        protected const bool KEEP_TEMP_DATA_AT_END = true;
+        private const bool WIPE_TEMP_DATA_AT_START = true;
+        private const bool KEEP_TEMP_DATA_AT_END = true;
 
         // DB Interface objerct
         public static DBWrapper m_DBWrapper;
@@ -43,7 +43,7 @@ namespace SMAQC
         public static SystemLogManager m_SystemLogManager = new SystemLogManager();
         public static OutputFileManager m_OutputFileManager;
 
-        protected static udtOptions m_Options;
+        private static udtOptions m_Options;
 
         // Configuration options
         public static readonly Dictionary<string, string> m_Configtable = new Dictionary<string, string>();
@@ -365,7 +365,7 @@ namespace SMAQC
             return 0;
         }
 
-        protected static string GetAppPath()
+        private static string GetAppPath()
         {
             return System.Reflection.Assembly.GetExecutingAssembly().Location;
         }
