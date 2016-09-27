@@ -200,6 +200,7 @@ namespace SMAQC
         /// </summary>
         /// <param name="countTailingPeptides">False means to count early eluting peptides; True means to count late-eluting peptides</param>
         /// <returns></returns>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         private string C_1_Shared(bool countTailingPeptides)
         {
 
@@ -257,6 +258,7 @@ namespace SMAQC
         /// We also cache various scan numbers associated with filter-passing peptides
         /// </summary>
         /// <returns></returns>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string C_2A()
         {
 
@@ -354,6 +356,7 @@ namespace SMAQC
         /// C-2B: Rate of peptide identification during C-2A
         /// </summary>
         /// <returns></returns>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string C_2B()
         {
 
@@ -717,6 +720,7 @@ namespace SMAQC
         /// <summary>
         /// Computes stats on the number of spectra by which each peptide was identified
         /// </summary>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         private void Cache_DS_1_Data()
         {
 
@@ -793,6 +797,7 @@ namespace SMAQC
         /// IS-2: Median precursor m/z for all peptides
         /// </summary>
         /// <returns></returns>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string IS_2()
         {
 
@@ -1454,6 +1459,7 @@ namespace SMAQC
         /// MS2_1: Median MS2 ion injection time for identified peptides
         /// </summary>
         /// <returns></returns>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_1()
         {
 
@@ -1483,6 +1489,7 @@ namespace SMAQC
         /// MS2_2: Median S/N value for identified MS2 spectra
         /// </summary>
         /// <returns></returns>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_2()
         {
 
@@ -1523,6 +1530,7 @@ namespace SMAQC
         /// MS2_3: Median number of peaks in all MS2 spectra
         /// </summary>
         /// <returns></returns>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_3()
         {
 
@@ -1796,9 +1804,10 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// P_2A: Number of tryptic peptides; total spectra count
+        /// P_2A: Number of fully, partially, and non-tryptic peptides; total spectra count
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Total PSMs (spectra with a filter-passing match)</returns>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string P_2A()
         {
             return P_2A_Shared(phosphoPeptides: false);
@@ -1837,9 +1846,10 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// P_2B: Number of unique tryptic peptides; unique peptide & charge count
+        /// P_2B:Number of unique fully, partially, and non-tryptic peptides peptides; unique peptide & charge count
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Unique peptide count, counting charge states separately</returns>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string P_2B()
         {
 
@@ -1855,9 +1865,10 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// P_2C: Number of unique tryptic peptides; unique peptide count
+        /// P_2C: Number of unique fully, partially, and non-tryptic peptides peptides; unique count regardless of charge
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Unique peptide count</returns>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string P_2C()
         {
 
@@ -1934,6 +1945,7 @@ namespace SMAQC
         /// P_4B: Ratio of total missed cleavages (among unique peptides) / total unique peptides
         /// </summary>
         /// <returns></returns>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string P_4B()
         {
 
@@ -1994,6 +2006,7 @@ namespace SMAQC
         /// Keratin_2A: Number of keratin peptides; total spectra count
         /// </summary>
         /// <returns></returns>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string Keratin_2A()
         {
             m_DBInterface.setQuery("SELECT Count(*) AS Spectra "
@@ -2019,6 +2032,7 @@ namespace SMAQC
         /// Keratin_2C: Number of keratin peptides; unique peptide count
         /// </summary>
         /// <returns></returns>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string Keratin_2C()
         {
 
@@ -2046,6 +2060,7 @@ namespace SMAQC
         /// Trypsin_2A: Number of peptides from trypsin; total spectra count
         /// </summary>
         /// <returns></returns>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string Trypsin_2A()
         {
             m_DBInterface.setQuery("SELECT Count(*) AS Spectra "
@@ -2071,6 +2086,7 @@ namespace SMAQC
         /// Trypsin_2C: Number of peptides from trypsin; unique peptide count
         /// </summary>
         /// <returns></returns>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string Trypsin_2C()
         {
 
@@ -2308,7 +2324,8 @@ namespace SMAQC
         /// Counts the number of fully, partially, and non-tryptic peptides
         /// </summary>
         /// <param name="groupByCharge">If true, then counts charges separately</param>
-        /// <returns></returns>
+        /// <returns>Unique peptide count</returns>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         private Dictionary<int, int> SummarizePSMs(bool groupByCharge)
         {
             return SummarizePSMs(groupByCharge, phosphoPeptides: false);
@@ -2319,7 +2336,8 @@ namespace SMAQC
         /// </summary>
         /// <param name="groupByCharge">If true, then counts charges separately</param>
         /// <param name="phosphoPeptides">If true, then only uses phosphopeptides</param>
-        /// <returns></returns>
+        /// <returns>Unique peptide count</returns>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         private Dictionary<int, int> SummarizePSMs(bool groupByCharge, bool phosphoPeptides)
         {
             var chargeSql = string.Empty;
