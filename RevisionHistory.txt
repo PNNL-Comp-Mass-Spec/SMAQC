@@ -1,5 +1,8 @@
 SMAQC Change Log
 
+Version 1.2.6117; September 30, 2016
+	- Use MSGFResultsSummarizer.dll for determining unique peptides and for identifying Keratin and Trypsin-contaminant proteins
+
 Version 1.2.6008; September 26, 2016
 	- Improve logic validating that required MASIC files are present
 

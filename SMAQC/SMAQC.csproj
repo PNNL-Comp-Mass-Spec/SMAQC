@@ -62,8 +62,14 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="MSGFResultsSummarizer">
+      <HintPath>..\dll\MSGFResultsSummarizer.dll</HintPath>
+    </Reference>
     <Reference Include="PHRPReader">
       <HintPath>..\dll\PHRPReader.dll</HintPath>
+    </Reference>
+    <Reference Include="PRISM">
+      <HintPath>..\dll\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -113,9 +119,6 @@
       <ProductName>Windows Installer 3.1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
-  </ItemGroup>
-  <ItemGroup>
-    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

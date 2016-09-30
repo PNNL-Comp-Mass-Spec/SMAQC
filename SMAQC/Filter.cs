@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using MSGFResultsSummarizer;
 using PHRPReader;
 
 namespace SMAQC
@@ -254,13 +255,27 @@ namespace SMAQC
 				var dctBestPeptide = new Dictionary<string, string>();
 				dctBestPeptide.Clear();
 
-                // Dictionary mapping normalized peptide sequences to NormalizedSeqID values
-                // The NormalizedSeqID values are custom-assigned by this class to keep track of peptide sequences 
-                //   on a basis where modifications are tracked but not mapped to specific residues
-                //   This is done so that peptides like PEPT*IDES and PEPTIDES* are counted as the same peptide
-			    var normalizedPeptides = new Dictionary<string, int>();
+                // Keys in this dictionary are clean sequences (peptide sequence without any mod symbols)
+                // Values are lists of modified residue combinations that correspond to the given clean sequence
+                // Each combination of residues has a corresponding "best" SeqID associated with it
+                //
+                // When comparing a new sequence to entries in this dictionary, if the mod locations are all within one residue of an existing normalized sequence,
+                //  the new sequence and mods is not added
+                // For example, LS*SPATLNSR and LSS*PATLNSR are considered equivalent, and will be tracked as LSSPATLNSR with * at index 1
+                // But P#EPT*IDES and PEP#T*IDES and P#EPTIDES* are all different, and are tracked with entries:
+                //  PEPTIDES with # at index 0 and * at index 3
+                //  PEPTIDES with # at index 2 and * at index 3
+                //  PEPTIDES with # at index 0 and * at index 7
+                //
+                // If sequenceInfoAvailable is True, then instead of using mod symbols we use ModNames from the Mod_Description column in the _SeqInfo.txt file
+                //   For example, VGVEASEETPQT with Phosph at index 5
+                //
+                // The SeqID value tracked by udtNormalizedPeptideType is the SeqID of the first sequence to get normalized to the given entry
+                // If sequenceInfoAvailable is False, values are the ResultID value of the first peptide to get normalized to the given entry
+                //
+                var normalizedPeptides = new Dictionary<string, List<clsNormalizedPeptideInfo>>();
 
-				var intBestPeptideScan = -1;
+                var intBestPeptideScan = -1;
 				var intBestPeptideCharge = -1;
 				double dblBestPeptideScore = 100;
 
@@ -271,21 +286,11 @@ namespace SMAQC
 
 				Console.WriteLine("Populating database using PHRP");
 
-                // Regex to match keratin proteins, including 
-                //   K1C9_HUMAN, K1C10_HUMAN, K1CI_HUMAN
-                //   K2C1_HUMAN, K2C1B_HUMAN, K2C3_HUMAN, K2C6C_HUMAN, K2C71_HUMAN
-                //   K22E_HUMAN and K22O_HUMAN
-                //   Contaminant_K2C1_HUMAN
-                //   Contaminant_K22E_HUMAN
-                //   Contaminant_K1C9_HUMAN
-                //   Contaminant_K1C10_HUMAN
-                var reKeratinProtein = new Regex(@"(K[1-2]C\d+[A-K]*|K22[E,O]|K1CI)_HUMAN", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                // Regex to match keratin proteins
+			    var reKeratinProtein = clsMSGFResultsSummarizer.GetKeratinRegEx();
 
-                // Regex to match trypsin proteins, including
-                //   TRYP_PIG, sp|TRYP_PIG, Contaminant_TRYP_PIG, Cntm_P00761|TRYP_PIG
-                //   Contaminant_TRYP_BOVIN and gi|136425|sp|P00760|TRYP_BOVIN
-                //   Contaminant_Trypa
-                var reTrypsinProtein = new Regex(@"(TRYP_(PIG|BOVIN)|Contaminant_Trypa)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                // Regex to match trypsin proteins
+			    var reTrypsinProtein = clsMSGFResultsSummarizer.GetTrypsinRegEx();
 
                 // Read the data using PHRP Reader
                 // Only store the best scoring peptide for each scan/charge combo
@@ -338,17 +343,39 @@ namespace SMAQC
 					else
 						dctCurrentPeptide.Add("MSGFSpecProb", "1");
 
-                    var normalizedPeptide = NormalizeSequence(objCurrentPSM.PeptideCleanSequence, objCurrentPSM.ModifiedResidues);
+                    var normalizedPeptide = NormalizeSequence(objCurrentPSM.PeptideCleanSequence, objCurrentPSM.ModifiedResidues, objCurrentPSM.SeqID);
 
-				    int normalizedSeqID;
-                    if (!normalizedPeptides.TryGetValue(normalizedPeptide, out normalizedSeqID))
+				    var normalizedSeqID = clsMSGFResultsSummarizer.FindNormalizedSequence(normalizedPeptides, normalizedPeptide);
+
+				    if (normalizedSeqID == clsPSMInfo.UNKNOWN_SEQID)
                     {
-                        normalizedSeqID = normalizedPeptides.Count + 1;
-                        normalizedPeptides.Add(normalizedPeptide, normalizedSeqID);
+                        // New normalized peptide
+                        
+                        List<clsNormalizedPeptideInfo> observedNormalizedPeptides;
+
+                        if (!normalizedPeptides.TryGetValue(normalizedPeptide.CleanSequence, out observedNormalizedPeptides))
+                        {
+                            // This clean sequence is not yet tracked; add it
+                            observedNormalizedPeptides = new List<clsNormalizedPeptideInfo>();
+                            normalizedPeptides.Add(normalizedPeptide.CleanSequence, observedNormalizedPeptides);
+                        }
+
+                        normalizedSeqID = objCurrentPSM.SeqID;
+                        if (normalizedSeqID < 0)
+                        {
+                            normalizedSeqID = objCurrentPSM.ResultID;
+                        }
+
+                        // Make a new normalized peptide entry that does not have clean sequence 
+                        // (to conserve memory, since keys in dictionary normalizedPeptides are clean sequence)
+                        var normalizedPeptideToStore = new clsNormalizedPeptideInfo(string.Empty);
+                        normalizedPeptideToStore.StoreModifications(normalizedPeptide.Modifications);
+                        normalizedPeptideToStore.SeqID = normalizedSeqID;
+
+                        observedNormalizedPeptides.Add(normalizedPeptideToStore);
                     }
                     
-					// Note: previously stored objCurrentPSM.SeqID.ToString()
-                    // Now storing normalizedSeqID
+					// Associate the normalized SeqID with the current peptide
                     dctCurrentPeptide.Add("Unique_Seq_ID", normalizedSeqID.ToString());
 
 					dctCurrentPeptide.Add("Cleavage_State", ((int)objCurrentPSM.CleavageState).ToString());
@@ -357,7 +384,7 @@ namespace SMAQC
 					byte phosphoFlag = 0;
 					foreach (var modification in objCurrentPSM.ModifiedResidues)
 					{
-						if (modification.ModDefinition.MassCorrectionTag == "Phosph")
+						if (string.Equals(modification.ModDefinition.MassCorrectionTag, "Phosph", StringComparison.InvariantCultureIgnoreCase))
 						{
 							phosphoFlag = 1;
 							break;
@@ -422,22 +449,26 @@ namespace SMAQC
 			return false;
 		}
 
-	    private string NormalizeSequence(string peptideCleanSequence, ICollection<clsAminoAcidModInfo> modifiedResidues)
+	    private clsNormalizedPeptideInfo NormalizeSequence(string peptideCleanSequence, IEnumerable<clsAminoAcidModInfo> modifiedResidues, int seqId)
 	    {
-	        if (modifiedResidues.Count == 0)
-                return peptideCleanSequence;
+            var modifications = new List< KeyValuePair<string, int>>();
 
-	        var sbModifications = new StringBuilder();
+            foreach (var modEntry in modifiedResidues)
+            {
+                string modSymbolOrName;
+                var residueIndex = modEntry.ResidueLocInPeptide - 1;
 
-	        foreach (var modEntry in modifiedResidues)
-	        {
                 if (string.IsNullOrEmpty(modEntry.ModDefinition.MassCorrectionTag))
-                    sbModifications.Append(modEntry.ModDefinition.ModificationSymbol);
+                    modSymbolOrName = modEntry.ModDefinition.ModificationSymbol.ToString();
                 else
-	                sbModifications.Append(modEntry.ModDefinition.MassCorrectionTag);
-	        }
+                    modSymbolOrName = modEntry.ModDefinition.MassCorrectionTag;
 
-            return peptideCleanSequence + "_" + sbModifications;
+                modifications.Add(new KeyValuePair<string, int>(modSymbolOrName, residueIndex));
+            }
+
+            var normalizedPeptide = clsMSGFResultsSummarizer.GetNormalizedPeptideInfo(peptideCleanSequence, modifications, seqId);
+	        return normalizedPeptide;
+
 	    }
 
 
