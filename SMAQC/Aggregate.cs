@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 
 namespace SMAQC
 {
@@ -81,7 +82,7 @@ namespace SMAQC
             catch (DirectoryNotFoundException)
             {
                 Console.WriteLine("GFIL():: Could not find directory {0}!", m_DataFolder);
-				System.Threading.Thread.Sleep(2000);
+                Thread.Sleep(1500);
                 Environment.Exit(1);
             }
 
@@ -126,7 +127,7 @@ namespace SMAQC
             catch (DirectoryNotFoundException)
             {
 				Console.WriteLine("getFileImportList():: Could not find directory {0}!", m_DataFolder);
-				System.Threading.Thread.Sleep(2000);
+                Thread.Sleep(1500);
                 Environment.Exit(1);				
             }
 

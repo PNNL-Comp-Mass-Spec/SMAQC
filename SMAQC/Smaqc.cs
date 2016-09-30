@@ -2,6 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Xml;
 
 namespace SMAQC
@@ -51,7 +52,7 @@ namespace SMAQC
         // Measurement results
         public static Dictionary<string, string> m_Results = new Dictionary<string, string>();
 
-        private const string SMAQC_BUILD_DATE = "September 26, 2016";
+        private const string SMAQC_BUILD_DATE = "September 30, 2016";
 
         // Define the filename suffixes
         // These names need to be lowercase
@@ -120,6 +121,7 @@ namespace SMAQC
             catch (Exception ex)
             {
                 ShowErrorMessage("Error initializing log file: " + ex.Message);
+                Thread.Sleep(1500);
                 return 6;
             }
 
@@ -152,13 +154,17 @@ namespace SMAQC
                     {
                         var errorCode = ProcessDatasets(random_id, lstMeasurementsToRun);
                         if (errorCode != 0)
-                             return errorCode;
+                        {
+                            Thread.Sleep(1500);
+                            return errorCode;
+                        }
                     }
                     catch (Exception ex)
                     {
                         var message = "Error processing datasets: " + ex.Message;
                         ShowErrorMessage(message);
                         m_SystemLogManager.addApplicationLog(message);
+                        Thread.Sleep(1500);
                         return 9;
                     }
 
@@ -171,6 +177,7 @@ namespace SMAQC
                     catch (Exception ex)
                     {
                         ShowErrorMessage("Error closing the log file: " + ex.Message);
+                        Thread.Sleep(1500);
                         return 10;
                     }
 
@@ -178,6 +185,7 @@ namespace SMAQC
                 catch (Exception ex)
                 {
                     ShowErrorMessage("Error initializing database wrapper: " + ex.Message);
+                    Thread.Sleep(1500);
                     return 7;
                 }
 
@@ -185,6 +193,7 @@ namespace SMAQC
             catch (Exception ex)
             {
                 ShowErrorMessage("Error initializing program: " + ex.Message);
+                Thread.Sleep(1500);
                 return 8;
             }
 
@@ -536,7 +545,7 @@ namespace SMAQC
                 Console.WriteLine();
 
                 // Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
-                System.Threading.Thread.Sleep(750);
+                Thread.Sleep(1500);
 
             }
             catch (Exception ex)
