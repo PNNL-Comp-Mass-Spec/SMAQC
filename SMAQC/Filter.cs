@@ -218,7 +218,9 @@ namespace SMAQC
 				const bool blnLoadMSGFResults = true;
 				const bool blnLoadScanStats = false;
 
-				var oPHRPReader = new clsPHRPReader(sInputFilePath, clsPHRPReader.ePeptideHitResultType.Unknown, blnLoadModsAndSeqInfo, blnLoadMSGFResults, blnLoadScanStats)
+			    var peptideMassCalculator = new clsPeptideMassCalculator();
+
+                var oPHRPReader = new clsPHRPReader(sInputFilePath, clsPHRPReader.ePeptideHitResultType.Unknown, blnLoadModsAndSeqInfo, blnLoadMSGFResults, blnLoadScanStats)
 				{
 					EchoMessagesToConsole = false,
 					SkipDuplicatePSMs = true
@@ -331,7 +333,7 @@ namespace SMAQC
 					dctCurrentPeptide.Add("CollisionMode", objCurrentPSM.CollisionMode);
 					dctCurrentPeptide.Add("Charge", objCurrentPSM.Charge.ToString());
 
-					dctCurrentPeptide.Add("Peptide_MH", clsPeptideMassCalculator.ConvoluteMass(objCurrentPSM.PeptideMonoisotopicMass, 0, 1).ToString("0.00000"));
+					dctCurrentPeptide.Add("Peptide_MH", peptideMassCalculator.ConvoluteMass(objCurrentPSM.PeptideMonoisotopicMass, 0, 1).ToString("0.00000"));
 					dctCurrentPeptide.Add("Peptide_Sequence", objCurrentPSM.Peptide);
 
 					dctCurrentPeptide.Add("DelM_Da", objCurrentPSM.MassErrorDa);

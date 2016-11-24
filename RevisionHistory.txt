@@ -1,5 +1,8 @@
 SMAQC Change Log
 
+Version 1.2.6171; November 23, 2016
+	- Updated PHRPReader.dll that defaults to use _msgfplus for MSGF+ results
+
 Version 1.2.6117; September 30, 2016
 	- Use MSGFResultsSummarizer.dll for determining unique peptides and for identifying Keratin and Trypsin-contaminant proteins
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using PHRPReader;
 
 namespace SMAQC
 {
@@ -87,6 +88,8 @@ namespace SMAQC
         // Cached data for the ReporterIon metrics
         private List<string> mReporterIonColumns;
 
+        private clsPeptideMassCalculator mPeptideMassCalculator;
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -96,6 +99,7 @@ namespace SMAQC
         {
             m_Random_ID = random_id;
             m_DBInterface = DBInterface;
+            mPeptideMassCalculator = new clsPeptideMassCalculator();
         }
 
         /// <summary>
@@ -504,7 +508,7 @@ namespace SMAQC
                 string peptidePrefix;
                 string peptideSuffix;
 
-                PHRPReader.clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(m_MeasurementResults["Peptide_Sequence"], out peptideResidues, out peptidePrefix, out peptideSuffix);
+                clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(m_MeasurementResults["Peptide_Sequence"], out peptideResidues, out peptidePrefix, out peptideSuffix);
 
                 var currentPeptide = new udtPeptideEntry();
 
@@ -820,7 +824,7 @@ namespace SMAQC
             while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
 
-                var temp_mz = PHRPReader.clsPeptideMassCalculator.ConvoluteMass(Convert.ToDouble(m_MeasurementResults["Peptide_MH"]), 1, Convert.ToInt32(m_MeasurementResults["Charge"]));
+                var temp_mz = mPeptideMassCalculator.ConvoluteMass(Convert.ToDouble(m_MeasurementResults["Peptide_MH"]), 1, Convert.ToInt32(m_MeasurementResults["Charge"]));
 
                 if (!MZ_list.Contains(temp_mz))
                     MZ_list.Add(temp_mz);
@@ -1433,11 +1437,11 @@ namespace SMAQC
             while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 // Calculate the theoretical monoisotopic mass of the peptide
-                var theoMonoMass = PHRPReader.clsPeptideMassCalculator.ConvoluteMass(Convert.ToDouble(m_MeasurementResults["Peptide_MH"]), 1, 0);
+                var theoMonoMass = mPeptideMassCalculator.ConvoluteMass(Convert.ToDouble(m_MeasurementResults["Peptide_MH"]), 1, 0);
 
                 // Compute observed precursor mass, as monoisotopic mass					
                 int observedCharge = Convert.ToInt16(m_MeasurementResults["Charge"]);
-                var observedMonoMass = PHRPReader.clsPeptideMassCalculator.ConvoluteMass(Convert.ToDouble(m_MeasurementResults["MZ"]), observedCharge, 0);
+                var observedMonoMass = mPeptideMassCalculator.ConvoluteMass(Convert.ToDouble(m_MeasurementResults["MZ"]), observedCharge, 0);
 
                 var delm = observedMonoMass - theoMonoMass;
 

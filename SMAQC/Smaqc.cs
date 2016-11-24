@@ -52,7 +52,7 @@ namespace SMAQC
         // Measurement results
         public static Dictionary<string, string> m_Results = new Dictionary<string, string>();
 
-        private const string SMAQC_BUILD_DATE = "September 30, 2016";
+        private const string SMAQC_BUILD_DATE = "November 23, 2016";
 
         // Define the filename suffixes
         // These names need to be lowercase
@@ -654,7 +654,7 @@ namespace SMAQC
         /// </summary>
         /// <returns></returns>
         /// <remarks>Multiple datasets processed at once will have the same Result_ID</remarks>
-		static int determine_result_id()
+        static int determine_result_id()
         {
             var dctMostRecentEntry = new Dictionary<string, string>();
             int result_id;
