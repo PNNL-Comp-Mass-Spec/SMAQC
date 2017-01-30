@@ -35,8 +35,8 @@ namespace SMAQC
 
     class ConcreteSubject : Subject
     {
-	    // Gets or sets subject state
-	    public string SubjectState { get; set; }
+        // Gets or sets subject state
+        public string SubjectState { get; set; }
     }
 
     class ConcreteObserver : Observer

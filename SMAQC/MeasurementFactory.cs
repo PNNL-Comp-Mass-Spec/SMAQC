@@ -14,7 +14,7 @@ namespace SMAQC
 
         public string BuildMeasurement(string measurement)
         {
-	        // Convert measurement name to function using reflection
+            // Convert measurement name to function using reflection
             var methodName = measurement;
             var info = m_Measurement.GetType().GetMethod(methodName);
             var result = (string)info.Invoke(m_Measurement, null);
@@ -25,7 +25,7 @@ namespace SMAQC
         // Clear saved data
         public void CleanMeasurements()
         {
-			m_Measurement.ClearStorage();
+            m_Measurement.ClearStorage();
         }
     }
 }

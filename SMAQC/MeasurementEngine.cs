@@ -6,16 +6,16 @@ namespace SMAQC
     class MeasurementEngine
     {
         
-	    readonly List<string> m_MeasurementsToRun;
-	    readonly MeasurementFactory factory;
-	    readonly SystemLogManager m_SystemLogManager;
+        readonly List<string> m_MeasurementsToRun;
+        readonly MeasurementFactory factory;
+        readonly SystemLogManager m_SystemLogManager;
 
         // Constructor
-		public MeasurementEngine(List<string> lstMeasurementsToRun, ref Measurement measurement, ref SystemLogManager systemLogManager)
+        public MeasurementEngine(List<string> lstMeasurementsToRun, ref Measurement measurement, ref SystemLogManager systemLogManager)
         {
-			factory = new MeasurementFactory(ref measurement);
-			m_MeasurementsToRun = lstMeasurementsToRun;            
-			m_SystemLogManager = systemLogManager;
+            factory = new MeasurementFactory(ref measurement);
+            m_MeasurementsToRun = lstMeasurementsToRun;            
+            m_SystemLogManager = systemLogManager;
 
         }
 
@@ -23,35 +23,35 @@ namespace SMAQC
         /// Compute the stats
         /// </summary>
         /// <returns></returns>
-		public Dictionary<string, string> RunMeasurements()
+        public Dictionary<string, string> RunMeasurements()
         {
             // Results dictionary
-			var dctResults = new Dictionary<string, string>();
-			var iMeasurementsStarted = 0;
+            var dctResults = new Dictionary<string, string>();
+            var iMeasurementsStarted = 0;
 
             foreach (var measurementName in m_MeasurementsToRun)
             {
                 // Console.WriteLine("MeasurementEngine ELEMENT={0}", element);
 
-				var dtStartTime = DateTime.UtcNow;
-				iMeasurementsStarted += 1;
-				var percentComplete = iMeasurementsStarted / Convert.ToDouble(m_MeasurementsToRun.Count) * 100.0;
+                var dtStartTime = DateTime.UtcNow;
+                iMeasurementsStarted += 1;
+                var percentComplete = iMeasurementsStarted / Convert.ToDouble(m_MeasurementsToRun.Count) * 100.0;
 
-				try
+                try
                 {
-					var sResult = factory.BuildMeasurement(measurementName);
+                    var sResult = factory.BuildMeasurement(measurementName);
                     if (string.IsNullOrEmpty(sResult))
-						sResult = "Null";
+                        sResult = "Null";
 
                     dctResults.Add(measurementName, sResult);
-					m_SystemLogManager.addApplicationLog((measurementName + ":").PadRight(7) + " complete in " + DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0.00") + " seconds; " + percentComplete.ToString("0") + "% complete");
+                    m_SystemLogManager.addApplicationLog((measurementName + ":").PadRight(7) + " complete in " + DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0.00") + " seconds; " + percentComplete.ToString("0") + "% complete");
                 }
                 catch (Exception ex)
                 {
                     // Measurement failed; store Null
                     dctResults.Add(measurementName, "Null");
-					Console.WriteLine();
-					m_SystemLogManager.addApplicationLog(measurementName + " failed: " + ex.Message);
+                    Console.WriteLine();
+                    m_SystemLogManager.addApplicationLog(measurementName + " failed: " + ex.Message);
                 }
             }
 
