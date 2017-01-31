@@ -65,7 +65,7 @@ namespace SMAQC
         {
             var line_num = 0;
 
-            const char newDelimiter = '\t';
+            var tabChar = "\t";
 
             // Split on tab characters
             var delimiters = new[] { '\t' };
@@ -87,19 +87,21 @@ namespace SMAQC
                         if (string.IsNullOrEmpty(line))
                             continue;
 
-                        var query_info = "";
+                        var filteredData = new List<string>();
 
                         var parts = line.Split(delimiters, StringSplitOptions.None);
                         
                         if (line_num == 0)
                         {
                             // Prepend the additional headers
-                            query_info += "instrument_id" + newDelimiter + "random_id" + newDelimiter;
+                            filteredData.Add("instrument_id");
+                            filteredData.Add("random_id");
                         }
                         else
                         {
                             // Prepend Instrument_ID and Random_ID
-                            query_info += mInstrumentId + newDelimiter + mRandomId + newDelimiter;
+                            filteredData.Add(mInstrumentId);
+                            filteredData.Add(mRandomId.ToString());
                         }
 
                         // Process the fields
@@ -107,25 +109,19 @@ namespace SMAQC
                         {
                             if (dataValue.Equals("[PAD]"))
                             {
-                                query_info += newDelimiter;
+                                filteredData.Add("");
                             }
                             else
                             {
                                 // Replace any tab characters with semicolons
-                                query_info += dataValue.Replace(newDelimiter, ';') + newDelimiter;
+                                filteredData.Add(dataValue.Replace(tabChar, ";"));
                             }
                         }
 
-                        if (!string.IsNullOrEmpty(query_info))
+                        if (filteredData.Count > 0)
                         {
-                            // Final column; remove the trailing tab character								
-                            query_info = query_info.Substring(0, query_info.Length - 1);
-
-                            // Append a carriage return
-                            query_info += Environment.NewLine;
-
                             // Write out the data line
-                            swOutFile.Write(query_info);
+                            swOutFile.WriteLine(string.Join(tabChar, filteredData));
                         }
                                             
                         line_num++;
