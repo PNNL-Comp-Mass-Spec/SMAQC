@@ -77,9 +77,9 @@ namespace SMAQC
         }
 
         // Bulk insert
-        public void BulkInsert(string insert_into_table, string file_to_read_from)
+        public void BulkInsert(string targetTable, string sourceFile, List<string> excludedFieldNameSuffixes)
         {
-            dbConn.BulkInsert(insert_into_table, file_to_read_from);
+            dbConn.BulkInsert(targetTable, sourceFile, excludedFieldNameSuffixes);
         }
 
         // For queries such as insert/delete/update

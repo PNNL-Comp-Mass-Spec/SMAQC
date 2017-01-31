@@ -137,10 +137,15 @@ namespace SMAQC
             mConnection.Open();
         }
 
-        public void BulkInsert(string insert_into_table, string file_to_read_from)
+        public void BulkInsert(string targetTable, string sourceFile, List<string> excludedFieldNameSuffixes)
         {
+            // Keys in this dictionary are field index values (0, 1, 2, etc.)
+            // Values are True if the field should be used and false if it should not be used
+            Dictionary<int, bool> fieldEnabledByIndex;
+
             // Fetch fields
-            var fieldNames = SQLiteBulkInsert_Fields(file_to_read_from);
+            var fieldNames = SQLiteBulkInsert_Fields(sourceFile, excludedFieldNameSuffixes, out fieldEnabledByIndex);
+
 
             errorMsgCount = 0;
             if (dctErrorMessages == null)
@@ -437,11 +442,18 @@ namespace SMAQC
             return true;
         }
 
-        List<string> SQLiteBulkInsert_Fields(string filename)
+        List<string> SQLiteBulkInsert_Fields(
+            string filename, 
+            List<string> excludedFieldNameSuffixes, 
+            out Dictionary<int, bool> fieldEnabledByIndex)
         {
             var file = new StreamReader(filename);
             var line = file.ReadLine();
             file.Close();
+
+            // Keys in this dictionary are field index values (0, 1, 2, etc.)
+            // Values are True if the field should be used and false if it should not be used
+            fieldEnabledByIndex = new Dictionary<int, bool>();
 
             if (string.IsNullOrWhiteSpace(line))
                 return new List<string>();
@@ -452,16 +464,39 @@ namespace SMAQC
             // Do split operation
             var parts = line.Split(delimiters, StringSplitOptions.None).ToList();
 
-            // Make sure the field names do not have spaces or parentheses in them
-            for (var i = 0; i < parts.Count; i++)
+
+            var filteredList = new List<string>();
+            for (var fieldIndex = 0; fieldIndex < parts.Count; fieldIndex++)
             {
-                parts[i] = SQLiteBulkInsert_CleanFields(parts[i]);
+                var fieldName = parts[fieldIndex];
+
+                var addField = true;
+                foreach (var suffix in excludedFieldNameSuffixes)
+                {
+                    if (fieldName.EndsWith(suffix, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        addField = false;
+                        break;
+                    }
+                }
+
+                if (addField)
+                {
+                    filteredList.Add(fieldName);
+                    fieldEnabledByIndex[fieldIndex] = true;
+                }
             }
 
-            return parts;
+            // Make sure the field names do not have spaces or parentheses in them
+            for (var i = 0; i < filteredList.Count; i++)
+            {
+                filteredList[i] = SQLiteBulkInsert_CleanFields(filteredList[i]);
+            }
+
+            return filteredList;
         }
 
-        string[] SQLiteBulkInsert_TokenizeLine(string line)
+        List<string> SQLiteBulkInsert_TokenizeLine(string line)
         {
             // Split given data files by tab
             var delimiters = new[] { '\t' };
