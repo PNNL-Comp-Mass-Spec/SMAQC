@@ -249,7 +249,47 @@ namespace SMAQC
 
         }
 
-        private void AddColumnsToTable(SQLiteConnection dbConnection, string tableName, List<string> columnsToAdd, string columnType = "VARCHAR", bool isNullable = true)
+        /// <summary>
+        /// Assure that the specified columns exist in the table
+        /// Add them if missing
+        /// </summary>
+        /// <param name="conn"></param>
+        /// <param name="tableName">Target table</param>
+        /// <param name="columnNames">Required column names</param>
+        /// <param name="columnType">Data type for the columns if they need to be added (varchar, float, int)</param>
+        /// <param name="isNullable">True if the columns can contain nulls</param>
+        public void AssureColumnsExist(
+            SQLiteConnection conn, 
+            string tableName, 
+            IEnumerable<string> columnNames, 
+            string columnType = "VARCHAR", 
+            bool isNullable = true)
+        {
+            if (!TableExists(conn, tableName))
+                return;
+
+            var missingColumns = new List<string>();
+
+            foreach (var columnName in columnNames)
+            {
+                if (!TableHasColumn(conn, tableName, columnName))
+                {
+                    missingColumns.Add(columnName);
+                }
+            }
+
+            if (missingColumns.Count > 0)
+            {
+                AddColumnsToTable(conn, tableName, missingColumns, "float");
+            }
+        }
+
+        private void AddColumnsToTable(
+            SQLiteConnection dbConnection, 
+            string tableName, 
+            IEnumerable<string> columnsToAdd, 
+            string columnType = "VARCHAR", 
+            bool isNullable = true)
         {
             foreach (var columnName in columnsToAdd)
             {
@@ -400,26 +440,34 @@ namespace SMAQC
                         // + "[Ion_102] FLOAT NULL,"       // ETD iTRAQ Ion
                         // + "[Ion_104] FLOAT NULL,"       // ETD iTRAQ Ion
 
+                        // + "[Ion_113] FLOAT NULL,"       // 8-plex iTRAQ Ion
+                        // + "[Ion_114] FLOAT NULL,"       // 4-plex and 8-plex iTRAQ Ion
+                        // + "[Ion_115] FLOAT NULL,"       // 4-plex and 8-plex iTRAQ Ion
+                        // + "[Ion_116] FLOAT NULL,"       // 4-plex and 8-plex iTRAQ Ion
+                        // + "[Ion_117] FLOAT NULL,"       // 4-plex and 8-plex iTRAQ Ion
+                        // + "[Ion_118] FLOAT NULL,"       // iTRAQ Ion
+                        // + "[Ion_119] FLOAT NULL,"       // iTRAQ Ion
+                        // + "[Ion_120] FLOAT NULL,"       // iTRAQ Ion
+                        // + "[Ion_121] FLOAT NULL,"       // iTRAQ Ion
 
-                        + "[Ion_113] FLOAT NULL,"       // 8-plex iTRAQ Ion
-                        + "[Ion_114] FLOAT NULL,"       // 4-plex and 8-plex iTRAQ Ion
-                        + "[Ion_115] FLOAT NULL,"       // 4-plex and 8-plex iTRAQ Ion
-                        + "[Ion_116] FLOAT NULL,"       // 4-plex and 8-plex iTRAQ Ion
-                        + "[Ion_117] FLOAT NULL,"       // 4-plex and 8-plex iTRAQ Ion
-                        + "[Ion_118] FLOAT NULL,"       // iTRAQ Ion
-                        + "[Ion_119] FLOAT NULL,"       // iTRAQ Ion
-                        + "[Ion_120] FLOAT NULL,"       // iTRAQ Ion
-                        + "[Ion_121] FLOAT NULL,"       // iTRAQ Ion
-                        + "[Ion_126.128] FLOAT NULL,"   // TMT Ion (TMT6 and TMT10)
-                        + "[Ion_127.125] FLOAT NULL,"   // TMT Ion (TMT10)
-                        + "[Ion_127.131] FLOAT NULL,"   // TMT Ion (TMT6 and TMT10)
-                        + "[Ion_128.128] FLOAT NULL,"   // TMT Ion (TMT10)
-                        + "[Ion_128.134] FLOAT NULL,"   // TMT Ion (TMT6 and TMT10)
-                        + "[Ion_129.131] FLOAT NULL,"   // TMT Ion (TMT10)
-                        + "[Ion_129.138] FLOAT NULL,"   // TMT Ion (TMT6 and TMT10)
-                        + "[Ion_130.135] FLOAT NULL,"   // TMT Ion (TMT10)
-                        + "[Ion_130.141] FLOAT NULL,"   // TMT Ion (TMT6 and TMT10)
-                        + "[Ion_131.138] FLOAT NULL,"   // TMT Ion (TMT6 and TMT10)
+                        // + "[Ion_126] FLOAT NULL,"       // TMT Ion (TMT6)
+                        // + "[Ion_127] FLOAT NULL,"       // TMT Ion (TMT6)
+                        // + "[Ion_128] FLOAT NULL,"       // TMT Ion (TMT6)
+                        // + "[Ion_129] FLOAT NULL,"       // TMT Ion (TMT6)
+                        // + "[Ion_130] FLOAT NULL,"       // TMT Ion (TMT6)
+                        // + "[Ion_131] FLOAT NULL,"       // TMT Ion (TMT6)
+
+                        // + "[Ion_126.128] FLOAT NULL,"   // TMT Ion (TMT10)
+                        // + "[Ion_127.125] FLOAT NULL,"   // TMT Ion (TMT10)
+                        // + "[Ion_127.131] FLOAT NULL,"   // TMT Ion (TMT10)
+                        // + "[Ion_128.128] FLOAT NULL,"   // TMT Ion (TMT10)
+                        // + "[Ion_128.134] FLOAT NULL,"   // TMT Ion (TMT10)
+                        // + "[Ion_129.131] FLOAT NULL,"   // TMT Ion (TMT10)
+                        // + "[Ion_129.138] FLOAT NULL,"   // TMT Ion (TMT10)
+                        // + "[Ion_130.135] FLOAT NULL,"   // TMT Ion (TMT10)
+                        // + "[Ion_130.141] FLOAT NULL,"   // TMT Ion (TMT10)
+                        // + "[Ion_131.138] FLOAT NULL,"   // TMT Ion (TMT10)
+
                         + "[Weighted_Avg_Pct_Intensity_Correction] FLOAT NOT NULL"
                         + ")";
                     break;

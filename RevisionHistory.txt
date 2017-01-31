@@ -1,5 +1,8 @@
 SMAQC Change Log
 
+Version 1.2.6239; January 30, 2017
+	- Dynamically add reporter ion columns to temp_reporterions based on the data in the _ReporterIons.txt file
+
 Version 1.2.6171; November 23, 2016
 	- Updated PHRPReader.dll that defaults to use _msgfplus for MSGF+ results
 

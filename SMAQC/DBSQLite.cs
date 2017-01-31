@@ -146,6 +146,16 @@ namespace SMAQC
             // Fetch fields
             var fieldNames = SQLiteBulkInsert_Fields(sourceFile, excludedFieldNameSuffixes, out fieldEnabledByIndex);
 
+            if (string.Equals(targetTable, "temp_reporterions", StringComparison.InvariantCultureIgnoreCase))
+            {
+                // Auto-add the reporter ion columns
+                var ionColumns = (from item in fieldNames where item.ToLower().StartsWith("ion_") select item).ToList();
+
+                if (ionColumns.Count > 0)
+                {
+                    SQLiteTools.AssureColumnsExist(mConnection, "temp_reporterions", ionColumns, "FLOAT");
+                }
+            }
 
             errorMsgCount = 0;
             if (dctErrorMessages == null)
