@@ -92,7 +92,6 @@
     <Compile Include="Measurement.cs" />
     <Compile Include="MeasurementEngine.cs" />
     <Compile Include="MeasurementFactory.cs" />
-    <Compile Include="Observer.cs" />
     <Compile Include="OutputFileManager.cs" />
     <Compile Include="SystemLogManager.cs" />
     <Compile Include="Smaqc.cs" />

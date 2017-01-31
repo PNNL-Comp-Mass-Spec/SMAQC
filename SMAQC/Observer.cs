@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace SMAQC
 {
+    [Obsolete("Obtuse and unused")]
     abstract class Subject
     {
         private readonly List<Observer> _observers = new List<Observer>();
@@ -26,6 +27,7 @@ namespace SMAQC
         }
     }
 
+    [Obsolete("Obtuse and unused")]
     abstract class Observer
     {
 
@@ -33,18 +35,23 @@ namespace SMAQC
 
     }
 
+    [Obsolete("Obtuse and unused")]
     class ConcreteSubject : Subject
     {
         // Gets or sets subject state
         public string SubjectState { get; set; }
     }
 
+    [Obsolete("Obtuse and unused")]
     class ConcreteObserver : Observer
     {
         private string _observerState;
         private ConcreteSubject _subject;
 
-        // Constructor
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="subject"></param>
         public ConcreteObserver(ConcreteSubject subject)
         {
             _subject = subject;
