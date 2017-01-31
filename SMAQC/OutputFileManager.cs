@@ -6,19 +6,37 @@ namespace SMAQC
 {
     class OutputFileManager
     {
-        // Declare variables
-        private readonly DBWrapper DBWrapper;                                                                // Ref db interface object
-        private bool first_use;																			     // Is the first use?
-        private readonly string smaqc_version;                                                               // Smaqc version
-        private readonly List<string> fields;                                                                // Smaqc fields
+        /// <summary>
+        /// Database wrapper
+        /// </summary>
+        private readonly DBWrapper mDBWrapper;
 
-        // Constructor
-        public OutputFileManager(ref DBWrapper DBWrapper, string ProgVersion, List<string> ProgFields)
+        /// <summary>
+        /// True on the first use, then false after that
+        /// </summary>
+        private bool mFirstUse;
+
+        /// <summary>
+        /// SMAQC Version
+        /// </summary>
+        private readonly string mSMAQCVersion;
+
+        /// <summary>
+        /// Metric names
+        /// </summary>
+        private readonly List<string> mMetricNames;
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="DBWrapper"></param>
+        /// <param name="ProgVersion"></param>
+        /// <param name="metricNames"></param>
+        public OutputFileManager(ref DBWrapper DBWrapper, string ProgVersion, List<string> metricNames)
         {
-            this.DBWrapper = DBWrapper;
-            first_use = true;
-            smaqc_version = ProgVersion;
-            fields = ProgFields;
+            mDBWrapper = DBWrapper;
+            mFirstUse = true;
+            mSMAQCVersion = ProgVersion;
             mMetricNames = metricNames;
         }
 
