@@ -92,7 +92,7 @@ namespace SMAQC
         /// </summary>
         /// <param name="random_id"></param>
         /// <param name="DBInterface"></param>
-        public Measurement(int random_id, ref DBWrapper DBInterface)
+        public Measurement(int random_id, DBWrapper DBInterface)
         {
             m_Random_ID = random_id;
             m_DBInterface = DBInterface;

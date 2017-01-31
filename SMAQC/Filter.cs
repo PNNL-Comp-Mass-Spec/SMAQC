@@ -28,7 +28,7 @@ namespace SMAQC
         /// <param name="instrument_id"></param>
         /// <param name="random_id"></param>
         /// <param name="systemLogManager"></param>
-        public Filter(ref DBWrapper DBInterface, string instrument_id, int random_id, ref SystemLogManager systemLogManager)
+        public Filter(DBWrapper DBInterface, string instrument_id, int random_id, SystemLogManager systemLogManager)
         {
             mDBWrapper = DBInterface;
             mInstrumentId = instrument_id;

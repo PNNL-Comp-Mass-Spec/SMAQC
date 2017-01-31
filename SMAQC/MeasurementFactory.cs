@@ -9,8 +9,8 @@ namespace SMAQC
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="m_Measurement"></param>
-        public MeasurementFactory(ref Measurement m_Measurement)
+        /// <param name="measurement"></param>
+        public MeasurementFactory(Measurement measurement)
         {
             this.m_Measurement = m_Measurement;
         }

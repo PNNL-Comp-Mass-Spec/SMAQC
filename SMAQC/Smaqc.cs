@@ -153,10 +153,10 @@ namespace SMAQC
                         mDBWrapper.ClearTempTables();
 
                     mAggregate = new Aggregate(mOptions.InputFolderPath);
-                    mMeasurement = new Measurement(random_id, ref mDBWrapper);
-                    mMeasurementEngine = new MeasurementEngine(lstMeasurementsToRun, ref mMeasurement, ref mSystemLogManager);
-                    mFilter = new Filter(ref mDBWrapper, mOptions.Instrument_id, random_id, ref mSystemLogManager);
-                    mOutputFileManager = new OutputFileManager(ref mDBWrapper, GetAppVersion(), mMetricNames);
+                    mMeasurement = new Measurement(random_id, mDBWrapper);
+                    mMeasurementEngine = new MeasurementEngine(lstMeasurementsToRun, mMeasurement, mSystemLogManager);
+                    mFilter = new Filter(mDBWrapper, mOptions.Instrument_id, random_id, mSystemLogManager);
+                    mOutputFileManager = new OutputFileManager(mDBWrapper, GetAppVersion(), mMetricNames);
 
                     try
                     {

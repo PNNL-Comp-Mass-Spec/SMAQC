@@ -32,7 +32,7 @@ namespace SMAQC
         /// <param name="DBWrapper"></param>
         /// <param name="ProgVersion"></param>
         /// <param name="metricNames"></param>
-        public OutputFileManager(ref DBWrapper DBWrapper, string ProgVersion, List<string> metricNames)
+        public OutputFileManager(DBWrapper DBWrapper, string ProgVersion, List<string> metricNames)
         {
             mDBWrapper = DBWrapper;
             mFirstUse = true;

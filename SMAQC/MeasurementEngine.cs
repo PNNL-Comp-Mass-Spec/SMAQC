@@ -16,7 +16,7 @@ namespace SMAQC
         /// <param name="lstMeasurementsToRun"></param>
         /// <param name="measurement"></param>
         /// <param name="systemLogManager"></param>
-        public MeasurementEngine(List<string> lstMeasurementsToRun, ref Measurement measurement, ref SystemLogManager systemLogManager)
+        public MeasurementEngine(List<string> lstMeasurementsToRun, Measurement measurement, SystemLogManager systemLogManager)
         {
             factory = new MeasurementFactory(ref measurement);
             m_MeasurementsToRun = lstMeasurementsToRun;            
