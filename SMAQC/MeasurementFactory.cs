@@ -6,7 +6,10 @@ namespace SMAQC
         
         public Measurement m_Measurement;
 
-        // Constructor
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="m_Measurement"></param>
         public MeasurementFactory(ref Measurement m_Measurement)
         {
             this.m_Measurement = m_Measurement;
@@ -22,10 +25,12 @@ namespace SMAQC
             return result;
         }
 
-        // Clear saved data
-        public void CleanMeasurements()
+        /// <summary>
+        /// Clear cached data
+        /// </summary>
+        public void ResetMeasurements()
         {
-            m_Measurement.ClearStorage();
+            m_Measurement.Reset();
         }
     }
 }

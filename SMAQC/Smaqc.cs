@@ -28,7 +28,7 @@ namespace SMAQC
         }
 
         private const bool WIPE_TEMP_DATA_AT_START = true;
-        private const bool KEEP_TEMP_DATA_AT_END = true;
+        private const bool KEEP_TEMP_DATA_AT_END = false;
 
         // DB Interface object
         private static DBWrapper mDBWrapper;

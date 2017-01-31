@@ -116,12 +116,42 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// Clear storage
+        /// Clear cached data
         /// </summary>
-        public void ClearStorage()
+        public void Reset()
         {
-            m_MeasurementResults.Clear();
-            m_ResultsStorage.Clear();
+            m_MeasurementResults?.Clear();
+            m_ResultsStorage?.Clear();
+
+            m_MedianPeakWidthDataCached = false;
+            m_MPWCached_BestScan?.Clear();
+            m_MPWCached_FWHMinScans?.Clear();
+            m_MPWCached_OptimalPeakApexScanNumber?.Clear();
+            m_MPWCached_ScanTime?.Clear();
+
+            m_Cached_PSM_Stats_by_Charge?.Clear();
+
+            m_PeptideSamplingStats?.Clear();
+
+            m_Cached_DS3?.Clear();
+            m_Cached_DS3_Bottom50pct?.Clear();
+
+            m_Cached_BasePeakSignalToNoiseRatio?.Clear();
+            m_Cached_TotalIonIntensity?.Clear();
+
+            m_Cached_PeakMaxIntensity_5thPercentile = 0;
+            m_Cached_PeakMaxIntensity_95thPercentile = 0;
+            m_Cached_MS1_3?.Clear();
+
+            m_Cached_DelM?.Clear();
+            m_Cached_DelM_ppm?.Clear();
+
+            m_MS2_4_Counts_Cached = false;
+            m_Cached_MS2_4_Counts.ScanCount?.Clear();
+            m_Cached_MS2_4_Counts.PassFilt?.Clear();
+
+            mReporterIonColumns?.Clear();
+
         }
 
         private double ComputeMedian(List<double> values)
@@ -661,7 +691,7 @@ namespace SMAQC
         {
             double result = 0;
 
-            if (m_PeptideSamplingStats == null)
+            if (m_PeptideSamplingStats == null || m_PeptideSamplingStats.Count == 0)
                 Cache_DS_1_Data();
 
             // Calculate the value; return 0 if number of peptides identified with 2 spectra is 0
@@ -694,7 +724,7 @@ namespace SMAQC
 
             double result = 0;
 
-            if (m_PeptideSamplingStats == null)
+            if (m_PeptideSamplingStats == null || m_PeptideSamplingStats.Count == 0)
                 Cache_DS_1_Data();
 
             // Calculate the value; return 0 if number of peptides identified with 3 spectra is 0
@@ -839,7 +869,7 @@ namespace SMAQC
             int psm_count_charge1;
             double result = 0;
 
-            if (m_Cached_PSM_Stats_by_Charge == null)
+            if (m_Cached_PSM_Stats_by_Charge == null || m_Cached_PSM_Stats_by_Charge.Count == 0)
             {
                 Cache_IS3_Data();
             }
@@ -864,7 +894,7 @@ namespace SMAQC
             int psm_count_charge2;
             double result = 0;
 
-            if (m_Cached_PSM_Stats_by_Charge == null)
+            if (m_Cached_PSM_Stats_by_Charge == null || m_Cached_PSM_Stats_by_Charge.Count == 0)
             {
                 Cache_IS3_Data();
             }
@@ -889,7 +919,7 @@ namespace SMAQC
             int psm_count_charge2;
             double result = 0;
 
-            if (m_Cached_PSM_Stats_by_Charge == null)
+            if (m_Cached_PSM_Stats_by_Charge == null || m_Cached_PSM_Stats_by_Charge.Count == 0)
             {
                 Cache_IS3_Data();
             }
@@ -975,7 +1005,7 @@ namespace SMAQC
         {
             var median = 0.00;
 
-            if (m_Cached_BasePeakSignalToNoiseRatio == null)
+            if (m_Cached_BasePeakSignalToNoiseRatio == null || m_Cached_BasePeakSignalToNoiseRatio.Count == 0)
                 Cache_MS1_2_Data();
 
             if (m_Cached_BasePeakSignalToNoiseRatio != null && m_Cached_BasePeakSignalToNoiseRatio.Count > 0)
@@ -992,7 +1022,7 @@ namespace SMAQC
         /// <returns></returns>
         public string MS1_2B()
         {
-            if (m_Cached_TotalIonIntensity == null)
+            if (m_Cached_TotalIonIntensity == null || m_Cached_TotalIonIntensity.Count == 0)
                 Cache_MS1_2_Data();
 
             var median = ComputeMedian(m_Cached_TotalIonIntensity);
@@ -1056,7 +1086,7 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS1_3B()
         {
-            if (m_Cached_MS1_3 == null)
+            if (m_Cached_MS1_3 == null || m_Cached_MS1_3.Count == 0)
                 Cache_MS1_3_Data();
 
             var median = ComputeMedian(m_Cached_MS1_3);
@@ -1206,7 +1236,7 @@ namespace SMAQC
         /// <returns></returns>
         private string DS_3_Shared(bool bottom50Pct)
         {
-            if (m_Cached_DS3 == null)
+            if (m_Cached_DS3 == null || m_Cached_DS3.Count == 0)
             {
                 DS_3_CacheData();
             }
@@ -1306,10 +1336,10 @@ namespace SMAQC
         public string MS1_5A()
         {
 
-            if (m_Cached_DelM == null)
+            if (m_Cached_DelM == null || m_Cached_DelM.Count == 0)
                 Cache_MS1_5_Data();
 
-            if (m_Cached_DelM != null && m_Cached_DelM.Count == 0)
+            if (m_Cached_DelM == null || m_Cached_DelM.Count == 0)
                 return "0";
 
             var median = ComputeMedian(m_Cached_DelM);
@@ -1326,20 +1356,15 @@ namespace SMAQC
         public string MS1_5B()
         {
 
-            if (m_Cached_DelM == null)
+            if (m_Cached_DelM == null || m_Cached_DelM.Count == 0)
                 Cache_MS1_5_Data();
 
-            if (m_Cached_DelM == null)
+            if (m_Cached_DelM == null || m_Cached_DelM.Count == 0)
             {
                 return "0";
             }
 
             var lstAbsDelM = new List<double>(m_Cached_DelM.Count);
-
-            if (m_Cached_DelM.Count == 0)
-            {
-                return "0";
-            }
 
             foreach (var value in m_Cached_DelM)
             {
@@ -1360,7 +1385,7 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS1_5C()
         {
-            if (m_Cached_DelM_ppm == null)
+            if (m_Cached_DelM_ppm == null || m_Cached_DelM_ppm.Count == 0)
                 Cache_MS1_5_Data();
 
             if (m_Cached_DelM_ppm == null || m_Cached_DelM_ppm.Count == 0)
@@ -1378,7 +1403,7 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS1_5D()
         {
-            if (m_Cached_DelM_ppm == null)
+            if (m_Cached_DelM_ppm == null || m_Cached_DelM_ppm.Count == 0)
                 Cache_MS1_5_Data();
 
             if (m_Cached_DelM_ppm == null || m_Cached_DelM_ppm.Count == 0)
@@ -2289,7 +2314,7 @@ namespace SMAQC
 
         private List<string> DetermineReporterIonColumns()
         {
-            if (mReporterIonColumns != null)
+            if (mReporterIonColumns != null && mReporterIonColumns.Count > 0)
                 return mReporterIonColumns;
 
             var columnList = m_DBInterface.GetTableColumns("temp_reporterions");

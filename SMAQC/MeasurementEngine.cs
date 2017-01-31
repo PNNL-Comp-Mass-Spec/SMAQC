@@ -30,6 +30,9 @@ namespace SMAQC
         /// <returns></returns>
         public Dictionary<string, string> RunMeasurements()
         {
+
+            factory.ResetMeasurements();
+
             // Results dictionary
             var dctResults = new Dictionary<string, string>();
             var iMeasurementsStarted = 0;
@@ -59,9 +62,6 @@ namespace SMAQC
                     m_SystemLogManager.AddApplicationLog(measurementName + " failed: " + ex.Message);
                 }
             }
-
-            // Clear cached measurements
-            factory.CleanMeasurements();
 
             return dctResults;
         }
