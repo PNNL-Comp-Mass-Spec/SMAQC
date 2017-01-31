@@ -84,6 +84,7 @@ namespace SMAQC
 
         // Cached data for the ReporterIon metrics
         private List<string> mReporterIonColumns;
+        private bool mIgnoreReporterIons;
 
         private readonly clsPeptideMassCalculator mPeptideMassCalculator;
 
@@ -147,6 +148,7 @@ namespace SMAQC
             m_Cached_MS2_4_Counts.PassFilt?.Clear();
 
             mReporterIonColumns?.Clear();
+            mIgnoreReporterIons = false;
 
         }
 
@@ -2345,11 +2347,21 @@ namespace SMAQC
 
         private List<string> DetermineReporterIonColumns()
         {
+            if (mIgnoreReporterIons)
+                return new List<string>();
+
             if (mReporterIonColumns != null && mReporterIonColumns.Count > 0)
                 return mReporterIonColumns;
 
             var columnList = m_DBInterface.GetTableColumns("temp_reporterions");
             var ionColumns = columnList.Where(column => column.StartsWith("Ion_")).ToList();
+
+            if (ionColumns.Count == 0)
+            {
+                mReporterIonColumns = new List<string>();
+                mIgnoreReporterIons = true;
+                return mReporterIonColumns;
+            }
 
             var sbSql = new StringBuilder();
 
