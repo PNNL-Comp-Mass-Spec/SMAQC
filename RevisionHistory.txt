@@ -1,5 +1,8 @@
 SMAQC Change Log
 
+Version 1.2.6240; January 31, 2017
+	- Simplify convoluted code
+
 Version 1.2.6239; January 30, 2017
 	- Dynamically add reporter ion columns to temp_reporterions based on the data in the _ReporterIons.txt file
 
