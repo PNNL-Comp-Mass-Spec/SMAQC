@@ -381,11 +381,11 @@ namespace SMAQC
 
         }
 
-
         // Read single db row [different from readlines() as here we close reader afterward]
         // [Returns false if no further rows to read]
-        public bool ReadSingleLine(string[] fields, ref Dictionary<string, string> dctData)
+        public bool ReadSingleLine(string[] fields, out Dictionary<string, string> dctData)
         {
+            dctData = new Dictionary<string, string>();
             // Read line
             var status = reader.Read();
 
@@ -420,8 +420,10 @@ namespace SMAQC
         }
 
         // Read db row(s) [returns false if no further rows to read]
-        public bool ReadLines(string[] fields, ref Dictionary<string, string> dctData)
+        public bool ReadLines(string[] fields, out Dictionary<string, string> dctData)
         {
+            dctData = new Dictionary<string, string>();
+
             // Read line
             var status = reader.Read();
 

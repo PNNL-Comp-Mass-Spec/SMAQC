@@ -15,8 +15,8 @@ namespace SMAQC
         void Open();
         void BulkInsert(string targetTable, string sourceFile, List<string> excludedFieldNameSuffixes);
         void InitReader();
-        bool ReadSingleLine(string[] fields, ref Dictionary<string, string> dctData);
-        bool ReadLines(string[] fields, ref Dictionary<string, string> hash);
+        bool ReadSingleLine(string[] fields, out Dictionary<string, string> dctData);
+        bool ReadLines(string[] fields, out Dictionary<string, string> hash);
         string GetDateTime();
         
         List<string> GetTableColumns(string tableName);

@@ -654,9 +654,6 @@ namespace SMAQC
         /// <remarks>Multiple datasets processed at once will have the same Result_ID</remarks>
         static int determine_result_id()
         {
-            var dctMostRecentEntry = new Dictionary<string, string>();
-            int result_id;
-
             // In the scan_results table, result_id is PRIMARY KEY AUTOINCREMENT
             // scan_id the value inserted into the table, but is actually equivalent to result_id
             mDBWrapper.SetQuery("SELECT Max(result_id) AS result_id FROM scan_results;");
@@ -665,7 +662,9 @@ namespace SMAQC
 
             string[] field_array = { "result_id" };
 
-            mDBWrapper.ReadSingleLine(field_array, ref dctMostRecentEntry);
+            Dictionary<string, string> dctMostRecentEntry;
+            mDBWrapper.ReadSingleLine(field_array, out dctMostRecentEntry);
+
 
             if (int.TryParse(dctMostRecentEntry["result_id"], out result_id))
                 result_id++;

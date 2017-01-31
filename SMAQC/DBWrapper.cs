@@ -110,21 +110,17 @@ namespace SMAQC
 
         // Read single db row [different from readlines() as here we close reader afterward]
         // [Returns false if no further rows to read]
-        public bool ReadSingleLine(string[] fields, ref Dictionary<string, string> dctData)
+        public bool ReadSingleLine(string[] fields, out Dictionary<string, string> dctData)
         {
-            dctData.Clear();
-
-            var status = dbConn.ReadSingleLine(fields, ref dctData);
+            var status = dbConn.ReadSingleLine(fields, out dctData);
 
             return status;
         }
 
         // Read db row(s) [returns false if no further rows to read]
-        public bool ReadLines(string[] fields, ref Dictionary<string, string> dctData)
+        public bool ReadLines(string[] fields, out Dictionary<string, string> dctData)
         {
-            dctData.Clear();
-
-            dbConn.ReadLines(fields, ref dctData);
+            dbConn.ReadLines(fields, out dctData);
 
             return true;
         }
