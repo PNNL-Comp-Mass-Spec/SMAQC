@@ -6,9 +6,9 @@ namespace SMAQC
     class MeasurementEngine
     {
         
-        readonly List<string> m_MeasurementsToRun;
+        readonly List<string> mMeasurementsToRun;
         readonly MeasurementFactory factory;
-        readonly SystemLogManager m_SystemLogManager;
+        readonly SystemLogManager mSystemLogManager;
 
         /// <summary>
         /// Constructor
@@ -18,9 +18,9 @@ namespace SMAQC
         /// <param name="systemLogManager"></param>
         public MeasurementEngine(List<string> lstMeasurementsToRun, Measurement measurement, SystemLogManager systemLogManager)
         {
-            factory = new MeasurementFactory(ref measurement);
-            m_MeasurementsToRun = lstMeasurementsToRun;            
-            m_SystemLogManager = systemLogManager;
+            factory = new MeasurementFactory(measurement);
+            mMeasurementsToRun = lstMeasurementsToRun;            
+            mSystemLogManager = systemLogManager;
 
         }
 
@@ -37,13 +37,11 @@ namespace SMAQC
             var dctResults = new Dictionary<string, string>();
             var iMeasurementsStarted = 0;
 
-            foreach (var measurementName in m_MeasurementsToRun)
+            foreach (var measurementName in mMeasurementsToRun)
             {
-                // Console.WriteLine("MeasurementEngine ELEMENT={0}", element);
-
                 var dtStartTime = DateTime.UtcNow;
                 iMeasurementsStarted += 1;
-                var percentComplete = iMeasurementsStarted / Convert.ToDouble(m_MeasurementsToRun.Count) * 100.0;
+                var percentComplete = iMeasurementsStarted / Convert.ToDouble(mMeasurementsToRun.Count) * 100.0;
 
                 try
                 {
@@ -52,14 +50,14 @@ namespace SMAQC
                         sResult = "Null";
 
                     dctResults.Add(measurementName, sResult);
-                    m_SystemLogManager.AddApplicationLog((measurementName + ":").PadRight(7) + " complete in " + DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0.00") + " seconds; " + percentComplete.ToString("0") + "% complete");
+                    mSystemLogManager.AddApplicationLog((measurementName + ":").PadRight(7) + " complete in " + DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0.00") + " seconds; " + percentComplete.ToString("0") + "% complete");
                 }
                 catch (Exception ex)
                 {
                     // Measurement failed; store Null
                     dctResults.Add(measurementName, "Null");
                     Console.WriteLine();
-                    m_SystemLogManager.AddApplicationLog(measurementName + " failed: " + ex.Message);
+                    mSystemLogManager.AddApplicationLog(measurementName + " failed: " + ex.Message);
                 }
             }
 

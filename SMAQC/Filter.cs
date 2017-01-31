@@ -162,7 +162,7 @@ namespace SMAQC
 
                 if (!knownFile)
                 {
-                    //NOT A VALID .TXT FILE FROM OUR LIST!
+                    // Not a recognized file; cannot load it
                     Console.WriteLine("ERROR, unrecognized file " + filePath);
                     continue;
                 }
@@ -178,31 +178,23 @@ namespace SMAQC
                 {
                     // Yes
 
-                    // Rebuild [SAVE TO DFF.TempFilePath BY DEFAULT]
-                    //DFF.handleRebuild(FileList[i]);
-
-                    //SET FILE_INFO TO OUR REBUILT FILE NOW
                     var reformattedFilePath = mDataFileFormatter.TempFilePath;
 
-                    // PARSE + FORMAT FILE CORRECTLY FOR BULK INSERT QUERIES
+                    // Parse and format the file for bulk insert queries
                     // Will add columns instrument_id and random_id
                     parse_and_filter(reformattedFilePath, temp_file);
                 }
                 else
                 {
-                    // PARSE + FORMAT FILE CORRECTLY FOR BULK INSERT QUERIES
                     // Will add columns instrument_id and random_id
                     parse_and_filter(filePath, temp_file);
                 }
 
 
-                //WE NOW HAVE A ACCESS TO valid_file_tables[j] which starts with the prefix '_'
-                //APPEND temp [DB PREFIX] to this.
                 var targetTable = "temp" + targetTableName;
 
                 Console.WriteLine("Populating Table {0}", targetTable);
 
-                //INSERT INTO DB
                 mDBWrapper.BulkInsert(targetTable, temp_file, excludedFieldNameSuffixes);
 
                 // Delete the tempfile
@@ -264,7 +256,6 @@ namespace SMAQC
 
                 // Dictionary has key/value pairs of information about the best peptide for the scan
                 var dctBestPeptide = new Dictionary<string, string>();
-                dctBestPeptide.Clear();
 
                 // Keys in this dictionary are clean sequences (peptide sequence without any mod symbols)
                 // Values are lists of modified residue combinations that correspond to the given clean sequence
@@ -332,21 +323,19 @@ namespace SMAQC
                     }
 
                     // Dictionary has key/value pairs of information about the peptide
-                    var dctCurrentPeptide = new Dictionary<string, string>();
-                    dctCurrentPeptide.Clear();
-
-                    dctCurrentPeptide.Add("instrument_id", mInstrumentId);
-                    dctCurrentPeptide.Add("random_id", mRandomId.ToString());
-                    dctCurrentPeptide.Add("Result_ID", objCurrentPSM.ResultID.ToString());
-                    dctCurrentPeptide.Add("Scan", objCurrentPSM.ScanNumberStart.ToString());
-                    dctCurrentPeptide.Add("CollisionMode", objCurrentPSM.CollisionMode);
-                    dctCurrentPeptide.Add("Charge", objCurrentPSM.Charge.ToString());
-
-                    dctCurrentPeptide.Add("Peptide_MH", peptideMassCalculator.ConvoluteMass(objCurrentPSM.PeptideMonoisotopicMass, 0, 1).ToString("0.00000"));
-                    dctCurrentPeptide.Add("Peptide_Sequence", objCurrentPSM.Peptide);
-
-                    dctCurrentPeptide.Add("DelM_Da", objCurrentPSM.MassErrorDa);
-                    dctCurrentPeptide.Add("DelM_PPM", objCurrentPSM.MassErrorPPM);
+                    var dctCurrentPeptide = new Dictionary<string, string>
+                    {
+                        {"instrument_id", mInstrumentId},
+                        {"random_id", mRandomId.ToString()},
+                        {"Result_ID", objCurrentPSM.ResultID.ToString()},
+                        {"Scan", objCurrentPSM.ScanNumberStart.ToString()},
+                        {"CollisionMode", objCurrentPSM.CollisionMode},
+                        {"Charge", objCurrentPSM.Charge.ToString()},
+                        {"Peptide_MH", peptideMassCalculator.ConvoluteMass(objCurrentPSM.PeptideMonoisotopicMass, 0, 1).ToString("0.00000")},
+                        {"Peptide_Sequence", objCurrentPSM.Peptide},
+                        {"DelM_Da", objCurrentPSM.MassErrorDa},
+                        {"DelM_PPM", objCurrentPSM.MassErrorPPM}
+                    };
 
                     double msgfSpecProb;
                     if (double.TryParse(objCurrentPSM.MSGFSpecProb, out msgfSpecProb))

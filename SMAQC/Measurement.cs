@@ -172,7 +172,7 @@ namespace SMAQC
             else
             {
                 // Even
-                var pos = (values.Count / 2) - 1; //-1 DUE TO STARTING AT 0 INSTEAD OF 1
+                var pos = (values.Count / 2) - 1;
                 return (values[pos] + values[pos + 1]) / 2;
             }
         }
@@ -362,7 +362,7 @@ namespace SMAQC
             if (lstFilterPassingPeptides.Count > 0)
             {
                 // Add to global list for use with MS_2A/B
-                // SCAN_FIRST_FILTER_PASSING_PEPTIDE is the scan number of the first filter-passing peptide
+                // ScanFirstFilterPassingPeptide is the scan number of the first filter-passing peptide
                 AddUpdateResultsStorage(eCachedResult.ScanFirstFilterPassingPeptide, lstFilterPassingPeptides.Keys.Min());
             }
 

@@ -4,7 +4,7 @@ namespace SMAQC
     class MeasurementFactory
     {
         
-        public Measurement m_Measurement;
+        public Measurement mMeasurement;
 
         /// <summary>
         /// Constructor
@@ -12,15 +12,15 @@ namespace SMAQC
         /// <param name="measurement"></param>
         public MeasurementFactory(Measurement measurement)
         {
-            this.m_Measurement = m_Measurement;
+            this.mMeasurement = measurement;
         }
 
-        public string BuildMeasurement(string measurement)
+        public string BuildMeasurement(string measurementName)
         {
             // Convert measurement name to function using reflection
-            var methodName = measurement;
-            var info = m_Measurement.GetType().GetMethod(methodName);
-            var result = (string)info.Invoke(m_Measurement, null);
+            var methodName = measurementName;
+            var info = mMeasurement.GetType().GetMethod(methodName);
+            var result = (string)info.Invoke(mMeasurement, null);
 
             return result;
         }
@@ -30,7 +30,7 @@ namespace SMAQC
         /// </summary>
         public void ResetMeasurements()
         {
-            m_Measurement.Reset();
+            mMeasurement.Reset();
         }
     }
 }

@@ -9,16 +9,33 @@ namespace SMAQC
 {
     class DBSQLite : DBInterface
     {
-        private readonly SQLiteConnection mConnection;                                         // Sqlite connection
-        private string query;                                                           // Query to run
-        private SQLiteDataReader reader;                                                // Sqlite reader
-        private readonly DBSQLiteTools SQLiteTools = new DBSQLiteTools();               // Create dbsqlite tools object
+        /// <summary>
+        /// Sqlite connection
+        /// </summary>
+        private readonly SQLiteConnection mConnection;
 
-        private int errorMsgCount;
-        private Dictionary<string, int> dctErrorMessages;
+        /// <summary>
+        /// Query to run
+        /// </summary>
+        private string mQuery;
 
-        SQLiteCommand m_PHRPInsertCommand;
-        Dictionary<string, int> m_PHRPFieldsForInsert;
+        /// <summary>
+        /// Sqlite reader
+        /// </summary>
+        private SQLiteDataReader mSQLiteReader;
+
+        /// <summary>
+        /// DBSQLite tools object
+        /// </summary>
+        private readonly DBSQLiteTools mSQLiteTools = new DBSQLiteTools();
+
+        private int mErrorMsgCount;
+
+        private Dictionary<string, int> mErrorMessages;
+
+        SQLiteCommand mPHRPInsertCommand;
+
+        Dictionary<string, int> mPHRPFieldsForInsert;
 
 
         // Event
@@ -35,7 +52,7 @@ namespace SMAQC
             if (!File.Exists(datasource))
             {
                 // Create the file, along with the tables
-                SQLiteTools.CreateTables(datasource);
+                mSQLiteTools.CreateTables(datasource);
             }
 
             mConnection = new SQLiteConnection("Data Source=" + datasource, true);
@@ -44,7 +61,7 @@ namespace SMAQC
             Open();
 
             // Create any missing tables and add any missing columns
-            SQLiteTools.create_missing_tables(mConnection);
+            mSQLiteTools.create_missing_tables(mConnection);
 
         }       
 
@@ -92,7 +109,7 @@ namespace SMAQC
         public void SetQuery(string myquery)
         {
             // Set query to param
-            query = myquery;
+            mQuery = myquery;
         }
 
         // For queries that return rows
@@ -100,7 +117,7 @@ namespace SMAQC
         {
             var cmd = new SQLiteCommand(mConnection)
             {
-                CommandText = query
+                CommandText = mQuery
             };
             var dbReader = cmd.ExecuteReader();
 
@@ -112,7 +129,7 @@ namespace SMAQC
         {            
             var cmd = new SQLiteCommand(mConnection)
             {
-                CommandText = query
+                CommandText = mQuery
             };
             cmd.ExecuteNonQuery();
 
@@ -124,7 +141,7 @@ namespace SMAQC
         {
             var cmd = new SQLiteCommand(mConnection)
             {
-                CommandText = query
+                CommandText = mQuery
             };
             cmd.ExecuteScalar();
 
@@ -153,15 +170,15 @@ namespace SMAQC
 
                 if (ionColumns.Count > 0)
                 {
-                    SQLiteTools.AssureColumnsExist(mConnection, "temp_reporterions", ionColumns, "FLOAT");
+                    mSQLiteTools.AssureColumnsExist(mConnection, "temp_reporterions", ionColumns, "FLOAT");
                 }
             }
 
-            errorMsgCount = 0;
-            if (dctErrorMessages == null)
-                dctErrorMessages = new Dictionary<string, int>();
+            mErrorMsgCount = 0;
+            if (mErrorMessages == null)
+                mErrorMessages = new Dictionary<string, int>();
             else
-                dctErrorMessages.Clear();
+                mErrorMessages.Clear();
 
             // Build sql line
             var sql = SQLiteBulkInsert_BuildSQL_Line(targetTable, fieldNames);
@@ -228,12 +245,12 @@ namespace SMAQC
                 }
                 dbTrans.Commit();
 
-                if (dctErrorMessages.Count > 0)
+                if (mErrorMessages.Count > 0)
                 {
                     var firstErrorMsg = string.Empty;
                     var totalErrorRows = 0;
 
-                    foreach (var kvEntry in dctErrorMessages)
+                    foreach (var kvEntry in mErrorMessages)
                     {
                         totalErrorRows += kvEntry.Value;
                         OnErrorEvent("Error message count = " + kvEntry.Value + " for '" + kvEntry.Key + "'");
@@ -262,13 +279,13 @@ namespace SMAQC
             {
                 var msg = ex.Message.Replace(Environment.NewLine, ": ");
 
-                errorMsgCount = 1;
-                if (dctErrorMessages.TryGetValue(msg, out errorMsgCount))
-                    dctErrorMessages[msg] = errorMsgCount + 1;
+                mErrorMsgCount = 1;
+                if (mErrorMessages.TryGetValue(msg, out mErrorMsgCount))
+                    mErrorMessages[msg] = mErrorMsgCount + 1;
                 else
-                    dctErrorMessages.Add(msg, 1);
+                    mErrorMessages.Add(msg, 1);
 
-                if (errorMsgCount < 10)
+                if (mErrorMsgCount < 10)
                     OnErrorEvent("Error inserting row " + line_num + ": " + msg);
                 
             }
@@ -304,15 +321,15 @@ namespace SMAQC
         public void InitReader()
         {
             // Call query reader
-            reader = QueryReader();
+            mSQLiteReader = QueryReader();
         }
 
 
         public bool InitPHRPInsertCommand(out DbTransaction dbTrans)
         {
-            m_PHRPFieldsForInsert = new Dictionary<string, int>();
+            mPHRPFieldsForInsert = new Dictionary<string, int>();
 
-            m_PHRPInsertCommand = mConnection.CreateCommand();
+            mPHRPInsertCommand = mConnection.CreateCommand();
 
             var fields = new List<string>
             {
@@ -335,18 +352,18 @@ namespace SMAQC
                 "Trypsinpeptide"
             };
 
-            m_PHRPInsertCommand.CommandText = SQLiteBulkInsert_BuildSQL_Line("temp_PSMs", fields);
+            mPHRPInsertCommand.CommandText = SQLiteBulkInsert_BuildSQL_Line("temp_PSMs", fields);
 
             for (var i = 0; i < fields.Count; i++)
             {
-                m_PHRPFieldsForInsert.Add(fields[i], i);
+                mPHRPFieldsForInsert.Add(fields[i], i);
             }
 
-            errorMsgCount = 0;
-            if (dctErrorMessages == null)
-                dctErrorMessages = new Dictionary<string, int>();
+            mErrorMsgCount = 0;
+            if (mErrorMessages == null)
+                mErrorMessages = new Dictionary<string, int>();
             else
-                dctErrorMessages.Clear();
+                mErrorMessages.Clear();
 
             using (var mycommand = mConnection.CreateCommand())
             {
@@ -362,10 +379,10 @@ namespace SMAQC
 
         public void ExecutePHRPInsert(Dictionary<string, string> dctData, int line_num)
         {
-            m_PHRPInsertCommand.Parameters.Clear();
+            mPHRPInsertCommand.Parameters.Clear();
 
             // Update insertcommand to have the data value for each field
-            foreach (var item in m_PHRPFieldsForInsert)
+            foreach (var item in mPHRPFieldsForInsert)
             {
                 string dataValue;
                 if (!dctData.TryGetValue(item.Key, out dataValue))
@@ -373,11 +390,11 @@ namespace SMAQC
                     dataValue = string.Empty;
                 }
 
-                m_PHRPInsertCommand.Parameters.AddWithValue("@" + item.Value, dataValue);
+                mPHRPInsertCommand.Parameters.AddWithValue("@" + item.Value, dataValue);
             }
 
             // Run the command
-            ExecuteCommand(m_PHRPInsertCommand, line_num);
+            ExecuteCommand(mPHRPInsertCommand, line_num);
 
         }
 
@@ -386,14 +403,15 @@ namespace SMAQC
         public bool ReadSingleLine(string[] fields, out Dictionary<string, string> dctData)
         {
             dctData = new Dictionary<string, string>();
+
             // Read line
-            var status = reader.Read();
+            var status = mSQLiteReader.Read();
 
             // If returned false ... no rows to return
             if (!status)
             {
                 // Close reader
-                reader.Close();
+                mSQLiteReader.Close();
 
                 // Return false as no more to read
                 return false;
@@ -403,8 +421,8 @@ namespace SMAQC
             {
                 try
                 {
-                    var value = reader.GetOrdinal(fieldName);
-                    dctData.Add(fieldName, reader.GetValue(value).ToString());
+                    var value = mSQLiteReader.GetOrdinal(fieldName);
+                    dctData.Add(fieldName, mSQLiteReader.GetValue(value).ToString());
                 }
                 catch (System.Data.SqlTypes.SqlNullValueException)
                 {
@@ -413,7 +431,7 @@ namespace SMAQC
             }
 
             // Close reader
-            reader.Close();
+            mSQLiteReader.Close();
 
             // Return true since read == ok
             return true;
@@ -425,13 +443,13 @@ namespace SMAQC
             dctData = new Dictionary<string, string>();
 
             // Read line
-            var status = reader.Read();
+            var status = mSQLiteReader.Read();
 
             // If returned false ... no rows to return
             if (!status)
             {
                 // Close reader
-                reader.Close();
+                mSQLiteReader.Close();
 
                 // Return false as no more to read
                 return false;
@@ -442,8 +460,8 @@ namespace SMAQC
                 // Read + store field [value, result]
                 try
                 {
-                    var value = reader.GetOrdinal(fieldName);
-                    dctData.Add(fieldName, reader.GetValue(value).ToString());
+                    var value = mSQLiteReader.GetOrdinal(fieldName);
+                    dctData.Add(fieldName, mSQLiteReader.GetValue(value).ToString());
                 }
                 catch (System.Data.SqlTypes.SqlNullValueException)
                 {

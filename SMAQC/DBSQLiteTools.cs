@@ -68,7 +68,7 @@ namespace SMAQC
                     cmd.CommandText = GetTableCreateSql("temp_PSMs");
                     cmd.ExecuteNonQuery();
 
-                    // CREATE INDICES ON THE TABLES
+                    // Create the indices on the tables
                     CreateIndices(cmd);
 
                     conn.Close();

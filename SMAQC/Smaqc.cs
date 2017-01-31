@@ -49,7 +49,7 @@ namespace SMAQC
         // Measurement engine
         private static MeasurementEngine mMeasurementEngine;
 
-        private static SystemLogManager mSystemLogManager = new SystemLogManager();
+        private static readonly SystemLogManager mSystemLogManager = new SystemLogManager();
 
         /// <summary>
         /// Output engine
@@ -612,36 +612,39 @@ namespace SMAQC
 
         }
 
-        //BUILD SCAN_RESULTS INSERT QUERY
+        /// <summary>
+        /// Construct the query to append to scan_results
+        /// </summary>
+        /// <param name="instrument_id"></param>
+        /// <param name="random_id"></param>
+        /// <param name="scan_id"></param>
+        /// <param name="lstMeasurementsToRun"></param>
+        /// <returns></returns>
         static string build_scan_results_query(string instrument_id, int random_id, int scan_id, List<string> lstMeasurementsToRun)
         {
 
-            //HEAD OF RESULTS STRING QUERY
             var scan_results_query = "INSERT INTO scan_results ( scan_id, instrument_id, random_id, scan_date";
 
-            //BUILD METRICS FIELDS [, `C_1A` ...]
+            // Append each metric, e.g. `C_1A`
             foreach (var item in lstMeasurementsToRun)
             {
                 scan_results_query += ", `" + item + "`";
             }
             scan_results_query += ") VALUES (";
 
-            // BUILD VALUES FOR SCAN_ID, INSTRUMENT_ID, RANDOM_ID
+            // Append the metadata values
             scan_results_query += "'" + scan_id + "',";
             scan_results_query += "'" + instrument_id + "',";
             scan_results_query += "'" + random_id + "',";
 
-            //BUILD DATE STRINGS
             scan_results_query += mDBWrapper.GetDateTime();
 
-            //BUILD METRICS VALUE LIST ["'" + resultstable["C_1A"] + "',"]
+            // Append teh metric values (as strings), e.g. '3.2342'
             foreach (var item in lstMeasurementsToRun)
             {
                 scan_results_query += ", '" + mResults[item] + "'";
-                //Console.WriteLine("KEY=[{0}] -- VALUE=[{1}]", key, resultstable[measurementsDict[key]]);
             }
 
-            //BUILD END
             scan_results_query += ");";
 
             return scan_results_query;
@@ -704,7 +707,6 @@ namespace SMAQC
                         {
                             var parser = new XmlTextReader(fsMeasurementsFile);
 
-                            //LOOP THROUGH ENTIRE XML FILE
                             while (parser.ReadToFollowing("measurement"))
                             {
                                 parser.MoveToAttribute("name");
@@ -737,7 +739,6 @@ namespace SMAQC
 
             }
 
-            //RETURN OUR LIST
             return lstMeasurementsToRun;
         }
 
