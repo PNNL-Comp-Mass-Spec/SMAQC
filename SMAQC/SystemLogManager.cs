@@ -74,9 +74,8 @@ namespace SMAQC
             // Append to the log file
             // Add to record log
             applicationlog_records.Add(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt") + " - " + message);
-            
-            if (mApplicationLogFile != null)
-                mApplicationLogFile.WriteLine(applicationlog_records.Last());
+
+            mApplicationLogFile?.WriteLine(applicationlog_records.Last());
 
 
             Console.WriteLine("{0:yyyy-MM-dd hh:mm:ss tt} - {1}", DateTime.Now, message);
@@ -85,9 +84,7 @@ namespace SMAQC
         // Close the log file
         public void CloseLogFile()
         {
-            if (mApplicationLogFile != null)
-                mApplicationLogFile.Close();
-
+            mApplicationLogFile?.Close();
         }
     }
 }

@@ -668,13 +668,14 @@ namespace SMAQC
             Dictionary<string, string> dctMostRecentEntry;
             mDBWrapper.ReadSingleLine(field_array, out dctMostRecentEntry);
 
+            int result_id;
 
             if (int.TryParse(dctMostRecentEntry["result_id"], out result_id))
-                result_id++;
-            else
-                result_id = 1;
+            {
+                return result_id + 1;
+            }
 
-            return result_id;
+            return 1;
         }
         
         /// <summary>

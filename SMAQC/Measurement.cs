@@ -2294,7 +2294,7 @@ namespace SMAQC
 
             if (overallCount > 0)
             {
-                var nonZeroAverage = overallSum / (double)overallCount;
+                var nonZeroAverage = overallSum / overallCount;
                 var noiseThreshold = nonZeroAverage / 1000.0;
 
                 AddUpdateResultsStorage(eCachedResult.ReporterIonNoiseThreshold, noiseThreshold);
