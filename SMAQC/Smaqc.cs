@@ -674,54 +674,7 @@ namespace SMAQC
 
             return result_id;
         }
-
-        //[Obsolete("These config values are not used")]
-        //static void loadConfig()
-        //{
-        //    // Define the default config values
-
-        //    m_Configtable.Clear();
-        //    m_Configtable.Add("dbhost", "localhost");
-        //    m_Configtable.Add("dbuser", "root");
-        //    m_Configtable.Add("dbpass", "password");
-        //    m_Configtable.Add("dbname", "SMAQC_DB");
-        //    m_Configtable.Add("dbtype", "SQLite");
-
-        //    string configFilePath = Path.GetDirectoryName(GetAppPath());
-        //    if (string.IsNullOrWhiteSpace(configFilePath))
-        //        configFilePath = "";
-
-        //    var fiConfigFile = new FileInfo(Path.Combine(configFilePath, "config.xml"));
-
-        //    if (!fiConfigFile.Exists)
-        //    {
-        //        return;
-        //    }
-
-        //    //OPEN XML DOC + INIT PARSER
-        //    using (var configFile = new FileStream(fiConfigFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-        //    {
-
-        //        var parser = new XmlTextReader(configFile);
-        //        var configKeys = (from item in m_Configtable select item.Key).ToList();
-
-        //        // LOOP THROUGH EACH VARIABLE IN XML CONFIG
-        //        // Note that this code logic requires that the settings in the config file be in the 
-        //        foreach (string fieldName in configKeys)
-        //        {
-        //            if (parser.ReadToFollowing(fieldName))
-        //            {
-        //                //READ ATTRIBUTE
-        //                parser.MoveToAttribute("value");
-
-        //                //ADD TO HASH TABLE
-        //                m_Configtable[fieldName] = parser.Value;
-        //            }
-        //        }
-        //    }
-
-        //}
-
+        
         /// <summary>
         /// Determine the names of the measurements that should be run
         /// </summary>
