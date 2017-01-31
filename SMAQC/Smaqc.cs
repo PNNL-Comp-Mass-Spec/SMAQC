@@ -598,32 +598,23 @@ namespace SMAQC
         /// </summary>
         /// <param name="instrument_id"></param>
         /// <param name="random_id"></param>
-        /// <param name="result_id"></param>
+        /// <param name="scan_id"></param>
         /// <param name="lstMeasurementsToRun"></param>
-        static void add_scan_results(string instrument_id, int random_id, int result_id, List<string> lstMeasurementsToRun)
+        static void add_scan_results(string instrument_id, int random_id, int scan_id, List<string> lstMeasurementsToRun)
         {
 
-            // Remove scan_id (required in case multiple datasets were processed 
-            if (m_Configtable.ContainsKey("scan_id"))
-                m_Configtable.Remove("scan_id");
+            // Query to store data in scan_results
+            var sql = build_scan_results_query(instrument_id, random_id, scan_id, lstMeasurementsToRun);
 
-            //BUILD SCAN RESULTS QUERY
-            var scan_results_query = build_scan_results_query(instrument_id, random_id, result_id, lstMeasurementsToRun);
+            mDBWrapper.SetQuery(sql);
 
-            //SET QUERY TO STORE DATA TO SCAN_STATS
-            m_DBWrapper.setQuery(scan_results_query);
+            mDBWrapper.ExecuteNonQuery();
 
-            //EXECUTE QUERY
-            m_DBWrapper.QueryNonQuery();
-
-            //SET SCAN_ID
-            m_Configtable.Add("scan_id", result_id.ToString());
         }
 
         //BUILD SCAN_RESULTS INSERT QUERY
-        static string build_scan_results_query(string instrument_id, int random_id, int result_id, List<string> lstMeasurementsToRun)
+        static string build_scan_results_query(string instrument_id, int random_id, int scan_id, List<string> lstMeasurementsToRun)
         {
-            //DECLARE VARIABLES
 
             //HEAD OF RESULTS STRING QUERY
             var scan_results_query = "INSERT INTO scan_results ( scan_id, instrument_id, random_id, scan_date";
@@ -635,8 +626,8 @@ namespace SMAQC
             }
             scan_results_query += ") VALUES (";
 
-            //BUILD VALUES FOR SCAN_ID, INSTRUMENT_ID, RANDOM_ID
-            scan_results_query += "'" + result_id + "',";
+            // BUILD VALUES FOR SCAN_ID, INSTRUMENT_ID, RANDOM_ID
+            scan_results_query += "'" + scan_id + "',";
             scan_results_query += "'" + instrument_id + "',";
             scan_results_query += "'" + random_id + "',";
 
@@ -666,7 +657,9 @@ namespace SMAQC
             var dctMostRecentEntry = new Dictionary<string, string>();
             int result_id;
 
-            m_DBWrapper.setQuery("SELECT Max(result_id) AS result_id FROM scan_results;");
+            // In the scan_results table, result_id is PRIMARY KEY AUTOINCREMENT
+            // scan_id the value inserted into the table, but is actually equivalent to result_id
+            mDBWrapper.SetQuery("SELECT Max(result_id) AS result_id FROM scan_results;");
 
             mDBWrapper.initReader();
 
@@ -681,7 +674,6 @@ namespace SMAQC
 
             return result_id;
         }
-
 
         //[Obsolete("These config values are not used")]
         //static void loadConfig()

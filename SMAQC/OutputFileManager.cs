@@ -19,10 +19,11 @@ namespace SMAQC
             first_use = true;
             smaqc_version = ProgVersion;
             fields = ProgFields;
+            mMetricNames = metricNames;
         }
 
         // Save data handler
-        public void SaveData(string dataset, string filePath, int scan_id, int dataset_number)
+        public void SaveData(string dataset, string filePath, int scan_id)
         {
             try
             {
@@ -45,18 +46,18 @@ namespace SMAQC
                     targetFilePath = filePath;
                 }
 
-                if (first_use)
+                if (mFirstUse)
                 {
                     // Create the file and append the first set of metrics
-                    CreateOutputFileForFirstTimeUse(dataset, targetFilePath, scan_id, dataset_number);
+                    CreateOutputFileForFirstTimeUse(dataset, targetFilePath, scan_id);
 
                     // Set first_use to false
-                    first_use = false;
+                    mFirstUse = false;
                 }
                 else
                 {
                     // Append to the file
-                    AppendAdditionalMeasurementsToOutputFile(dataset, targetFilePath, scan_id, dataset_number);
+                    AppendAdditionalMeasurementsToOutputFile(dataset, targetFilePath, scan_id);
                 }
             }
             catch (Exception ex)
@@ -67,14 +68,12 @@ namespace SMAQC
         }
 
         // Create the file + add metrics for first time use
-        private void CreateOutputFileForFirstTimeUse(string dataset, string filename, int scan_id, int dataset_number)
+        private void CreateOutputFileForFirstTimeUse(string dataset, string filename, int scan_id)
         {
-            // Declare variables
-            var dctResults = new Dictionary<string, string>();                                             // Scan results
+            // Scan results
+            var dctResults = new Dictionary<string, string>();
             var dctValidResults = new SortedDictionary<string, string>();
 
-            // Calculate relative result_id
-            var result_id = scan_id + dataset_number;
             // Set query to retrieve scan results
             mDBWrapper.SetQuery("SELECT * FROM scan_results WHERE scan_id ='" + scan_id + "' LIMIT 1;");
 
@@ -127,6 +126,7 @@ namespace SMAQC
                 foreach (var pair in dctValidResults)
                 {
                     // Add: dataset, measurement name,
+
                     var outLine = string.Format("" + dataset + ", " + pair.Key + ",");
 
                     // If there is a non-null value
