@@ -1,14 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace SMAQC
 {
     class DataFileFormatter
     {
-        private readonly List<string> mValidFilesToReFormat = new List<string>();                     // List of files that are valid to reformat
-        private readonly string[,] mFieldList = new string[10, 30];                                   // List of fields
+        /// <summary>
+        /// List of files that need to be reformatted
+        /// e.g. ScanStats, ScanStatsEx, SICstats
+        /// Keys are filename suffixes
+        /// Values are the known fields that we want to load from the file
+        /// </summary>
+        /// <remarks>
+        /// Field names are scrubbed to remove spaces, parentheses, and slashes
+        /// </remarks>
+        private readonly Dictionary<string, List<string>> mValidFilesToReFormat;
 
+        /// <summary>
+        /// Temporary file path with scrubbed data
+        /// </summary>
         private string mTempFilePath = "";
 
         /// <summary>
@@ -16,110 +28,119 @@ namespace SMAQC
         /// </summary>
         public DataFileFormatter()
         {
-            // Set valid files to reformat
-            mValidFilesToReFormat.Add("ScanStats");
-            mValidFilesToReFormat.Add("ScanStatsEx");
-            mValidFilesToReFormat.Add("SICstats");
-            mValidFilesToReFormat.Add("xt");
-            mValidFilesToReFormat.Add("xt_ResultToSeqMap");
-            mValidFilesToReFormat.Add("xt_SeqToProteinMap");
+            // ReSharper disable once UseObjectOrCollectionInitializer
+            mValidFilesToReFormat = new Dictionary<string, List<string>>(StringComparer.InvariantCultureIgnoreCase);
 
             // ScanStats fields
-            mFieldList[0, 0] = "Dataset";
-            mFieldList[0, 1] = "ScanNumber";
-            mFieldList[0, 2] = "ScanTime";
-            mFieldList[0, 3] = "ScanType";
-            mFieldList[0, 4] = "TotalIonIntensity";
-            mFieldList[0, 5] = "BasePeakIntensity";
-            mFieldList[0, 6] = "BasePeakMZ";
-            mFieldList[0, 7] = "BasePeakSignalToNoiseRatio";
-            mFieldList[0, 8] = "IonCount";
-            mFieldList[0, 9] = "IonCountRaw";
-            mFieldList[0, 10] = "ScanTypeName";
+            mValidFilesToReFormat.Add("ScanStats",
+                FieldCleaner(new List<string> {
+                    "Dataset",
+                    "ScanNumber",
+                    "ScanTime",
+                    "ScanType",
+                    "TotalIonIntensity",
+                    "BasePeakIntensity",
+                    "BasePeakMZ",
+                    "BasePeakSignalToNoiseRatio",
+                    "IonCount",
+                    "IonCountRaw",
+                    "ScanTypeName"}));
 
             // ScanStatsEx fields
-            mFieldList[1, 0] = "Dataset";
-            mFieldList[1, 1] = "ScanNumber";
-            mFieldList[1, 2] = "Ion Injection Time (ms)";
-            mFieldList[1, 3] = "Scan Segment";//
-            mFieldList[1, 4] = "Scan Event";
-            mFieldList[1, 5] = "Master Index";
-            mFieldList[1, 6] = "Elapsed Scan Time (sec)";
-            mFieldList[1, 7] = "Charge State";
-            mFieldList[1, 8] = "Monoisotopic M/Z";
-            mFieldList[1, 9] = "MS2 Isolation Width";
-            mFieldList[1, 10] = "FT Analyzer Settings";
-            mFieldList[1, 11] = "FT Analyzer Message";
-            mFieldList[1, 12] = "FT Resolution";
-            mFieldList[1, 13] = "Conversion Parameter B";
-            mFieldList[1, 14] = "Conversion Parameter C";
-            mFieldList[1, 15] = "Conversion Parameter D";
-            mFieldList[1, 16] = "Conversion Parameter E";
-            mFieldList[1, 17] = "Collision Mode";
-            mFieldList[1, 18] = "Scan Filter Text";
-            mFieldList[1, 19] = "Source Voltage (kV)";
-            mFieldList[1, 20] = "Source Current (uA)";
+            mValidFilesToReFormat.Add("ScanStatsEx",
+                FieldCleaner(new List<string> {
+                    "Dataset",
+                    "ScanNumber",
+                    "Ion Injection Time (ms)",
+                    "Scan Segment",
+                    "Scan Event",
+                    "Master Index",
+                    "Elapsed Scan Time (sec)",
+                    "Charge State",
+                    "Monoisotopic M/Z",
+                    "MS2 Isolation Width",
+                    "FT Analyzer Settings",
+                    "FT Analyzer Message",
+                    "FT Resolution",
+                    "Conversion Parameter B",
+                    "Conversion Parameter C",
+                    "Conversion Parameter D",
+                    "Conversion Parameter E",
+                    "Collision Mode",
+                    "Scan Filter Text",
+                    "Source Voltage (kV)",
+                    "Source Current (uA)"}));
 
-            // Sicstats fields
-            mFieldList[2, 0] = "Dataset";
-            mFieldList[2, 1] = "ParentIonIndex";
-            mFieldList[2, 2] = "MZ";
-            mFieldList[2, 3] = "SurveyScanNumber";
-            mFieldList[2, 4] = "FragScanNumber";
-            mFieldList[2, 5] = "OptimalPeakApexScanNumber";
-            mFieldList[2, 6] = "PeakApexOverrideParentIonIndex";
-            mFieldList[2, 7] = "CustomSICPeak";
-            mFieldList[2, 8] = "PeakScanStart";
-            mFieldList[2, 9] = "PeakScanEnd";
-            mFieldList[2, 10] = "PeakScanMaxIntensity";
-            mFieldList[2, 11] = "PeakMaxIntensity";
-            mFieldList[2, 12] = "PeakSignalToNoiseRatio";
-            mFieldList[2, 13] = "FWHMInScans";
-            mFieldList[2, 14] = "PeakArea";
-            mFieldList[2, 15] = "ParentIonIntensity";
-            mFieldList[2, 16] = "PeakBaselineNoiseLevel";
-            mFieldList[2, 17] = "PeakBaselineNoiseStDev";
-            mFieldList[2, 18] = "PeakBaselinePointsUsed";
-            mFieldList[2, 19] = "StatMomentsArea";
-            mFieldList[2, 20] = "CenterOfMassScan";
-            mFieldList[2, 21] = "PeakStDev";
-            mFieldList[2, 22] = "PeakSkew";
-            mFieldList[2, 23] = "PeakKSStat";
-            mFieldList[2, 24] = "StatMomentsDataCountUsed";
+
+            // SICstats fields
+            mValidFilesToReFormat.Add("SICstats",
+               FieldCleaner(new List<string> {
+                    "Dataset",
+                    "ParentIonIndex",
+                    "MZ",
+                    "SurveyScanNumber",
+                    "FragScanNumber",
+                    "OptimalPeakApexScanNumber",
+                    "PeakApexOverrideParentIonIndex",
+                    "CustomSICPeak",
+                    "PeakScanStart",
+                    "PeakScanEnd",
+                    "PeakScanMaxIntensity",
+                    "PeakMaxIntensity",
+                    "PeakSignalToNoiseRatio",
+                    "FWHMInScans",
+                    "PeakArea",
+                    "ParentIonIntensity",
+                    "PeakBaselineNoiseLevel",
+                    "PeakBaselineNoiseStDev",
+                    "PeakBaselinePointsUsed",
+                    "StatMomentsArea",
+                    "CenterOfMassScan",
+                    "PeakStDev",
+                    "PeakSkew",
+                    "PeakKSStat",
+                    "StatMomentsDataCountUsed"}));
+
 
             // Xt fields
-            mFieldList[3, 0] = "Result_ID";
-            mFieldList[3, 1] = "Group_ID";
-            mFieldList[3, 2] = "Scan";
-            mFieldList[3, 3] = "Charge";
-            mFieldList[3, 4] = "Peptide_MH";
-            mFieldList[3, 5] = "Peptide_Hyperscore";
-            mFieldList[3, 6] = "Peptide_Expectation_Value_Log(e)";
-            mFieldList[3, 7] = "Multiple_Protein_Count";
-            mFieldList[3, 8] = "Peptide_Sequence";
-            mFieldList[3, 9] = "DeltaCn2";
-            mFieldList[3, 10] = "y_score";
-            mFieldList[3, 11] = "y_ions";
-            mFieldList[3, 12] = "b_score";
-            mFieldList[3, 13] = "b_ions";
-            mFieldList[3, 14] = "Delta_Mass";
-            mFieldList[3, 15] = "Peptide_Intensity_Log(I)";
-            mFieldList[3, 16] = "DelM_PPM";
+            mValidFilesToReFormat.Add("xt",
+                FieldCleaner(new List<string> {
+                    "Result_ID",
+                    "Group_ID",
+                    "Scan",
+                    "Charge",
+                    "Peptide_MH",
+                    "Peptide_Hyperscore",
+                    "Peptide_Expectation_Value_Log(e)",
+                    "Multiple_Protein_Count",
+                    "Peptide_Sequence",
+                    "DeltaCn2",
+                    "y_score",
+                    "y_ions",
+                    "b_score",
+                    "b_ions",
+                    "Delta_Mass",
+                    "Peptide_Intensity_Log(I)",
+                    "DelM_PPM"}));
+
 
             // Xt_resulttoseqmap fields
-            mFieldList[4, 0] = "Result_ID";
-            mFieldList[4, 1] = "Unique_Seq_ID";
+            mValidFilesToReFormat.Add("xt_ResultToSeqMap",
+                FieldCleaner(new List<string> {
+                    "Result_ID",
+                    "Unique_Seq_ID"}));
+
 
             // Xt_seqtoproteinmap fields
-            mFieldList[5, 0] = "Unique_Seq_ID";
-            mFieldList[5, 1] = "Cleavage_State";
-            mFieldList[5, 2] = "Terminus_State";
-            mFieldList[5, 3] = "Protein_Name";
-            mFieldList[5, 4] = "Protein_Expectation_Value_Log(e)";
-            mFieldList[5, 5] = "Protein_Intensity_Log(I)";
+            mValidFilesToReFormat.Add("xt_SeqToProteinMap",
+               FieldCleaner(new List<string> {
+                    "Unique_Seq_ID",
+                    "Cleavage_State",
+                    "Terminus_State",
+                    "Protein_Name",
+                    "Protein_Expectation_Value_Log(e)",
+                    "Protein_Intensity_Log(I)"}));
 
-            // Clean fields from 2 dim array
-            mFieldList = FieldCleaner2d(mFieldList);
         }
 
         // Destructor
@@ -142,123 +163,126 @@ namespace SMAQC
 
         #endregion
 
-        // This function checks each file to see if it should be re-formated and then takes care of it
-        // Returns false == no rebuild || true == rebuild
-        public bool HandleFile(string filename, string dataset)
+        /// <summary>
+        /// This function checks each file to see if it should be re-formatted
+        /// If yes, data in the file is processed and stored in mTempFilePath
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="dataset"></param>
+        /// <returns>True if reformatted, false if not</returns>
+        public bool HandleFile(string filePath, string dataset)
         {
-            // Maps observed column index to desired column index in db (-1 means do not store the given column in the db)
-            var ListFieldID = new List<int>();                    
 
             // Check if is valid file
-            var ValidFilesToReFormat_id = is_valid_file_to_reformat(filename, dataset);
+            var knownFields = GetFieldsForKnownFile(filePath, dataset);
 
-            // Is this a file that needs re-formating?
-            if (ValidFilesToReFormat_id >= 0)
-            {
-                // Pad hash table with pointer to correct values
-                var numOfColumns = padHashTable(filename, ref ListFieldID, ValidFilesToReFormat_id);
+            if (knownFields.Count == 0)
+                return false;
 
-                // Obtain a temp file path
-                mTempFilePath = Path.GetTempFileName();
+            // Maps observed column index to desired column index in db (-1 means do not store the given column in the db)
+            List<int> columnIndexMap;
 
-                // Call internal rebuild function
-                rebuildFile(filename, mTempFilePath, numOfColumns, ListFieldID);
+            // Pad hash table with pointer to correct values
+            var columnCount = MapColumnsToKnownFields(filePath, out columnIndexMap, knownFields);
 
-                return true;
-            }
+            // Obtain a temp file path
+            mTempFilePath = Path.GetTempFileName();
 
-            // Clear hash table
-            ListFieldID.Clear();
+            // Call internal rebuild function
+            RebuildFile(filePath, mTempFilePath, columnCount, columnIndexMap);
 
-            return false;
+            return true;
         }
 
-        // Rebuild filename using padding to ensure all fields match up
-        private void rebuildFile(string filename, string save_to_filename, int numOfColumns, List<int> ListFieldID)
+        /// <summary>
+        /// Rebuild filename using padding to ensure all fields match up
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <param name="save_to_filename"></param>
+        /// <param name="columnCount">Total number of columns in the data file</param>
+        /// <param name="columnIndexMap">Maps observed column index to desired column index in DB (-1 means do not store the given column in the DB)</param>
+        private void RebuildFile(string filename, string save_to_filename, int columnCount, List<int> columnIndexMap)
         {
-            var line_num = 0;
+            var headerParsed = false;
+
+            // Split given data files by tab
+            var delimiters = new[] { '\t' };
+
+            var knownColumnCount = (from item in columnIndexMap where item > -1 select item).Count();
 
             // Open files used for r/w
-            using (var file_read = new StreamReader(filename))
+            using (var sourceFileReader = new StreamReader(filename))
             {
-                using (var file_write = new StreamWriter(save_to_filename))
+                using (var updatedFileWriter = new StreamWriter(save_to_filename))
                 {
                     // Loop through each line
-                    string line;
-                    while ((line = file_read.ReadLine()) != null)
+                    while (!sourceFileReader.EndOfStream)
                     {
-                        // Declare new line
-                        var line_temp = "";
+                        var line = sourceFileReader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(line))
+                            continue;
 
-                        // Split given data files by tab
-                        var delimiters = new[] { '\t' };
+                        var dataToWrite = new List<string>();
 
                         // Do split operation
-                        var parts = line.Split(delimiters, StringSplitOptions.None);
+                        List<string> parts;
 
-                        // If column and data mismatch
-                        if (parts.Length != numOfColumns)
+                        if (!headerParsed)
                         {
-                            // Number of columns is not the expected number
-                            // This normally happens on ScanStatsEx. nothing we can do due to bad tool. ignore line.
-
-                            // Next line
-                            continue;
-                        }
-
-                        // Reading the first line ... skip it as no longer needed
-                        if (line_num == 0)
-                        {
+                            // Header line
                             // Clean fields to ensure consistency
-                            parts = FieldCleaner(parts);
-
-                            // Inc
-                            line_num++;
-
-                            // Next line
-                            // Continue;
+                            parts = FieldCleaner(line.Split(delimiters, StringSplitOptions.None).ToList());
+                            headerParsed = true;
                         }
-
-                        // Now reading data lines [assuming line_num > 0]
+                        else
+                        {
+                            parts = line.Split(delimiters, StringSplitOptions.None).ToList();
+                        }
 
                         // Loop through each part
-                        for (var i = 0; i < parts.Length; i++)
+                        for (var i = 0; i < parts.Count; i++)
                         {
-                            // If not an allowed field ignore
-                            if (ListFieldID[i] > -1)
+                            if (i == columnCount)
                             {
-                                if (line_temp.Length > 0)
-                                    line_temp += "\t";
+                                // Too many columns for this line; ignore them
+                                break;
+                            }
 
-                                // Append to line_temp
-                                line_temp += parts[i];
-
+                            // If not an allowed field ignore
+                            if (columnIndexMap[i] > -1)
+                            {
+                                dataToWrite.Add(parts[i]);
                             }
 
                         }
 
+                        while (dataToWrite.Count < knownColumnCount)
+                        {
+                            // Missing columns for this line; add them
+                            dataToWrite.Add("");
+                        }
+
                         // Write line
-                        file_write.WriteLine(line_temp);
+                        updatedFileWriter.WriteLine(string.Join("\t", dataToWrite));
 
                     }
                 }
             }
         }
 
-        // This function defines a mapping between the column index in the file vs. the column index to which the data should be written in the database
-        /*
-        1. IDENTIFIES USING ValidFilesToReFormat_id THE CORRECT [x][] ARRAY
-        2. STORES VALUES IN HashFieldID IN FOLLOWING FORMAT, IF ValidFilesToReFormat_id=1
-            ASSUME FILE HAS ONLY: 'FT Analyzer Settings', 'Conversion Parameter C', 'Dataset' IN FILE
-            1. Find offset for each:: 'FT Analyzer Settings'=10, 'Conversion Parameter C'=14, 'Dataset'=0
-            2. store in HashFieldID as [0]=10, [1]=14, [2]=0, ...all others == -1
-        */
-        private int padHashTable(string file_to_load, ref List<int> ListFieldID, int ValidFilesToReFormat_id)
+        /// <summary>
+        /// This function defines a mapping between the column index in the file vs. the column index to which the data should be written in the database
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="columnIndexMap">Maps observed column index to desired column index in DB (-1 means do not store the given column in the DB)</param>
+        /// <param name="knownFields"></param>
+        /// <returns>Total number of columns in the input file</returns>
+        private int MapColumnsToKnownFields(string filePath, out List<int> columnIndexMap, List<string> knownFields)
         {
-            int numOfcolumns;
+            int columnCount;
+            columnIndexMap = new List<int>();
 
-            // Open + read
-            using (var file = new StreamReader(file_to_load))
+            using (var file = new StreamReader(filePath))
             {
                 var line = file.ReadLine();
 
@@ -266,57 +290,53 @@ namespace SMAQC
                     return 0;
 
                 // Split given data files by tab
-                var delimiters = new[] {'\t'};
+                var delimiters = new[] { '\t' };
 
                 // Do split operation
-                var parts = line.Split(delimiters, StringSplitOptions.None);
-
                 // Clean fields to ensure consistency
-                parts = FieldCleaner(parts);
+                var parts = FieldCleaner(line.Split(delimiters, StringSplitOptions.None).ToList());
 
-                // Set numofcolumns
-                numOfcolumns = parts.Length;
+                // Set columnCount
+                columnCount = parts.Count;
 
                 // Loop through each column
                 foreach (var column in parts)
                 {
                     // Search for column name that is found in our file line
-                    var index = findIndexOfColumnName(ValidFilesToReFormat_id, column);
+                    var index = findIndexOfColumnName(knownFields, column);
 
                     // If found [not -1]
-                    if (index != -1)
+                    if (index > -1)
                     {
                         // Console.writeline("store i={0} && index={1}", i, index);
                         // Store index of our part_id as index value as per function requirements [see details above func name]
-                        ListFieldID.Add(index);
+                        columnIndexMap.Add(index);
                     }
                     else
                     {
                         // Not found ... add -1 to indicate we will skip this column
                         // Console.writeline("store i={0} && index={1}", i, index);
-                        ListFieldID.Add(-1);
+                        columnIndexMap.Add(-1);
                     }
                 }
 
             }
 
-            return numOfcolumns;
+            return columnCount;
         }
 
-        // Searches [id][x] for name ... if found returns index ... else -1
-        private int findIndexOfColumnName(int ValidFilesToReFormat_id, string name)
+        /// <summary>
+        /// Look for fieldName in knownFields
+        /// </summary>
+        /// <param name="knownFields"></param>
+        /// <param name="fieldName"></param>
+        /// <returns>Return the index if a match or -1 if no match</returns>
+        private int findIndexOfColumnName(List<string> knownFields, string fieldName)
         {
-            // Get bound of second dim
-            var bound = mFieldList.GetLength(1);
-
-            for (var i = 0; i < bound; i++)
+            for (var i = 0; i < knownFields.Count; i++)
             {
-                // Check to ensure that we are not null
-                if (mFieldList[ValidFilesToReFormat_id, i] == null)
-                    break;
-
                 // If found name ... return index
-                if (mFieldList[ValidFilesToReFormat_id, i].Equals(name))
+                if (string.Equals(knownFields[i], fieldName, StringComparison.InvariantCultureIgnoreCase))
                 {
                     return i;
                 }
@@ -335,108 +355,70 @@ namespace SMAQC
             }
         }
 
-        // Is this a valid file to reformat [checks validfilestoreformat list]
-        private int is_valid_file_to_reformat(string filename, string dataset)
+        /// <summary>
+        /// Is this a valid file to reformat (checks mValidFilesToReFormat list)
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <param name="dataset"></param>
+        /// <returns></returns>
+        private List<string> GetFieldsForKnownFile(string filename, string dataset)
         {
-            // Step # 1 get filename without extension
-            filename = Path.GetFileNameWithoutExtension(filename);
+            // Get filename without extension
+            var filenameNoExtension = Path.GetFileNameWithoutExtension(filename);
 
-            if (string.IsNullOrWhiteSpace(filename))
-                return -1;
+            if (string.IsNullOrWhiteSpace(filenameNoExtension))
+                return new List<string>();
 
-            // Step # 3 now do actual removing of data prefix
-            filename = filename.Substring(dataset.Length + 1);                  // Returns ScanStats, ScanStatsEx, ...
+            // Remove the dataset name from the filename
+            // Example result: ScanStats or ScanStatsEx
+            var filenamePart = filenameNoExtension.Substring(dataset.Length + 1);
 
-            // Loop through all valid files that we reformat
-            for (var i = 0; i < mValidFilesToReFormat.Count; i++)
+
+            List<string> knownFields;
+            if (mValidFilesToReFormat.TryGetValue(filenamePart, out knownFields))
             {
-                // If found a match
-                if (filename.Equals(mValidFilesToReFormat[i], StringComparison.OrdinalIgnoreCase))
-                {
-                    return i;
-                }
+                return knownFields;
             }
 
-            return -1;
+            return new List<string>();
         }
 
-        // Field cleaner to ensure database consistency by removing spaces, (,), / and more from 2 dim arrays
-        private string[,] FieldCleaner2d(string[,] field_array)
+        // Field cleaner to ensure database consistency by removing spaces, parentheses, / and more
+        private List<string> FieldCleaner(IEnumerable<string> field_array)
         {
-            var dim1 = field_array.GetLength(0); // [X][]
-            var dim2 = field_array.GetLength(1); // [][X]
-
-            // Loop through first dimension
-            for (var j = 0; j < dim1; j++)
-            {
-                // Loop through second dimension [stores all fields]
-                for (var i = 0; i < dim2; i++)
-                {
-                    // If null skip
-                    if (field_array[j, i] == null)
-                        continue;
-
-                    // Step #1 remove (...)
-                    var first_index = field_array[j, i].IndexOf(" (", StringComparison.Ordinal);
-                    var last_index = field_array[j, i].IndexOf(")", StringComparison.Ordinal);
-
-                    // If there is a (...)
-                    if (first_index > 0 && last_index > 0)
-                    {
-                        field_array[j, i] = field_array[j, i].Remove(first_index, last_index - first_index + 1);
-                    }
-
-                    // Step #2 replace all " " with "_"
-                    field_array[j, i] = field_array[j, i].Replace(" ", "_");
-
-                    // Step #3 replace all "/" with "" [required due to things like ScanStatsEx having m/z when it should be mz]
-                    field_array[j, i] = field_array[j, i].Replace("/", "");
-                }
-            }
-
-            return field_array;
-        }
-
-        // Field cleaner to ensure database consistency by removing spaces, (,), / and more
-        private string[] FieldCleaner(string[] field_array)
-        {
+            var updatedFields = new List<string>();
 
             // Loop through each field
-            for (var i = 0; i < field_array.Length; i++)
+            foreach (var field in field_array)
             {
                 // Step #1 remove (...)
-                var first_index = field_array[i].IndexOf(" (", StringComparison.Ordinal);
-                var last_index = field_array[i].IndexOf(")", StringComparison.Ordinal);
+                var first_index = field.IndexOf(" (", StringComparison.Ordinal);
+                var last_index = field.IndexOf(")", StringComparison.Ordinal);
+
+                string updatedField;
 
                 // If there is a (...)
                 if (first_index > 0 && last_index > first_index)
                 {
-                    field_array[i] = field_array[i].Remove(first_index, last_index - first_index + 1);
+                    updatedField = field.Remove(first_index, last_index - first_index + 1);
+                }
+                else
+                {
+                    updatedField = string.Copy(field);
                 }
 
                 // Step #2 replace all " " with "_"
-                field_array[i] = field_array[i].Replace(" ", "_");
+                updatedField = updatedField.Replace(" ", "_");
 
                 // Step #3 replace all "/" with "" [required due to things like ScanStatsEx having m/z when it should be mz]
-                field_array[i] = field_array[i].Replace("/", "");
+                updatedField = updatedField.Replace("/", "");
+
+                updatedFields.Add(updatedField);
             }
 
-            return field_array;
+            return updatedFields;
         }
 
-        // This function returns whether or not we are currently working with _ScanStatsEx.txt
-        private bool ScanStatsExBugFixer(string file_to_load)
-        {
-            var value = file_to_load.IndexOf("_ScanStatsEx.txt", StringComparison.OrdinalIgnoreCase);
-
-            // If found return true
-            if (value >= 0)
-            {
-                return true;
-            }
-
-            // Else return false
-            return false;
-        }
+      
     }
 }
