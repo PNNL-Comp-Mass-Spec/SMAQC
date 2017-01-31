@@ -9,8 +9,7 @@ namespace SMAQC
 {
     class DBSQLite : DBInterface
     {
-        // Declare variables
-        private readonly SQLiteConnection conn;                                          // Sqlite connection
+        private readonly SQLiteConnection mConnection;                                         // Sqlite connection
         private string query;                                                           // Query to run
         private SQLiteDataReader reader;                                                // Sqlite reader
         private readonly DBSQLiteTools SQLiteTools = new DBSQLiteTools();               // Create dbsqlite tools object
@@ -25,7 +24,10 @@ namespace SMAQC
         // Event
         public event DBWrapper.DBErrorEventHandler ErrorEvent;
 
-        // Constructor
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="datasource"></param>
         public DBSQLite(string datasource)
         {
 
@@ -36,13 +38,13 @@ namespace SMAQC
                 SQLiteTools.CreateTables(datasource);
             }
 
-            conn = new SQLiteConnection("Data Source=" + datasource, true);
+            mConnection = new SQLiteConnection("Data Source=" + datasource, true);
             
             // Open a connection to the database
             Open();
 
             // Create any missing tables and add any missing columns
-            SQLiteTools.create_missing_tables(conn);
+            SQLiteTools.create_missing_tables(mConnection);
 
         }       
 
@@ -55,17 +57,14 @@ namespace SMAQC
             // Loop through each temp table
             foreach (var tableName in db_tables)
             {
-                if (DBSQLiteTools.TableExists(conn, tableName))
-                {
-                    // Create query
-                    var temp_string = "DELETE FROM " + tableName + ";";
+                if (!DBSQLiteTools.TableExists(mConnection, tableName))
+                    continue;
 
-                    // Set query
-                    setQuery(temp_string);
+                var sql = "DELETE FROM " + tableName + ";";
 
-                    // Call query function
-                    QueryNonQuery();
-                }
+                SetQuery(sql);
+
+                ExecuteNonQuery();
             }
         }
 
@@ -79,21 +78,18 @@ namespace SMAQC
             // Loop through each temp table
             foreach (var tableName in db_tables)
             {
-                if (DBSQLiteTools.TableExists(conn, tableName))
-                {
-                    // Create query
-                    var temp_string = "DELETE FROM " + tableName + " WHERE random_id='" + random_id + "';";
+                if (!DBSQLiteTools.TableExists(mConnection, tableName))
+                    continue;
 
-                    // Set query
-                    setQuery(temp_string);
+                var sql = "DELETE FROM " + tableName + " WHERE random_id='" + random_id + "';";
 
-                    // Call query function
-                    QueryNonQuery();
-                }
+                SetQuery(sql);
+
+                ExecuteNonQuery();
             }
         }
 
-        public void setQuery(string myquery)
+        public void SetQuery(string myquery)
         {
             // Set query to param
             query = myquery;
@@ -102,7 +98,7 @@ namespace SMAQC
         // For queries that return rows
         public SQLiteDataReader QueryReader()
         {
-            var cmd = new SQLiteCommand(conn)
+            var cmd = new SQLiteCommand(mConnection)
             {
                 CommandText = query
             };
@@ -112,9 +108,9 @@ namespace SMAQC
         }
 
         // For queries such as insert/delete/update
-        public bool QueryNonQuery()
+        public bool ExecuteNonQuery()
         {            
-            var cmd = new SQLiteCommand(conn)
+            var cmd = new SQLiteCommand(mConnection)
             {
                 CommandText = query
             };
@@ -126,7 +122,7 @@ namespace SMAQC
         // For queries that return a single value
         public void QueryScalar()
         {
-            var cmd = new SQLiteCommand(conn)
+            var cmd = new SQLiteCommand(mConnection)
             {
                 CommandText = query
             };
@@ -138,7 +134,7 @@ namespace SMAQC
         public void Open()
         {
             // Open sqlite conn
-            conn.Open();
+            mConnection.Open();
         }
 
         public void BulkInsert(string insert_into_table, string file_to_read_from)
@@ -153,28 +149,31 @@ namespace SMAQC
                 dctErrorMessages.Clear();
 
             // Build sql line
-            var sql = SQLiteBulkInsert_BuildSQL_Line(insert_into_table, fieldNames);
+            var sql = SQLiteBulkInsert_BuildSQL_Line(targetTable, fieldNames);
             var previousLine = string.Empty;
 
-            using (var mycommand = conn.CreateCommand())
+            using (var mycommand = mConnection.CreateCommand())
             {
                 mycommand.CommandText = "PRAGMA synchronous=OFF";
                 ExecuteCommand(mycommand, -1);
             }
 
-            using (DbTransaction dbTrans = conn.BeginTransaction())
+            using (DbTransaction dbTrans = mConnection.BeginTransaction())
             {
-                using (var mycommand = conn.CreateCommand())
+                using (var mycommand = mConnection.CreateCommand())
                 {
 
                     mycommand.CommandText = sql;
 
-                    using (var file = new StreamReader(file_to_read_from))
+                    using (var file = new StreamReader(sourceFile))
                     {
-                        string line;
                         var line_num = 0;
-                        while ((line = file.ReadLine()) != null)
+                        while (!file.EndOfStream)
                         {
+                            var line = file.ReadLine();
+                            if (string.IsNullOrEmpty(line))
+                                continue;
+
                             line_num++;
 
                             if (line_num == 1)
@@ -196,8 +195,10 @@ namespace SMAQC
                             // Loop through field listing + set parameters
                             for (var i = 0; i < fieldNames.Count; i++)
                             {
-
-                                mycommand.Parameters.AddWithValue("@" + i, values[i]);
+                                if (fieldEnabledByIndex[i])
+                                {
+                                    mycommand.Parameters.AddWithValue("@" + i, values[i]);
+                                }
                             }
 
                             // Now that all fields + values are in our system
@@ -225,7 +226,7 @@ namespace SMAQC
                             firstErrorMsg = string.Copy(kvEntry.Key);
                     }
 
-                    var msg = "Errors during BulkInsert from file " + Path.GetFileName(file_to_read_from) + "; problem with " + totalErrorRows + " row";
+                    var msg = "Errors during BulkInsert from file " + Path.GetFileName(sourceFile) + "; problem with " + totalErrorRows + " row";
                     if (totalErrorRows != 1)
                         msg += "s";
 
@@ -236,7 +237,7 @@ namespace SMAQC
             }
         }
 
-        protected bool ExecuteCommand(SQLiteCommand mycommand, int line_num)
+        private void ExecuteCommand(SQLiteCommand mycommand, int line_num)
         {
             try
             {
@@ -254,11 +255,9 @@ namespace SMAQC
 
                 if (errorMsgCount < 10)
                     OnErrorEvent("Error inserting row " + line_num + ": " + msg);
-
-                return false;
+                
             }
 
-            return true;
         }
 
         /// <summary>
@@ -270,7 +269,7 @@ namespace SMAQC
         {
             var columns = new List<string>();
 
-            using (var cmd = conn.CreateCommand())
+            using (var cmd = mConnection.CreateCommand())
             {
                 cmd.CommandText = "SELECT * FROM [" + tableName + "] LIMIT 1";
 
@@ -287,7 +286,7 @@ namespace SMAQC
         }
 
         // Init reader [whenever we want to read a row]
-        public void initReader()
+        public void InitReader()
         {
             // Call query reader
             reader = QueryReader();
@@ -298,7 +297,7 @@ namespace SMAQC
         {
             m_PHRPFieldsForInsert = new Dictionary<string, int>();
 
-            m_PHRPInsertCommand = conn.CreateCommand();
+            m_PHRPInsertCommand = mConnection.CreateCommand();
 
             var fields = new List<string>
             {
@@ -334,13 +333,13 @@ namespace SMAQC
             else
                 dctErrorMessages.Clear();
 
-            using (var mycommand = conn.CreateCommand())
+            using (var mycommand = mConnection.CreateCommand())
             {
                 mycommand.CommandText = "PRAGMA synchronous=OFF";
                 ExecuteCommand(mycommand, -1);
             }
 
-            dbTrans = conn.BeginTransaction();
+            dbTrans = mConnection.BeginTransaction();
 
             return true;
 
@@ -370,7 +369,7 @@ namespace SMAQC
 
         // Read single db row [different from readlines() as here we close reader afterward]
         // [Returns false if no further rows to read]
-        public bool readSingleLine(string[] fields, ref Dictionary<string, string> dctData)
+        public bool ReadSingleLine(string[] fields, ref Dictionary<string, string> dctData)
         {
             // Read line
             var status = reader.Read();
@@ -385,7 +384,6 @@ namespace SMAQC
                 return false;
             }
 
-            // Declare variables
             foreach (var fieldName in fields)
             {
                 try
@@ -407,7 +405,7 @@ namespace SMAQC
         }
 
         // Read db row(s) [returns false if no further rows to read]
-        public bool readLines(string[] fields, ref Dictionary<string, string> dctData)
+        public bool ReadLines(string[] fields, ref Dictionary<string, string> dctData)
         {
             // Read line
             var status = reader.Read();
@@ -422,7 +420,6 @@ namespace SMAQC
                 return false;
             }
 
-            // Declare variables
             foreach (var fieldName in fields)
             {
                 // Read + store field [value, result]
@@ -476,7 +473,7 @@ namespace SMAQC
             }
 
             // Do split operation
-            var parts = line.Split(delimiters, StringSplitOptions.None);
+            var parts = line.Split(delimiters, StringSplitOptions.None).ToList();
 
             return parts;
         }
@@ -544,17 +541,14 @@ namespace SMAQC
             return field_line;
         }
 
-        public string getDateTime()
+        public string GetDateTime()
         {
             return "strftime('%Y-%m-%d %H:%M:%S','now', 'localtime')";
         }
 
         void OnErrorEvent(string errorMessage)
         {
-            if (ErrorEvent != null)
-            {
-                ErrorEvent(errorMessage);
-            }
+            ErrorEvent?.Invoke(errorMessage);
         }
 
     }

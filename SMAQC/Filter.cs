@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using MSGFResultsSummarizer;
 using PHRPReader;
 
@@ -13,11 +11,15 @@ namespace SMAQC
     class Filter
     {
 
-        public readonly DBWrapper mDBWrapper;                                                                // Create db interface object
-        public readonly string instrument_id;                                                                // Instrument id
-        public readonly int random_id;                                                                       // Random id
-        public readonly DataFileFormatter DFF = new DataFileFormatter();                                     // Dff object
-        private readonly SystemLogManager m_SystemLogManager;
+        public readonly DBWrapper mDBWrapper;
+
+        public readonly string mInstrumentId;
+
+        public readonly int mRandomId;
+
+        public readonly DataFileFormatter mDataFileFormatter = new DataFileFormatter();
+
+        private readonly SystemLogManager mSystemLogManager;
 
         /// <summary>
         /// Constructor
@@ -29,9 +31,9 @@ namespace SMAQC
         public Filter(ref DBWrapper DBInterface, string instrument_id, int random_id, ref SystemLogManager systemLogManager)
         {
             mDBWrapper = DBInterface;
-            this.instrument_id = instrument_id;
-            this.random_id = random_id;
-            m_SystemLogManager = systemLogManager;
+            mInstrumentId = instrument_id;
+            mRandomId = random_id;
+            mSystemLogManager = systemLogManager;
 
             // Attach the event handler
             mDBWrapper.ErrorEvent += DBWrapper_ErrorEvent;
@@ -57,9 +59,9 @@ namespace SMAQC
         /// <summary>
         /// Create a bulk-insert compatible file
         /// </summary>
-        /// <param name="temp_file"></param>
-        /// <param name="file_to_load"></param>
-        public void parse_and_filter(string temp_file, string file_to_load)
+        /// <param name="targetFilePath"></param>
+        /// <param name="filePathToLoad"></param>
+        private void parse_and_filter(string filePathToLoad, string targetFilePath)
         {
             var line_num = 0;
 
@@ -69,13 +71,13 @@ namespace SMAQC
             var delimiters = new[] { '\t' };
 
             // Create the output file
-            using (var swOutFile = new StreamWriter(temp_file))
+            using (var swOutFile = new StreamWriter(targetFilePath))
             {
 
-                //Console.WriteLine("WRITE TO: {0} ... LOAD FROM: {1}", temp_file, file_to_load);
+                //Console.WriteLine("WRITE TO: {0} ... LOAD FROM: {1}", temp_file, filePathToLoad);
 
                 // Open the input file
-                using (var srInFile = new StreamReader(file_to_load))
+                using (var srInFile = new StreamReader(filePathToLoad))
                 {
                     
                     while (!srInFile.EndOfStream)
@@ -97,7 +99,7 @@ namespace SMAQC
                         else
                         {
                             // Prepend Instrument_ID and Random_ID
-                            query_info += instrument_id + newDelimiter + random_id + newDelimiter;
+                            query_info += mInstrumentId + newDelimiter + mRandomId + newDelimiter;
                         }
 
                         // Process the fields
@@ -132,12 +134,12 @@ namespace SMAQC
             }
 
         }
-    
+
         /// <summary>
         /// Loop through the file list, processing each file
         /// </summary>
-        /// <param name="fileList"></param>
-        /// <param name="valid_file_tables"></param>
+        /// <param name="fileList">Files to load. Keys are file paths and Values are lists of header column suffixes to ignore, e.g. _SignalToNoise</param>
+        /// <param name="validFileExtensions"></param>
         /// <param name="dataset"></param>
         /// <remarks>
         /// For each file:
@@ -145,56 +147,63 @@ namespace SMAQC
         ///   2. From the filename, determines the correct table to insert into, appends temp
         ///   3. Calls our bulk insert function
         /// </remarks>
-        public void LoadFilesAndInsertIntoDB(List<string> fileList, string[] valid_file_tables, string dataset)
+        public void LoadFilesAndInsertIntoDB(Dictionary<string, List<string>> fileList, string[] validFileExtensions, string dataset)
         {
-            
-            foreach (var fileName in fileList)
+
+            foreach (var candidateFile in fileList)
             {
 
-                var file_info = string.Copy(fileName);
+                var filePath = string.Copy(candidateFile.Key);
 
-                // Obtain a temp file
-                var temp_file = Path.GetTempFileName();
-
-                var query_table = "temp";
+                string targetTableName;
 
                 // Determine if we have a table to insert into depending on our input filename
-                var j = return_file_table_position(file_info, valid_file_tables);
+                var knownFile = IsKnownFileExtension(filePath, validFileExtensions, out targetTableName);
 
-                if (j >= 0)
+                if (!knownFile)
                 {
-                    // Valid table
+                    //NOT A VALID .TXT FILE FROM OUR LIST!
+                    Console.WriteLine("ERROR, unrecognized file " + filePath);
+                    continue;
+                }
 
-                    // Does this file need to be reformatted [variable column support]
-                    if (DFF.handleFile(file_info, dataset))
-                    {
-                        // Yes
+                // Valid table
+                // Create a temp file
+                var temp_file = Path.GetTempFileName();
 
-                        // Rebuild [SAVE TO DFF.TempFilePath BY DEFAULT]
-                        //DFF.handleRebuild(FileList[i]);
+                var excludedFieldNameSuffixes = candidateFile.Value;
 
-                        //SET FILE_INFO TO OUR REBUILT FILE NOW
-                        file_info = DFF.TempFilePath;
-                    }
+                // Does this file need to be reformatted [variable column support]
+                if (mDataFileFormatter.HandleFile(filePath, dataset))
+                {
+                    // Yes
+
+                    // Rebuild [SAVE TO DFF.TempFilePath BY DEFAULT]
+                    //DFF.handleRebuild(FileList[i]);
+
+                    //SET FILE_INFO TO OUR REBUILT FILE NOW
+                    var reformattedFilePath = mDataFileFormatter.TempFilePath;
 
                     // PARSE + FORMAT FILE CORRECTLY FOR BULK INSERT QUERIES
                     // Will add columns instrument_id and random_id
-                    parse_and_filter(temp_file, file_info);
-
-
-                    //WE NOW HAVE A ACCESS TO valid_file_tables[j] which starts with the prefix '_'
-                    //APPEND temp [DB PREFIX] to this.
-                    query_table += valid_file_tables[j];
-                    Console.WriteLine("Populating Table {0}", query_table);
-
-                    //INSERT INTO DB
-                    mDBWrapper.BulkInsert(query_table, temp_file);
+                    parse_and_filter(reformattedFilePath, temp_file);
                 }
                 else
                 {
-                    //NOT A VALID .TXT FILE FROM OUR LIST!
-                    Console.WriteLine("ERROR, unrecognized file " + fileName);
+                    // PARSE + FORMAT FILE CORRECTLY FOR BULK INSERT QUERIES
+                    // Will add columns instrument_id and random_id
+                    parse_and_filter(filePath, temp_file);
                 }
+
+
+                //WE NOW HAVE A ACCESS TO valid_file_tables[j] which starts with the prefix '_'
+                //APPEND temp [DB PREFIX] to this.
+                var targetTable = "temp" + targetTableName;
+
+                Console.WriteLine("Populating Table {0}", targetTable);
+
+                //INSERT INTO DB
+                mDBWrapper.BulkInsert(targetTable, temp_file, excludedFieldNameSuffixes);
 
                 // Delete the tempfile
                 File.Delete(temp_file);
@@ -234,14 +243,14 @@ namespace SMAQC
                 // Report any errors cached during instantiation of mPHRPReader
                 foreach (var strMessage in oPHRPReader.ErrorMessages.Distinct())
                 {
-                    m_SystemLogManager.addApplicationLog("Error: " + strMessage);
+                    mSystemLogManager.AddApplicationLog("Error: " + strMessage);
                     Console.WriteLine(strMessage);
                 }
 
                 // Report any warnings cached during instantiation of mPHRPReader
                 foreach (var strMessage in oPHRPReader.WarningMessages.Distinct())
                 {
-                    m_SystemLogManager.addApplicationLog("Warning: " + strMessage);
+                    mSystemLogManager.AddApplicationLog("Warning: " + strMessage);
                     Console.WriteLine(strMessage);
                 }
                 if (oPHRPReader.WarningMessages.Count > 0)
@@ -326,8 +335,8 @@ namespace SMAQC
                     var dctCurrentPeptide = new Dictionary<string, string>();
                     dctCurrentPeptide.Clear();
 
-                    dctCurrentPeptide.Add("instrument_id", instrument_id);
-                    dctCurrentPeptide.Add("random_id", random_id.ToString());
+                    dctCurrentPeptide.Add("instrument_id", mInstrumentId);
+                    dctCurrentPeptide.Add("random_id", mRandomId.ToString());
                     dctCurrentPeptide.Add("Result_ID", objCurrentPSM.ResultID.ToString());
                     dctCurrentPeptide.Add("Scan", objCurrentPSM.ScanNumberStart.ToString());
                     dctCurrentPeptide.Add("CollisionMode", objCurrentPSM.CollisionMode);
@@ -474,50 +483,57 @@ namespace SMAQC
         }
 
 
-        // Function will search through a file name, ensuring it is a valid table extension and returning
-        // The position so that it can be passed to our dbinterface/other classes for processing
-        public int return_file_table_position(string filename, string[] valid_file_tables)
+        /// <summary>
+        /// Checks whether the file has a known extension and thus should be loaded into the database
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <param name="validFileExtensions"></param>
+        /// <param name="targetTableName"></param>
+        /// <returns></returns>
+        public bool IsKnownFileExtension(string filename, string[] validFileExtensions, out string targetTableName)
         {
+            targetTableName = string.Empty;
+
             var baseName = Path.GetFileNameWithoutExtension(filename);
-            if (baseName != null)
+            if (baseName == null)
+            {                
+                return false;
+            }
+
+            var baseFilenameLCase = baseName.ToLower();
+
+            foreach (var fileExtension in validFileExtensions)
             {
-                var baseFilenameLCase = baseName.ToLower();
-
-                //LOOP THROUGH ALL VALID FILE/TABLE EXTENSIONS
-                for (var i = 0; i < valid_file_tables.Length; i++)
+                if (baseFilenameLCase.EndsWith(fileExtension.ToLower()))
                 {
-                    if (baseFilenameLCase.EndsWith(valid_file_tables[i].ToLower()))
-                    {
-                        // Match found
-                        //RETURN THE POSITION ID IN OUR FILE/TABLE LIST
-                        return i;
-                    }
-
+                    // Match found
+                    targetTableName = fileExtension;
+                    return true;
                 }
             }
-            return -1;
+            return false;
         }
 
         #region "Error handlers"
 
-        protected void DBWrapper_ErrorEvent(string errorMessage)
+        private void DBWrapper_ErrorEvent(string errorMessage)
         {
-            m_SystemLogManager.addApplicationLog(errorMessage);
+            mSystemLogManager.AddApplicationLog(errorMessage);
         }
 
         void mPHRPReader_ErrorEvent(string strErrorMessage)
         {
-            m_SystemLogManager.addApplicationLog("PHRPReader error: " + strErrorMessage);
+            mSystemLogManager.AddApplicationLog("PHRPReader error: " + strErrorMessage);
         }
 
         void mPHRPReader_MessageEvent(string strMessage)
         {
-            m_SystemLogManager.addApplicationLog(strMessage);
+            mSystemLogManager.AddApplicationLog(strMessage);
         }
 
         void mPHRPReader_WarningEvent(string strWarningMessage)
         {
-            m_SystemLogManager.addApplicationLog("PHRPReader warning: " + strWarningMessage);
+            mSystemLogManager.AddApplicationLog("PHRPReader warning: " + strWarningMessage);
         }
 
         #endregion

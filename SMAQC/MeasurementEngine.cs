@@ -10,7 +10,12 @@ namespace SMAQC
         readonly MeasurementFactory factory;
         readonly SystemLogManager m_SystemLogManager;
 
-        // Constructor
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="lstMeasurementsToRun"></param>
+        /// <param name="measurement"></param>
+        /// <param name="systemLogManager"></param>
         public MeasurementEngine(List<string> lstMeasurementsToRun, ref Measurement measurement, ref SystemLogManager systemLogManager)
         {
             factory = new MeasurementFactory(ref measurement);
@@ -44,14 +49,14 @@ namespace SMAQC
                         sResult = "Null";
 
                     dctResults.Add(measurementName, sResult);
-                    m_SystemLogManager.addApplicationLog((measurementName + ":").PadRight(7) + " complete in " + DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0.00") + " seconds; " + percentComplete.ToString("0") + "% complete");
+                    m_SystemLogManager.AddApplicationLog((measurementName + ":").PadRight(7) + " complete in " + DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0.00") + " seconds; " + percentComplete.ToString("0") + "% complete");
                 }
                 catch (Exception ex)
                 {
                     // Measurement failed; store Null
                     dctResults.Add(measurementName, "Null");
                     Console.WriteLine();
-                    m_SystemLogManager.addApplicationLog(measurementName + " failed: " + ex.Message);
+                    m_SystemLogManager.AddApplicationLog(measurementName + " failed: " + ex.Message);
                 }
             }
 

@@ -8,16 +8,16 @@ namespace SMAQC
         void ClearTempTables(string[] db_tables);
         void ClearTempTables(string[] db_tables, int random_id);
 
-        void setQuery(string temp);
+        void SetQuery(string temp);
         SQLiteDataReader QueryReader();
-        bool QueryNonQuery();
+        bool ExecuteNonQuery();
         void QueryScalar();
         void Open();
-        void BulkInsert(string insert_into_table, string file_to_read_from);
-        void initReader();
-        bool readSingleLine(string[] fields, ref Dictionary<string, string> dctData);
-        bool readLines(string[] fields, ref Dictionary<string, string> hash);
-        string getDateTime();
+        void BulkInsert(string targetTable, string sourceFile, List<string> excludedFieldNameSuffixes);
+        void InitReader();
+        bool ReadSingleLine(string[] fields, ref Dictionary<string, string> dctData);
+        bool ReadLines(string[] fields, ref Dictionary<string, string> hash);
+        string GetDateTime();
         
         List<string> GetTableColumns(string tableName);
 

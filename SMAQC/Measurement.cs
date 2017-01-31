@@ -36,7 +36,7 @@ namespace SMAQC
         }
 
         // Constants
-        private const int XTANDEM_LOG_EVALUE_THRESHOLD = -2;
+        // private const int XTANDEM_LOG_EVALUE_THRESHOLD = -2;
         public const double MSGF_SPECPROB_THRESHOLD = 1e-12;
 
         // DB interface object
@@ -88,7 +88,7 @@ namespace SMAQC
         // Cached data for the ReporterIon metrics
         private List<string> mReporterIonColumns;
 
-        private clsPeptideMassCalculator mPeptideMassCalculator;
+        private readonly clsPeptideMassCalculator mPeptideMassCalculator;
 
         /// <summary>
         /// Constructor
@@ -103,15 +103,6 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// Destructor
-        /// </summary>
-        ~Measurement()
-        {
-            // Clear the dictionaries
-            ClearStorage();
-        }
-
-        /// <summary>
         /// Add (or update) entryName in mResultsStorage
         /// </summary>
         /// <param name="entryType"></param>
@@ -121,7 +112,7 @@ namespace SMAQC
             if (m_ResultsStorage.ContainsKey(entryType))
                 m_ResultsStorage[entryType] = value;
             else
-                m_ResultsStorage.Add(entryType, value);            
+                m_ResultsStorage.Add(entryType, value);
         }
 
         /// <summary>
@@ -211,7 +202,7 @@ namespace SMAQC
         private string C_1_Shared(bool countTailingPeptides)
         {
 
-            m_DBInterface.setQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber, t1.OptimalPeakApexScanNumber,"
+            m_DBInterface.SetQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber, t1.OptimalPeakApexScanNumber,"
                                     + "    temp_scanstats.ScanTime as ScanTime1, t2.ScanTime as ScanTimePeakApex "
                                     + " FROM temp_PSMs, temp_scanstats, temp_sicstats as t1 "
                                     + "      INNER JOIN temp_scanstats as t2 on t1.OptimalPeakApexScanNumber=t2.ScanNumber "
@@ -223,7 +214,7 @@ namespace SMAQC
                                     + "  AND t2.random_id=" + m_Random_ID
                                     + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
                                     + " ORDER BY Scan;");
-            
+
 
             var psm_count_late_or_early = 0;
             var psm_count_total = 0;
@@ -232,7 +223,7 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 // Calculate difference
                 double temp_difference;
@@ -269,7 +260,7 @@ namespace SMAQC
         public string C_2A()
         {
 
-            m_DBInterface.setQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber as ScanNumber,"
+            m_DBInterface.SetQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber as ScanNumber,"
                                     + "    temp_scanstats.ScanTime as ScanTime1 "
                                     + " FROM temp_PSMs, temp_scanstats, temp_sicstats as t1 "
                                     + " WHERE temp_PSMs.Scan = t1.FragScanNumber "
@@ -287,7 +278,7 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 // Filter-passing peptide; Append to the dictionary
                 int scanNumber;
@@ -367,7 +358,7 @@ namespace SMAQC
         public string C_2B()
         {
 
-            m_DBInterface.setQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber as ScanNumber,"
+            m_DBInterface.SetQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber as ScanNumber,"
                                     + "    temp_scanstats.ScanTime as ScanTime1 "
                                     + " FROM temp_PSMs, temp_scanstats, temp_sicstats as t1 "
                                     + " WHERE temp_PSMs.Scan = t1.FragScanNumber "
@@ -389,7 +380,7 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 // Filter-passing peptide; Append to the dictionary
                 int scanNumber;
@@ -491,7 +482,7 @@ namespace SMAQC
             m_MPWCached_OptimalPeakApexScanNumber = new Dictionary<int, int>();			// Optimal peak apex scan number; keys are FragScanNumbers
             m_MPWCached_ScanTime = new Dictionary<int, double>();						// Scan time for given scan number; keys are scan numbers
 
-            m_DBInterface.setQuery("SELECT Scan, Charge, Peptide_Sequence, MSGFSpecProb AS Peptide_Score"
+            m_DBInterface.SetQuery("SELECT Scan, Charge, Peptide_Sequence, MSGFSpecProb AS Peptide_Score"
                                 + " FROM temp_PSMs "
                                 + " WHERE random_id=" + m_Random_ID);
 
@@ -501,7 +492,7 @@ namespace SMAQC
 
             // Read and cache the data since we need to trim off the prefix and suffix letters from the peptide sequence
 
-            while ((m_DBInterface.readLines(fields1, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields1, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
 
                 string peptideResidues;
@@ -569,7 +560,7 @@ namespace SMAQC
             // Sort the data
             m_MPWCached_BestScan.Sort();
 
-            m_DBInterface.setQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM temp_sicstats WHERE temp_sicstats.random_id=" + m_Random_ID);
+            m_DBInterface.SetQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM temp_sicstats WHERE temp_sicstats.random_id=" + m_Random_ID);
 
             string[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
 
@@ -577,7 +568,7 @@ namespace SMAQC
 
             // Fetch columns d-f
 
-            while ((m_DBInterface.readLines(fields2, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields2, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 var fragScanNumber = Convert.ToInt32(m_MeasurementResults["FragScanNumber"]);
 
@@ -585,14 +576,14 @@ namespace SMAQC
                 m_MPWCached_OptimalPeakApexScanNumber.Add(fragScanNumber, Convert.ToInt32(m_MeasurementResults["OptimalPeakApexScanNumber"]));
             }
 
-            m_DBInterface.setQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM temp_scanstats WHERE temp_scanstats.random_id=" + m_Random_ID);
+            m_DBInterface.SetQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM temp_scanstats WHERE temp_scanstats.random_id=" + m_Random_ID);
 
             string[] fields3 = { "ScanNumber", "ScanTime" };
 
             m_DBInterface.initReader();
 
             // Fetch columns h-i
-            while ((m_DBInterface.readLines(fields3, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields3, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 m_MPWCached_ScanTime.Add(Convert.ToInt32(m_MeasurementResults["ScanNumber"]), Convert.ToDouble(m_MeasurementResults["ScanTime"]));
             }
@@ -733,7 +724,7 @@ namespace SMAQC
         private void Cache_DS_1_Data()
         {
 
-            m_DBInterface.setQuery("SELECT Spectra, Count(*) AS Peptides "
+            m_DBInterface.SetQuery("SELECT Spectra, Count(*) AS Peptides "
                                 + " FROM ( SELECT Unique_Seq_ID, COUNT(*) AS Spectra "
                                 + "        FROM ( SELECT Unique_Seq_ID, Scan "
                                 + "               FROM temp_PSMs "
@@ -749,7 +740,7 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 var spectra = Convert.ToInt32(m_MeasurementResults["Spectra"]);
                 var peptides = Convert.ToInt32(m_MeasurementResults["Peptides"]);
@@ -785,7 +776,7 @@ namespace SMAQC
             var scanStartC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanStart, 0);
             var scanEndC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanEnd, 0);
 
-            m_DBInterface.setQuery("SELECT COUNT(*) AS ScanCount "
+            m_DBInterface.SetQuery("SELECT COUNT(*) AS ScanCount "
                 + " FROM temp_scanstats "
                 + " WHERE temp_scanstats.random_id=" + m_Random_ID
                 + "   AND ScanType = " + msLevel
@@ -795,7 +786,7 @@ namespace SMAQC
             string[] fields = { "ScanCount" };
 
             m_DBInterface.initReader();
-            m_DBInterface.readSingleLine(fields, ref m_MeasurementResults);
+            m_DBInterface.ReadSingleLine(fields, ref m_MeasurementResults);
 
             var intScanCount = Convert.ToInt32(m_MeasurementResults["ScanCount"]);
 
@@ -810,7 +801,7 @@ namespace SMAQC
         public string IS_2()
         {
 
-            m_DBInterface.setQuery("SELECT Peptide_MH, Charge "
+            m_DBInterface.SetQuery("SELECT Peptide_MH, Charge "
                                 + " FROM temp_PSMs "
                                 + " WHERE random_id=" + m_Random_ID
                                 + "   AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
@@ -821,7 +812,7 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
 
                 var temp_mz = mPeptideMassCalculator.ConvoluteMass(Convert.ToDouble(m_MeasurementResults["Peptide_MH"]), 1, Convert.ToInt32(m_MeasurementResults["Charge"]));
@@ -916,7 +907,7 @@ namespace SMAQC
         private void Cache_IS3_Data()
         {
 
-            m_DBInterface.setQuery("SELECT Charge, COUNT(*) AS PSMs "
+            m_DBInterface.SetQuery("SELECT Charge, COUNT(*) AS PSMs "
                     + " FROM temp_PSMs "
                     + " WHERE random_id=" + m_Random_ID
                     + "   AND MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
@@ -928,7 +919,7 @@ namespace SMAQC
 
             m_Cached_PSM_Stats_by_Charge = new Dictionary<int, int>();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 int charge;
                 if (int.TryParse(m_MeasurementResults["Charge"], out charge))
@@ -950,7 +941,7 @@ namespace SMAQC
         public string MS1_1()
         {
 
-            m_DBInterface.setQuery("SELECT temp_scanstatsex.Ion_Injection_Time "
+            m_DBInterface.SetQuery("SELECT temp_scanstatsex.Ion_Injection_Time "
                 + " FROM temp_scanstats, temp_scanstatsex "
                 + " WHERE temp_scanstats.ScanNumber = temp_scanstatsex.ScanNumber "
                 + "  AND temp_scanstatsex.random_id = " + m_Random_ID
@@ -965,7 +956,7 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 // Add to the filter list
                 lstValues.Add(Convert.ToDouble(m_MeasurementResults["Ion_Injection_Time"]));
@@ -1018,7 +1009,7 @@ namespace SMAQC
             var scanFirstPeptide = GetStoredValueInt(eCachedResult.ScanFirstFilterPassingPeptide, 0);
             var scanEndC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanEnd, 0);
 
-            m_DBInterface.setQuery("SELECT BasePeakSignalToNoiseRatio, TotalIonIntensity "
+            m_DBInterface.SetQuery("SELECT BasePeakSignalToNoiseRatio, TotalIonIntensity "
                 + " FROM temp_scanstats"
                 + " WHERE temp_scanstats.random_id=" + m_Random_ID
                 + "   AND ScanType = 1 "
@@ -1032,7 +1023,7 @@ namespace SMAQC
             m_Cached_BasePeakSignalToNoiseRatio = new List<double>();
             m_Cached_TotalIonIntensity = new List<double>();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 m_Cached_BasePeakSignalToNoiseRatio.Add(Convert.ToDouble(m_MeasurementResults["BasePeakSignalToNoiseRatio"]));
                 m_Cached_TotalIonIntensity.Add(Convert.ToDouble(m_MeasurementResults["TotalIonIntensity"]));
@@ -1081,7 +1072,7 @@ namespace SMAQC
         private void Cache_MS1_3_Data()
         {
 
-            m_DBInterface.setQuery("SELECT temp_sicstats.PeakMaxIntensity"
+            m_DBInterface.SetQuery("SELECT temp_sicstats.PeakMaxIntensity"
                 + " FROM temp_sicstats, temp_PSMs"
                 + " WHERE temp_sicstats.FragScanNumber=temp_PSMs.Scan"
                 + "   AND temp_sicstats.random_id=" + m_Random_ID
@@ -1100,7 +1091,7 @@ namespace SMAQC
             m_Cached_PeakMaxIntensity_95thPercentile = 0;
             m_Cached_MS1_3 = new List<double>();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 // Add to the filter list
                 m_Cached_MS1_3.Add(Convert.ToDouble(m_MeasurementResults["PeakMaxIntensity"]));
@@ -1154,7 +1145,7 @@ namespace SMAQC
         private void DS_3_CacheData()
         {
 
-            m_DBInterface.setQuery("SELECT ParentIonIntensity, PeakMaxIntensity"
+            m_DBInterface.SetQuery("SELECT ParentIonIntensity, PeakMaxIntensity"
                 + " FROM temp_sicstats, temp_PSMs "
                 + " WHERE temp_sicstats.FragScanNumber=temp_PSMs.Scan"
                 + "   AND temp_sicstats.random_id=" + m_Random_ID
@@ -1168,7 +1159,7 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
 
                 // Compute the ratio of the PeakMaxIntensity over ParentIonIntensity
@@ -1261,7 +1252,7 @@ namespace SMAQC
         private void IS_1_Shared(int foldThreshold, out int countMS1Jump10x, out int countMS1Fall10x)
         {
 
-            m_DBInterface.setQuery("SELECT ScanNumber, BasePeakIntensity  "
+            m_DBInterface.SetQuery("SELECT ScanNumber, BasePeakIntensity  "
                 + " FROM temp_scanstats "
                 + " WHERE temp_scanstats.random_id=" + m_Random_ID
                 + "   AND ScanType = 1");
@@ -1282,7 +1273,7 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
 
                 var bpiCurrent = Convert.ToDouble(m_MeasurementResults["BasePeakIntensity"]);
@@ -1420,7 +1411,7 @@ namespace SMAQC
         private void Cache_MS1_5_Data()
         {
 
-            m_DBInterface.setQuery("SELECT temp_PSMs.Peptide_MH, temp_PSMs.Charge, temp_sicstats.MZ, temp_PSMs.DelM_Da, temp_PSMs.DelM_PPM"
+            m_DBInterface.SetQuery("SELECT temp_PSMs.Peptide_MH, temp_PSMs.Charge, temp_sicstats.MZ, temp_PSMs.DelM_Da, temp_PSMs.DelM_PPM"
                     + " FROM temp_PSMs, temp_sicstats"
                     + " WHERE temp_sicstats.FragScanNumber=temp_PSMs.Scan AND temp_sicstats.random_id=" + m_Random_ID + " AND temp_PSMs.random_id=" + m_Random_ID
                     + " AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
@@ -1434,7 +1425,7 @@ namespace SMAQC
             m_Cached_DelM = new List<double>();
             m_Cached_DelM_ppm = new List<double>();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 // Calculate the theoretical monoisotopic mass of the peptide
                 var theoMonoMass = mPeptideMassCalculator.ConvoluteMass(Convert.ToDouble(m_MeasurementResults["Peptide_MH"]), 1, 0);
@@ -1481,7 +1472,7 @@ namespace SMAQC
         public string MS2_1()
         {
 
-            m_DBInterface.setQuery("SELECT temp_scanstatsex.Ion_Injection_Time "
+            m_DBInterface.SetQuery("SELECT temp_scanstatsex.Ion_Injection_Time "
                 + " FROM temp_PSMs, temp_scanstatsex "
                 + " WHERE temp_PSMs.Scan=temp_scanstatsex.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_scanstatsex.random_id=" + m_Random_ID
                 + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
@@ -1492,7 +1483,7 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 FilterList.Add(Convert.ToDouble(m_MeasurementResults["Ion_Injection_Time"]));
             }
@@ -1511,7 +1502,7 @@ namespace SMAQC
         public string MS2_2()
         {
 
-            m_DBInterface.setQuery("SELECT temp_scanstats.BasePeakSignalToNoiseRatio "
+            m_DBInterface.SetQuery("SELECT temp_scanstats.BasePeakSignalToNoiseRatio "
                 + " FROM temp_PSMs, temp_scanstats "
                 + " WHERE temp_PSMs.Scan=temp_scanstats.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_scanstats.random_id=" + m_Random_ID
                 + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
@@ -1523,7 +1514,7 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 // Add to the filtered list
                 FilterList.Add(Convert.ToDouble(m_MeasurementResults["BasePeakSignalToNoiseRatio"]));
@@ -1552,7 +1543,7 @@ namespace SMAQC
         public string MS2_3()
         {
 
-            m_DBInterface.setQuery("SELECT temp_scanstats.IonCountRaw "
+            m_DBInterface.SetQuery("SELECT temp_scanstats.IonCountRaw "
                 + " FROM temp_PSMs, temp_scanstats "
                 + " WHERE temp_PSMs.Scan=temp_scanstats.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_scanstats.random_id=" + m_Random_ID
                 + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
@@ -1563,7 +1554,7 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 FilterList.Add(Convert.ToDouble(m_MeasurementResults["IonCountRaw"]));
             }
@@ -1653,7 +1644,7 @@ namespace SMAQC
         private void Cache_MS2_4_Data()
         {
 
-            m_DBInterface.setQuery("SELECT COUNT(*) as MS2ScanCount "
+            m_DBInterface.SetQuery("SELECT COUNT(*) as MS2ScanCount "
                 + " FROM (SELECT DISTINCT temp_PSMs.Scan, temp_sicstats.PeakMaxIntensity "
                 + "       FROM temp_PSMs, temp_sicstats "
                 + "       WHERE temp_PSMs.Scan=temp_sicstats.FragScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_sicstats.random_id=" + m_Random_ID
@@ -1663,13 +1654,13 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            m_DBInterface.readSingleLine(fields1, ref m_MeasurementResults);
+            m_DBInterface.ReadSingleLine(fields1, ref m_MeasurementResults);
             var scanCountMS2 = Convert.ToInt32(m_MeasurementResults["MS2ScanCount"]);
 
             // Note that we sort by ascending PeakMaxIntensity
             // Thus, quartile 1 in m_Cached_MS2_4_Counts will have the lowest abundance peptides
 
-            m_DBInterface.setQuery("SELECT temp_PSMs.Scan, temp_sicstats.PeakMaxIntensity, Min(temp_PSMs.MSGFSpecProb) AS Peptide_Score "
+            m_DBInterface.SetQuery("SELECT temp_PSMs.Scan, temp_sicstats.PeakMaxIntensity, Min(temp_PSMs.MSGFSpecProb) AS Peptide_Score "
                 + " FROM temp_PSMs, temp_sicstats"
                 + " WHERE temp_PSMs.Scan=temp_sicstats.FragScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_sicstats.random_id=" + m_Random_ID
                 + " GROUP BY temp_PSMs.Scan, temp_sicstats.PeakMaxIntensity "
@@ -1693,7 +1684,7 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            while ((m_DBInterface.readLines(fields2, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields2, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 var passed_filter = false;
 
@@ -1762,7 +1753,7 @@ namespace SMAQC
         public string P_1A()
         {
 
-            m_DBInterface.setQuery("SELECT Scan, Max(-Log10(MSGFSpecProb)) AS Peptide_Score"
+            m_DBInterface.SetQuery("SELECT Scan, Max(-Log10(MSGFSpecProb)) AS Peptide_Score"
                 + " FROM temp_PSMs "
                 + " WHERE random_id=" + m_Random_ID
                 + " GROUP BY Scan "
@@ -1775,7 +1766,7 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 double peptideScore;
                 if (double.TryParse(m_MeasurementResults["Peptide_Score"], out peptideScore))
@@ -1797,7 +1788,7 @@ namespace SMAQC
         public string P_1B()
         {
 
-            m_DBInterface.setQuery("SELECT Scan, Min(Log10(MSGFSpecProb)) AS Peptide_Score"
+            m_DBInterface.SetQuery("SELECT Scan, Min(Log10(MSGFSpecProb)) AS Peptide_Score"
                 + " FROM temp_PSMs "
                 + " WHERE random_id=" + m_Random_ID
                 + " GROUP BY Scan "
@@ -1810,7 +1801,7 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 double peptideScore;
                 if (double.TryParse(m_MeasurementResults["Peptide_Score"], out peptideScore))
@@ -1838,7 +1829,7 @@ namespace SMAQC
         private string P_2A_Shared(bool phosphoPeptides)
         {
 
-            m_DBInterface.setQuery("SELECT Cleavage_State, Count(*) AS Spectra "
+            m_DBInterface.SetQuery("SELECT Cleavage_State, Count(*) AS Spectra "
                                 + " FROM ( SELECT Scan, Max(Cleavage_State) AS Cleavage_State "
                                 + "        FROM temp_PSMs "
                                 + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
@@ -1853,7 +1844,7 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 dctPSMStats.Add(Convert.ToInt32(m_MeasurementResults["Cleavage_State"]), Convert.ToInt32(m_MeasurementResults["Spectra"]));
             }
@@ -1973,7 +1964,7 @@ namespace SMAQC
         public string P_4B()
         {
 
-            m_DBInterface.setQuery("SELECT Count(*) AS Peptides, SUM(MissedCleavages) as TotalMissedCleavages"
+            m_DBInterface.SetQuery("SELECT Count(*) AS Peptides, SUM(MissedCleavages) as TotalMissedCleavages"
                                    + " FROM ( SELECT Unique_Seq_ID, Max(MissedCleavages) AS MissedCleavages "
                                    + "        FROM temp_PSMs "
                                    + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
@@ -1984,10 +1975,10 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            m_DBInterface.readSingleLine(fields, ref m_MeasurementResults);
+            m_DBInterface.ReadSingleLine(fields, ref m_MeasurementResults);
 
             var uniquePeptides = Convert.ToInt32(m_MeasurementResults["Peptides"]);
-            var totalMissedCleavages = Convert.ToInt32(m_MeasurementResults["TotalMissedCleavages"]);           
+            var totalMissedCleavages = Convert.ToInt32(m_MeasurementResults["TotalMissedCleavages"]);
 
             // Compute the ratio of total missed cleavagesc / total unique peptides
 
@@ -2035,7 +2026,7 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string Keratin_2A()
         {
-            m_DBInterface.setQuery("SELECT Count(*) AS Spectra "
+            m_DBInterface.SetQuery("SELECT Count(*) AS Spectra "
                                    + " FROM ( SELECT Scan, Max(Cleavage_State) AS Cleavage_State "
                                    + "        FROM temp_PSMs "
                                    + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
@@ -2043,11 +2034,11 @@ namespace SMAQC
                                    + "          AND Keratinpeptide = 1"
                                    + "        GROUP BY Scan ) StatsQ "
                                    + " WHERE Cleavage_State >= 0");
-                    
+
             string[] fields = { "Spectra" };
 
             m_DBInterface.initReader();
-            m_DBInterface.readSingleLine(fields, ref m_MeasurementResults);
+            m_DBInterface.ReadSingleLine(fields, ref m_MeasurementResults);
 
             var keratinCount = Convert.ToInt32(m_MeasurementResults["Spectra"]);
 
@@ -2062,7 +2053,7 @@ namespace SMAQC
         public string Keratin_2C()
         {
 
-            m_DBInterface.setQuery("SELECT Count(*) AS Peptides "
+            m_DBInterface.SetQuery("SELECT Count(*) AS Peptides "
                                    + " FROM ( SELECT Unique_Seq_ID, Max(Cleavage_State) AS Cleavage_State "
                                    + "        FROM temp_PSMs "
                                    + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
@@ -2074,7 +2065,7 @@ namespace SMAQC
             string[] fields = { "Peptides" };
 
             m_DBInterface.initReader();
-            m_DBInterface.readSingleLine(fields, ref m_MeasurementResults);
+            m_DBInterface.ReadSingleLine(fields, ref m_MeasurementResults);
 
             var keratinCount = Convert.ToInt32(m_MeasurementResults["Peptides"]);
 
@@ -2089,7 +2080,7 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string Trypsin_2A()
         {
-            m_DBInterface.setQuery("SELECT Count(*) AS Spectra "
+            m_DBInterface.SetQuery("SELECT Count(*) AS Spectra "
                                    + " FROM ( SELECT Scan, Max(Cleavage_State) AS Cleavage_State "
                                    + "        FROM temp_PSMs "
                                    + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
@@ -2101,7 +2092,7 @@ namespace SMAQC
             string[] fields = { "Spectra" };
 
             m_DBInterface.initReader();
-            m_DBInterface.readSingleLine(fields, ref m_MeasurementResults);
+            m_DBInterface.ReadSingleLine(fields, ref m_MeasurementResults);
 
             var trypsinCount = Convert.ToInt32(m_MeasurementResults["Spectra"]);
 
@@ -2116,7 +2107,7 @@ namespace SMAQC
         public string Trypsin_2C()
         {
 
-            m_DBInterface.setQuery("SELECT Count(*) AS Peptides "
+            m_DBInterface.SetQuery("SELECT Count(*) AS Peptides "
                                    + " FROM ( SELECT Unique_Seq_ID, Max(Cleavage_State) AS Cleavage_State "
                                    + "        FROM temp_PSMs "
                                    + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
@@ -2128,7 +2119,7 @@ namespace SMAQC
             string[] fields = { "Peptides" };
 
             m_DBInterface.initReader();
-            m_DBInterface.readSingleLine(fields, ref m_MeasurementResults);
+            m_DBInterface.ReadSingleLine(fields, ref m_MeasurementResults);
 
             var trypsinCount = Convert.ToInt32(m_MeasurementResults["Peptides"]);
 
@@ -2223,15 +2214,15 @@ namespace SMAQC
             }
 
             sbSql.Append(" FROM temp_reporterions");
-            sbSql.Append(" WHERE random_id=" + m_Random_ID);            
+            sbSql.Append(" WHERE random_id=" + m_Random_ID);
 
-            m_DBInterface.setQuery(sbSql.ToString());
+            m_DBInterface.SetQuery(sbSql.ToString());
 
             var fields = (from item in ionColumns select item + "_Sum").ToList();
             fields.AddRange((from item in ionColumns select item + "_Count").ToList());
 
             m_DBInterface.initReader();
-            m_DBInterface.readSingleLine(fields.ToArray(), ref m_MeasurementResults);
+            m_DBInterface.ReadSingleLine(fields.ToArray(), ref m_MeasurementResults);
 
             var overallSum = 0.0;
             var overallCount = 0;
@@ -2284,18 +2275,18 @@ namespace SMAQC
                       " FROM (" + sbSql + ") AS FilterQ" +
                       " WHERE ReporterIonCount = " + reporterIonObsCount;
 
-            m_DBInterface.setQuery(sql);
+            m_DBInterface.SetQuery(sql);
 
             string[] fields = { "PSMs" };
 
             m_DBInterface.initReader();
-            m_DBInterface.readSingleLine(fields.ToArray(), ref m_MeasurementResults);
+            m_DBInterface.ReadSingleLine(fields.ToArray(), ref m_MeasurementResults);
 
             var psmCount = Convert.ToInt32(m_MeasurementResults["PSMs"]);
             return psmCount;
 
         }
-        
+
         private List<string> DetermineReporterIonColumns()
         {
             if (mReporterIonColumns != null)
@@ -2319,12 +2310,12 @@ namespace SMAQC
             sbSql.Append(" FROM temp_reporterions");
             sbSql.Append(" WHERE random_id=" + m_Random_ID);
 
-            m_DBInterface.setQuery(sbSql.ToString());
+            m_DBInterface.SetQuery(sbSql.ToString());
 
             var fields = ionColumns.ToArray();
 
             m_DBInterface.initReader();
-            m_DBInterface.readSingleLine(fields, ref m_MeasurementResults);
+            m_DBInterface.ReadSingleLine(fields, ref m_MeasurementResults);
 
             var ionColumnsToUse = new List<string>();
             foreach (var column in ionColumns)
@@ -2377,7 +2368,7 @@ namespace SMAQC
                 chargeSql = ", Charge ";
             }
 
-            m_DBInterface.setQuery("SELECT Cleavage_State, Count(*) AS Peptides "
+            m_DBInterface.SetQuery("SELECT Cleavage_State, Count(*) AS Peptides "
                                 + " FROM ( SELECT Unique_Seq_ID" + chargeSql + ", Max(Cleavage_State) AS Cleavage_State "
                                 + "        FROM temp_PSMs "
                                 + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
@@ -2392,7 +2383,7 @@ namespace SMAQC
 
             m_DBInterface.initReader();
 
-            while ((m_DBInterface.readLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
+            while ((m_DBInterface.ReadLines(fields, ref m_MeasurementResults)) && (m_MeasurementResults.Count > 0))
             {
                 dctPeptideStats.Add(Convert.ToInt32(m_MeasurementResults["Cleavage_State"]), Convert.ToInt32(m_MeasurementResults["Peptides"]));
             }

@@ -75,106 +75,36 @@ namespace SMAQC
 
             // Calculate relative result_id
             var result_id = scan_id + dataset_number;
-
             // Set query to retrieve scan results
-            DBWrapper.setQuery("SELECT * FROM scan_results WHERE result_id='" + result_id + "' LIMIT 1;");
+            mDBWrapper.SetQuery("SELECT * FROM scan_results WHERE scan_id ='" + scan_id + "' LIMIT 1;");
 
             // Init reader
-            DBWrapper.initReader();
+            mDBWrapper.initReader();
 
             // Read it into our hash table
-            DBWrapper.readSingleLine(fields.ToArray(), ref dctResults);
+            mDBWrapper.ReadSingleLine(mMetricNames.ToArray(), ref dctResults);
 
             // Get count
             var count = dctResults.Count;
 
             // Ensure there is data!
-            if (count > 0)
-            {
-                // Open temp file
-                using (var file = new StreamWriter(filename))
-                {
-
-                    file.WriteLine("SMAQC SCANNER RESULTS");
-                    file.WriteLine("-----------------------------------------------------------");
-                    file.WriteLine("SMAQC Version: " + smaqc_version + "");
-                    // file.WriteLine("results from scan id: " + scan_id + "");
-                    file.WriteLine("Instrument ID: " + dctResults["instrument_id"] + "");
-                    file.WriteLine("Scan Date: " + dctResults["scan_date"] + "");
-                    file.WriteLine("[Data]");
-                    file.WriteLine("Dataset, Measurement Name, Measurement Value");
-
-                    // Remove from hash table
-                    dctResults.Remove("instrument_id");
-                    dctResults.Remove("scan_date");
-                    dctResults.Remove("scan_id");
-                    dctResults.Remove("random_id");
-
-                    // Loop through all that should be left [our measurements]
-                    foreach (var key in dctResults.Keys)
-                    {
-                        // Ensure that all keys have data [this is really a fix for sqlite due to not supporting nulls properly]
-                        if (!string.IsNullOrEmpty(dctResults[key]))
-                        {
-                            // Add to sorted dictionary
-                            dctValidResults.Add(key, dctResults[key]);
-                        }
-                    }
-
-                    // Loop through each sorted dictionary
-                    foreach (var pair in dctValidResults)
-                    {
-                        // Add: dataset, measurement name,
-
-                        var outLine = string.Format("" + dataset + ", " + pair.Key + ",");
-
-                        // If there is a non-null value
-                        if (!pair.Value.Equals("Null"))
-                        {
-                            outLine += " " + pair.Value;
-                        }
-
-                        file.WriteLine(outLine);
-                    }
-
-                    file.WriteLine();
-                    // Close file
-                }
-            }
-            else
+            if (count <= 0)
             {
                 Console.WriteLine("Error: The scan id provided either does not exist, or has no results!");
+                return;
             }
 
-        }
-
-        // Append additional measurement data to output file
-        private void AppendAdditionalMeasurementsToOutputFile(string dataset, string filename, int scan_id, int dataset_number)
-        {
-            // Declare variables
-            var dctResults = new Dictionary<string, string>();                                             // Hash table for scan results
-            var dctValidResults = new SortedDictionary<string, string>();
-
-            // Calculate relative result_id
-            var result_id = scan_id + dataset_number;
-
-            // Set query to retrieve scan results
-            DBWrapper.setQuery("SELECT * FROM scan_results WHERE result_id='" + result_id + "' LIMIT 1;");
-
-            // Init reader
-            DBWrapper.initReader();
-
-            // Read it into our hash table
-            DBWrapper.readSingleLine(fields.ToArray(), ref dctResults);
-
-            // Get count
-            var count = dctResults.Count;
-
-            // Ensure there is data!
-            if (count > 0)
+            // Create the result file
+            using (var file = new StreamWriter(filename))
             {
-                // Open temp file
-                var file = File.AppendText(filename);
+                file.WriteLine("SMAQC SCANNER RESULTS");
+                file.WriteLine("-----------------------------------------------------------");
+                file.WriteLine("SMAQC Version: " + mSMAQCVersion + "");
+                // file.WriteLine("results from scan id: " + scan_id + "");
+                file.WriteLine("Instrument ID: " + dctResults["instrument_id"] + "");
+                file.WriteLine("Scan Date: " + dctResults["scan_date"] + "");
+                file.WriteLine("[Data]");
+                file.WriteLine("Dataset, Measurement Name, Measurement Value");
 
                 // Remove from hash table
                 dctResults.Remove("instrument_id");
@@ -209,14 +139,75 @@ namespace SMAQC
                 }
 
                 file.WriteLine();
-
-                file.Close();
             }
-            else
+
+        }
+
+        // Append additional measurement data to output file
+        private void AppendAdditionalMeasurementsToOutputFile(string dataset, string filename, int scan_id)
+        {
+            // Hash table for scan results
+            var dctResults = new Dictionary<string, string>();
+            var dctValidResults = new SortedDictionary<string, string>();
+
+            // Set query to retrieve scan results
+            mDBWrapper.SetQuery("SELECT * FROM scan_results WHERE scan_id ='" + scan_id + "' LIMIT 1;");
+
+            // Init reader
+            mDBWrapper.initReader();
+
+            // Read it into our hash table
+            mDBWrapper.ReadSingleLine(mMetricNames.ToArray(), ref dctResults);
+
+            // Get count
+            var count = dctResults.Count;
+
+            // Ensure there is data!
+            if (count <= 0)
             {
+
                 Console.WriteLine("Error: The scan id provided either does not exist, or has no results!");
+                return;
             }
 
+            // Append to the result file
+            var file = File.AppendText(filename);
+
+            // Remove from hash table
+            dctResults.Remove("instrument_id");
+            dctResults.Remove("scan_date");
+            dctResults.Remove("scan_id");
+            dctResults.Remove("random_id");
+
+            // Loop through all that should be left [our measurements]
+            foreach (var key in dctResults.Keys)
+            {
+                // Ensure that all keys have data [this is really a fix for sqlite due to not supporting nulls properly]
+                if (!string.IsNullOrEmpty(dctResults[key]))
+                {
+                    // Add to sorted dictionary
+                    dctValidResults.Add(key, dctResults[key]);
+                }
+            }
+
+            // Loop through each sorted dictionary
+            foreach (var pair in dctValidResults)
+            {
+                // Add: dataset, measurement name,
+                var outLine = string.Format("" + dataset + ", " + pair.Key + ",");
+
+                // If there is a non-null value
+                if (!pair.Value.Equals("Null"))
+                {
+                    outLine += " " + pair.Value;
+                }
+
+                file.WriteLine(outLine);
+            }
+
+            file.WriteLine();
+
+            file.Close();
         }
 
 

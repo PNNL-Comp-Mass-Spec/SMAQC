@@ -30,37 +30,48 @@ namespace SMAQC
         private const bool WIPE_TEMP_DATA_AT_START = true;
         private const bool KEEP_TEMP_DATA_AT_END = true;
 
-        // DB Interface objerct
-        public static DBWrapper m_DBWrapper;
-        public static Aggregate m_Aggregate;
-        public static Measurement m_Measurement;
+        // DB Interface object
+        private static DBWrapper mDBWrapper;
+
+        /// <summary>
+        /// Aggregate object
+        /// </summary>
+        private static Aggregate mAggregate;
+
+        /// <summary>
+        /// Measurement engine that computes the metrics
+        /// </summary>
+        private static Measurement mMeasurement;
 
         // Filter engine
-        public static Filter m_Filter;
+        private static Filter mFilter;
 
         // Measurement engine
-        public static MeasurementEngine m_MeasurementEngine;
+        private static MeasurementEngine mMeasurementEngine;
 
-        public static SystemLogManager m_SystemLogManager = new SystemLogManager();
-        public static OutputFileManager m_OutputFileManager;
+        private static SystemLogManager mSystemLogManager = new SystemLogManager();
 
-        private static udtOptions m_Options;
+        /// <summary>
+        /// Output engine
+        /// </summary>
+        private static OutputFileManager mOutputFileManager;
 
-        // Configuration options
-        public static readonly Dictionary<string, string> m_Configtable = new Dictionary<string, string>();
+        /// <summary>
+        /// Options
+        /// </summary>
+        private static udtOptions mOptions;
 
         // Measurement results
-        public static Dictionary<string, string> m_Results = new Dictionary<string, string>();
+        private static Dictionary<string, string> mResults = new Dictionary<string, string>();
 
-        private const string SMAQC_BUILD_DATE = "November 23, 2016";
+        private const string SMAQC_BUILD_DATE = "January 30, 2017";
 
         // Define the filename suffixes
-        // These names need to be lowercase
-        private static readonly string[] m_MasicFileNames = { "_scanstats", "_scanstatsex", "_sicstats", "_reporterions" };
+        private static readonly string[] mMasicFileExtensions = { "_ScanStats", "_ScanStatsEx", "_SICStats", "_ReporterIons" };
 
-        // Fields to track in the database
+        // Metrics to track in the database
         // Note that LoadMeasurementInfoFile uses this list to define the default metrics to run (skipping "instrument_id", "random_id", and "scan_date")
-        private static readonly List<string> m_Fields = new List<string> {
+        private static readonly List<string> mMetricNames = new List<string> {
             "instrument_id", "random_id", "scan_date", "C_1A", "C_1B",
             "C_2A", "C_2B", "C_3A", "C_3B", "C_4A", "C_4B", "C_4C", "DS_1A", "DS_1B", "DS_2A", "DS_2B",
             "DS_3A", "DS_3B", "IS_1A", "IS_1B", "IS_2", "IS_3A", "IS_3B", "IS_3C", "MS1_1",
@@ -79,7 +90,7 @@ namespace SMAQC
             var objParseCommandLine = new FileProcessor.clsParseCommandLine();
             var success = false;
 
-            m_Options.Clear();
+            mOptions.Clear();
 
             if (objParseCommandLine.ParseCommandLine())
             {
@@ -90,7 +101,7 @@ namespace SMAQC
             if (!success ||
                 objParseCommandLine.NeedToShowHelp ||
                 objParseCommandLine.ParameterCount + objParseCommandLine.NonSwitchParameterCount == 0 ||
-                string.IsNullOrEmpty(m_Options.InputFolderPath))
+                string.IsNullOrEmpty(mOptions.InputFolderPath))
             {
                 ShowProgramHelp();
                 return -1;
@@ -99,23 +110,23 @@ namespace SMAQC
 
             // Show the processing options
             Console.WriteLine();
-            Console.WriteLine("Instrument ID: ".PadRight(20) + m_Options.Instrument_id);
-            Console.WriteLine("Path to datasets: ".PadRight(20) + m_Options.InputFolderPath);
-            if (string.IsNullOrEmpty(m_Options.MeasurementsFile))
+            Console.WriteLine("Instrument ID: ".PadRight(20) + mOptions.Instrument_id);
+            Console.WriteLine("Path to datasets: ".PadRight(20) + mOptions.InputFolderPath);
+            if (string.IsNullOrEmpty(mOptions.MeasurementsFile))
                 Console.WriteLine("Using default metrics");
             else
-                Console.WriteLine("Measurements file: ".PadRight(20) + m_Options.MeasurementsFile);
-            if (!string.IsNullOrEmpty(m_Options.OutputFilePath))
-                Console.WriteLine("Text results file: ".PadRight(20) + m_Options.OutputFilePath);
-            Console.WriteLine("SQLite DB folder: ".PadRight(20) + m_Options.DBFolderPath);
+                Console.WriteLine("Measurements file: ".PadRight(20) + mOptions.MeasurementsFile);
+            if (!string.IsNullOrEmpty(mOptions.OutputFilePath))
+                Console.WriteLine("Text results file: ".PadRight(20) + mOptions.OutputFilePath);
+            Console.WriteLine("SQLite DB folder: ".PadRight(20) + mOptions.DBFolderPath);
             Console.WriteLine();
 
             try
             {
                 // Create the application log
-                m_SystemLogManager.createApplicationLog();
+                mSystemLogManager.CreateApplicationLog();
 
-                m_SystemLogManager.addApplicationLog("SMAQC Version " + GetAppVersion());
+                mSystemLogManager.AddApplicationLog("SMAQC Version " + GetAppVersion());
 
             }
             catch (Exception ex)
@@ -130,25 +141,22 @@ namespace SMAQC
             {
 
                 // Obtain the list of measurements to run
-                var lstMeasurementsToRun = LoadMeasurementInfoFile(m_Options.MeasurementsFile);
+                var lstMeasurementsToRun = LoadMeasurementInfoFile(mOptions.MeasurementsFile);
 
                 try
                 {
 
                     // Connect to the database
-                    m_DBWrapper = new DBWrapper(m_Options.DBFolderPath)
-                    {
-                        ShowQueryText = false
-                    };
+                    mDBWrapper = new DBWrapper(mOptions.DBFolderPath, false);
 
                     if (WIPE_TEMP_DATA_AT_START)
-                        m_DBWrapper.ClearTempTables();
+                        mDBWrapper.ClearTempTables();
 
-                    m_Aggregate = new Aggregate(m_Options.InputFolderPath);                                                                 // AGGREGATE OBJECT
-                    m_Measurement = new Measurement(random_id, ref m_DBWrapper);                                                            // MEASUREMENT LIST OBJECT
-                    m_MeasurementEngine = new MeasurementEngine(lstMeasurementsToRun, ref m_Measurement, ref m_SystemLogManager);      // MEASUREMENT ENGINE OBJECT
-                    m_Filter = new Filter(ref m_DBWrapper, m_Options.Instrument_id, random_id, ref m_SystemLogManager);                              // FILTER OBJECT
-                    m_OutputFileManager = new OutputFileManager(ref m_DBWrapper, GetAppVersion(), m_Fields);            // OUTPUTFILE MANAGER OBJECT
+                    mAggregate = new Aggregate(mOptions.InputFolderPath);
+                    mMeasurement = new Measurement(random_id, ref mDBWrapper);
+                    mMeasurementEngine = new MeasurementEngine(lstMeasurementsToRun, ref mMeasurement, ref mSystemLogManager);
+                    mFilter = new Filter(ref mDBWrapper, mOptions.Instrument_id, random_id, ref mSystemLogManager);
+                    mOutputFileManager = new OutputFileManager(ref mDBWrapper, GetAppVersion(), mMetricNames);
 
                     try
                     {
@@ -163,16 +171,16 @@ namespace SMAQC
                     {
                         var message = "Error processing datasets: " + ex.Message;
                         ShowErrorMessage(message);
-                        m_SystemLogManager.addApplicationLog(message);
+                        mSystemLogManager.AddApplicationLog(message);
                         Thread.Sleep(1500);
                         return 9;
                     }
 
                     try
                     {
-                        m_SystemLogManager.addApplicationLog("SMAQC analysis complete");
+                        mSystemLogManager.AddApplicationLog("SMAQC analysis complete");
 
-                        m_SystemLogManager.CloseLogFile();
+                        mSystemLogManager.CloseLogFile();
                     }
                     catch (Exception ex)
                     {
@@ -209,31 +217,32 @@ namespace SMAQC
         private static int ProcessDatasets(int random_id, List<string> lstMeasurementsToRun)
         {
 
-            m_SystemLogManager.addApplicationLog("Searching for Text Files...");
+            mSystemLogManager.AddApplicationLog("Searching for Text Files...");
 
             // Detect datasets
-            var DatasetNames = m_Aggregate.DetectDatasets();
+            var DatasetNames = mAggregate.DetectDatasets();
 
             if (DatasetNames.Count == 0)
             {
                 // No datasets were found
-                m_SystemLogManager.addApplicationLog("Unable to find any datasets in " + m_Options.InputFolderPath);
-                m_SystemLogManager.addApplicationLog("Exiting...");
+                mSystemLogManager.AddApplicationLog("Unable to find any datasets in " + mOptions.InputFolderPath);
+                mSystemLogManager.AddApplicationLog("Exiting...");
                 return -2;
             }
 
-            // Get the next available result_id
-            var result_id = determine_result_id();
-
             // Process the datasets
-            var datasetNumber = 0;
             foreach (var datasetName in DatasetNames)
             {
+                // Get the next available scan_id
+                var scan_id = determine_result_id();
+
                 try
                 {
-                    m_Aggregate.setDataset(datasetName);
+                    mAggregate.SetDatasetName(datasetName);
 
-                    var MasicFileList = m_Aggregate.getMasicFileImportList(datasetName, "*.txt");
+                    // getMasicFileImportList returns a dictionary where 
+                    // Keys are file paths and Values are lists of header column suffixes to ignore
+                    var masicFileList = mAggregate.GetMasicFileImportList("*.txt");
 
                     // Ensure that the MASIC files exist
                     var scanStatsMissing = false;
@@ -242,13 +251,13 @@ namespace SMAQC
                     var reporterIonsMissing = false;
 
                     // Find the missing files
-                    foreach (var sSuffix in m_MasicFileNames)
+                    foreach (var sSuffix in mMasicFileExtensions)
                     {
                         var bMatchFound = false;
 
-                        foreach (var sFilePath in MasicFileList)
+                        foreach (var candidateFile in masicFileList)
                         {
-                            var sFileName = Path.GetFileNameWithoutExtension(sFilePath);
+                            var sFileName = Path.GetFileNameWithoutExtension(candidateFile.Key);
                             if (sFileName != null && sFileName.EndsWith(sSuffix, true, System.Globalization.CultureInfo.CurrentCulture))
                             {
                                 bMatchFound = true;
@@ -256,119 +265,117 @@ namespace SMAQC
                             }
                         }
 
-                        if (!bMatchFound)
-                        {
-                            if (sSuffix == "_scanstats")
-                            {
-                                scanStatsMissing = true;
-                            }
-                            else
-                            if (sSuffix == "_scanstatsex")
-                            {
-                                scanStatsExMissing = true;
-                            }
-                            else
-                            if (sSuffix == "_sicstats")
-                            {
-                                sicStatsMissing = true;
-                            }
-                            else
-                            if (sSuffix == "_reporterions")
-                            {
-                                reporterIonsMissing = true;
-                            }
-                            else
-                            {
-                                m_SystemLogManager.addApplicationLog("  Missing unrecognized file: " + datasetName + sSuffix + ".txt");
-                            }
-                        }
+                        if (bMatchFound)
+                            continue;
 
+                        if (string.Equals(sSuffix, "_ScanStats", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            scanStatsMissing = true;
+                        }
+                        else
+                        if (string.Equals(sSuffix, "_ScanStatsEx", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            scanStatsExMissing = true;
+                        }
+                        else
+                        if (string.Equals(sSuffix, "_SICStats", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            sicStatsMissing = true;
+                        }
+                        else
+                        if (string.Equals(sSuffix, "_ReporterIons", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            reporterIonsMissing = true;
+                        }
+                        else
+                        {
+                            mSystemLogManager.AddApplicationLog("  Missing unrecognized file: " + datasetName + sSuffix + ".txt");
+                        }
                     }
 
                     if (scanStatsMissing || sicStatsMissing)
                     {
                         // Missing required files
-                        m_SystemLogManager.addApplicationLog("Required MASIC data files not found in " +
-                                                             m_Options.InputFolderPath);
+                        mSystemLogManager.AddApplicationLog("Required MASIC data files not found in " +
+                                                             mOptions.InputFolderPath);
                     }
 
                     if (scanStatsMissing)
                     {
-                        m_SystemLogManager.addApplicationLog("  Missing file: " + datasetName + "_ScanStats.txt");
-                        m_SystemLogManager.addApplicationLog("Exiting...");
-                        m_SystemLogManager.CloseLogFile();
+                        mSystemLogManager.AddApplicationLog("  Missing file: " + datasetName + "_ScanStats.txt");
+                        mSystemLogManager.AddApplicationLog("Exiting...");
+                        mSystemLogManager.CloseLogFile();
                         return 11;
                     }
 
                     if (sicStatsMissing)
                     {
-                        m_SystemLogManager.addApplicationLog("  Missing file: " + datasetName + "_SicStats.txt");
-                        m_SystemLogManager.addApplicationLog("Exiting...");
-                        m_SystemLogManager.CloseLogFile();
+                        mSystemLogManager.AddApplicationLog("  Missing file: " + datasetName + "_SicStats.txt");
+                        mSystemLogManager.AddApplicationLog("Exiting...");
+                        mSystemLogManager.CloseLogFile();
                         return 12;
                     }
 
                     if (scanStatsExMissing)
                     {
                         // _ScanStatsEx.txt is missing; that's OK
-                        m_SystemLogManager.addApplicationLog("Did not find file " + datasetName +
+                        mSystemLogManager.AddApplicationLog("Did not find file " + datasetName +
                                                                 "_ScanStatsEx.txt; metrics MS1_1 and MS2_1 will not be computed");
                     }
 
                     if (reporterIonsMissing)
                     {
                         // _ReporterIons.txt is missing; that's OK
-                        m_SystemLogManager.addApplicationLog("Did not find file " + datasetName +
+                        mSystemLogManager.AddApplicationLog("Did not find file " + datasetName +
                                                                 "_ReporterIons.txt; MS2_RepIon metrics will not be computed");
                     }
 
                     // Load the data and store in the database
-                    m_SystemLogManager.addApplicationLog("Parsing and Inserting Data into DB Temp Tables");
+                    mSystemLogManager.AddApplicationLog("Parsing and Inserting Data into DB Temp Tables");
 
                     // Load data using PHRP
-                    m_Filter.LoadFilesUsingPHRP(m_Options.InputFolderPath, datasetName);
+                    mFilter.LoadFilesUsingPHRP(mOptions.InputFolderPath, datasetName);
 
                     // Load the MASIC data
-                    m_Filter.LoadFilesAndInsertIntoDB(MasicFileList, m_MasicFileNames, datasetName);
+                    mFilter.LoadFilesAndInsertIntoDB(masicFileList, mMasicFileExtensions, datasetName);
 
                     // Run the measurements
-                    m_SystemLogManager.addApplicationLog("Now running Measurements on " + datasetName);
+                    mSystemLogManager.AddApplicationLog("Now running Measurements on " + datasetName);
 
-                    m_Results = m_MeasurementEngine.RunMeasurements();
+                    mResults = mMeasurementEngine.RunMeasurements();
 
                     // Store the results
-                    m_SystemLogManager.addApplicationLog("Saving Scan Results");
-                    add_scan_results(m_Options.Instrument_id, random_id, result_id, lstMeasurementsToRun);
+                    mSystemLogManager.AddApplicationLog("Saving Scan Results");
+                    add_scan_results(mOptions.Instrument_id, random_id, scan_id, lstMeasurementsToRun);
 
                     if (!KEEP_TEMP_DATA_AT_END)
                     {
                         // Remove the working data
-                        m_DBWrapper.ClearTempTables(random_id);
+                        mDBWrapper.ClearTempTables(random_id);
                     }
 
-                    if (!string.IsNullOrEmpty(m_Options.OutputFilePath))
+                    if (!string.IsNullOrEmpty(mOptions.OutputFilePath))
                     {
                         // Write the results to a file
-                        m_OutputFileManager.SaveData(datasetName, m_Options.OutputFilePath, Convert.ToInt32(m_Configtable["scan_id"]), datasetNumber);
+                        mOutputFileManager.SaveData(datasetName, mOptions.OutputFilePath, scan_id);
 
-                        m_SystemLogManager.addApplicationLog("Scan output has been saved to " + m_Options.OutputFilePath);
+                        mSystemLogManager.AddApplicationLog("Scan output has been saved to " + mOptions.OutputFilePath);
                     }
                     else
                     {
-                        m_SystemLogManager.addApplicationLog("Scan result saved to SQLite DB (Scan ID=" + m_Configtable["scan_id"] + ")");
+                        mSystemLogManager.AddApplicationLog("Scan result saved to SQLite DB (Scan ID=" + scan_id + ")");
                     }
 
-                    m_Results.Clear();
+                    mResults.Clear();
 
                 }
                 catch (Exception ex)
                 {
-                    m_SystemLogManager.addApplicationLog("Error processing dataset " + datasetName + ": " + ex.Message);
+                    mSystemLogManager.AddApplicationLog("Error processing dataset " + datasetName + ": " + ex.Message);
                     Console.WriteLine(ex.StackTrace);
                     return 5;
                 }
 
-                datasetNumber++;
             }
 
             return 0;
@@ -408,7 +415,7 @@ namespace SMAQC
                 // Query objParseCommandLine to see if various parameters are present						
                 if (objParseCommandLine.NonSwitchParameterCount > 0)
                 {
-                    m_Options.InputFolderPath = objParseCommandLine.RetrieveNonSwitchParameter(0);
+                    mOptions.InputFolderPath = objParseCommandLine.RetrieveNonSwitchParameter(0);
                 }
 
                 string strValue;
@@ -417,7 +424,7 @@ namespace SMAQC
                     if (string.IsNullOrWhiteSpace(strValue))
                         ShowErrorMessage("/O does not have a value; not overriding the output file path");
                     else
-                        m_Options.OutputFilePath = strValue;
+                        mOptions.OutputFilePath = strValue;
                 }
 
                 if (objParseCommandLine.RetrieveValueForParameter("DB", out strValue))
@@ -426,7 +433,7 @@ namespace SMAQC
                         ShowErrorMessage("/DB does not have a value; not overriding the database folder path");
                     else
                     {
-                        m_Options.DBFolderPath = strValue;
+                        mOptions.DBFolderPath = strValue;
                     }
                 }
 
@@ -436,7 +443,7 @@ namespace SMAQC
                         ShowErrorMessage("/I does not have a value; not overriding the Instrument ID");
                     else
                     {
-                        m_Options.Instrument_id = strValue;
+                        mOptions.Instrument_id = strValue;
                     }
                 }
 
@@ -446,7 +453,7 @@ namespace SMAQC
                         ShowErrorMessage("/M does not have a value; not customizing the metrics to compute");
                     else
                     {
-                        m_Options.MeasurementsFile = strValue;
+                        mOptions.MeasurementsFile = strValue;
                     }
                 }
 
@@ -634,12 +641,12 @@ namespace SMAQC
             scan_results_query += "'" + random_id + "',";
 
             //BUILD DATE STRINGS
-            scan_results_query += m_DBWrapper.getDateTime();// +",";
+            scan_results_query += mDBWrapper.GetDateTime();
 
             //BUILD METRICS VALUE LIST ["'" + resultstable["C_1A"] + "',"]
             foreach (var item in lstMeasurementsToRun)
             {
-                scan_results_query += ", '" + m_Results[item] + "'";
+                scan_results_query += ", '" + mResults[item] + "'";
                 //Console.WriteLine("KEY=[{0}] -- VALUE=[{1}]", key, resultstable[measurementsDict[key]]);
             }
 
@@ -661,11 +668,11 @@ namespace SMAQC
 
             m_DBWrapper.setQuery("SELECT Max(result_id) AS result_id FROM scan_results;");
 
-            m_DBWrapper.initReader();
+            mDBWrapper.initReader();
 
             string[] field_array = { "result_id" };
 
-            m_DBWrapper.readSingleLine(field_array, ref dctMostRecentEntry);
+            mDBWrapper.ReadSingleLine(field_array, ref dctMostRecentEntry);
 
             if (int.TryParse(dctMostRecentEntry["result_id"], out result_id))
                 result_id++;
@@ -741,8 +748,8 @@ namespace SMAQC
 
                 if (!fiMeasurementsToRunFile.Exists)
                 {
-                    m_SystemLogManager.addApplicationLog("Warning, measurement file was not found: " + fiMeasurementsToRunFile.FullName);
-                    m_SystemLogManager.addApplicationLog("Will use the default metrics");
+                    mSystemLogManager.AddApplicationLog("Warning, measurement file was not found: " + fiMeasurementsToRunFile.FullName);
+                    mSystemLogManager.AddApplicationLog("Will use the default metrics");
                     useDefaultMetrics = true;
                 }
                 else
@@ -779,7 +786,7 @@ namespace SMAQC
 
             if (useDefaultMetrics)
             {
-                var metricNames = (from item in m_Fields where item != "instrument_id" && item != "random_id" && item != "scan_date" select item);
+                var metricNames = (from item in mMetricNames where item != "instrument_id" && item != "random_id" && item != "scan_date" select item);
 
                 lstMeasurementsToRun.Clear();
                 lstMeasurementsToRun.AddRange(metricNames);

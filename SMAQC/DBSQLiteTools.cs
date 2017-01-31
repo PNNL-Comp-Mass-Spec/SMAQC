@@ -8,8 +8,6 @@ namespace SMAQC
     class DBSQLiteTools
     {
 
-        private SQLiteConnection conn;
-
         private readonly Regex mNonAlphanumericMatcher;
 
         /// <summary>
@@ -26,7 +24,7 @@ namespace SMAQC
         /// <param name="datasource"></param>
         public void CreateTables(string datasource)
         {
-            using (conn = new SQLiteConnection("Data Source=" + datasource, true))
+            using (var conn = new SQLiteConnection("Data Source=" + datasource, true))
             {
 
                 using (var cmd = conn.CreateCommand())
@@ -78,19 +76,19 @@ namespace SMAQC
             }
         }
 
-        protected void CreateIndices(SQLiteCommand cmd)
+        private void CreateIndices(SQLiteCommand cmd)
         {
             CreateIndicesMasic(cmd);
             CreateIndicesXTandem(cmd);
             CreateIndicesPHRP(cmd);
         }
 
-        protected void CreateIndicesMasic(SQLiteCommand cmd)
-        {           
+        private void CreateIndicesMasic(SQLiteCommand cmd)
+        {
             CreatePrimaryKey(cmd, "temp_scanstats", "random_id", "ScanNumber");
             CreatePrimaryKey(cmd, "temp_scanstatsex", "random_id", "ScanNumber");
             CreatePrimaryKey(cmd, "temp_sicstats", "random_id", "ParentIonIndex", "FragScanNumber");
-            
+
             CreateIndex(cmd, "temp_scanstats", "ScanNumber");
             CreateIndex(cmd, "temp_scanstatsex", "ScanNumber");
 
@@ -102,13 +100,13 @@ namespace SMAQC
 
         }
 
-        protected void CreateIndicesReporterIons(SQLiteCommand cmd)
+        private void CreateIndicesReporterIons(SQLiteCommand cmd)
         {
             CreatePrimaryKey(cmd, "temp_reporterions", "random_id", "ScanNumber");
             CreateIndex(cmd, "temp_reporterions", "ScanNumber");
         }
 
-        protected void CreateIndicesXTandem(SQLiteCommand cmd)
+        private void CreateIndicesXTandem(SQLiteCommand cmd)
         {
             CreateIndex(cmd, "temp_xt", "Scan");
             CreateIndex(cmd, "temp_xt", "Peptide_Expectation_Value_Log");
@@ -119,7 +117,7 @@ namespace SMAQC
             CreateIndex(cmd, "temp_xt_seqtoproteinmap", "Unique_Seq_ID");
         }
 
-        protected void CreateIndicesPHRP(SQLiteCommand cmd)
+        private void CreateIndicesPHRP(SQLiteCommand cmd)
         {
             CreateIndex(cmd, "temp_PSMs", "Scan");
             CreateIndex(cmd, "temp_PSMs", "MSGFSpecProb");
@@ -244,7 +242,7 @@ namespace SMAQC
 
                     AddColumnsToTable(connection, "scan_results", columnsToAdd);
                 }
-                
+
 
             } // End Using
 
@@ -273,7 +271,7 @@ namespace SMAQC
             }
         }
 
-        protected string GetTableCreateSql(string tableName)
+        private string GetTableCreateSql(string tableName)
         {
             var sql = string.Empty;
 
@@ -284,17 +282,17 @@ namespace SMAQC
                     // These are added to the table as VARCHAR NULL
                     var metricNames = new List<string>
                     {
-                        "C_1A", "C_1B", "C_2A", "C_2B", "C_3A", "C_3B", "C_4A", "C_4B", "C_4C", 
+                        "C_1A", "C_1B", "C_2A", "C_2B", "C_3A", "C_3B", "C_4A", "C_4B", "C_4C",
                         "DS_1A", "DS_1B", "DS_2A", "DS_2B", "DS_3A", "DS_3B",
-                        "IS_1A", "IS_1B", "IS_2", "IS_3A", "IS_3B", "IS_3C", 
-                        "MS1_1", "MS1_2A", "MS1_2B", "MS1_3A", "MS1_3B", "MS1_5A", "MS1_5B", "MS1_5C", "MS1_5D", 
+                        "IS_1A", "IS_1B", "IS_2", "IS_3A", "IS_3B", "IS_3C",
+                        "MS1_1", "MS1_2A", "MS1_2B", "MS1_3A", "MS1_3B", "MS1_5A", "MS1_5B", "MS1_5C", "MS1_5D",
                         "MS2_1", "MS2_2", "MS2_3", "MS2_4A", "MS2_4B", "MS2_4C", "MS2_4D",
-                        "P_1A", "P_1B", 
-                        "P_2A", "P_2B", "P_2C", 
-                        "P_3", 
-                        "Phos_2A", "Phos_2C", 
-                        "Keratin_2A", "Keratin_2C", 
-                        "P_4A", "P_4B", 
+                        "P_1A", "P_1B",
+                        "P_2A", "P_2B", "P_2C",
+                        "P_3",
+                        "Phos_2A", "Phos_2C",
+                        "Keratin_2A", "Keratin_2C",
+                        "P_4A", "P_4B",
                         "Trypsin_2A", "Trypsin_2C",
                         "MS2_RepIon_All", "MS2_RepIon_1Missing", "MS2_RepIon_2Missing", "MS2_RepIon_3Missing"
                     };
@@ -305,7 +303,7 @@ namespace SMAQC
                           + "[instrument_id] VARCHAR NOT NULL,"
                           + "[random_id] INTEGER  NOT NULL,"
                           + "[scan_date] VARCHAR NOT NULL,"
-                          + VarcharColumnNamesToSql(metricNames)                     
+                          + VarcharColumnNamesToSql(metricNames)
                         + ")";
                     break;
 
@@ -561,7 +559,7 @@ namespace SMAQC
             return hasColumn;
         }
 
-        protected void RunSql(SQLiteCommand cmd, string sql)
+        private void RunSql(SQLiteCommand cmd, string sql)
         {
             cmd.CommandText = sql;
             cmd.ExecuteNonQuery();
