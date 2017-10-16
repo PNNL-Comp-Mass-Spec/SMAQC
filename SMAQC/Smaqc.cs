@@ -418,8 +418,7 @@ namespace SMAQC
                     mOptions.InputFolderPath = objParseCommandLine.RetrieveNonSwitchParameter(0);
                 }
 
-                string strValue;
-                if (objParseCommandLine.RetrieveValueForParameter("O", out strValue))
+                if (objParseCommandLine.RetrieveValueForParameter("O", out var strValue))
                 {
                     if (string.IsNullOrWhiteSpace(strValue))
                         ShowErrorMessage("/O does not have a value; not overriding the output file path");
@@ -665,12 +664,10 @@ namespace SMAQC
 
             string[] field_array = { "result_id" };
 
-            Dictionary<string, string> dctMostRecentEntry;
-            mDBWrapper.ReadSingleLine(field_array, out dctMostRecentEntry);
+            mDBWrapper.ReadSingleLine(field_array, out var dctMostRecentEntry);
 
-            int result_id;
 
-            if (int.TryParse(dctMostRecentEntry["result_id"], out result_id))
+            if (int.TryParse(dctMostRecentEntry["result_id"], out var result_id))
             {
                 return result_id + 1;
             }

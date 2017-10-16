@@ -151,10 +151,9 @@ namespace SMAQC
 
                 var filePath = string.Copy(candidateFile.Key);
 
-                string targetTableName;
 
                 // Determine if we have a table to insert into depending on our input filename
-                var knownFile = IsKnownFileExtension(filePath, validFileExtensions, out targetTableName);
+                var knownFile = IsKnownFileExtension(filePath, validFileExtensions, out var targetTableName);
 
                 if (!knownFile)
                 {
@@ -346,10 +345,9 @@ namespace SMAQC
                     if (normalizedSeqID == clsPSMInfo.UNKNOWN_SEQID)
                     {
                         // New normalized peptide
-                        
-                        List<clsNormalizedPeptideInfo> observedNormalizedPeptides;
 
-                        if (!normalizedPeptides.TryGetValue(normalizedPeptide.CleanSequence, out observedNormalizedPeptides))
+
+                        if (!normalizedPeptides.TryGetValue(normalizedPeptide.CleanSequence, out var observedNormalizedPeptides))
                         {
                             // This clean sequence is not yet tracked; add it
                             observedNormalizedPeptides = new List<clsNormalizedPeptideInfo>();

@@ -158,10 +158,9 @@ namespace SMAQC
         {
             // Keys in this dictionary are field index values (0, 1, 2, etc.)
             // Values are True if the field should be used and false if it should not be used
-            Dictionary<int, bool> fieldEnabledByIndex;
 
             // Fetch fields
-            var fieldNames = SQLiteBulkInsert_Fields(sourceFile, excludedFieldNameSuffixes, out fieldEnabledByIndex);
+            var fieldNames = SQLiteBulkInsert_Fields(sourceFile, excludedFieldNameSuffixes, out var fieldEnabledByIndex);
 
             if (string.Equals(targetTable, "temp_reporterions", StringComparison.InvariantCultureIgnoreCase))
             {
@@ -384,8 +383,7 @@ namespace SMAQC
             // Update insertcommand to have the data value for each field
             foreach (var item in mPHRPFieldsForInsert)
             {
-                string dataValue;
-                if (!dctData.TryGetValue(item.Key, out dataValue))
+                if (!dctData.TryGetValue(item.Key, out var dataValue))
                 {
                     dataValue = string.Empty;
                 }

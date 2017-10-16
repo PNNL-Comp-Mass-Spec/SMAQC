@@ -89,7 +89,6 @@ namespace SMAQC
         private void CreateOutputFileForFirstTimeUse(string dataset, string filename, int scan_id)
         {
             // Scan results
-            Dictionary<string, string> dctResults;
             var dctValidResults = new SortedDictionary<string, string>();
 
             // Set query to retrieve scan results
@@ -99,7 +98,7 @@ namespace SMAQC
             mDBWrapper.initReader();
 
             // Read it into our hash table
-            mDBWrapper.ReadSingleLine(mMetricNames.ToArray(), out dctResults);
+            mDBWrapper.ReadSingleLine(mMetricNames.ToArray(), out var dctResults);
 
             // Get count
             var count = dctResults.Count;
@@ -165,7 +164,6 @@ namespace SMAQC
         private void AppendAdditionalMeasurementsToOutputFile(string dataset, string filename, int scan_id)
         {
             // Hash table for scan results
-            Dictionary<string, string> dctResults;
             var dctValidResults = new SortedDictionary<string, string>();
 
             // Set query to retrieve scan results
@@ -175,7 +173,7 @@ namespace SMAQC
             mDBWrapper.initReader();
 
             // Read it into our hash table
-            mDBWrapper.ReadSingleLine(mMetricNames.ToArray(), out dctResults);
+            mDBWrapper.ReadSingleLine(mMetricNames.ToArray(), out var dctResults);
 
             // Get count
             var count = dctResults.Count;

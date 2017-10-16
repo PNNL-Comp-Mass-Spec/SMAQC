@@ -180,10 +180,9 @@ namespace SMAQC
                 return false;
 
             // Maps observed column index to desired column index in db (-1 means do not store the given column in the db)
-            List<int> columnIndexMap;
 
             // Pad hash table with pointer to correct values
-            var columnCount = MapColumnsToKnownFields(filePath, out columnIndexMap, knownFields);
+            var columnCount = MapColumnsToKnownFields(filePath, out var columnIndexMap, knownFields);
 
             // Obtain a temp file path
             mTempFilePath = Path.GetTempFileName();
@@ -374,8 +373,7 @@ namespace SMAQC
             var filenamePart = filenameNoExtension.Substring(dataset.Length + 1);
 
 
-            List<string> knownFields;
-            if (mValidFilesToReFormat.TryGetValue(filenamePart, out knownFields))
+            if (mValidFilesToReFormat.TryGetValue(filenamePart, out var knownFields))
             {
                 return knownFields;
             }
