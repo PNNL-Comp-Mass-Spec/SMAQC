@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.IO;
 using System.Linq;
 using MSGFResultsSummarizer;
@@ -79,7 +78,7 @@ namespace SMAQC
                 // Open the input file
                 using (var srInFile = new StreamReader(filePathToLoad))
                 {
-                    
+
                     while (!srInFile.EndOfStream)
                     {
                         var line = srInFile.ReadLine();
@@ -90,7 +89,7 @@ namespace SMAQC
                         var filteredData = new List<string>();
 
                         var parts = line.Split(delimiters, StringSplitOptions.None);
-                        
+
                         if (line_num == 0)
                         {
                             // Prepend the additional headers
@@ -123,7 +122,7 @@ namespace SMAQC
                             // Write out the data line
                             swOutFile.WriteLine(string.Join(tabChar, filteredData));
                         }
-                                            
+
                         line_num++;
                     }
                 }
@@ -223,9 +222,9 @@ namespace SMAQC
                 };
 
                 // Attach the error handlers
-                oPHRPReader.MessageEvent += mPHRPReader_MessageEvent;
-                oPHRPReader.ErrorEvent += mPHRPReader_ErrorEvent;
-                oPHRPReader.WarningEvent += mPHRPReader_WarningEvent;
+                reader.StatusEvent += mPHRPReader_MessageEvent;
+                reader.ErrorEvent += mPHRPReader_ErrorEvent;
+                reader.WarningEvent += mPHRPReader_WarningEvent;
 
                 // Report any errors cached during instantiation of mPHRPReader
                 foreach (var strMessage in reader.ErrorMessages.Distinct())
@@ -471,7 +470,7 @@ namespace SMAQC
 
             var baseName = Path.GetFileNameWithoutExtension(filename);
             if (baseName == null)
-            {                
+            {
                 return false;
             }
 
@@ -496,7 +495,7 @@ namespace SMAQC
             mSystemLogManager.AddApplicationLogError(message);
         }
 
-        void mPHRPReader_ErrorEvent(string strErrorMessage)
+        void mPHRPReader_ErrorEvent(string message, Exception ex)
         {
             mSystemLogManager.AddApplicationLogError("PHRPReader error: " + message);
         }
