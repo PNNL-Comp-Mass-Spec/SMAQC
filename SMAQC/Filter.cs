@@ -197,15 +197,15 @@ namespace SMAQC
             }
         }
 
-        public bool LoadFilesUsingPHRP(string sInputFolderPath, string sDataset)
+        public bool LoadFilesUsingPHRP(string inputFolderPath, string sDataset)
         {
 
             // Look for a valid input file
-            var sInputFilePath = clsPHRPReader.AutoDetermineBestInputFile(sInputFolderPath, sDataset);
+            var inputFilePath = clsPHRPReader.AutoDetermineBestInputFile(inputFolderPath, sDataset);
 
-            if (string.IsNullOrEmpty(sInputFilePath))
+            if (string.IsNullOrEmpty(inputFilePath))
             {
-                throw new FileNotFoundException("Valid input file not found for dataset " + sDataset + " in folder " + sInputFolderPath);
+                throw new FileNotFoundException("Valid input file not found for dataset " + sDataset + " in folder " + inputFolderPath);
             }
 
             try
@@ -216,7 +216,7 @@ namespace SMAQC
 
                 var peptideMassCalculator = new clsPeptideMassCalculator();
 
-                var oPHRPReader = new clsPHRPReader(sInputFilePath, clsPHRPReader.ePeptideHitResultType.Unknown, blnLoadModsAndSeqInfo, blnLoadMSGFResults, blnLoadScanStats)
+                var reader = new clsPHRPReader(inputFilePath, clsPHRPReader.ePeptideHitResultType.Unknown, blnLoadModsAndSeqInfo, blnLoadMSGFResults, blnLoadScanStats)
                 {
                     EchoMessagesToConsole = false,
                     SkipDuplicatePSMs = true
@@ -228,24 +228,23 @@ namespace SMAQC
                 oPHRPReader.WarningEvent += mPHRPReader_WarningEvent;
 
                 // Report any errors cached during instantiation of mPHRPReader
-                foreach (var strMessage in oPHRPReader.ErrorMessages.Distinct())
+                foreach (var strMessage in reader.ErrorMessages.Distinct())
                 {
                     mSystemLogManager.AddApplicationLogError("Error: " + strMessage);
                 }
 
                 // Report any warnings cached during instantiation of mPHRPReader
-                foreach (var strMessage in oPHRPReader.WarningMessages.Distinct())
+                foreach (var strMessage in reader.WarningMessages.Distinct())
                 {
                     mSystemLogManager.AddApplicationLogWarning("Warning: " + strMessage);
                 }
-                if (oPHRPReader.WarningMessages.Count > 0)
+                if (reader.WarningMessages.Count > 0)
                     Console.WriteLine();
 
-                oPHRPReader.ClearErrors();
-                oPHRPReader.ClearWarnings();
+                reader.ClearErrors();
+                reader.ClearWarnings();
 
-                DbTransaction dbTrans;
-                mDBWrapper.InitPHRPInsertCommand(out dbTrans);
+                mDBWrapper.InitPHRPInsertCommand(out var dbTrans);
 
                 // Dictionary has key/value pairs of information about the best peptide for the scan
                 var dctBestPeptide = new Dictionary<string, string>();
@@ -291,22 +290,18 @@ namespace SMAQC
                 // Only store the best scoring peptide for each scan/charge combo
                 // Furthermore, normalize peptide sequences so that modifications are not associated with specific residues
 
-                while (oPHRPReader.MoveNext())
+                while (reader.MoveNext())
                 {
-                    var objCurrentPSM = oPHRPReader.CurrentPSM;
+                    var currentPSM = reader.CurrentPSM;
                     line_num += 1;
 
-                    string strCurrentPeptide;
-                    string strPrefix;
-                    string strSuffix;
+                    clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(currentPSM.Peptide, out var strCurrentPeptide, out _, out _);
 
-                    clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(objCurrentPSM.Peptide, out strCurrentPeptide, out strPrefix, out strSuffix);
-
-                    if (prev_scan == objCurrentPSM.ScanNumberStart && prev_charge == objCurrentPSM.Charge && prev_peptide == strCurrentPeptide)
+                    if (prev_scan == currentPSM.ScanNumberStart && prev_charge == currentPSM.Charge && prev_peptide == strCurrentPeptide)
                         // Skip this entry (same peptide, different protein)
                         continue;
 
-                    if (intBestPeptideScan > 0 && !(intBestPeptideScan == objCurrentPSM.ScanNumberStart && intBestPeptideCharge == objCurrentPSM.Charge))
+                    if (intBestPeptideScan > 0 && !(intBestPeptideScan == currentPSM.ScanNumberStart && intBestPeptideCharge == currentPSM.Charge))
                     {
                         // Store the cached peptide
                         mDBWrapper.ExecutePHRPInsertCommand(dctBestPeptide, line_num);
@@ -320,23 +315,22 @@ namespace SMAQC
                     {
                         {"instrument_id", mInstrumentId},
                         {"random_id", mRandomId.ToString()},
-                        {"Result_ID", objCurrentPSM.ResultID.ToString()},
-                        {"Scan", objCurrentPSM.ScanNumberStart.ToString()},
-                        {"CollisionMode", objCurrentPSM.CollisionMode},
-                        {"Charge", objCurrentPSM.Charge.ToString()},
-                        {"Peptide_MH", peptideMassCalculator.ConvoluteMass(objCurrentPSM.PeptideMonoisotopicMass, 0, 1).ToString("0.00000")},
-                        {"Peptide_Sequence", objCurrentPSM.Peptide},
-                        {"DelM_Da", objCurrentPSM.MassErrorDa},
-                        {"DelM_PPM", objCurrentPSM.MassErrorPPM}
+                        {"Result_ID", currentPSM.ResultID.ToString()},
+                        {"Scan", currentPSM.ScanNumberStart.ToString()},
+                        {"CollisionMode", currentPSM.CollisionMode},
+                        {"Charge", currentPSM.Charge.ToString()},
+                        {"Peptide_MH", peptideMassCalculator.ConvoluteMass(currentPSM.PeptideMonoisotopicMass, 0).ToString("0.00000")},
+                        {"Peptide_Sequence", currentPSM.Peptide},
+                        {"DelM_Da", currentPSM.MassErrorDa},
+                        {"DelM_PPM", currentPSM.MassErrorPPM}
                     };
 
-                    double msgfSpecProb;
-                    if (double.TryParse(objCurrentPSM.MSGFSpecProb, out msgfSpecProb))
-                        dctCurrentPeptide.Add("MSGFSpecProb", objCurrentPSM.MSGFSpecProb);
+                    if (double.TryParse(currentPSM.MSGFSpecEValue, out var msgfSpecProb))
+                        dctCurrentPeptide.Add("MSGFSpecProb", currentPSM.MSGFSpecEValue);
                     else
                         dctCurrentPeptide.Add("MSGFSpecProb", "1");
 
-                    var normalizedPeptide = NormalizeSequence(objCurrentPSM.PeptideCleanSequence, objCurrentPSM.ModifiedResidues, objCurrentPSM.SeqID);
+                    var normalizedPeptide = NormalizeSequence(currentPSM.PeptideCleanSequence, currentPSM.ModifiedResidues, currentPSM.SeqID);
 
                     var normalizedSeqID = clsMSGFResultsSummarizer.FindNormalizedSequence(normalizedPeptides, normalizedPeptide);
 
@@ -352,13 +346,13 @@ namespace SMAQC
                             normalizedPeptides.Add(normalizedPeptide.CleanSequence, observedNormalizedPeptides);
                         }
 
-                        normalizedSeqID = objCurrentPSM.SeqID;
+                        normalizedSeqID = currentPSM.SeqID;
                         if (normalizedSeqID < 0)
                         {
-                            normalizedSeqID = objCurrentPSM.ResultID;
+                            normalizedSeqID = currentPSM.ResultID;
                         }
 
-                        // Make a new normalized peptide entry that does not have clean sequence 
+                        // Make a new normalized peptide entry that does not have clean sequence
                         // (to conserve memory, since keys in dictionary normalizedPeptides are clean sequence)
                         var normalizedPeptideToStore = new clsNormalizedPeptideInfo(string.Empty);
                         normalizedPeptideToStore.StoreModifications(normalizedPeptide.Modifications);
@@ -366,15 +360,15 @@ namespace SMAQC
 
                         observedNormalizedPeptides.Add(normalizedPeptideToStore);
                     }
-                    
+
                     // Associate the normalized SeqID with the current peptide
                     dctCurrentPeptide.Add("Unique_Seq_ID", normalizedSeqID.ToString());
 
-                    dctCurrentPeptide.Add("Cleavage_State", ((int)objCurrentPSM.CleavageState).ToString());
+                    dctCurrentPeptide.Add("Cleavage_State", ((int)currentPSM.CleavageState).ToString());
 
                     // Check whether this is a phosphopeptide
                     byte phosphoFlag = 0;
-                    foreach (var modification in objCurrentPSM.ModifiedResidues)
+                    foreach (var modification in currentPSM.ModifiedResidues)
                     {
                         if (string.Equals(modification.ModDefinition.MassCorrectionTag, "Phosph", StringComparison.InvariantCultureIgnoreCase))
                         {
@@ -393,18 +387,18 @@ namespace SMAQC
 
                     // Check whether this is a peptide from Keratin
                     byte keratinFlag = 0;
-                    if (objCurrentPSM.Proteins.Any(protein => reKeratinProtein.IsMatch(protein)))
+                    if (currentPSM.Proteins.Any(protein => reKeratinProtein.IsMatch(protein)))
                     {
                         keratinFlag = 1;
                     }
                     dctCurrentPeptide.Add("Keratinpeptide", keratinFlag.ToString());
 
                     // Store the number of missed cleavages
-                    dctCurrentPeptide.Add("MissedCleavages", objCurrentPSM.NumMissedCleavages.ToString());
+                    dctCurrentPeptide.Add("MissedCleavages", currentPSM.NumMissedCleavages.ToString());
 
                     // Check whether this is a peptide from trypsin or trypsinogen
                     byte trypsinFlag = 0;
-                    if (objCurrentPSM.Proteins.Any(protein => reTrypsinProtein.IsMatch(protein)))
+                    if (currentPSM.Proteins.Any(protein => reTrypsinProtein.IsMatch(protein)))
                     {
                         trypsinFlag = 1;
                     }
@@ -414,13 +408,13 @@ namespace SMAQC
                     {
                         dctBestPeptide = dctCurrentPeptide;
 
-                        intBestPeptideScan = objCurrentPSM.ScanNumberStart;
-                        intBestPeptideCharge = objCurrentPSM.Charge;
+                        intBestPeptideScan = currentPSM.ScanNumberStart;
+                        intBestPeptideCharge = currentPSM.Charge;
                         dblBestPeptideScore = msgfSpecProb;
                     }
 
-                    prev_scan = objCurrentPSM.ScanNumberStart;
-                    prev_charge = objCurrentPSM.Charge;
+                    prev_scan = currentPSM.ScanNumberStart;
+                    prev_charge = currentPSM.Charge;
                     prev_peptide = string.Copy(strCurrentPeptide);
 
                 }
