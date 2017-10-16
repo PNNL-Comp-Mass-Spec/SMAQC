@@ -226,7 +226,7 @@ namespace SMAQC
             if (DatasetNames.Count == 0)
             {
                 // No datasets were found
-                mSystemLogManager.AddApplicationLog("Unable to find any datasets in " + mOptions.InputFolderPath);
+                mSystemLogManager.AddApplicationLogError("Unable to find any datasets in " + mOptions.InputFolderPath);
                 mSystemLogManager.AddApplicationLog("Exiting...");
                 return -2;
             }
@@ -467,39 +467,15 @@ namespace SMAQC
             return false;
         }
 
-        private static void ShowErrorMessage(string strMessage)
+        private static void ShowErrorMessage(string message)
         {
-            const string strSeparator = "------------------------------------------------------------------------------";
-
-            Console.WriteLine();
-            Console.WriteLine(strSeparator);
-            Console.WriteLine(strMessage);
-            Console.WriteLine(strSeparator);
-            Console.WriteLine();
-
-            WriteToErrorStream(strMessage);
+            ConsoleMsgUtils.ShowError(message);
         }
 
-        private static void ShowErrorMessage(string strTitle, IEnumerable<string> items)
+        private static void ShowErrorMessage(string title, IEnumerable<string> errorMessages)
         {
-            const string strSeparator = "------------------------------------------------------------------------------";
-
-            Console.WriteLine();
-            Console.WriteLine(strSeparator);
-            Console.WriteLine(strTitle);
-            var strMessage = strTitle + ":";
-
-            foreach (var item in items)
-            {
-                Console.WriteLine("   " + item);
-                strMessage += " " + item;
-            }
-            Console.WriteLine(strSeparator);
-            Console.WriteLine();
-
-            WriteToErrorStream(strMessage);
+            ConsoleMsgUtils.ShowErrors(title, errorMessages);
         }
-
 
         private static void ShowProgramHelp()
         {
@@ -560,37 +536,6 @@ namespace SMAQC
                 Console.WriteLine("Error displaying the program syntax: " + ex.Message);
             }
 
-        }
-
-
-        private static void WriteToErrorStream(string strErrorMessage)
-        {
-            try
-            {
-                using (var swErrorStream = new StreamWriter(Console.OpenStandardError()))
-                {
-                    swErrorStream.WriteLine(strErrorMessage);
-                }
-            }
-            // ReSharper disable once EmptyGeneralCatchClause
-            catch
-            {
-                // Ignore errors here
-            }
-        }
-
-        static void ShowErrorMessage(string message, bool pauseAfterError)
-        {
-            Console.WriteLine();
-            Console.WriteLine("===============================================");
-
-            Console.WriteLine(message);
-
-            if (pauseAfterError)
-            {
-                Console.WriteLine("===============================================");
-                System.Threading.Thread.Sleep(1500);
-            }
         }
 
         /// <summary>
@@ -694,7 +639,7 @@ namespace SMAQC
 
                 if (!fiMeasurementsToRunFile.Exists)
                 {
-                    mSystemLogManager.AddApplicationLog("Warning, measurement file was not found: " + fiMeasurementsToRunFile.FullName);
+                    mSystemLogManager.AddApplicationLogWarning("Warning, measurement file was not found: " + fiMeasurementsToRunFile.FullName);
                     mSystemLogManager.AddApplicationLog("Will use the default metrics");
                     useDefaultMetrics = true;
                 }

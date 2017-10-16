@@ -77,8 +77,16 @@ namespace SMAQC
 
             mApplicationLogFile?.WriteLine(applicationlog_records.Last());
 
+        public void AddApplicationLogError(string message)
+        {
+            AddApplicationLog(message, false);
+            ConsoleMsgUtils.ShowError(message);
+        }
 
-            Console.WriteLine("{0:yyyy-MM-dd hh:mm:ss tt} - {1}", DateTime.Now, message);
+        public void AddApplicationLogWarning(string message)
+        {
+            AddApplicationLog(message, false);
+            ConsoleMsgUtils.ShowWarning(message);
         }
 
         // Close the log file

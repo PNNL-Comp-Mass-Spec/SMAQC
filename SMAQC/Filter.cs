@@ -230,15 +230,13 @@ namespace SMAQC
                 // Report any errors cached during instantiation of mPHRPReader
                 foreach (var strMessage in oPHRPReader.ErrorMessages.Distinct())
                 {
-                    mSystemLogManager.AddApplicationLog("Error: " + strMessage);
-                    Console.WriteLine(strMessage);
+                    mSystemLogManager.AddApplicationLogError("Error: " + strMessage);
                 }
 
                 // Report any warnings cached during instantiation of mPHRPReader
                 foreach (var strMessage in oPHRPReader.WarningMessages.Distinct())
                 {
-                    mSystemLogManager.AddApplicationLog("Warning: " + strMessage);
-                    Console.WriteLine(strMessage);
+                    mSystemLogManager.AddApplicationLogWarning("Warning: " + strMessage);
                 }
                 if (oPHRPReader.WarningMessages.Count > 0)
                     Console.WriteLine();
@@ -499,24 +497,24 @@ namespace SMAQC
 
         #region "Error handlers"
 
-        private void DBWrapper_ErrorEvent(string errorMessage)
+        private void DBWrapper_ErrorEvent(string message)
         {
-            mSystemLogManager.AddApplicationLog(errorMessage);
+            mSystemLogManager.AddApplicationLogError(message);
         }
 
         void mPHRPReader_ErrorEvent(string strErrorMessage)
         {
-            mSystemLogManager.AddApplicationLog("PHRPReader error: " + strErrorMessage);
+            mSystemLogManager.AddApplicationLogError("PHRPReader error: " + message);
         }
 
-        void mPHRPReader_MessageEvent(string strMessage)
+        void mPHRPReader_MessageEvent(string message)
         {
-            mSystemLogManager.AddApplicationLog(strMessage);
+            mSystemLogManager.AddApplicationLog(message);
         }
 
-        void mPHRPReader_WarningEvent(string strWarningMessage)
+        void mPHRPReader_WarningEvent(string message)
         {
-            mSystemLogManager.AddApplicationLog("PHRPReader warning: " + strWarningMessage);
+            mSystemLogManager.AddApplicationLogWarning("PHRPReader warning: " + message);
         }
 
         #endregion
