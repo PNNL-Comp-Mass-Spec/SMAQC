@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using PRISM;
 
 namespace SMAQC
 {
     class SystemLogManager
     {
-        
+
         private readonly string applicationlog_filename;
-        private readonly List<string> applicationlog_records = new List<string>();
 
         StreamWriter mApplicationLogFile;
 
@@ -24,7 +24,7 @@ namespace SMAQC
         // Create our application log filename
         public void CreateApplicationLog()
         {
-            
+
             try
             {
                 // Create file
@@ -68,14 +68,21 @@ namespace SMAQC
             AddApplicationLog("-----------------------------------------------------");
         }
 
-        // Add application logs to our list<>
-        public void AddApplicationLog(string message)
+        /// <summary>
+        /// Add entry to the log records list and to the log file (if defined)
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="showMessage"></param>
+        public void AddApplicationLog(string message, bool showMessage = true)
         {
-            // Append to the log file
-            // Add to record log
-            applicationlog_records.Add(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt") + " - " + message);
+            var messageWithTime = DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt") + " - " + message;
 
-            mApplicationLogFile?.WriteLine(applicationlog_records.Last());
+            // Append to the log file
+            mApplicationLogFile?.WriteLine(messageWithTime);
+
+            if (showMessage)
+                Console.WriteLine(message);
+        }
 
         public void AddApplicationLogError(string message)
         {
