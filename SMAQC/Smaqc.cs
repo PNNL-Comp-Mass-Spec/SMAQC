@@ -215,7 +215,7 @@ namespace SMAQC
         /// <param name="random_id"></param>
         /// <param name="lstMeasurementsToRun"></param>
         /// <returns>0 if success, otherwise an error code</returns>
-        private static int ProcessDatasets(int random_id, List<string> lstMeasurementsToRun)
+        private static int ProcessDatasets(int random_id, IReadOnlyCollection<string> lstMeasurementsToRun)
         {
 
             mSystemLogManager.AddApplicationLog("Searching for Text Files...");
@@ -545,7 +545,7 @@ namespace SMAQC
         /// <param name="random_id"></param>
         /// <param name="scan_id"></param>
         /// <param name="lstMeasurementsToRun"></param>
-        static void add_scan_results(string instrument_id, int random_id, int scan_id, List<string> lstMeasurementsToRun)
+        static void add_scan_results(string instrument_id, int random_id, int scan_id, IReadOnlyCollection<string> lstMeasurementsToRun)
         {
 
             // Query to store data in scan_results
@@ -565,7 +565,7 @@ namespace SMAQC
         /// <param name="scan_id"></param>
         /// <param name="lstMeasurementsToRun"></param>
         /// <returns></returns>
-        static string build_scan_results_query(string instrument_id, int random_id, int scan_id, List<string> lstMeasurementsToRun)
+        static string build_scan_results_query(string instrument_id, int random_id, int scan_id, IReadOnlyCollection<string> lstMeasurementsToRun)
         {
 
             var scan_results_query = "INSERT INTO scan_results ( scan_id, instrument_id, random_id, scan_date";
