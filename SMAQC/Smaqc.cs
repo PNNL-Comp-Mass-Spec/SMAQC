@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Xml;
+using PRISM;
 
 namespace SMAQC
 {
@@ -87,7 +88,7 @@ namespace SMAQC
             var random = new Random();
             var random_id = random.Next();
 
-            var objParseCommandLine = new FileProcessor.clsParseCommandLine();
+            var objParseCommandLine = new clsParseCommandLine();
             var success = false;
 
             mOptions.Clear();
@@ -391,7 +392,7 @@ namespace SMAQC
             return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version + " (" + SMAQC_BUILD_DATE + ")";
         }
 
-        private static bool SetOptionsUsingCommandLineParameters(FileProcessor.clsParseCommandLine objParseCommandLine)
+        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine objParseCommandLine)
         {
             // Returns True if no problems; otherwise, returns false
             var lstValidParameters = new List<string> { "O", "DB", "I", "M" };
