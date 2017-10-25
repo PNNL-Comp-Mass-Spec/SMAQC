@@ -51,17 +51,7 @@ namespace SMAQC
                 AddApplicationLog(MyAssembly.FullName);
             }
 
-            // Add system information
-            AddApplicationLog("[System Information]");
-            AddApplicationLog("OS Version: " + Environment.OSVersion);
-            AddApplicationLog("Processor Count: " + Environment.ProcessorCount);
-
-            if (Environment.Is64BitOperatingSystem)
-                AddApplicationLog("Operating System Type: 64-Bit OS");
-            else
-                AddApplicationLog("Operating System Type: 32-Bit OS");
-
-            AddApplicationLog("Page Size: " + Environment.SystemPageSize);
+            Console.WriteLine();
 
             // Start with main system log
             AddApplicationLog("[LogStart]");
