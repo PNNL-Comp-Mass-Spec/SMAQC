@@ -117,8 +117,6 @@ namespace SMAQC
             mQuery = query;
         }
 
-        // For queries that return rows
-        public SQLiteDataReader QueryReader()
         /// <summary>
         /// Run a query that does not return results (insert/delete/update)
         /// </summary>
@@ -137,17 +135,6 @@ namespace SMAQC
             };
             cmd.ExecuteNonQuery();
 
-            return true;
-        }
-
-        // For queries that return a single value
-        public void QueryScalar()
-        {
-            var cmd = new SQLiteCommand(mConnection)
-            {
-                CommandText = mQuery
-            };
-            cmd.ExecuteScalar();
             // Clear mQuery, for safety (to prevent the same query being run twice)
             mQuery = string.Empty;
 
@@ -334,9 +321,6 @@ namespace SMAQC
         /// <remarks>Call SetQuery prior to calling this method</remarks>
         public void InitReader()
         {
-            // Call query reader
-            mSQLiteReader = QueryReader();
-        }
             if (string.IsNullOrWhiteSpace(mQuery))
             {
                 throw new Exception("Call SetQuery prior to calling InitReader");

@@ -11,7 +11,6 @@ namespace SMAQC
         /// <Param name="tableNames"></param>
         void ClearTempTables(string[] tableNames);
 
-        SQLiteDataReader QueryReader();
         /// <Summary>
         /// Clear database temp tables for given randomId value
         /// </Summary>
@@ -30,7 +29,6 @@ namespace SMAQC
         /// </summary>
         /// <remarks>Call SetQuery prior to calling this method</remarks>
         bool ExecuteNonQuery();
-        void QueryScalar();
 
         void Open();
 
