@@ -275,8 +275,8 @@ namespace SMAQC
             // Calculate solution
             if (psmCountTotal > 0)
             {
-                return answer.ToString("0.000000");
                 var answer = psmCountLateOrEarly / (double)psmCountTotal;
+                return PRISM.StringUtilities.DblToString(answer, 6, 0.0000001);
             }
 
             return string.Empty;
@@ -375,7 +375,7 @@ namespace SMAQC
 
             AddUpdateResultsStorage(eCachedResult.C2A_TimeMinutes, timeMinutes);
 
-            return timeMinutes.ToString("0.0000");
+            return PRISM.StringUtilities.DblToString(timeMinutes, 4, 0.00001);
         }
 
 
@@ -426,8 +426,7 @@ namespace SMAQC
                 var answer = lstScansWithFilterPassingIDs.Count / timeMinutesC2A;
 
                 // Round the result
-                answerText = answer.ToString("0.0000");
-
+                return PRISM.StringUtilities.DblToString(answer, 4, 0.00001);
             }
 
             return string.Empty;
@@ -661,7 +660,7 @@ namespace SMAQC
                 var median = ComputeMedian(result);
 
                 // Round the result
-                resultText = median.ToString("0.00");
+                return PRISM.StringUtilities.DblToString(median, 2, 0.0001);
 
                 // Implementation notes
                 /*
@@ -699,7 +698,7 @@ namespace SMAQC
                 }
             }
 
-            return result.ToString("0.000");
+            return PRISM.StringUtilities.DblToString(result, 3, 0.00001);
         }
 
         /// <summary>
@@ -730,7 +729,7 @@ namespace SMAQC
                 }
             }
 
-            return result.ToString("0.000");
+            return PRISM.StringUtilities.DblToString(result, 3, 0.00001);
 
         }
 
@@ -844,7 +843,7 @@ namespace SMAQC
             var median = ComputeMedian(mzlist.ToList());
 
             // Round the result
-            return median.ToString("0.0000");
+            return PRISM.StringUtilities.DblToString(median, 4, 0.00001);
         }
 
         /// <summary>
@@ -867,7 +866,7 @@ namespace SMAQC
                     result = psmCountCharge1 / (double)psmCountCharge2;
             }
 
-            return result.ToString("0.000000");
+            return PRISM.StringUtilities.DblToString(result, 6, 0.0000001);
         }
 
         /// <summary>
@@ -890,7 +889,7 @@ namespace SMAQC
                     result = psmCountCharge3 / (double)psmCountCharge2;
             }
 
-            return result.ToString("0.000000");
+            return PRISM.StringUtilities.DblToString(result, 6, 0.0000001);
         }
 
         /// <summary>
@@ -913,7 +912,7 @@ namespace SMAQC
                     result = psmCountCharge4 / (double)psmCountCharge2;
             }
 
-            return result.ToString("0.000000");
+            return PRISM.StringUtilities.DblToString(result, 6, 0.0000001);
         }
 
         private void Cache_IS3_Data()
@@ -974,7 +973,7 @@ namespace SMAQC
 
             var median = ComputeMedian(lstValues);
 
-            return Convert.ToString(median, CultureInfo.InvariantCulture);
+            return PRISM.StringUtilities.ValueToString(median, 5);
         }
 
         /// <summary>
@@ -993,7 +992,7 @@ namespace SMAQC
                 median = ComputeMedian(m_Cached_BasePeakSignalToNoiseRatio);
             }
 
-            return Convert.ToString(median, CultureInfo.InvariantCulture);
+            return PRISM.StringUtilities.ValueToString(median, 5);
         }
 
         /// <summary>
@@ -1010,7 +1009,7 @@ namespace SMAQC
             // Divide by 1000
             median = median / 1000;
 
-            return Convert.ToString(median, CultureInfo.InvariantCulture);
+            return PRISM.StringUtilities.ValueToString(median, 5, 100000000);
         }
 
         private void Cache_MS1_2_Data()
@@ -1056,7 +1055,7 @@ namespace SMAQC
                 final = m_Cached_PeakMaxIntensity_95thPercentile / m_Cached_PeakMaxIntensity_5thPercentile;
 
             // Round the result
-            return final.ToString("0.000");
+            return PRISM.StringUtilities.DblToString(final, 3, 0.0001);
         }
 
         /// <summary>
@@ -1228,7 +1227,7 @@ namespace SMAQC
                 median = ComputeMedian(m_Cached_DS3);
 
             // Round the result
-            return median.ToString("0.000");
+            return PRISM.StringUtilities.DblToString(median, 3, 0.0001);
         }
 
         /// <summary>
@@ -1321,7 +1320,7 @@ namespace SMAQC
             var median = ComputeMedian(m_Cached_DelM);
 
             // Round the result
-            return median.ToString("0.000000");
+            return PRISM.StringUtilities.DblToString(median, 6, 0.0000001);
         }
 
         /// <summary>
@@ -1350,8 +1349,7 @@ namespace SMAQC
             var average = lstAbsDelM.Average();
 
             // Round the result
-            return average.ToString("0.000000");
-
+            return PRISM.StringUtilities.DblToString(average, 6, 0.0000001);
         }
 
         /// <summary>
@@ -1369,7 +1367,7 @@ namespace SMAQC
 
             var median = ComputeMedian(m_Cached_DelM_ppm);
 
-            return median.ToString("0.000");
+            return PRISM.StringUtilities.DblToString(median, 3, 0.0001);
         }
 
         /// <summary>
@@ -1406,7 +1404,7 @@ namespace SMAQC
             var median = ComputeMedian(lstInterquartilePPMErrors);
 
             // Round the result
-            return median.ToString("0.000");
+            return PRISM.StringUtilities.DblToString(median, 3, 0.0001);
         }
 
         private void Cache_MS1_5_Data()
@@ -1492,7 +1490,7 @@ namespace SMAQC
             var median = ComputeMedian(filterList);
 
             // Round the result
-            return median.ToString("0.000");
+            return PRISM.StringUtilities.DblToString(median, 3, 0.0001);
         }
 
         /// <summary>
@@ -1533,7 +1531,7 @@ namespace SMAQC
             var median = ComputeMedian(finishedList);
 
             // Round the result
-            return median.ToString("0.000");
+            return PRISM.StringUtilities.DblToString(median, 3, 0.0001);
         }
 
         /// <summary>
@@ -1578,7 +1576,7 @@ namespace SMAQC
                 Cache_MS2_4_Data();
 
             var result = Compute_MS2_4_Ratio(1);
-            return result.ToString("0.0000");
+            return PRISM.StringUtilities.DblToString(result, 4, 0.00001);
         }
 
         /// <summary>
@@ -1592,7 +1590,7 @@ namespace SMAQC
                 Cache_MS2_4_Data();
 
             var result = Compute_MS2_4_Ratio(2);
-            return result.ToString("0.0000");
+            return PRISM.StringUtilities.DblToString(result, 4, 0.00001);
 
         }
 
@@ -1607,7 +1605,7 @@ namespace SMAQC
                 Cache_MS2_4_Data();
 
             var result = Compute_MS2_4_Ratio(3);
-            return result.ToString("0.0000");
+            return PRISM.StringUtilities.DblToString(result, 4, 0.00001);
 
         }
 
@@ -1622,8 +1620,7 @@ namespace SMAQC
                 Cache_MS2_4_Data();
 
             var result = Compute_MS2_4_Ratio(4);
-            return result.ToString("0.0000");
-
+            return PRISM.StringUtilities.DblToString(result, 4, 0.00001);
         }
 
         private double Compute_MS2_4_Ratio(int quartile)
@@ -1776,7 +1773,7 @@ namespace SMAQC
             var median = ComputeMedian(peptideScoreList);
 
             // Round the result
-            return median.ToString("0.00");
+            return PRISM.StringUtilities.DblToString(median, 2, 0.0001);
         }
 
         /// <summary>
@@ -1810,7 +1807,7 @@ namespace SMAQC
             var median = ComputeMedian(peptideScoreList);
 
             // Round the result
-            return median.ToString("0.000");
+            return PRISM.StringUtilities.DblToString(median, 3, 0.0001);
         }
 
         /// <summary>
@@ -1915,7 +1912,7 @@ namespace SMAQC
                 answer = peptideCountSemiTryptic / (double)peptideCountFullyTryptic;
 
             // Round the result
-            return answer.ToString("0.000000");
+            return PRISM.StringUtilities.DblToString(answer, 6, 0.0000001);
         }
 
         /// <summary>
@@ -1943,7 +1940,7 @@ namespace SMAQC
                 answer = peptideCountFullyTryptic / (double)peptideCountTotal;
 
             // Round the result
-            return answer.ToString("0.000000");
+            return PRISM.StringUtilities.DblToString(answer, 6, 0.0000001);
         }
 
         /// <summary>
@@ -1977,7 +1974,7 @@ namespace SMAQC
                 answer = totalMissedCleavages / (double)uniquePeptides;
 
             // Round the result
-            return answer.ToString("0.000000");
+            return PRISM.StringUtilities.DblToString(answer, 6, 0.0000001);
         }
 
         /// <summary>
