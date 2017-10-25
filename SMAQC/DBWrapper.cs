@@ -56,18 +56,21 @@ namespace SMAQC
             dbConn.ClearTempTables(db_tables, random_id);
         }
 
-        // Set query
-        public void SetQuery(string myquery)
+        /// <summary>
+        /// Define the query to run
+        /// </summary>
+        /// <param name="query"></param>
+        public void SetQuery(string query)
         {
             try
             {
 
-                dbConn.SetQuery(myquery);
+                dbConn.SetQuery(query);
 
                 if (mShowQueryText)
                 {
                     Console.WriteLine();
-                    Console.WriteLine(myquery);
+                    Console.WriteLine(query);
                 }
             }
             catch (NullReferenceException ex)
@@ -76,40 +79,54 @@ namespace SMAQC
             }
         }
 
-        // Bulk insert
+        /// <summary>
+        /// Bulk insert a set of data from sourceFile
+        /// </summary>
+        /// <param name="targetTable">Target table</param>
+        /// <param name="sourceFile">Soruce file</param>
+        /// <param name="excludedFieldNameSuffixes">Field prefixes to ignore</param>
         public void BulkInsert(string targetTable, string sourceFile, List<string> excludedFieldNameSuffixes)
         {
             dbConn.BulkInsert(targetTable, sourceFile, excludedFieldNameSuffixes);
         }
 
-        // For queries such as insert/delete/update
+        /// <summary>
+        /// Run a query that does not return results (insert/delete/update)
+        /// </summary>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks>Call SetQuery prior to calling this method</remarks>
         public bool ExecuteNonQuery()
         {
 
-            var status = false;
-
-            // Update status + run query
             try
             {
-                status = dbConn.ExecuteNonQuery();
+                var status = dbConn.ExecuteNonQuery();
+                return status;
             }
             catch (NullReferenceException ex)
             {
                 Console.WriteLine("Error in ExecuteNonQuery: " + ex.Message);
+                return false;
             }
 
-            // Return true/false
-            return status;
         }
 
-        // Init reader [whenever we want to read a row]
-        public void initReader()
+        /// <summary>
+        /// Inititialize the reader
+        /// </summary>
+        /// <remarks>Call SetQuery prior to calling this method</remarks>
+        public void InitReader()
         {
             dbConn.InitReader();
         }
 
-        // Read single db row [different from readlines() as here we close reader afterward]
-        // [Returns false if no further rows to read]
+        /// <summary>
+        /// Read a single database row
+        /// </summary>
+        /// <param name="fields"></param>
+        /// <param name="dctData"></param>
+        /// <returns>True if success, false if no further rows to read</returns>
+        /// <remarks>This method differs from ReadNextRow since here we close the reader after reading a single row of data</remarks>
         public bool ReadSingleLine(string[] fields, out Dictionary<string, string> dctData)
         {
             var status = dbConn.ReadSingleLine(fields, out dctData);
@@ -117,15 +134,23 @@ namespace SMAQC
             return status;
         }
 
-        // Read db row(s) [returns false if no further rows to read]
-        public bool ReadLines(string[] fields, out Dictionary<string, string> dctData)
+        /// <summary>
+        /// Read data for one database row
+        /// </summary>
+        /// <param name="fields"></param>
+        /// <param name="dctData"></param>
+        /// <returns>True if success, false if no further rows to read</returns>
+        public bool ReadNextRow(string[] fields, out Dictionary<string, string> dctData)
         {
-            dbConn.ReadLines(fields, out dctData);
+            dbConn.ReadNextRow(fields, out dctData);
 
             return true;
         }
 
-        // Get the db getdate() for our db's as string
+        /// <summary>
+        /// Get the database function for obtaining date/time as a string (within a SQL query)
+        /// </summary>
+        /// <returns>Function name, including format codes to convert date and time to a string</returns>
         public string GetDateTime()
         {
             return dbConn.GetDateTime();
@@ -142,7 +167,7 @@ namespace SMAQC
         }
 
         /// <Summary>
-        /// Initialize the command for inserting phrp data
+        /// Initialize the command for inserting PHRP data
         /// </Summary>
         /// <Param name="dbtrans"></param>
         /// <Returns></returns>
@@ -152,13 +177,13 @@ namespace SMAQC
         }
 
         /// <Summary>
-        /// Add new phrp data
+        /// Add new PHRP data
         /// </Summary>
         /// <Param name="dctdata"></param>
         /// <Param name="line_num"></param>
-        public void ExecutePHRPInsertCommand(Dictionary<string, string> dctData, int line_num)
+        public void ExecutePHRPInsertCommand(Dictionary<string, string> dctData, int lineNumber)
         {
-            dbConn.ExecutePHRPInsert(dctData, line_num);
+            dbConn.ExecutePHRPInsert(dctData, lineNumber);
         }
 
         void dbConn_ErrorEvent(string errorMessage)

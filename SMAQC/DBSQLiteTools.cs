@@ -259,10 +259,10 @@ namespace SMAQC
         /// <param name="columnType">Data type for the columns if they need to be added (varchar, float, int)</param>
         /// <param name="isNullable">True if the columns can contain nulls</param>
         public void AssureColumnsExist(
-            SQLiteConnection conn, 
-            string tableName, 
-            IEnumerable<string> columnNames, 
-            string columnType = "VARCHAR", 
+            SQLiteConnection conn,
+            string tableName,
+            IEnumerable<string> columnNames,
+            string columnType = "VARCHAR",
             bool isNullable = true)
         {
             if (!TableExists(conn, tableName))
@@ -285,10 +285,10 @@ namespace SMAQC
         }
 
         private void AddColumnsToTable(
-            SQLiteConnection dbConnection, 
-            string tableName, 
-            IEnumerable<string> columnsToAdd, 
-            string columnType = "VARCHAR", 
+            SQLiteConnection dbConnection,
+            string tableName,
+            IEnumerable<string> columnsToAdd,
+            string columnType = "VARCHAR",
             bool isNullable = true)
         {
             foreach (var columnName in columnsToAdd)

@@ -11,10 +11,10 @@ namespace SMAQC
         /// List of files that need to be reformatted
         /// e.g. ScanStats, ScanStatsEx, SICstats
         /// Keys are filename suffixes
-        /// Values are the known fields that we want to load from the file
+        /// Values are the known columns that we want to load from the file
         /// </summary>
         /// <remarks>
-        /// Field names are scrubbed to remove spaces, parentheses, and slashes
+        /// Column names are scrubbed to remove spaces, parentheses, and slashes
         /// </remarks>
         private readonly Dictionary<string, List<string>> mValidFilesToReFormat;
 
@@ -31,7 +31,7 @@ namespace SMAQC
             // ReSharper disable once UseObjectOrCollectionInitializer
             mValidFilesToReFormat = new Dictionary<string, List<string>>(StringComparer.InvariantCultureIgnoreCase);
 
-            // ScanStats fields
+            // ScanStats columns
             mValidFilesToReFormat.Add("ScanStats",
                 FieldCleaner(new List<string> {
                     "Dataset",
@@ -46,7 +46,7 @@ namespace SMAQC
                     "IonCountRaw",
                     "ScanTypeName"}));
 
-            // ScanStatsEx fields
+            // ScanStatsEx columns
             mValidFilesToReFormat.Add("ScanStatsEx",
                 FieldCleaner(new List<string> {
                     "Dataset",
@@ -72,7 +72,7 @@ namespace SMAQC
                     "Source Current (uA)"}));
 
 
-            // SICstats fields
+            // SICstats columns
             mValidFilesToReFormat.Add("SICstats",
                FieldCleaner(new List<string> {
                     "Dataset",
@@ -102,7 +102,7 @@ namespace SMAQC
                     "StatMomentsDataCountUsed"}));
 
 
-            // Xt fields
+            // xt columns (X!Tandem)
             mValidFilesToReFormat.Add("xt",
                 FieldCleaner(new List<string> {
                     "Result_ID",
@@ -124,14 +124,14 @@ namespace SMAQC
                     "DelM_PPM"}));
 
 
-            // Xt_resulttoseqmap fields
+            // xt_ResultToSeqMap columns
             mValidFilesToReFormat.Add("xt_ResultToSeqMap",
                 FieldCleaner(new List<string> {
                     "Result_ID",
                     "Unique_Seq_ID"}));
 
 
-            // Xt_seqtoproteinmap fields
+            // xt_SeqToProteinMap columns
             mValidFilesToReFormat.Add("xt_SeqToProteinMap",
                FieldCleaner(new List<string> {
                     "Unique_Seq_ID",
@@ -143,12 +143,14 @@ namespace SMAQC
 
         }
 
-        // Destructor
+        /// <summary>
+        /// Destructor
+        /// </summary>
         ~DataFileFormatter()
         {
             // Ensure temp file does not still exist
             if (!string.IsNullOrEmpty(mTempFilePath) && File.Exists(mTempFilePath))
-                ensure_temp_file_removed(mTempFilePath);
+                DeleteTempFile(mTempFilePath);
         }
 
         #region "Properties"
@@ -156,10 +158,7 @@ namespace SMAQC
         /// <summary>
         /// Temporary file path
         /// </summary>
-        public string TempFilePath
-        {
-            get { return mTempFilePath; }
-        }
+        public string TempFilePath => mTempFilePath;
 
         #endregion
 
@@ -174,15 +173,15 @@ namespace SMAQC
         {
 
             // Check if is valid file
-            var knownFields = GetFieldsForKnownFile(filePath, dataset);
+            var knownColumns = GetColumnsForKnownFile(filePath, dataset);
 
-            if (knownFields.Count == 0)
+            if (knownColumns.Count == 0)
                 return false;
 
             // Maps observed column index to desired column index in db (-1 means do not store the given column in the db)
 
             // Pad hash table with pointer to correct values
-            var columnCount = MapColumnsToKnownFields(filePath, out var columnIndexMap, knownFields);
+            var columnCount = MapColumnsToKnownFields(filePath, out var columnIndexMap, knownColumns);
 
             // Obtain a temp file path
             mTempFilePath = Path.GetTempFileName();
@@ -194,13 +193,13 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// Rebuild filename using padding to ensure all fields match up
+        /// Rebuild filename using padding to ensure all columns match up
         /// </summary>
-        /// <param name="filename"></param>
-        /// <param name="save_to_filename"></param>
+        /// <param name="sourceFilePath"></param>
+        /// <param name="targetFilePath"></param>
         /// <param name="columnCount">Total number of columns in the data file</param>
         /// <param name="columnIndexMap">Maps observed column index to desired column index in DB (-1 means do not store the given column in the DB)</param>
-        private void RebuildFile(string filename, string save_to_filename, int columnCount, List<int> columnIndexMap)
+        private void RebuildFile(string sourceFilePath, string targetFilePath, int columnCount, IReadOnlyList<int> columnIndexMap)
         {
             var headerParsed = false;
 
@@ -210,62 +209,61 @@ namespace SMAQC
             var knownColumnCount = (from item in columnIndexMap where item > -1 select item).Count();
 
             // Open files used for r/w
-            using (var sourceFileReader = new StreamReader(filename))
+            using (var sourceFileReader = new StreamReader(new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using (var updatedFileWriter = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
-                using (var updatedFileWriter = new StreamWriter(save_to_filename))
+                // Loop through each line
+                while (!sourceFileReader.EndOfStream)
                 {
-                    // Loop through each line
-                    while (!sourceFileReader.EndOfStream)
+                    var line = sourceFileReader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
+
+                    var dataToWrite = new List<string>();
+
+                    // Do split operation
+                    List<string> parts;
+
+                    if (!headerParsed)
                     {
-                        var line = sourceFileReader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(line))
-                            continue;
+                        // Header line
+                        // Clean column names to ensure database compatibility
+                        parts = FieldCleaner(line.Split(delimiters, StringSplitOptions.None).ToList());
+                        headerParsed = true;
+                    }
+                    else
+                    {
+                        parts = line.Split(delimiters, StringSplitOptions.None).ToList();
+                    }
 
-                        var dataToWrite = new List<string>();
-
-                        // Do split operation
-                        List<string> parts;
-
-                        if (!headerParsed)
+                    // Loop through each part
+                    for (var i = 0; i < parts.Count; i++)
+                    {
+                        if (i == columnCount)
                         {
-                            // Header line
-                            // Clean fields to ensure consistency
-                            parts = FieldCleaner(line.Split(delimiters, StringSplitOptions.None).ToList());
-                            headerParsed = true;
-                        }
-                        else
-                        {
-                            parts = line.Split(delimiters, StringSplitOptions.None).ToList();
+                            // Too many columns for this line; ignore them
+                            break;
                         }
 
-                        // Loop through each part
-                        for (var i = 0; i < parts.Count; i++)
+                        if (columnIndexMap[i] > -1)
                         {
-                            if (i == columnCount)
-                            {
-                                // Too many columns for this line; ignore them
-                                break;
-                            }
-
-                            // If not an allowed field ignore
-                            if (columnIndexMap[i] > -1)
-                            {
-                                dataToWrite.Add(parts[i]);
-                            }
-
+                            // Known column; add it
+                            dataToWrite.Add(parts[i]);
                         }
-
-                        while (dataToWrite.Count < knownColumnCount)
-                        {
-                            // Missing columns for this line; add them
-                            dataToWrite.Add("");
-                        }
-
-                        // Write line
-                        updatedFileWriter.WriteLine(string.Join("\t", dataToWrite));
 
                     }
+
+                    while (dataToWrite.Count < knownColumnCount)
+                    {
+                        // Missing columns for this line; add them
+                        dataToWrite.Add("");
+                    }
+
+                    // Write line
+                    updatedFileWriter.WriteLine(string.Join("\t", dataToWrite));
+
                 }
+
             }
         }
 
@@ -274,9 +272,9 @@ namespace SMAQC
         /// </summary>
         /// <param name="filePath"></param>
         /// <param name="columnIndexMap">Maps observed column index to desired column index in DB (-1 means do not store the given column in the DB)</param>
-        /// <param name="knownFields"></param>
+        /// <param name="knownColumns"></param>
         /// <returns>Total number of columns in the input file</returns>
-        private int MapColumnsToKnownFields(string filePath, out List<int> columnIndexMap, List<string> knownFields)
+        private int MapColumnsToKnownFields(string filePath, out List<int> columnIndexMap, IReadOnlyList<string> knownColumns)
         {
             int columnCount;
             columnIndexMap = new List<int>();
@@ -302,7 +300,7 @@ namespace SMAQC
                 foreach (var column in parts)
                 {
                     // Search for column name that is found in our file line
-                    var index = findIndexOfColumnName(knownFields, column);
+                    var index = FindIndexOfColumnName(knownColumns, column);
 
                     // If found [not -1]
                     if (index > -1)
@@ -325,17 +323,16 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// Look for fieldName in knownFields
+        /// Look for columnName in knownColumns
         /// </summary>
-        /// <param name="knownFields"></param>
-        /// <param name="fieldName"></param>
+        /// <param name="knownColumns"></param>
+        /// <param name="columnName"></param>
         /// <returns>Return the index if a match or -1 if no match</returns>
-        private int findIndexOfColumnName(List<string> knownFields, string fieldName)
+        private int FindIndexOfColumnName(IReadOnlyList<string> knownColumns, string columnName)
         {
-            for (var i = 0; i < knownFields.Count; i++)
+            for (var i = 0; i < knownColumns.Count; i++)
             {
-                // If found name ... return index
-                if (string.Equals(knownFields[i], fieldName, StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals(knownColumns[i], columnName, StringComparison.InvariantCultureIgnoreCase))
                 {
                     return i;
                 }
@@ -344,14 +341,24 @@ namespace SMAQC
             return -1;
         }
 
-        // Ensure file has been deleted
-        private void ensure_temp_file_removed(string filePath)
+        /// <summary>
+        /// Delete the file if it exists
+        /// </summary>
+        /// <param name="filePath"></param>
+        private void DeleteTempFile(string filePath)
         {
-            // Ensure temp file does not still exist
-            if (File.Exists(filePath))
+            try
             {
-                File.Delete(filePath);
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
             }
+            catch
+            {
+                // Ignore exceptions
+            }
+
         }
 
         /// <summary>
@@ -360,7 +367,7 @@ namespace SMAQC
         /// <param name="filename"></param>
         /// <param name="dataset"></param>
         /// <returns></returns>
-        private List<string> GetFieldsForKnownFile(string filename, string dataset)
+        private List<string> GetColumnsForKnownFile(string filename, string dataset)
         {
             // Get filename without extension
             var filenameNoExtension = Path.GetFileNameWithoutExtension(filename);
@@ -373,50 +380,52 @@ namespace SMAQC
             var filenamePart = filenameNoExtension.Substring(dataset.Length + 1);
 
 
-            if (mValidFilesToReFormat.TryGetValue(filenamePart, out var knownFields))
+            if (mValidFilesToReFormat.TryGetValue(filenamePart, out var knownColumns))
             {
-                return knownFields;
+                return knownColumns;
             }
 
             return new List<string>();
         }
 
-        // Field cleaner to ensure database consistency by removing spaces, parentheses, / and more
-        private List<string> FieldCleaner(IEnumerable<string> field_array)
+        /// <summary>
+        /// Examine column names to ensure database compatibility
+        /// </summary>
+        /// <param name="columnNames"></param>
+        /// <returns>Updated column names</returns>
+        /// <remarks>Remove spaces, parentheses, / and more</remarks>
+        private List<string> FieldCleaner(IEnumerable<string> columnNames)
         {
-            var updatedFields = new List<string>();
+            var updatedColumnNames = new List<string>();
 
-            // Loop through each field
-            foreach (var field in field_array)
+            foreach (var column in columnNames)
             {
-                // Step #1 remove (...)
-                var first_index = field.IndexOf(" (", StringComparison.Ordinal);
-                var last_index = field.IndexOf(")", StringComparison.Ordinal);
+                // Step #1 remove pairs of parentheses, e.g. Ion Injection Time (ms)
+                var firstIndex = column.IndexOf(" (", StringComparison.Ordinal);
+                var lastIndex = column.IndexOf(")", StringComparison.Ordinal);
 
-                string updatedField;
+                string updatedName;
 
-                // If there is a (...)
-                if (first_index > 0 && last_index > first_index)
+                if (firstIndex > 0 && lastIndex > firstIndex)
                 {
-                    updatedField = field.Remove(first_index, last_index - first_index + 1);
+                    updatedName = column.Remove(firstIndex, lastIndex - firstIndex + 1);
                 }
                 else
                 {
-                    updatedField = string.Copy(field);
+                    updatedName = string.Copy(column);
                 }
 
-                // Step #2 replace all " " with "_"
-                updatedField = updatedField.Replace(" ", "_");
+                // Step #2 replace all spaces with underscores
+                updatedName = updatedName.Replace(" ", "_");
 
-                // Step #3 replace all "/" with "" [required due to things like ScanStatsEx having m/z when it should be mz]
-                updatedField = updatedField.Replace("/", "");
+                // Step #3 replace all forward slashes with empty string, e.g. change m/z to mz
+                updatedName = updatedName.Replace("/", "");
 
-                updatedFields.Add(updatedField);
+                updatedColumnNames.Add(updatedName);
             }
 
-            return updatedFields;
+            return updatedColumnNames;
         }
 
-      
     }
 }

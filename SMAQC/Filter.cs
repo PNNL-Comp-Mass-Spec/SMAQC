@@ -60,72 +60,66 @@ namespace SMAQC
         /// </summary>
         /// <param name="targetFilePath"></param>
         /// <param name="filePathToLoad"></param>
-        private void parse_and_filter(string filePathToLoad, string targetFilePath)
+        private void CreateBulkInsertableDataFile(string filePathToLoad, string targetFilePath)
         {
-            var line_num = 0;
+            var lineNumber = 0;
 
             var tabChar = "\t";
 
             // Split on tab characters
             var delimiters = new[] { '\t' };
 
-            // Create the output file
-            using (var swOutFile = new StreamWriter(targetFilePath))
+            using (var srInFile = new StreamReader(new FileStream(filePathToLoad, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using (var swOutFile = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
 
-                //Console.WriteLine("WRITE TO: {0} ... LOAD FROM: {1}", temp_file, filePathToLoad);
-
-                // Open the input file
-                using (var srInFile = new StreamReader(filePathToLoad))
+                while (!srInFile.EndOfStream)
                 {
+                    var line = srInFile.ReadLine();
 
-                    while (!srInFile.EndOfStream)
+                    if (string.IsNullOrEmpty(line))
+                        continue;
+
+                    var filteredData = new List<string>();
+
+                    var parts = line.Split(delimiters, StringSplitOptions.None);
+
+                    if (lineNumber == 0)
                     {
-                        var line = srInFile.ReadLine();
+                        // Prepend the additional headers
+                        filteredData.Add("instrument_id");
+                        filteredData.Add("random_id");
+                    }
+                    else
+                    {
+                        // Prepend Instrument_ID and Random_ID
+                        filteredData.Add(mInstrumentId);
+                        filteredData.Add(mRandomId.ToString());
+                    }
 
-                        if (string.IsNullOrEmpty(line))
-                            continue;
-
-                        var filteredData = new List<string>();
-
-                        var parts = line.Split(delimiters, StringSplitOptions.None);
-
-                        if (line_num == 0)
+                    // Process the fields
+                    foreach (var dataValue in parts)
+                    {
+                        if (dataValue.Equals("[PAD]"))
                         {
-                            // Prepend the additional headers
-                            filteredData.Add("instrument_id");
-                            filteredData.Add("random_id");
+                            filteredData.Add("");
                         }
                         else
                         {
-                            // Prepend Instrument_ID and Random_ID
-                            filteredData.Add(mInstrumentId);
-                            filteredData.Add(mRandomId.ToString());
+                            // Replace any tab characters with semicolons
+                            filteredData.Add(dataValue.Replace(tabChar, ";"));
                         }
-
-                        // Process the fields
-                        foreach (var dataValue in parts)
-                        {
-                            if (dataValue.Equals("[PAD]"))
-                            {
-                                filteredData.Add("");
-                            }
-                            else
-                            {
-                                // Replace any tab characters with semicolons
-                                filteredData.Add(dataValue.Replace(tabChar, ";"));
-                            }
-                        }
-
-                        if (filteredData.Count > 0)
-                        {
-                            // Write out the data line
-                            swOutFile.WriteLine(string.Join(tabChar, filteredData));
-                        }
-
-                        line_num++;
                     }
+
+                    if (filteredData.Count > 0)
+                    {
+                        // Write out the data line
+                        swOutFile.WriteLine(string.Join(tabChar, filteredData));
+                    }
+
+                    lineNumber++;
                 }
+
             }
 
         }
@@ -163,7 +157,7 @@ namespace SMAQC
 
                 // Valid table
                 // Create a temp file
-                var temp_file = Path.GetTempFileName();
+                var tempFilePath = Path.GetTempFileName();
 
                 var excludedFieldNameSuffixes = candidateFile.Value;
 
@@ -176,12 +170,12 @@ namespace SMAQC
 
                     // Parse and format the file for bulk insert queries
                     // Will add columns instrument_id and random_id
-                    parse_and_filter(reformattedFilePath, temp_file);
+                    CreateBulkInsertableDataFile(reformattedFilePath, tempFilePath);
                 }
                 else
                 {
                     // Will add columns instrument_id and random_id
-                    parse_and_filter(filePath, temp_file);
+                    CreateBulkInsertableDataFile(filePath, tempFilePath);
                 }
 
 
@@ -189,10 +183,10 @@ namespace SMAQC
 
                 Console.WriteLine("Populating Table {0}", targetTable);
 
-                mDBWrapper.BulkInsert(targetTable, temp_file, excludedFieldNameSuffixes);
+                mDBWrapper.BulkInsert(targetTable, tempFilePath, excludedFieldNameSuffixes);
 
                 // Delete the tempfile
-                File.Delete(temp_file);
+                File.Delete(tempFilePath);
             }
         }
 
@@ -268,14 +262,14 @@ namespace SMAQC
                 //
                 var normalizedPeptides = new Dictionary<string, List<clsNormalizedPeptideInfo>>();
 
-                var intBestPeptideScan = -1;
-                var intBestPeptideCharge = -1;
-                double dblBestPeptideScore = 100;
+                var bestPeptideScan = -1;
+                var bestPeptideCharge = -1;
+                double bestPeptideScore = 100;
 
-                var line_num = 0;
-                var prev_scan = 0;
-                var prev_charge = 0;
-                var prev_peptide = string.Empty;
+                var lineNumber = 0;
+                var prevScan = 0;
+                var prevCharge = 0;
+                var prevPeptide = string.Empty;
 
                 Console.WriteLine("Populating database using PHRP");
 
@@ -292,21 +286,21 @@ namespace SMAQC
                 while (reader.MoveNext())
                 {
                     var currentPSM = reader.CurrentPSM;
-                    line_num += 1;
+                    lineNumber += 1;
 
                     clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(currentPSM.Peptide, out var strCurrentPeptide, out _, out _);
 
-                    if (prev_scan == currentPSM.ScanNumberStart && prev_charge == currentPSM.Charge && prev_peptide == strCurrentPeptide)
+                    if (prevScan == currentPSM.ScanNumberStart && prevCharge == currentPSM.Charge && prevPeptide == strCurrentPeptide)
                         // Skip this entry (same peptide, different protein)
                         continue;
 
-                    if (intBestPeptideScan > 0 && !(intBestPeptideScan == currentPSM.ScanNumberStart && intBestPeptideCharge == currentPSM.Charge))
+                    if (bestPeptideScan > 0 && !(bestPeptideScan == currentPSM.ScanNumberStart && bestPeptideCharge == currentPSM.Charge))
                     {
                         // Store the cached peptide
-                        mDBWrapper.ExecutePHRPInsertCommand(dctBestPeptide, line_num);
-                        intBestPeptideScan = -1;
-                        intBestPeptideCharge = -1;
-                        dblBestPeptideScore = 100;
+                        mDBWrapper.ExecutePHRPInsertCommand(dctBestPeptide, lineNumber);
+                        bestPeptideScan = -1;
+                        bestPeptideCharge = -1;
+                        bestPeptideScore = 100;
                     }
 
                     // Dictionary has key/value pairs of information about the peptide
@@ -403,25 +397,25 @@ namespace SMAQC
                     }
                     dctCurrentPeptide.Add("Trypsinpeptide", trypsinFlag.ToString());
 
-                    if (intBestPeptideScan < 0 || msgfSpecProb < dblBestPeptideScore)
+                    if (bestPeptideScan < 0 || msgfSpecProb < bestPeptideScore)
                     {
                         dctBestPeptide = dctCurrentPeptide;
 
-                        intBestPeptideScan = currentPSM.ScanNumberStart;
-                        intBestPeptideCharge = currentPSM.Charge;
-                        dblBestPeptideScore = msgfSpecProb;
+                        bestPeptideScan = currentPSM.ScanNumberStart;
+                        bestPeptideCharge = currentPSM.Charge;
+                        bestPeptideScore = msgfSpecProb;
                     }
 
-                    prev_scan = currentPSM.ScanNumberStart;
-                    prev_charge = currentPSM.Charge;
-                    prev_peptide = string.Copy(strCurrentPeptide);
+                    prevScan = currentPSM.ScanNumberStart;
+                    prevCharge = currentPSM.Charge;
+                    prevPeptide = string.Copy(strCurrentPeptide);
 
                 }
 
-                if (intBestPeptideScan > 0)
+                if (bestPeptideScan > 0)
                 {
                     // Store the cached peptide
-                    mDBWrapper.ExecutePHRPInsertCommand(dctBestPeptide, line_num);
+                    mDBWrapper.ExecutePHRPInsertCommand(dctBestPeptide, lineNumber);
                 }
 
                 // Commit the transaction
@@ -436,7 +430,7 @@ namespace SMAQC
 
         private clsNormalizedPeptideInfo NormalizeSequence(string peptideCleanSequence, IEnumerable<clsAminoAcidModInfo> modifiedResidues, int seqId)
         {
-            var modifications = new List< KeyValuePair<string, int>>();
+            var modifications = new List<KeyValuePair<string, int>>();
 
             foreach (var modEntry in modifiedResidues)
             {

@@ -5,7 +5,7 @@ namespace SMAQC
 {
     class MeasurementEngine
     {
-        
+
         readonly List<string> mMeasurementsToRun;
         readonly MeasurementFactory factory;
         readonly SystemLogManager mSystemLogManager;
@@ -19,7 +19,7 @@ namespace SMAQC
         public MeasurementEngine(List<string> lstMeasurementsToRun, Measurement measurement, SystemLogManager systemLogManager)
         {
             factory = new MeasurementFactory(measurement);
-            mMeasurementsToRun = lstMeasurementsToRun;            
+            mMeasurementsToRun = lstMeasurementsToRun;
             mSystemLogManager = systemLogManager;
 
         }
@@ -41,7 +41,7 @@ namespace SMAQC
             {
                 var dtStartTime = DateTime.UtcNow;
                 iMeasurementsStarted += 1;
-                var percentComplete = iMeasurementsStarted / Convert.ToDouble(mMeasurementsToRun.Count) * 100.0;
+                var percentComplete = iMeasurementsStarted / (double)mMeasurementsToRun.Count * 100;
 
                 try
                 {
@@ -50,7 +50,7 @@ namespace SMAQC
                         sResult = "Null";
 
                     dctResults.Add(measurementName, sResult);
-                    mSystemLogManager.AddApplicationLog((measurementName + ":").PadRight(7) + " complete in " + DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0.00") + " seconds; " + percentComplete.ToString("0") + "% complete");
+                    mSystemLogManager.AddApplicationLog((measurementName + ":").PadRight(15) + " complete in " + DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0.00") + " seconds; " + percentComplete.ToString("0") + "% complete");
                 }
                 catch (Exception ex)
                 {

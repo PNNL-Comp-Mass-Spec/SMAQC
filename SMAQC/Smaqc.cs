@@ -86,7 +86,7 @@ namespace SMAQC
         {
 
             var random = new Random();
-            var random_id = random.Next();
+            var randomId = random.Next();
 
             var objParseCommandLine = new clsParseCommandLine();
             var success = false;
@@ -154,14 +154,14 @@ namespace SMAQC
                         mDBWrapper.ClearTempTables();
 
                     mAggregate = new Aggregate(mOptions.InputFolderPath);
-                    mMeasurement = new Measurement(random_id, mDBWrapper);
+                    mMeasurement = new Measurement(randomId, mDBWrapper);
                     mMeasurementEngine = new MeasurementEngine(lstMeasurementsToRun, mMeasurement, mSystemLogManager);
-                    mFilter = new Filter(mDBWrapper, mOptions.Instrument_id, random_id, mSystemLogManager);
+                    mFilter = new Filter(mDBWrapper, mOptions.Instrument_id, randomId, mSystemLogManager);
                     mOutputFileManager = new OutputFileManager(mDBWrapper, GetAppVersion(), mMetricNames);
 
                     try
                     {
-                        var errorCode = ProcessDatasets(random_id, lstMeasurementsToRun);
+                        var errorCode = ProcessDatasets(randomId, lstMeasurementsToRun);
                         if (errorCode != 0)
                         {
                             Thread.Sleep(1500);
@@ -212,10 +212,10 @@ namespace SMAQC
         /// <summary>
         /// Process the datasets in the specified input folder
         /// </summary>
-        /// <param name="random_id"></param>
+        /// <param name="randomId"></param>
         /// <param name="lstMeasurementsToRun"></param>
         /// <returns>0 if success, otherwise an error code</returns>
-        private static int ProcessDatasets(int random_id, IReadOnlyCollection<string> lstMeasurementsToRun)
+        private static int ProcessDatasets(int randomId, IReadOnlyCollection<string> lstMeasurementsToRun)
         {
 
             mSystemLogManager.AddApplicationLog("Searching for Text Files...");
@@ -234,14 +234,14 @@ namespace SMAQC
             // Process the datasets
             foreach (var datasetName in DatasetNames)
             {
-                // Get the next available scan_id
-                var scan_id = determine_result_id();
+                // Get the next available scan id
+                var scanId = DetermineResultId();
 
                 try
                 {
                     mAggregate.SetDatasetName(datasetName);
 
-                    // getMasicFileImportList returns a dictionary where 
+                    // getMasicFileImportList returns a dictionary where
                     // Keys are file paths and Values are lists of header column suffixes to ignore
                     var masicFileList = mAggregate.GetMasicFileImportList("*.txt");
 
@@ -347,24 +347,24 @@ namespace SMAQC
 
                     // Store the results
                     mSystemLogManager.AddApplicationLog("Saving Scan Results");
-                    add_scan_results(mOptions.Instrument_id, random_id, scan_id, lstMeasurementsToRun);
+                    AddScanResults(mOptions.Instrument_id, randomId, scanId, lstMeasurementsToRun);
 
                     if (!KEEP_TEMP_DATA_AT_END)
                     {
                         // Remove the working data
-                        mDBWrapper.ClearTempTables(random_id);
+                        mDBWrapper.ClearTempTables(randomId);
                     }
 
                     if (!string.IsNullOrEmpty(mOptions.OutputFilePath))
                     {
                         // Write the results to a file
-                        mOutputFileManager.SaveData(datasetName, mOptions.OutputFilePath, scan_id);
+                        mOutputFileManager.SaveData(datasetName, mOptions.OutputFilePath, scanId);
 
                         mSystemLogManager.AddApplicationLog("Scan output has been saved to " + mOptions.OutputFilePath);
                     }
                     else
                     {
-                        mSystemLogManager.AddApplicationLog("Scan result saved to SQLite DB (Scan ID=" + scan_id + ")");
+                        mSystemLogManager.AddApplicationLog("Scan result saved to SQLite DB (Scan ID=" + scanId + ")");
                     }
 
                     mResults.Clear();
@@ -413,7 +413,7 @@ namespace SMAQC
                     return false;
                 }
 
-                // Query objParseCommandLine to see if various parameters are present						
+                // Query objParseCommandLine to see if various parameters are present
                 if (objParseCommandLine.NonSwitchParameterCount > 0)
                 {
                     mOptions.InputFolderPath = objParseCommandLine.RetrieveNonSwitchParameter(0);
@@ -541,15 +541,15 @@ namespace SMAQC
         /// <summary>
         /// Store the results
         /// </summary>
-        /// <param name="instrument_id"></param>
-        /// <param name="random_id"></param>
-        /// <param name="scan_id"></param>
+        /// <param name="instrumentId"></param>
+        /// <param name="randomId"></param>
+        /// <param name="scanId"></param>
         /// <param name="lstMeasurementsToRun"></param>
-        static void add_scan_results(string instrument_id, int random_id, int scan_id, IReadOnlyCollection<string> lstMeasurementsToRun)
+        static void AddScanResults(string instrumentId, int randomId, int scanId, IReadOnlyCollection<string> lstMeasurementsToRun)
         {
 
             // Query to store data in scan_results
-            var sql = build_scan_results_query(instrument_id, random_id, scan_id, lstMeasurementsToRun);
+            var sql = BuildScanResultsQuery(instrumentId, randomId, scanId, lstMeasurementsToRun);
 
             mDBWrapper.SetQuery(sql);
 
@@ -560,12 +560,12 @@ namespace SMAQC
         /// <summary>
         /// Construct the query to append to scan_results
         /// </summary>
-        /// <param name="instrument_id"></param>
-        /// <param name="random_id"></param>
-        /// <param name="scan_id"></param>
+        /// <param name="instrumentId"></param>
+        /// <param name="randomId"></param>
+        /// <param name="scanId"></param>
         /// <param name="lstMeasurementsToRun"></param>
         /// <returns></returns>
-        static string build_scan_results_query(string instrument_id, int random_id, int scan_id, IReadOnlyCollection<string> lstMeasurementsToRun)
+        private static string BuildScanResultsQuery(string instrumentId, int randomId, int scanId, IReadOnlyCollection<string> lstMeasurementsToRun)
         {
 
             var scan_results_query = "INSERT INTO scan_results ( scan_id, instrument_id, random_id, scan_date";
@@ -600,27 +600,27 @@ namespace SMAQC
         /// </summary>
         /// <returns></returns>
         /// <remarks>Multiple datasets processed at once will have the same Result_ID</remarks>
-        static int determine_result_id()
+        static int DetermineResultId()
         {
             // In the scan_results table, result_id is PRIMARY KEY AUTOINCREMENT
-            // scan_id the value inserted into the table, but is actually equivalent to result_id
+            // scan_id is inserted into the table, but is actually equivalent to result_id
             mDBWrapper.SetQuery("SELECT Max(result_id) AS result_id FROM scan_results;");
 
-            mDBWrapper.initReader();
+            mDBWrapper.InitReader();
 
             string[] field_array = { "result_id" };
 
             mDBWrapper.ReadSingleLine(field_array, out var dctMostRecentEntry);
 
 
-            if (int.TryParse(dctMostRecentEntry["result_id"], out var result_id))
+            if (int.TryParse(dctMostRecentEntry["result_id"], out var resultId))
             {
-                return result_id + 1;
+                return resultId + 1;
             }
 
             return 1;
         }
-        
+
         /// <summary>
         /// Determine the names of the measurements that should be run
         /// </summary>

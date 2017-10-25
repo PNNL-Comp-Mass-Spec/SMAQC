@@ -95,7 +95,7 @@ namespace SMAQC
             mDBWrapper.SetQuery("SELECT * FROM scan_results WHERE scan_id ='" + scan_id + "' LIMIT 1;");
 
             // Init reader
-            mDBWrapper.initReader();
+            mDBWrapper.InitReader();
 
             // Read it into our hash table
             mDBWrapper.ReadSingleLine(mMetricNames.ToArray(), out var dctResults);
@@ -170,7 +170,7 @@ namespace SMAQC
             mDBWrapper.SetQuery("SELECT * FROM scan_results WHERE scan_id ='" + scan_id + "' LIMIT 1;");
 
             // Init reader
-            mDBWrapper.initReader();
+            mDBWrapper.InitReader();
 
             // Read it into our hash table
             mDBWrapper.ReadSingleLine(mMetricNames.ToArray(), out var dctResults);
