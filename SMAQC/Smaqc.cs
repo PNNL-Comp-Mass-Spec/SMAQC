@@ -2,6 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Xml;
 using PRISM;
@@ -62,10 +63,12 @@ namespace SMAQC
         /// </summary>
         private static udtOptions mOptions;
 
+        private static readonly StringBuilder mQueryBuilder = new StringBuilder();
+
         // Measurement results
         private static Dictionary<string, string> mResults = new Dictionary<string, string>();
 
-        private const string SMAQC_BUILD_DATE = "October 16, 2017";
+        private const string SMAQC_BUILD_DATE = "October 24, 2017";
 
         // Define the filename suffixes
         private static readonly string[] mMasicFileExtensions = { "_ScanStats", "_ScanStatsEx", "_SICStats", "_ReporterIons" };
@@ -567,32 +570,32 @@ namespace SMAQC
         /// <returns></returns>
         private static string BuildScanResultsQuery(string instrumentId, int randomId, int scanId, IReadOnlyCollection<string> lstMeasurementsToRun)
         {
-
-            var scan_results_query = "INSERT INTO scan_results ( scan_id, instrument_id, random_id, scan_date";
+            mQueryBuilder.Clear();
+            mQueryBuilder.Append("INSERT INTO scan_results ( scan_id, instrument_id, random_id, scan_date");
 
             // Append each metric, e.g. `C_1A`
             foreach (var item in lstMeasurementsToRun)
             {
-                scan_results_query += ", `" + item + "`";
+                mQueryBuilder.Append(", `" + item + "`");
             }
-            scan_results_query += ") VALUES (";
+            mQueryBuilder.Append(") VALUES (");
 
             // Append the metadata values
-            scan_results_query += "'" + scan_id + "',";
-            scan_results_query += "'" + instrument_id + "',";
-            scan_results_query += "'" + random_id + "',";
+            mQueryBuilder.Append("'" + scanId + "',");
+            mQueryBuilder.Append("'" + instrumentId + "',");
+            mQueryBuilder.Append("'" + randomId + "',");
 
-            scan_results_query += mDBWrapper.GetDateTime();
+            mQueryBuilder.Append(mDBWrapper.GetDateTime());
 
-            // Append teh metric values (as strings), e.g. '3.2342'
+            // Append the metric values (as strings), e.g. '3.2342'
             foreach (var item in lstMeasurementsToRun)
             {
-                scan_results_query += ", '" + mResults[item] + "'";
+                mQueryBuilder.Append(", '" + mResults[item] + "'");
             }
 
-            scan_results_query += ");";
+            mQueryBuilder.Append(");");
 
-            return scan_results_query;
+            return mQueryBuilder.ToString();
         }
 
         /// <summary>
