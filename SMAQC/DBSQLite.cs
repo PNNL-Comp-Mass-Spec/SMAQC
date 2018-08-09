@@ -47,18 +47,18 @@ namespace SMAQC
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="datasource"></param>
-        public DBSQLite(string datasource)
+        /// <param name="dbPath">Path to the SQLite database</param>
+        public DBSQLite(string dbPath)
         {
 
             // Make sure the sqlitedb exists and that it contains the correct tables
-            if (!File.Exists(datasource))
+            if (!File.Exists(dbPath))
             {
                 // Create the file, along with the tables
-                mSQLiteTools.CreateTables(datasource);
+                mSQLiteTools.CreateTables(dbPath);
             }
 
-            mConnection = new SQLiteConnection("Data Source=" + datasource, true);
+            mConnection = new SQLiteConnection("Data Source=" + dbPath, true);
 
             // Open a connection to the database
             Open();

@@ -21,10 +21,10 @@ namespace SMAQC
         /// <summary>
         /// Create the database tables
         /// </summary>
-        /// <param name="datasource"></param>
-        public void CreateTables(string datasource)
+        /// <param name="dbPath">Path to the SQLite database</param>
+        public void CreateTables(string dbPath)
         {
-            using (var conn = new SQLiteConnection("Data Source=" + datasource, true))
+            using (var conn = new SQLiteConnection("Data Source=" + dbPath, true))
             {
 
                 using (var cmd = conn.CreateCommand())

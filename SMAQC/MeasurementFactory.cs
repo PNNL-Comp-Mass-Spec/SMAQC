@@ -3,7 +3,7 @@ namespace SMAQC
 {
     class MeasurementFactory
     {
-        
+
         public Measurement mMeasurement;
 
         /// <summary>
