@@ -68,7 +68,7 @@ namespace SMAQC
         // Measurement results
         private static Dictionary<string, string> mResults = new Dictionary<string, string>();
 
-        private const string SMAQC_BUILD_DATE = "October 24, 2017";
+        private const string SMAQC_BUILD_DATE = "August 9, 2018";
 
         // Define the filename suffixes
         private static readonly string[] mMasicFileExtensions = { "_ScanStats", "_ScanStatsEx", "_SICStats", "_ReporterIons" };
@@ -487,47 +487,56 @@ namespace SMAQC
             try
             {
                 Console.WriteLine();
-                Console.WriteLine("SMAQC computes quality metrics for a LC-MS/MS dataset.  The software");
-                Console.WriteLine("requires that the dataset first be processed with MASIC, then processed");
-                Console.WriteLine("with MSGF+ or X!Tandem.  The MSGF+ or X!Tandem results must be");
-                Console.WriteLine("post-processed with the PeptideHitResultsProcessor (PHRP).");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "SMAQC (Software Metrics for Analysis of Quality Control) computes quality metrics for an LC-MS/MS dataset. " +
+                    "The software requires that the dataset first be processed with MASIC, then processed " +
+                    "with MSGF+ or X!Tandem. The MSGF+ or X!Tandem results must be " +
+                    "post-processed with the PeptideHitResultsProcessor (PHRP)."));
                 Console.WriteLine();
-                Console.WriteLine("SMAQC reads the data from the _syn.txt file along with the parallel");
-                Console.WriteLine("text files created by PHRP.  It uses this information to compute peptide");
-                Console.WriteLine("count related metrics (peptides are filtered on MSGF_SpecProb");
-                Console.WriteLine("less than " + Measurement.MSGF_SPECPROB_THRESHOLD.ToString("0E+00") + "). SMAQC also reads the data from the _ScanStats.txt, ");
-                Console.WriteLine("_SICstats.txt, and _ScanStatsEx.txt files created by MASIC");
-                Console.WriteLine("to determine chromatography and scan-related metrics.");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "SMAQC reads the data from the _syn.txt file along with the parallel " +
+                    "text files created by PHRP.  It uses this information to compute peptide " +
+                    "count related metrics (peptides are filtered on MSGF_SpecProb " +
+                    "less than " + Measurement.MSGF_SPECPROB_THRESHOLD.ToString("0E+00") + "). " +
+                    "SMAQC also reads the data from the _ScanStats.txt, " +
+                    "_SICstats.txt, and _ScanStatsEx.txt files created by MASIC " +
+                    "to determine chromatography and scan-related metrics."));
                 Console.WriteLine();
-                Console.WriteLine("The quality metrics computed by SMAQC are based on the metrics proposed");
-                Console.WriteLine("by Rudnick and Stein, as described in \"Performance metrics for liquid ");
-                Console.WriteLine("chromatography-tandem mass spectrometry systems in proteomics analyses.\",");
-                Console.WriteLine("Mol Cell Proteomics. 2010 Feb;9(2):225-41. doi: 10.1074/mcp.M900223-MCP200.");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                    "The quality metrics computed by SMAQC are based on the metrics proposed " +
+                    "by Rudnick and Stein, as described in \"Performance metrics for liquid " +
+                    "chromatography-tandem mass spectrometry systems in proteomics analyses.\",\n" +
+                    "Mol Cell Proteomics. 2010 Feb; 9(2):225-41. doi: 10.1074/mcp.M900223-MCP200."));
                 Console.WriteLine();
                 Console.WriteLine("Program syntax:" + Environment.NewLine + exeName);
                 Console.WriteLine(" DatasetFolderPath [/O:OutputFilePath] [/DB:DatabaseFolder]");
                 Console.WriteLine(" [/I:InstrumentID] [/M:MeasurementsFile]");
                 Console.WriteLine();
-                Console.WriteLine("DatasetFolderPath specifies path to the folder with the dataset(s) to process; use quotes if spaces");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                                      "DatasetFolderPath specifies path to the folder with the dataset(s) to process; use quotes if spaces"));
                 Console.WriteLine();
-                Console.WriteLine("Use /O to specify the output file path. If /O is not used, then");
-                Console.WriteLine("results will only be stored in the SQLite database");
-                Console.WriteLine("Examples: /O:Metrics.txt   or   /O:\"C:\\Results Folder\\Metrics.txt\"");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                                      "Use /O to specify the output file path. If /O is not used, " +
+                                      "results will only be stored in the SQLite database"));
+                Console.WriteLine(@"Examples: /O:Metrics.txt or /O:""C:\Results Folder\Metrics.txt""");
                 Console.WriteLine();
-                Console.WriteLine("Use /DB to specify where the SQLite database should be created (default is with the .exe)");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                                      "Use /DB to specify where the SQLite database should be created (default is with the .exe)"));
+                Console.WriteLine();
                 Console.WriteLine("Use /I to specify an instrument ID (number or text); defaults to /I:1");
                 Console.WriteLine();
                 Console.WriteLine("Use /M to specify the path to the XML file containing the measurements to run.");
-                Console.WriteLine("If /M is not used, then all of the metrics will be computed");
+                Console.WriteLine("If /M is not used, all of the metrics will be computed");
                 Console.WriteLine();
-                Console.WriteLine("Program written by Matthew Monroe, in collaboration with computer science students");
-                Console.WriteLine("at Washington State University for the Department of Energy (PNNL, Richland, WA) in 2012");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                                      "Program written by Matthew Monroe, in collaboration with computer science students " +
+                                      "at Washington State University for the Department of Energy (PNNL, Richland, WA) in 2012"));
                 Console.WriteLine("");
                 Console.WriteLine("Version: " + GetAppVersion());
                 Console.WriteLine();
 
-                Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com");
-                Console.WriteLine("Website: http://panomics.pnnl.gov/ or http://omics.pnl.gov or http://www.sysbio.org/resources/staff/");
+                Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov");
+                Console.WriteLine("Website: https://omics.pnl.gov or https://panomics.pnl.gov/");
                 Console.WriteLine();
 
                 // Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)

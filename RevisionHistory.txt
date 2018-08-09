@@ -1,6 +1,9 @@
 SMAQC Change Log
 
-Version 1.2.6498; January 31, 2017
+Version 1.2.6795; August 9, 2018
+	- Updated DLLs
+
+Version 1.2.6498; October 16, 2017
 	- Obtain DLLs from NuGet and update to .NET v4.6.2
 	- Update PHRPReader
 
