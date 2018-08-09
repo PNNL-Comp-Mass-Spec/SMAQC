@@ -21,8 +21,8 @@ namespace SMAQC
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="dbFolderPath"></param>
-        /// <param name="showQueryText"></param>
+        /// <param name="dbFolderPath">Path to the directory where SMAQC.s3db should be created/updated</param>
+        /// <param name="showQueryText">When true, show the text of every query at the console</param>
         public DBWrapper(string dbFolderPath, bool showQueryText)
         {
             // Get path to db [needed for sqlite so we save in correct location]
@@ -70,7 +70,7 @@ namespace SMAQC
                 if (mShowQueryText)
                 {
                     Console.WriteLine();
-                    Console.WriteLine(query);
+                    PRISM.ConsoleMsgUtils.ShowDebug(query);
                 }
             }
             catch (NullReferenceException ex)
