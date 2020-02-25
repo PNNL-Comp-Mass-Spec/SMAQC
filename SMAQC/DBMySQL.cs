@@ -1,7 +1,7 @@
 ﻿using System;
 using MySql.Data.MySqlClient;
 using System.Data;
-using System.Data.SqlClient;
+//using System.Data.SqlClient;
 using System.Collections;
 using System.IO;
 using System.Data.Common;
