@@ -131,7 +131,7 @@ namespace SMAQC
                 // Loop through all that should be left [our measurements]
                 foreach (var key in dctResults.Keys)
                 {
-                    // Ensure that all keys have data [this is really a fix for sqlite due to not supporting nulls properly]
+                    // Ensure that all keys have data [this is really a fix for SQLite due to not supporting nulls properly]
                     if (!string.IsNullOrEmpty(dctResults[key]))
                     {
                         // Add to sorted dictionary
@@ -198,7 +198,7 @@ namespace SMAQC
             // Loop through all that should be left [our measurements]
             foreach (var key in dctResults.Keys)
             {
-                // Ensure that all keys have data [this is really a fix for sqlite due to not supporting nulls properly]
+                // Ensure that all keys have data [this is really a fix for SQLite due to not supporting nulls properly]
                 if (!string.IsNullOrEmpty(dctResults[key]))
                 {
                     // Add to sorted dictionary

@@ -411,7 +411,7 @@ namespace SMAQC
                         badArguments.Add("/" + item);
                     }
 
-                    ShowErrorMessage("Invalid commmand line parameters", badArguments);
+                    ShowErrorMessage("Invalid command line parameters", badArguments);
 
                     return false;
                 }
@@ -490,7 +490,7 @@ namespace SMAQC
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                     "SMAQC (Software Metrics for Analysis of Quality Control) computes quality metrics for an LC-MS/MS dataset. " +
                     "The software requires that the dataset first be processed with MASIC, then processed " +
-                    "with MSGF+ or X!Tandem. The MSGF+ or X!Tandem results must be " +
+                    "with MS-GF+ or X!Tandem. The MS-GF+ or X!Tandem results must be " +
                     "post-processed with the PeptideHitResultsProcessor (PHRP)."));
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
