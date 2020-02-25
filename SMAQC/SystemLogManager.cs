@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.IO;
 using PRISM;
 
@@ -9,7 +7,7 @@ namespace SMAQC
     class SystemLogManager
     {
 
-        private readonly string applicationlog_filename;
+        private readonly string mApplicationLogFileName;
 
         StreamWriter mApplicationLogFile;
 
@@ -18,7 +16,7 @@ namespace SMAQC
         /// </summary>
         public SystemLogManager()
         {
-            applicationlog_filename = "SMAQC-log_" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt";
+            mApplicationLogFileName = "SMAQC-log_" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt";
         }
 
         // Create our application log filename
@@ -29,7 +27,7 @@ namespace SMAQC
             {
                 // Create file
                 mApplicationLogFile =
-                    new StreamWriter(new FileStream(applicationlog_filename, FileMode.Append, FileAccess.Write, FileShare.Read))
+                    new StreamWriter(new FileStream(mApplicationLogFileName, FileMode.Append, FileAccess.Write, FileShare.Read))
                     {
                         AutoFlush = true
                     };

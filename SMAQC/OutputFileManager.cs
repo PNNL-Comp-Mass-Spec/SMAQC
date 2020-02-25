@@ -30,13 +30,13 @@ namespace SMAQC
         /// Constructor
         /// </summary>
         /// <param name="DBWrapper"></param>
-        /// <param name="ProgVersion"></param>
+        /// <param name="programVersion"></param>
         /// <param name="metricNames"></param>
-        public OutputFileManager(DBWrapper DBWrapper, string ProgVersion, List<string> metricNames)
+        public OutputFileManager(DBWrapper DBWrapper, string programVersion, List<string> metricNames)
         {
             mDBWrapper = DBWrapper;
             mFirstUse = true;
-            mSMAQCVersion = ProgVersion;
+            mSMAQCVersion = programVersion;
             mMetricNames = metricNames;
         }
 
