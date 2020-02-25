@@ -50,6 +50,12 @@ namespace SMAQC
                         result = "Null";
 
                     dctResults.Add(measurementName, result);
+
+                    mSystemLogManager.AddApplicationLog(string.Format(
+                        "{0,-22} complete in {1:F2} seconds; {2:F0}% complete",
+                        measurementName + ":",
+                        DateTime.UtcNow.Subtract(startTime).TotalSeconds,
+                        percentComplete));
                 }
                 catch (Exception ex)
                 {
