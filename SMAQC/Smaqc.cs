@@ -68,7 +68,7 @@ namespace SMAQC
         // Measurement results
         private static Dictionary<string, string> mResults = new Dictionary<string, string>();
 
-        private const string SMAQC_BUILD_DATE = "August 9, 2018";
+        private const string SMAQC_BUILD_DATE = "February 24, 2020";
 
         // Define the filename suffixes
         private static readonly string[] mMasicFileExtensions = { "_ScanStats", "_ScanStatsEx", "_SICStats", "_ReporterIons" };
@@ -153,6 +153,7 @@ namespace SMAQC
                     // Connect to the database
                     mDBWrapper = new DBWrapper(mOptions.DBFolderPath, false);
 
+                    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                     if (WIPE_TEMP_DATA_AT_START)
                         mDBWrapper.ClearTempTables();
 
@@ -230,6 +231,8 @@ namespace SMAQC
             {
                 // No datasets were found
                 mSystemLogManager.AddApplicationLogError("Unable to find any datasets in " + mOptions.InputFolderPath);
+                mSystemLogManager.AddApplicationLogWarning(
+                    "Copy _ScanStats.txt, _ScanStatsEx.txt, _SICStats.txt, plus PHRP _syn* files to the directory then try again");
                 mSystemLogManager.AddApplicationLog("Exiting...");
                 return -2;
             }
@@ -352,6 +355,7 @@ namespace SMAQC
                     mSystemLogManager.AddApplicationLog("Saving Scan Results");
                     AddScanResults(mOptions.Instrument_id, randomId, scanId, lstMeasurementsToRun);
 
+                    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                     if (!KEEP_TEMP_DATA_AT_END)
                     {
                         // Remove the working data
@@ -499,6 +503,7 @@ namespace SMAQC
                     "count related metrics (peptides are filtered on MSGF_SpecProb " +
                     "less than " + Measurement.MSGF_SPECPROB_THRESHOLD.ToString("0E+00") + "). " +
                     "SMAQC also reads the data from the _ScanStats.txt, " +
+                    // ReSharper disable once StringLiteralTypo
                     "_SICstats.txt, and _ScanStatsEx.txt files created by MASIC " +
                     "to determine chromatography and scan-related metrics."));
                 Console.WriteLine();
@@ -540,7 +545,7 @@ namespace SMAQC
                 Console.WriteLine();
 
                 // Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
-                Thread.Sleep(1500);
+                Thread.Sleep(750);
 
             }
             catch (Exception ex)
