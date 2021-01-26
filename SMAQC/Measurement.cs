@@ -2291,24 +2291,13 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// Counts the number of fully, partially, and non-tryptic peptides
-        /// </summary>
-        /// <param name="groupByCharge">If true, then counts charges separately</param>
-        /// <returns>Unique peptide count</returns>
-        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
-        private Dictionary<int, int> SummarizePSMs(bool groupByCharge)
-        {
-            return SummarizePSMs(groupByCharge, phosphoPeptides: false);
-        }
-
-        /// <summary>
         /// Counts the number of unique fully, partially, and non-tryptic peptides
         /// </summary>
-        /// <param name="groupByCharge">If true, then counts charges separately</param>
-        /// <param name="phosphoPeptides">If true, then only uses phosphopeptides</param>
+        /// <param name="groupByCharge">If true, counts charges separately</param>
+        /// <param name="phosphoPeptides">If true, only uses phosphopeptides</param>
         /// <returns>Unique peptide count</returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
-        private Dictionary<int, int> SummarizePSMs(bool groupByCharge, bool phosphoPeptides)
+        private Dictionary<int, int> SummarizePSMs(bool groupByCharge, bool phosphoPeptides = false)
         {
             var chargeSql = string.Empty;
 
