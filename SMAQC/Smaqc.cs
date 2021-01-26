@@ -568,7 +568,6 @@ namespace SMAQC
         /// <param name="randomId"></param>
         /// <param name="scanId"></param>
         /// <param name="measurementsToRun"></param>
-        /// <returns></returns>
         private static string BuildScanResultsQuery(string instrumentId, int randomId, int scanId, IReadOnlyCollection<string> measurementsToRun)
         {
             mQueryBuilder.Clear();
@@ -602,7 +601,6 @@ namespace SMAQC
         /// <summary>
         /// Check the DB for the next available result ID
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Multiple datasets processed at once will have the same Result_ID</remarks>
         private static int DetermineResultId()
         {
@@ -628,7 +626,6 @@ namespace SMAQC
         /// Determine the names of the measurements that should be run
         /// </summary>
         /// <param name="measurementsToRunFile"></param>
-        /// <returns></returns>
         private static List<string> LoadMeasurementInfoFile(string measurementsToRunFile)
         {
             var useDefaultMetrics = false;

@@ -70,14 +70,12 @@ namespace SMAQC
         /// Return the columns defined for the given table
         /// </summary>
         /// <param name="tableName"></param>
-        /// <returns></returns>
         List<string> GetTableColumns(string tableName);
 
         /// <Summary>
         /// Initialize the command for inserting PHRP data
         /// </Summary>
         /// <Param name="dbtrans"></param>
-        /// <Returns></returns>
         bool InitPHRPInsertCommand(out System.Data.Common.DbTransaction dbTrans);
 
         /// <Summary>

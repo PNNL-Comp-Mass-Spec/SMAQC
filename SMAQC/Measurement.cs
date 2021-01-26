@@ -210,7 +210,6 @@ namespace SMAQC
         /// <summary>
         /// C-1A: Fraction of peptides identified more than 4 minutes earlier than the chromatographic peak apex
         /// </summary>
-        /// <returns></returns>
         public string C_1A()
         {
             return C_1_Shared(countTailingPeptides: false);
@@ -219,7 +218,6 @@ namespace SMAQC
         /// <summary>
         /// C-1B: Fraction of peptides identified more than 4 minutes later than the chromatographic peak apex
         /// </summary>
-        /// <returns></returns>
         public string C_1B()
         {
             return C_1_Shared(countTailingPeptides: true);
@@ -229,7 +227,6 @@ namespace SMAQC
         /// Counts the number of peptides identified more than 4 minutes earlier or more than 4 minutes later than the chromatographic peak apex
         /// </summary>
         /// <param name="countTailingPeptides">False means to count early eluting peptides; True means to count late-eluting peptides</param>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         private string C_1_Shared(bool countTailingPeptides)
         {
@@ -285,7 +282,6 @@ namespace SMAQC
         /// C-2A: Time period over which 50% of peptides are identified
         /// We also cache various scan numbers associated with filter-passing peptides
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string C_2A()
         {
@@ -377,7 +373,6 @@ namespace SMAQC
         /// <summary>
         /// C-2B: Rate of peptide identification during C-2A
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string C_2B()
         {
@@ -429,7 +424,6 @@ namespace SMAQC
         /// <summary>
         /// C-3A: Median peak width for all peptides
         /// </summary>
-        /// <returns></returns>
         public string C_3A()
         {
             const double startScanRelative = 0;
@@ -442,7 +436,6 @@ namespace SMAQC
         /// <summary>
         /// C-3B: Median peak width during middle 50% of separation
         /// </summary>
-        /// <returns></returns>
         public string C_3B()
         {
             const double startScanRelative = 0.25;
@@ -455,7 +448,6 @@ namespace SMAQC
         /// <summary>
         /// C-4A: Median peak width during first 10% of separation
         /// </summary>
-        /// <returns></returns>
         public string C_4A()
         {
             const double startScanRelative = 0.00;
@@ -468,7 +460,6 @@ namespace SMAQC
         /// <summary>
         /// C-4B: Median peak width during last 10% of separation
         /// </summary>
-        /// <returns></returns>
         public string C_4B()
         {
             const double startScanRelative = 0.90;
@@ -481,7 +472,6 @@ namespace SMAQC
         /// <summary>
         /// C-4C: Median peak width during middle 10% of separation
         /// </summary>
-        /// <returns></returns>
         public string C_4C()
         {
             const double startScanRelative = 0.45;
@@ -661,7 +651,6 @@ namespace SMAQC
         /// <summary>
         /// DS-1A: Count of peptides with one spectrum / count of peptides with two spectra
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string DS_1A()
         {
@@ -689,7 +678,6 @@ namespace SMAQC
         /// <summary>
         /// DS-1B: Count of peptides with two spectra / count of peptides with three spectra
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string DS_1B()
         {
@@ -750,7 +738,6 @@ namespace SMAQC
         /// <summary>
         /// DS-2A: Number of MS1 scans taken over middle 50% of separation
         /// </summary>
-        /// <returns></returns>
         public string DS_2A()
         {
             const int msLevel = 1;
@@ -760,7 +747,6 @@ namespace SMAQC
         /// <summary>
         /// DS-2B: Number of MS2 scans taken over middle 50% of separation
         /// </summary>
-        /// <returns></returns>
         public string DS_2B()
         {
             const int msLevel = 2;
@@ -793,7 +779,6 @@ namespace SMAQC
         /// <summary>
         /// IS-2: Median precursor m/z for all peptides
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string IS_2()
         {
@@ -826,7 +811,6 @@ namespace SMAQC
         /// <summary>
         /// IS-3A: Count of 1+ peptides / count of 2+ peptides
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string IS_3A()
         {
@@ -849,7 +833,6 @@ namespace SMAQC
         /// <summary>
         /// IS-3B: Count of 3+ peptides / count of 2+ peptides
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string IS_3B()
         {
@@ -872,7 +855,6 @@ namespace SMAQC
         /// <summary>
         /// IS-3C: Count of 4+ peptides / count of 2+ peptides
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string IS_3C()
         {
@@ -922,7 +904,6 @@ namespace SMAQC
         /// <summary>
         /// MS1_1: Median MS1 ion injection time
         /// </summary>
-        /// <returns></returns>
         public string MS1_1()
         {
             m_DBInterface.SetQuery("SELECT temp_ScanStatsEx.Ion_Injection_Time "
@@ -953,7 +934,6 @@ namespace SMAQC
         /// <summary>
         /// MS1_2A: Median S/N value for MS1 spectra from run start through middle 50% of separation
         /// </summary>
-        /// <returns></returns>
         public string MS1_2A()
         {
             var median = 0.00;
@@ -972,7 +952,6 @@ namespace SMAQC
         /// <summary>
         /// MS1_2B: Median TIC value for identified peptides from run start through middle 50% of separation
         /// </summary>
-        /// <returns></returns>
         public string MS1_2B()
         {
             if (m_Cached_TotalIonIntensity == null || m_Cached_TotalIonIntensity.Count == 0)
@@ -1015,7 +994,6 @@ namespace SMAQC
         /// <summary>
         /// MS1_3A: Dynamic range estimate using 95th percentile peptide peak apex intensity / 5th percentile
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS1_3A()
         {
@@ -1033,7 +1011,6 @@ namespace SMAQC
         /// <summary>
         /// MS1_3B: Median peak apex intensity for all peptides
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS1_3B()
         {
@@ -1103,7 +1080,6 @@ namespace SMAQC
         /// <summary>
         /// DS_3A: Median of MS1 max / MS1 sampled abundance
         /// </summary>
-        /// <returns></returns>
         public string DS_3A()
         {
             return DS_3_Shared(bottom50Pct: false);
@@ -1112,7 +1088,6 @@ namespace SMAQC
         /// <summary>
         /// DS_3B: Median of MS1 max / MS1 sampled abundance; limit to bottom 50% of peptides by abundance
         /// </summary>
-        /// <returns></returns>
         public string DS_3B()
         {
             return DS_3_Shared(bottom50Pct: true);
@@ -1174,7 +1149,6 @@ namespace SMAQC
         /// Median of MS1 max / MS1 sampled abundance
         /// </summary>
         /// <param name="bottom50Pct">Set to true to limit to the bottom 50% of peptides by abundance</param>
-        /// <returns></returns>
         private string DS_3_Shared(bool bottom50Pct)
         {
             if (m_Cached_DS3 == null || m_Cached_DS3.Count == 0)
@@ -1195,7 +1169,6 @@ namespace SMAQC
         /// <summary>
         /// IS_1A: Occurrences of MS1 jumping >10x
         /// </summary>
-        /// <returns></returns>
         public string IS_1A()
         {
             const int foldThreshold = 10;
@@ -1207,7 +1180,6 @@ namespace SMAQC
         /// <summary>
         /// IS_1B: Occurrences of MS1 falling >10x
         /// </summary>
-        /// <returns></returns>
         public string IS_1B()
         {
             const int foldThreshold = 10;
@@ -1263,7 +1235,6 @@ namespace SMAQC
         /// <summary>
         /// MS1_5A: Median of precursor mass error (Th)
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS1_5A()
         {
@@ -1282,7 +1253,6 @@ namespace SMAQC
         /// <summary>
         /// MS1_5B: Median of absolute value of precursor mass error (Th)
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS1_5B()
         {
@@ -1311,7 +1281,6 @@ namespace SMAQC
         /// <summary>
         /// MS1_5C: Median of precursor mass error (ppm)
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS1_5C()
         {
@@ -1329,7 +1298,6 @@ namespace SMAQC
         /// <summary>
         /// MS1_5D: Interquartile distance in ppm-based precursor mass error
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS1_5D()
         {
@@ -1420,7 +1388,6 @@ namespace SMAQC
         /// <summary>
         /// MS2_1: Median MS2 ion injection time for identified peptides
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_1()
         {
@@ -1449,7 +1416,6 @@ namespace SMAQC
         /// <summary>
         /// MS2_2: Median S/N value for identified MS2 spectra
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_2()
         {
@@ -1489,7 +1455,6 @@ namespace SMAQC
         /// <summary>
         /// MS2_3: Median number of peaks in all MS2 spectra
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_3()
         {
@@ -1518,7 +1483,6 @@ namespace SMAQC
         /// <summary>
         /// MS2_4A: Fraction of all MS2 spectra identified; low abundance quartile (determined using MS1 intensity of identified peptides)
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_4A()
         {
@@ -1532,7 +1496,6 @@ namespace SMAQC
         /// <summary>
         /// MS2_4B: Fraction of all MS2 spectra identified; second quartile (determined using MS1 intensity of identified peptides)
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_4B()
         {
@@ -1546,7 +1509,6 @@ namespace SMAQC
         /// <summary>
         /// MS2_4C: Fraction of all MS2 spectra identified; third quartile (determined using MS1 intensity of identified peptides)
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_4C()
         {
@@ -1560,7 +1522,6 @@ namespace SMAQC
         /// <summary>
         /// MS2_4D: Fraction of all MS2 spectra identified; high abundance quartile (determined using MS1 intensity of identified peptides)
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_4D()
         {
@@ -1687,7 +1648,6 @@ namespace SMAQC
         /// <summary>
         /// P_1A: Median peptide ID score (X!Tandem hyperscore or -Log10(MSGF_SpecProb))
         /// </summary>
-        /// <returns></returns>
         public string P_1A()
         {
             m_DBInterface.SetQuery("SELECT Scan, Max(-Log10(MSGFSpecProb)) AS Peptide_Score"
@@ -1720,7 +1680,6 @@ namespace SMAQC
         /// <summary>
         /// P_1B: Median peptide ID score (X!Tandem Peptide_Expectation_Value_Log(e) or Log10(MSGF_SpecProb)
         /// </summary>
-        /// <returns></returns>
         public string P_1B()
         {
             m_DBInterface.SetQuery("SELECT Scan, Min(Log10(MSGFSpecProb)) AS Peptide_Score"
@@ -1826,7 +1785,6 @@ namespace SMAQC
         /// <summary>
         /// P_3: Ratio of unique semi-tryptic / fully tryptic peptides
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string P_3()
         {
@@ -1852,7 +1810,6 @@ namespace SMAQC
         /// <summary>
         /// P_4A: Ratio of unique fully-tryptic / total unique peptides
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string P_4A()
         {
@@ -1878,7 +1835,6 @@ namespace SMAQC
         /// <summary>
         /// P_4B: Ratio of total missed cleavages (among unique peptides) / total unique peptides
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string P_4B()
         {
@@ -1911,7 +1867,6 @@ namespace SMAQC
         /// <summary>
         /// Phos_2A: Number of tryptic phosphopeptides; total spectra count
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string Phos_2A()
         {
@@ -1921,7 +1876,6 @@ namespace SMAQC
         /// <summary>
         /// Phos_2C: Number of tryptic phosphopeptides; unique peptide count
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string Phos_2C()
         {
@@ -1937,7 +1891,6 @@ namespace SMAQC
         /// <summary>
         /// Keratin_2A: Number of keratin peptides; total spectra count
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string Keratin_2A()
         {
@@ -1964,7 +1917,6 @@ namespace SMAQC
         /// <summary>
         /// Keratin_2C: Number of keratin peptides; unique peptide count
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string Keratin_2C()
         {
@@ -1991,7 +1943,6 @@ namespace SMAQC
         /// <summary>
         /// Trypsin_2A: Number of peptides from trypsin; total spectra count
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string Trypsin_2A()
         {
@@ -2018,7 +1969,6 @@ namespace SMAQC
         /// <summary>
         /// Trypsin_2C: Number of peptides from trypsin; unique peptide count
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string Trypsin_2C()
         {
@@ -2045,7 +1995,6 @@ namespace SMAQC
         /// <summary>
         /// MS2_RepIon_All: Number of Filter-passing PSMs for which all of the Reporter Ions were seen
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_RepIon_All()
         {
@@ -2056,7 +2005,6 @@ namespace SMAQC
         /// <summary>
         /// MS2_RepIon_1Missing: Number of Filter-passing PSMs for which one Reporter Ion was not observed
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_RepIon_1Missing()
         {
@@ -2067,7 +2015,6 @@ namespace SMAQC
         /// <summary>
         /// MS2_RepIon_2Missing: Number of Filter-passing PSMs for which two Reporter Ions were not observed
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_RepIon_2Missing()
         {
@@ -2078,7 +2025,6 @@ namespace SMAQC
         /// <summary>
         /// MS2_RepIon_3Missing: Number of Filter-passing PSMs for which three Reporter Ions were not observed
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_RepIon_3Missing()
         {

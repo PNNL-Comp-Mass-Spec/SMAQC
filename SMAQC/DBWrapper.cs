@@ -157,7 +157,6 @@ namespace SMAQC
         /// Return the columns defined for the given table
         /// </summary>
         /// <param name="tableName"></param>
-        /// <returns></returns>
         public List<string> GetTableColumns(string tableName)
         {
             return dbConn.GetTableColumns(tableName);
@@ -167,7 +166,6 @@ namespace SMAQC
         /// Initialize the command for inserting PHRP data
         /// </Summary>
         /// <Param name="dbtrans"></param>
-        /// <Returns></returns>
         public bool InitPHRPInsertCommand(out System.Data.Common.DbTransaction dbTrans)
         {
             return dbConn.InitPHRPInsertCommand(out dbTrans);

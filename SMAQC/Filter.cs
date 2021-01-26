@@ -41,7 +41,6 @@ namespace SMAQC
         /// Returns true if processing the extended scan stats file (_ScanStatsEx.txt)
         /// </summary>
         /// <param name="fileToLoad"></param>
-        /// <returns></returns>
         public bool ScanStatsExBugFixer(string fileToLoad)
         {
             var value = fileToLoad.IndexOf("_ScanStatsEx.txt", StringComparison.OrdinalIgnoreCase);
@@ -441,7 +440,6 @@ namespace SMAQC
         /// <param name="filename"></param>
         /// <param name="validFileExtensions"></param>
         /// <param name="targetTableName"></param>
-        /// <returns></returns>
         public bool IsKnownFileExtension(string filename, string[] validFileExtensions, out string targetTableName)
         {
             targetTableName = string.Empty;

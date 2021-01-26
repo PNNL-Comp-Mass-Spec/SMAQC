@@ -25,7 +25,6 @@ namespace SMAQC
         /// <summary>
         /// Compute the stats
         /// </summary>
-        /// <returns></returns>
         public Dictionary<string, string> RunMeasurements()
         {
             mFactory.ResetMeasurements();

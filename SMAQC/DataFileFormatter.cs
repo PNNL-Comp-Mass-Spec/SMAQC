@@ -355,7 +355,6 @@ namespace SMAQC
         /// </summary>
         /// <param name="filename"></param>
         /// <param name="dataset"></param>
-        /// <returns></returns>
         private List<string> GetColumnsForKnownFile(string filename, string dataset)
         {
             // Get filename without extension

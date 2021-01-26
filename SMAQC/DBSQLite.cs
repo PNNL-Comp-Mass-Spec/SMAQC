@@ -285,7 +285,6 @@ namespace SMAQC
         /// Return the columns defined for the given table
         /// </summary>
         /// <param name="tableName"></param>
-        /// <returns></returns>
         public List<string> GetTableColumns(string tableName)
         {
             var columns = new List<string>();
@@ -331,7 +330,6 @@ namespace SMAQC
         /// Initialize the command for inserting PHRP data
         /// </Summary>
         /// <Param name="dbtrans"></param>
-        /// <Returns></returns>
         public bool InitPHRPInsertCommand(out DbTransaction dbTrans)
         {
             mPHRPFieldsForInsert = new Dictionary<string, int>();
@@ -617,7 +615,6 @@ namespace SMAQC
         /// Replace invalid characters in field names
         /// </Summary>
         /// <Param name="field"></param>
-        /// <Returns></returns>
         private string SQLiteBulkInsert_CleanFields(string field)
         {
             var cleanedField = field;
