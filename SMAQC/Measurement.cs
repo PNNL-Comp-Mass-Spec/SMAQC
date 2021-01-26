@@ -7,6 +7,14 @@ using PHRPReader;
 
 namespace SMAQC
 {
+    /// <summary>
+    /// This class defines the logic for computing each QC metric
+    /// </summary>
+    /// <remarks>
+    /// The methods in this file are used by the MeasurementFactory class
+    /// They are loaded via reflection, specifically
+    /// mMeasurement.GetType().GetMethod(methodName)
+    /// </remarks>
     class Measurement
     {
         struct udtPeptideEntry
@@ -367,7 +375,7 @@ namespace SMAQC
                 AddUpdateResultsStorage(eCachedResult.ScanFirstFilterPassingPeptide, lstFilterPassingPeptides.Keys.Min());
             }
 
-            // Cache the scan numbers at the start and end of the intequartile region
+            // Cache the scan numbers at the start and end of the interquartile region
             AddUpdateResultsStorage(eCachedResult.C2A_RegionScanStart, C2AScanStart);
             AddUpdateResultsStorage(eCachedResult.C2A_RegionScanEnd, C2AScanEnd);
 
@@ -558,7 +566,7 @@ namespace SMAQC
                 // Check whether previous peptide sequences are equivalent and have the same charge
                 if (previousPeptide.Peptide_Sequence.Equals(psm.Peptide_Sequence) && previousPeptide.Charge == psm.Charge)
                 {
-                    // Use the minimum (either previous best evalue or current peptide score)
+                    // Use the minimum (either previous best EValue or current peptide score)
                     bestScore = Math.Min(previousPeptide.Score, psm.Score);
                 }
                 else
@@ -623,7 +631,7 @@ namespace SMAQC
                 Cache_MedianPeakWidth_Data();
             }
 
-            // Loop through bestscan
+            // Loop through the list of best scans
             for (var i = 0; i < m_MPWCached_BestScan.Count; i++)
             {
                 // Find index + optimal peak apex scan +- FWHM for each result (columns: m,o)
@@ -1852,7 +1860,7 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// P_2B:Number of unique fully, partially, and non-tryptic peptides peptides; unique peptide & charge count
+        /// P_2B:Number of unique fully, partially, and non-tryptic peptides; unique peptide & charge count
         /// </summary>
         /// <returns>Unique peptide count, counting charge states separately</returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
@@ -1870,7 +1878,7 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// P_2C: Number of unique fully, partially, and non-tryptic peptides peptides; unique count regardless of charge
+        /// P_2C: Number of unique fully, partially, and non-tryptic peptides; unique count regardless of charge
         /// </summary>
         /// <returns>Unique peptide count</returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
@@ -1967,7 +1975,7 @@ namespace SMAQC
             var uniquePeptides = int.Parse(measurementResults["Peptides"]);
             var totalMissedCleavages = int.Parse(measurementResults["TotalMissedCleavages"]);
 
-            // Compute the ratio of total missed cleavagesc / total unique peptides
+            // Compute the ratio of total missed cleavages / total unique peptides
 
             double answer = 0;
             if (uniquePeptides > 0)

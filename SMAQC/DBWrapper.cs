@@ -25,7 +25,7 @@ namespace SMAQC
         /// <param name="showQueryText">When true, show the text of every query at the console</param>
         public DBWrapper(string dbFolderPath, bool showQueryText)
         {
-            // Get path to db [needed for sqlite so we save in correct location]
+            // Get path to db [needed for SQLite so we save in correct location]
             var dbPath = Path.Combine(dbFolderPath, "SMAQC.s3db");
 
             // Create db conn
@@ -83,7 +83,7 @@ namespace SMAQC
         /// Bulk insert a set of data from sourceFile
         /// </summary>
         /// <param name="targetTable">Target table</param>
-        /// <param name="sourceFile">Soruce file</param>
+        /// <param name="sourceFile">Source file</param>
         /// <param name="excludedFieldNameSuffixes">Field prefixes to ignore</param>
         public void BulkInsert(string targetTable, string sourceFile, List<string> excludedFieldNameSuffixes)
         {
@@ -112,7 +112,7 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// Inititialize the reader
+        /// Initialize the reader
         /// </summary>
         /// <remarks>Call SetQuery prior to calling this method</remarks>
         public void InitReader()

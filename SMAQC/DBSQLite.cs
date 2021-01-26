@@ -11,7 +11,7 @@ namespace SMAQC
     class DBSQLite : DBInterface
     {
         /// <summary>
-        /// Sqlite connection
+        /// SQLite connection
         /// </summary>
         private readonly SQLiteConnection mConnection;
 
@@ -21,7 +21,7 @@ namespace SMAQC
         private string mQuery;
 
         /// <summary>
-        /// Sqlite reader
+        /// SQLite reader
         /// </summary>
         private SQLiteDataReader mSQLiteReader;
 
@@ -51,7 +51,7 @@ namespace SMAQC
         public DBSQLite(string dbPath)
         {
 
-            // Make sure the sqlitedb exists and that it contains the correct tables
+            // Make sure the SQLite database exists and that it contains the correct tables
             if (!File.Exists(dbPath))
             {
                 // Create the file, along with the tables
@@ -153,7 +153,7 @@ namespace SMAQC
         /// Bulk insert a set of data from sourceFile
         /// </summary>
         /// <param name="targetTable">Target table</param>
-        /// <param name="sourceFile">Soruce file</param>
+        /// <param name="sourceFile">Source file</param>
         /// <param name="excludedColumnNameSuffixes">Columns that end in any of these suffixes will be skipped</param>
         public void BulkInsert(string targetTable, string sourceFile, List<string> excludedColumnNameSuffixes)
         {
@@ -218,7 +218,7 @@ namespace SMAQC
                                 continue;
                             }
 
-                            // Console.writeline("line [{0}]", line);
+                            // Console.WriteLine("line [{0}]", line);
                             // Fetch values
                             var values = SQLiteBulkInsert_TokenizeLine(line);
 

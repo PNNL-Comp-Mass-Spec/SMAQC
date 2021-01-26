@@ -36,7 +36,7 @@ namespace SMAQC
         /// Bulk insert a set of data from sourceFile
         /// </summary>
         /// <param name="targetTable">Target table</param>
-        /// <param name="sourceFile">Soruce file</param>
+        /// <param name="sourceFile">Source file</param>
         /// <param name="excludedFieldNameSuffixes">Field prefixes to ignore</param>
         void BulkInsert(string targetTable, string sourceFile, List<string> excludedFieldNameSuffixes);
 

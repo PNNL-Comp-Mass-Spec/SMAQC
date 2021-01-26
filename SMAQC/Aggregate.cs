@@ -16,13 +16,13 @@ namespace SMAQC
 
         /// <summary>
         /// List of MASIC files to import
-        /// Keys are filenames, values are true if required or false if optional
+        /// Keys are file names, values are true if required or false if optional
         /// </summary>
         readonly Dictionary<string, bool> MasicImportFiles;
 
         /// <summary>
-        /// List of X!Tandemfiles to import
-        /// Keys are filenames, values are true if required or false if optional
+        /// List of X!Tandem files to import
+        /// Keys are file names, values are true if required or false if optional
         /// </summary>
         /// <remarks>This is only uses if not using PHRP Reader</remarks>
         readonly Dictionary<string, bool> XTandemImportFiles;
@@ -186,7 +186,7 @@ namespace SMAQC
                 }
 
                 fileImportList.Add(filePath, excludedFieldNameSuffixes);
-                // Console.writeline("file {0}:: {1} -- ({2})", i, filepaths[i], index);
+                // Console.WriteLine("file {0}:: {1} -- ({2})", i, filePaths[i], index);
             }
             return fileImportList;
         }
