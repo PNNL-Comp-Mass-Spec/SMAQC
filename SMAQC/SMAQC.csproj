@@ -82,6 +82,7 @@
     <Compile Include="DBSQLiteTools.cs" />
     <Compile Include="DBWrapper.cs" />
     <Compile Include="Filter.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Measurement.cs" />
     <Compile Include="MeasurementEngine.cs" />
     <Compile Include="MeasurementFactory.cs" />

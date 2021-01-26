@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using PHRPReader;
 
+// ReSharper disable UnusedMember.Global
+
 namespace SMAQC
 {
     /// <summary>

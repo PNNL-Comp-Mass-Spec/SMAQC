@@ -660,6 +660,7 @@ namespace SMAQC
         /// <returns>Function name, including format codes to convert date and time to a string</returns>
         public string GetDateTime()
         {
+            // ReSharper disable once StringLiteralTypo
             return "strftime('%Y-%m-%d %H:%M:%S','now', 'localtime')";
         }
 

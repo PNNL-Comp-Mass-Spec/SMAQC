@@ -607,6 +607,7 @@ namespace SMAQC
             return hasColumn;
         }
 
+        // ReSharper disable once SuggestBaseTypeForParameter
         private void RunSql(SQLiteCommand cmd, string sql)
         {
             cmd.CommandText = sql;
