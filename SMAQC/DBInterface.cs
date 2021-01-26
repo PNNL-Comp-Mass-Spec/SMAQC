@@ -91,6 +91,5 @@ namespace SMAQC
         /// Error event
         /// </summary>
         event DBWrapper.DBErrorEventHandler ErrorEvent;
-
     }
 }

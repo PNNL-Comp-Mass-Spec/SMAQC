@@ -45,7 +45,6 @@ namespace SMAQC
         {
             try
             {
-
                 string targetFilePath;
 
                 if (filePath.EndsWith(@"\") || Directory.Exists(filePath))
@@ -157,7 +156,6 @@ namespace SMAQC
 
                 file.WriteLine();
             }
-
         }
 
         // Append additional measurement data to output file
@@ -181,7 +179,6 @@ namespace SMAQC
             // Ensure there is data!
             if (count <= 0)
             {
-
                 Console.WriteLine("Error: The scan id provided either does not exist, or has no results!");
                 return;
             }
@@ -225,7 +222,5 @@ namespace SMAQC
 
             file.Close();
         }
-
-
     }
 }

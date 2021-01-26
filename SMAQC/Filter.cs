@@ -9,7 +9,6 @@ namespace SMAQC
 {
     internal class Filter
     {
-
         public readonly DBWrapper mDBWrapper;
 
         public readonly string mInstrumentId;
@@ -67,7 +66,6 @@ namespace SMAQC
             using (var srInFile = new StreamReader(new FileStream(filePathToLoad, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             using (var swOutFile = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
-
                 while (!srInFile.EndOfStream)
                 {
                     var line = srInFile.ReadLine();
@@ -114,9 +112,7 @@ namespace SMAQC
 
                     lineNumber++;
                 }
-
             }
-
         }
 
         /// <summary>
@@ -133,12 +129,9 @@ namespace SMAQC
         /// </remarks>
         public void LoadFilesAndInsertIntoDB(Dictionary<string, List<string>> fileList, string[] validFileExtensions, string dataset)
         {
-
             foreach (var candidateFile in fileList)
             {
-
                 var filePath = string.Copy(candidateFile.Key);
-
 
                 // Determine if we have a table to insert into depending on our input filename
                 var knownFile = IsKnownFileExtension(filePath, validFileExtensions, out var targetTableName);
@@ -173,7 +166,6 @@ namespace SMAQC
                     CreateBulkInsertDataFile(filePath, tempFilePath);
                 }
 
-
                 var targetTable = "temp" + targetTableName;
 
                 Console.WriteLine("Populating Table {0}", targetTable);
@@ -187,7 +179,6 @@ namespace SMAQC
 
         public bool LoadFilesUsingPHRP(string inputFolderPath, string dataset)
         {
-
             // Look for a valid input file
             var inputFilePath = clsPHRPReader.AutoDetermineBestInputFile(inputFolderPath, dataset);
 
@@ -328,7 +319,6 @@ namespace SMAQC
                     {
                         // New normalized peptide
 
-
                         if (!normalizedPeptides.TryGetValue(normalizedPeptide.CleanSequence, out var observedNormalizedPeptides))
                         {
                             // This clean sequence is not yet tracked; add it
@@ -406,7 +396,6 @@ namespace SMAQC
                     prevScan = currentPSM.ScanNumberStart;
                     prevCharge = currentPSM.Charge;
                     prevPeptide = string.Copy(currentPeptide);
-
                 }
 
                 if (bestPeptideScan > 0)
@@ -444,9 +433,7 @@ namespace SMAQC
 
             var normalizedPeptide = clsMSGFResultsSummarizer.GetNormalizedPeptideInfo(peptideCleanSequence, modifications, seqId);
             return normalizedPeptide;
-
         }
-
 
         /// <summary>
         /// Checks whether the file has a known extension and thus should be loaded into the database
@@ -500,7 +487,6 @@ namespace SMAQC
         }
 
         #endregion
-
 
     }
 }

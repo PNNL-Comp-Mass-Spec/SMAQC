@@ -6,7 +6,6 @@ namespace SMAQC
 {
     internal class SystemLogManager
     {
-
         private readonly string mApplicationLogFileName;
 
         private StreamWriter mApplicationLogFile;
@@ -22,7 +21,6 @@ namespace SMAQC
         // Create our application log filename
         public void CreateApplicationLog()
         {
-
             try
             {
                 // Create file

@@ -38,7 +38,6 @@ namespace SMAQC
 
         private Dictionary<string, int> mPHRPFieldsForInsert;
 
-
         /// <summary>
         /// Error event
         /// </summary>
@@ -50,7 +49,6 @@ namespace SMAQC
         /// <param name="dbPath">Path to the SQLite database</param>
         public DBSQLite(string dbPath)
         {
-
             // Make sure the SQLite database exists and that it contains the correct tables
             if (!File.Exists(dbPath))
             {
@@ -65,7 +63,6 @@ namespace SMAQC
 
             // Create any missing tables and add any missing columns
             mSQLiteTools.CreateMissingTables(mConnection);
-
         }
 
         /// <Summary>
@@ -74,7 +71,6 @@ namespace SMAQC
         /// <Param name="tableNames"></param>
         public void ClearTempTables(string[] tableNames)
         {
-
             foreach (var tableName in tableNames)
             {
                 if (!DBSQLiteTools.TableExists(mConnection, tableName))
@@ -192,7 +188,6 @@ namespace SMAQC
             {
                 using (var myCommand = mConnection.CreateCommand())
                 {
-
                     myCommand.CommandText = sql;
 
                     using (var file = new StreamReader(sourceFile))
@@ -236,10 +231,8 @@ namespace SMAQC
                             ExecuteCommand(myCommand, lineNumber);
 
                             previousLine = string.Copy(line);
-
                         }
                     }
-
                 }
                 dbTrans.Commit();
 
@@ -285,9 +278,7 @@ namespace SMAQC
 
                 if (mErrorMsgCount < 10)
                     OnErrorEvent("Error inserting row " + lineNumber + ": " + msg);
-
             }
-
         }
 
         /// <summary>
@@ -390,7 +381,6 @@ namespace SMAQC
             dbTrans = mConnection.BeginTransaction();
 
             return true;
-
         }
 
         /// <Summary>
@@ -434,7 +424,6 @@ namespace SMAQC
 
             // Run the command
             ExecuteCommand(mPHRPInsertCommand, lineNumber);
-
         }
 
         /// <summary>
@@ -668,6 +657,5 @@ namespace SMAQC
         {
             ErrorEvent?.Invoke(errorMessage);
         }
-
     }
 }

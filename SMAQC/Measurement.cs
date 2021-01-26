@@ -160,7 +160,6 @@ namespace SMAQC
 
             mReporterIonColumns?.Clear();
             mIgnoreReporterIons = false;
-
         }
 
         private double ComputeMedian(List<double> values)
@@ -192,7 +191,6 @@ namespace SMAQC
 
         private double GetStoredValue(eCachedResult entryType, double valueIfMissing)
         {
-
             if (m_ResultsStorage.TryGetValue(entryType, out var value))
                 return value;
 
@@ -236,7 +234,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         private string C_1_Shared(bool countTailingPeptides)
         {
-
             m_DBInterface.SetQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber, t1.OptimalPeakApexScanNumber,"
                                     + "    temp_ScanStats.ScanTime as ScanTime1, t2.ScanTime as ScanTimePeakApex "
                                     + " FROM temp_PSMs, temp_ScanStats, temp_SICStats as t1 "
@@ -249,7 +246,6 @@ namespace SMAQC
                                     + "  AND t2.random_id=" + m_Random_ID
                                     + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
                                     + " ORDER BY Scan;");
-
 
             var psmCountLateOrEarly = 0;
             var psmCountTotal = 0;
@@ -294,7 +290,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string C_2A()
         {
-
             m_DBInterface.SetQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber as ScanNumber,"
                                     + "    temp_ScanStats.ScanTime as ScanTime1 "
                                     + " FROM temp_PSMs, temp_ScanStats, temp_SICStats as t1 "
@@ -320,7 +315,6 @@ namespace SMAQC
                 {
                     if (double.TryParse(measurementResults["ScanTime1"], out var scanTime))
                     {
-
                         if (!filterPassingPeptides.ContainsKey(scanNumber))
                         {
                             filterPassingPeptides.Add(scanNumber, scanTime);
@@ -340,7 +334,6 @@ namespace SMAQC
 
             if (filterPassingPeptides.Count > 0)
             {
-
                 // Determine the scan numbers at which the 25th and 75th percentiles are located
                 index25th = (int)(filterPassingPeptides.Count * 0.25);
                 index75th = (int)(filterPassingPeptides.Count * 0.75);
@@ -382,7 +375,6 @@ namespace SMAQC
             return PRISM.StringUtilities.DblToString(timeMinutes, 4, 0.00001);
         }
 
-
         /// <summary>
         /// C-2B: Rate of peptide identification during C-2A
         /// </summary>
@@ -390,7 +382,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string C_2B()
         {
-
             m_DBInterface.SetQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber as ScanNumber,"
                                     + "    temp_ScanStats.ScanTime as ScanTime1 "
                                     + " FROM temp_PSMs, temp_ScanStats, temp_SICStats as t1 "
@@ -503,7 +494,6 @@ namespace SMAQC
 
         private void Cache_MedianPeakWidth_Data()
         {
-
             var psms = new List<udtPeptideEntry>();					            		// Cached, filter-passing peptide-spectrum matches
 
             m_MPWCached_BestScan = new List<int>();										// Best Scan Number for each peptide
@@ -524,7 +514,6 @@ namespace SMAQC
             Dictionary<string, string> measurementResults;
             while (m_DBInterface.ReadNextRow(fields1, out measurementResults) && measurementResults.Count > 0)
             {
-
                 clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(measurementResults["Peptide_Sequence"], out var peptideResidues, out _, out _);
 
                 var currentPeptide = new udtPeptideEntry();
@@ -540,7 +529,6 @@ namespace SMAQC
                         }
                     }
                 }
-
             }
 
             // Sort by peptide sequence, then charge, then scan number
@@ -557,7 +545,6 @@ namespace SMAQC
             foreach (var psm in sortedPSMs)
             {
                 double bestScore;
-
 
                 // Check whether previous peptide sequences are equivalent and have the same charge
                 if (previousPeptide.Peptide_Sequence.Equals(psm.Peptide_Sequence) && previousPeptide.Charge == psm.Charge)
@@ -615,7 +602,6 @@ namespace SMAQC
             }
 
             m_MedianPeakWidthDataCached = true;
-
         }
 
         private string ComputeMedianPeakWidth(double startScanRelative, double endScanRelative)
@@ -636,12 +622,10 @@ namespace SMAQC
 
                 // Find other columns [n,p, q,r,t]
 
-
                 if (m_MPWCached_ScanTime.TryGetValue(optimalPeakApexScanMinusFWHM, out var startTime))
                 {
                     if (m_MPWCached_ScanTime.TryGetValue(optimalPeakApexScanPlusFWHM, out var endTime))
                     {
-
                         var peakWidthSeconds = (endTime - startTime) * 60;
                         var percent = (i + 1) / (double)m_MPWCached_BestScan.Count;
 
@@ -651,7 +635,6 @@ namespace SMAQC
                             // We are within our valid range ... so add the peak width to the list
                             result.Add(peakWidthSeconds);
                         }
-
                     }
                 }
             }
@@ -690,7 +673,6 @@ namespace SMAQC
 
             // Calculate the value; return 0 if number of peptides identified with 2 spectra is 0
 
-
             if (m_PeptideSamplingStats != null && m_PeptideSamplingStats.TryGetValue(2, out var numPeptidesWithTwoSpectra))
             {
                 if (numPeptidesWithTwoSpectra > 0)
@@ -721,7 +703,6 @@ namespace SMAQC
 
             // Calculate the value; return 0 if number of peptides identified with 3 spectra is 0
 
-
             if (m_PeptideSamplingStats != null && m_PeptideSamplingStats.TryGetValue(3, out var numPeptidesWithThreeSpectra))
             {
                 if (numPeptidesWithThreeSpectra > 0)
@@ -734,7 +715,6 @@ namespace SMAQC
             }
 
             return PRISM.StringUtilities.DblToString(result, 3, 0.00001);
-
         }
 
         /// <summary>
@@ -743,7 +723,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         private void Cache_DS_1_Data()
         {
-
             m_DBInterface.SetQuery("SELECT Spectra, Count(*) AS Peptides "
                                 + " FROM ( SELECT Unique_Seq_ID, COUNT(*) AS Spectra "
                                 + "        FROM ( SELECT Unique_Seq_ID, Scan "
@@ -767,7 +746,6 @@ namespace SMAQC
 
                 m_PeptideSamplingStats.Add(spectra, peptides);
             }
-
         }
 
         /// <summary>
@@ -792,7 +770,6 @@ namespace SMAQC
 
         private int DS_2_Shared(int msLevel)
         {
-
             var scanStartC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanStart, 0);
             var scanEndC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanEnd, 0);
 
@@ -821,7 +798,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string IS_2()
         {
-
             m_DBInterface.SetQuery("SELECT Peptide_MH, Charge "
                                 + " FROM temp_PSMs "
                                 + " WHERE random_id=" + m_Random_ID
@@ -839,7 +815,6 @@ namespace SMAQC
 
                 if (!mzList.Contains(mz))
                     mzList.Add(mz);
-
             }
 
             // Compute the median
@@ -920,7 +895,6 @@ namespace SMAQC
 
         private void Cache_IS3_Data()
         {
-
             m_DBInterface.SetQuery("SELECT Charge, COUNT(*) AS PSMs "
                     + " FROM temp_PSMs "
                     + " WHERE random_id=" + m_Random_ID
@@ -952,7 +926,6 @@ namespace SMAQC
         /// <returns></returns>
         public string MS1_1()
         {
-
             m_DBInterface.SetQuery("SELECT temp_ScanStatsEx.Ion_Injection_Time "
                 + " FROM temp_ScanStats, temp_ScanStatsEx "
                 + " WHERE temp_ScanStats.ScanNumber = temp_ScanStatsEx.ScanNumber "
@@ -960,7 +933,6 @@ namespace SMAQC
                 + "  AND temp_ScanStats.random_id = " + m_Random_ID
                 + "  AND temp_ScanStats.ScanType = 1 "
                 + " ORDER BY temp_ScanStats.ScanNumber;");
-
 
             var values = new List<double>();
 
@@ -1017,7 +989,6 @@ namespace SMAQC
 
         private void Cache_MS1_2_Data()
         {
-
             var scanFirstPeptide = GetStoredValueInt(eCachedResult.ScanFirstFilterPassingPeptide, 0);
             var scanEndC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanEnd, 0);
 
@@ -1040,7 +1011,6 @@ namespace SMAQC
                 m_Cached_BasePeakSignalToNoiseRatio.Add(double.Parse(measurementResults["BasePeakSignalToNoiseRatio"]));
                 m_Cached_TotalIonIntensity.Add(double.Parse(measurementResults["TotalIonIntensity"]));
             }
-
         }
 
         /// <summary>
@@ -1083,7 +1053,6 @@ namespace SMAQC
 
         private void Cache_MS1_3_Data()
         {
-
             m_DBInterface.SetQuery("SELECT temp_SICStats.PeakMaxIntensity"
                 + " FROM temp_SICStats, temp_PSMs"
                 + " WHERE temp_SICStats.FragScanNumber=temp_PSMs.Scan"
@@ -1114,7 +1083,6 @@ namespace SMAQC
                 // Store values between the 5th and 95th percentiles
                 for (var i = 0; i < m_Cached_MS1_3.Count; i++)
                 {
-
                     // Check if between 5-95%
                     var percent = i / (double)m_Cached_MS1_3.Count;
                     if (percent >= 0.05 && percent <= 0.95)
@@ -1122,7 +1090,6 @@ namespace SMAQC
                         // Add to the MPI list
                         maxPeakIntensities.Add(m_Cached_MS1_3[i]);
                     }
-
                 }
             }
 
@@ -1132,8 +1099,6 @@ namespace SMAQC
                 m_Cached_PeakMaxIntensity_5thPercentile = maxPeakIntensities.Min();
                 m_Cached_PeakMaxIntensity_95thPercentile = maxPeakIntensities.Max();
             }
-
-
         }
 
         /// <summary>
@@ -1156,7 +1121,6 @@ namespace SMAQC
 
         private void DS_3_CacheData()
         {
-
             m_DBInterface.SetQuery("SELECT ParentIonIntensity, PeakMaxIntensity"
                 + " FROM temp_SICStats, temp_PSMs "
                 + " WHERE temp_SICStats.FragScanNumber=temp_PSMs.Scan"
@@ -1173,7 +1137,6 @@ namespace SMAQC
 
             while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
             {
-
                 // Compute the ratio of the PeakMaxIntensity over ParentIonIntensity
                 var parentIonIntensity = double.Parse(measurementResults["ParentIonIntensity"]);
                 double ratioPeakMaxToParentIonIntensity;
@@ -1183,7 +1146,6 @@ namespace SMAQC
                     ratioPeakMaxToParentIonIntensity = 0;
 
                 values.Add(ratioPeakMaxToParentIonIntensity);
-
             }
 
             // Sort the values
@@ -1198,7 +1160,6 @@ namespace SMAQC
             // Loop through all keys
             for (var i = 0; i < values.Count; i++)
             {
-
                 // Add to the list
                 m_Cached_DS3.Add(values[i]);
 
@@ -1207,7 +1168,6 @@ namespace SMAQC
                     // In valid bottom 50% so add to DS3_Bottom50pct
                     m_Cached_DS3_Bottom50pct.Add(values[i]);
                 }
-
             }
         }
 
@@ -1259,7 +1219,6 @@ namespace SMAQC
 
         private void IS_1_Shared(int foldThreshold, out int countMS1Jump10x, out int countMS1Fall10x)
         {
-
             m_DBInterface.SetQuery("SELECT ScanNumber, BasePeakIntensity  "
                 + " FROM temp_ScanStats "
                 + " WHERE temp_ScanStats.random_id=" + m_Random_ID
@@ -1283,7 +1242,6 @@ namespace SMAQC
 
             while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
             {
-
                 var bpiCurrent = double.Parse(measurementResults["BasePeakIntensity"]);
 
                 if (bpiPrevious > -1)
@@ -1291,7 +1249,6 @@ namespace SMAQC
                     if (bpiCurrent > 0 && bpiPrevious / bpiCurrent > foldThreshold)
                     {
                         countMS1Fall10x++;
-
                     }
 
                     if (bpiPrevious > 0 && bpiCurrent / bpiPrevious > foldThreshold)
@@ -1301,9 +1258,7 @@ namespace SMAQC
                 }
 
                 bpiPrevious = bpiCurrent;
-
             }
-
         }
 
         /// <summary>
@@ -1313,7 +1268,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS1_5A()
         {
-
             if (m_Cached_DelM == null || m_Cached_DelM.Count == 0)
                 Cache_MS1_5_Data();
 
@@ -1333,7 +1287,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS1_5B()
         {
-
             if (m_Cached_DelM == null || m_Cached_DelM.Count == 0)
                 Cache_MS1_5_Data();
 
@@ -1413,7 +1366,6 @@ namespace SMAQC
 
         private void Cache_MS1_5_Data()
         {
-
             m_DBInterface.SetQuery("SELECT temp_PSMs.Peptide_MH, temp_PSMs.Charge, temp_SICStats.MZ, temp_PSMs.DelM_Da, temp_PSMs.DelM_PPM"
                     + " FROM temp_PSMs, temp_SICStats"
                     + " WHERE temp_SICStats.FragScanNumber=temp_PSMs.Scan AND temp_SICStats.random_id=" + m_Random_ID + " AND temp_PSMs.random_id=" + m_Random_ID
@@ -1463,9 +1415,7 @@ namespace SMAQC
                 m_Cached_DelM.Add(deltaMass);
 
                 m_Cached_DelM_ppm.Add(delMppm);
-
             }
-
         }
 
         /// <summary>
@@ -1475,7 +1425,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_1()
         {
-
             m_DBInterface.SetQuery("SELECT temp_ScanStatsEx.Ion_Injection_Time "
                 + " FROM temp_PSMs, temp_ScanStatsEx "
                 + " WHERE temp_PSMs.Scan=temp_ScanStatsEx.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_ScanStatsEx.random_id=" + m_Random_ID
@@ -1505,7 +1454,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_2()
         {
-
             m_DBInterface.SetQuery("SELECT temp_ScanStats.BasePeakSignalToNoiseRatio "
                 + " FROM temp_PSMs, temp_ScanStats "
                 + " WHERE temp_PSMs.Scan=temp_ScanStats.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_ScanStats.random_id=" + m_Random_ID
@@ -1546,7 +1494,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_3()
         {
-
             m_DBInterface.SetQuery("SELECT temp_ScanStats.IonCountRaw "
                 + " FROM temp_PSMs, temp_ScanStats "
                 + " WHERE temp_PSMs.Scan=temp_ScanStats.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_ScanStats.random_id=" + m_Random_ID
@@ -1576,7 +1523,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_4A()
         {
-
             if (!m_MS2_QuartileCounts_Cached)
                 Cache_MS2_4_Data();
 
@@ -1596,7 +1542,6 @@ namespace SMAQC
 
             var result = Compute_MS2_4_Ratio(2);
             return PRISM.StringUtilities.DblToString(result, 4, 0.00001);
-
         }
 
         /// <summary>
@@ -1611,7 +1556,6 @@ namespace SMAQC
 
             var result = Compute_MS2_4_Ratio(3);
             return PRISM.StringUtilities.DblToString(result, 4, 0.00001);
-
         }
 
         /// <summary>
@@ -1645,7 +1589,6 @@ namespace SMAQC
 
         private void Cache_MS2_4_Data()
         {
-
             m_DBInterface.SetQuery("SELECT COUNT(*) as MS2ScanCount "
                 + " FROM (SELECT DISTINCT temp_PSMs.Scan, temp_SICStats.PeakMaxIntensity "
                 + "       FROM temp_PSMs, temp_SICStats "
@@ -1717,7 +1660,6 @@ namespace SMAQC
                 {
                     // 4th quartile
                     UpdateMS2_4_QuartileStats(4, passedFilter);
-
                 }
 
                 scansProcessed++;
@@ -1727,12 +1669,10 @@ namespace SMAQC
                 Console.WriteLine("Possible bug in Cache_MS2_4_Data, running_scan_count >> scanCountMS2: " + scansProcessed + " vs. " + scanCountMS2);
 
             m_MS2_QuartileCounts_Cached = true;
-
         }
 
         private void UpdateMS2_4_QuartileStats(int quartile, bool passedFilter)
         {
-
             /*
               int newValue;
               newValue = m_Cached_MS2_QuartileCounts.ScanCount[quartile];
@@ -1751,7 +1691,6 @@ namespace SMAQC
         /// <returns></returns>
         public string P_1A()
         {
-
             m_DBInterface.SetQuery("SELECT Scan, Max(-Log10(MSGFSpecProb)) AS Peptide_Score"
                 + " FROM temp_PSMs "
                 + " WHERE random_id=" + m_Random_ID
@@ -1785,7 +1724,6 @@ namespace SMAQC
         /// <returns></returns>
         public string P_1B()
         {
-
             m_DBInterface.SetQuery("SELECT Scan, Min(Log10(MSGFSpecProb)) AS Peptide_Score"
                 + " FROM temp_PSMs "
                 + " WHERE random_id=" + m_Random_ID
@@ -1825,7 +1763,6 @@ namespace SMAQC
 
         private string P_2A_Shared(bool phosphoPeptides)
         {
-
             m_DBInterface.SetQuery("SELECT Cleavage_State, Count(*) AS Spectra "
                                 + " FROM ( SELECT Scan, Max(Cleavage_State) AS Cleavage_State "
                                 + "        FROM temp_PSMs "
@@ -1851,7 +1788,6 @@ namespace SMAQC
                 return spectraCount.ToString();
 
             return "0";
-
         }
 
         /// <summary>
@@ -1861,7 +1797,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string P_2B()
         {
-
             const bool groupByCharge = true;
             var dctPeptideStats = SummarizePSMs(groupByCharge);
 
@@ -1879,7 +1814,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string P_2C()
         {
-
             const bool groupByCharge = false;
             var dctPeptideStats = SummarizePSMs(groupByCharge);
 
@@ -1888,7 +1822,6 @@ namespace SMAQC
                 return peptideCount.ToString();
 
             return "0";
-
         }
 
         /// <summary>
@@ -1898,7 +1831,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string P_3()
         {
-
             var dctPeptideStats = SummarizePSMs(groupByCharge: false);
 
             // Lookup the number of fully tryptic peptides (Cleavage_State = 2)
@@ -1925,9 +1857,7 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string P_4A()
         {
-
             var dctPeptideStats = SummarizePSMs(groupByCharge: false);
-
 
             // Lookup the number of fully tryptic peptides (Cleavage_State = 2)
             if (!dctPeptideStats.TryGetValue(2, out var peptideCountFullyTryptic))
@@ -1953,7 +1883,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string P_4B()
         {
-
             m_DBInterface.SetQuery("SELECT Count(*) AS Peptides, SUM(MissedCleavages) as TotalMissedCleavages"
                                    + " FROM ( SELECT Unique_Seq_ID, Max(MissedCleavages) AS MissedCleavages "
                                    + "        FROM temp_PSMs "
@@ -1997,7 +1926,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string Phos_2C()
         {
-
             var dctPeptideStats = SummarizePSMs(groupByCharge: false, phosphoPeptides: true);
 
             // Lookup the number of fully tryptic peptides (Cleavage_State = 2)
@@ -2005,7 +1933,6 @@ namespace SMAQC
                 return peptideCount.ToString();
 
             return "0";
-
         }
 
         /// <summary>
@@ -2042,7 +1969,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string Keratin_2C()
         {
-
             m_DBInterface.SetQuery("SELECT Count(*) AS Peptides "
                                    + " FROM ( SELECT Unique_Seq_ID, Max(Cleavage_State) AS Cleavage_State "
                                    + "        FROM temp_PSMs "
@@ -2061,7 +1987,6 @@ namespace SMAQC
             var keratinCount = int.Parse(measurementResults["Peptides"]);
 
             return keratinCount.ToString("0");
-
         }
 
         /// <summary>
@@ -2098,7 +2023,6 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string Trypsin_2C()
         {
-
             m_DBInterface.SetQuery("SELECT Count(*) AS Peptides "
                                    + " FROM ( SELECT Unique_Seq_ID, Max(Cleavage_State) AS Cleavage_State "
                                    + "        FROM temp_PSMs "
@@ -2117,7 +2041,6 @@ namespace SMAQC
             var trypsinCount = int.Parse(measurementResults["Peptides"]);
 
             return trypsinCount.ToString("0");
-
         }
 
         /// <summary>
@@ -2279,7 +2202,6 @@ namespace SMAQC
 
             var psmCount = int.Parse(measurementResults["PSMs"]);
             return psmCount;
-
         }
 
         private List<string> DetermineReporterIonColumns()
@@ -2389,15 +2311,12 @@ namespace SMAQC
 
             m_DBInterface.InitReader();
 
-
             while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
             {
                 dctPeptideStats.Add(int.Parse(measurementResults["Cleavage_State"]), int.Parse(measurementResults["Peptides"]));
             }
 
             return dctPeptideStats;
-
         }
-
     }
 }

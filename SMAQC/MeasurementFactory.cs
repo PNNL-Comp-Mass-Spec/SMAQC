@@ -5,7 +5,6 @@ namespace SMAQC
 {
     internal class MeasurementFactory
     {
-
         public Measurement mMeasurement;
 
         /// <summary>

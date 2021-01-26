@@ -71,7 +71,6 @@ namespace SMAQC
                     "Source Voltage (kV)",
                     "Source Current (uA)"}));
 
-
             // SICStats columns
             mValidFilesToReFormat.Add("SICStats",
                FieldCleaner(new List<string> {
@@ -101,7 +100,6 @@ namespace SMAQC
                     "PeakKSStat",
                     "StatMomentsDataCountUsed"}));
 
-
             // xt columns (X!Tandem)
             mValidFilesToReFormat.Add("xt",
                 FieldCleaner(new List<string> {
@@ -123,13 +121,11 @@ namespace SMAQC
                     "Peptide_Intensity_Log(I)",
                     "DelM_PPM"}));
 
-
             // xt_ResultToSeqMap columns
             mValidFilesToReFormat.Add("xt_ResultToSeqMap",
                 FieldCleaner(new List<string> {
                     "Result_ID",
                     "Unique_Seq_ID"}));
-
 
             // xt_SeqToProteinMap columns
             mValidFilesToReFormat.Add("xt_SeqToProteinMap",
@@ -140,7 +136,6 @@ namespace SMAQC
                     "Protein_Name",
                     "Protein_Expectation_Value_Log(e)",
                     "Protein_Intensity_Log(I)"}));
-
         }
 
         /// <summary>
@@ -171,7 +166,6 @@ namespace SMAQC
         /// <returns>True if reformatted, false if not</returns>
         public bool HandleFile(string filePath, string dataset)
         {
-
             // Check if is valid file
             var knownColumns = GetColumnsForKnownFile(filePath, dataset);
 
@@ -250,7 +244,6 @@ namespace SMAQC
                             // Known column; add it
                             dataToWrite.Add(parts[i]);
                         }
-
                     }
 
                     while (dataToWrite.Count < knownColumnCount)
@@ -261,9 +254,7 @@ namespace SMAQC
 
                     // Write line
                     updatedFileWriter.WriteLine(string.Join("\t", dataToWrite));
-
                 }
-
             }
         }
 
@@ -316,7 +307,6 @@ namespace SMAQC
                         columnIndexMap.Add(-1);
                     }
                 }
-
             }
 
             return columnCount;
@@ -358,7 +348,6 @@ namespace SMAQC
             {
                 // Ignore exceptions
             }
-
         }
 
         /// <summary>
@@ -378,7 +367,6 @@ namespace SMAQC
             // Remove the dataset name from the filename
             // Example result: ScanStats or ScanStatsEx
             var filenamePart = filenameNoExtension.Substring(dataset.Length + 1);
-
 
             if (mValidFilesToReFormat.TryGetValue(filenamePart, out var knownColumns))
             {
@@ -426,6 +414,5 @@ namespace SMAQC
 
             return updatedColumnNames;
         }
-
     }
 }

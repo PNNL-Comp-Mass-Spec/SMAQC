@@ -87,7 +87,6 @@ namespace SMAQC
 
         private static int Main(string[] args)
         {
-
             var random = new Random();
             var randomId = random.Next();
 
@@ -109,7 +108,6 @@ namespace SMAQC
             {
                 ShowProgramHelp();
                 return -1;
-
             }
 
             // Show the processing options
@@ -131,7 +129,6 @@ namespace SMAQC
                 mSystemLogManager.CreateApplicationLog();
 
                 mSystemLogManager.AddApplicationLog("SMAQC Version " + GetAppVersion());
-
             }
             catch (Exception ex)
             {
@@ -140,16 +137,13 @@ namespace SMAQC
                 return 6;
             }
 
-
             try
             {
-
                 // Obtain the list of measurements to run
                 var measurementsToRun = LoadMeasurementInfoFile(mOptions.MeasurementsFile);
 
                 try
                 {
-
                     // Connect to the database
                     mDBWrapper = new DBWrapper(mOptions.DBFolderPath, false);
 
@@ -193,7 +187,6 @@ namespace SMAQC
                         Thread.Sleep(1500);
                         return 10;
                     }
-
                 }
                 catch (Exception ex)
                 {
@@ -201,7 +194,6 @@ namespace SMAQC
                     Thread.Sleep(1500);
                     return 7;
                 }
-
             }
             catch (Exception ex)
             {
@@ -221,7 +213,6 @@ namespace SMAQC
         /// <returns>0 if success, otherwise an error code</returns>
         private static int ProcessDatasets(int randomId, IReadOnlyCollection<string> measurementsToRun)
         {
-
             mSystemLogManager.AddApplicationLog("Searching for Text Files...");
 
             // Detect datasets
@@ -375,7 +366,6 @@ namespace SMAQC
                     }
 
                     mResults.Clear();
-
                 }
                 catch (Exception ex)
                 {
@@ -383,7 +373,6 @@ namespace SMAQC
                     Console.WriteLine(ex.StackTrace);
                     return 5;
                 }
-
             }
 
             return 0;
@@ -552,13 +541,11 @@ namespace SMAQC
 
                 // Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
                 Thread.Sleep(750);
-
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error displaying the program syntax: " + ex.Message);
             }
-
         }
 
         /// <summary>
@@ -570,14 +557,12 @@ namespace SMAQC
         /// <param name="measurementsToRun"></param>
         private static void AddScanResults(string instrumentId, int randomId, int scanId, IReadOnlyCollection<string> measurementsToRun)
         {
-
             // Query to store data in scan_results
             var sql = BuildScanResultsQuery(instrumentId, randomId, scanId, measurementsToRun);
 
             mDBWrapper.SetQuery(sql);
 
             mDBWrapper.ExecuteNonQuery();
-
         }
 
         /// <summary>
@@ -635,7 +620,6 @@ namespace SMAQC
 
             mDBWrapper.ReadSingleLine(field_array, out var dctMostRecentEntry);
 
-
             if (int.TryParse(dctMostRecentEntry["result_id"], out var resultId))
             {
                 return resultId + 1;
@@ -687,7 +671,6 @@ namespace SMAQC
                                     break;
                                 }
                             }
-
                         }
                     }
                     catch (Exception ex)
@@ -695,7 +678,6 @@ namespace SMAQC
                         ShowErrorMessage("Error reading the metrics to run from " + fiMeasurementsToRunFile.FullName + ": " + ex.Message);
                         useDefaultMetrics = true;
                     }
-
                 }
             }
 
@@ -705,11 +687,9 @@ namespace SMAQC
 
                 measurementsToRun.Clear();
                 measurementsToRun.AddRange(metricNames);
-
             }
 
             return measurementsToRun;
         }
-
     }
 }

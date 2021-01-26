@@ -8,7 +8,6 @@ namespace SMAQC
 {
     internal class DBSQLiteTools
     {
-
         private readonly Regex mNonAlphanumericMatcher;
 
         /// <summary>
@@ -27,10 +26,8 @@ namespace SMAQC
         {
             using (var conn = new SQLiteConnection("Data Source=" + dbPath, true))
             {
-
                 using (var cmd = conn.CreateCommand())
                 {
-
                     conn.Open();
 
                     // SMAQC results
@@ -98,7 +95,6 @@ namespace SMAQC
             CreateIndex(cmd, "temp_SICStats", "OptimalPeakApexScanNumber");
 
             CreateIndicesReporterIons(cmd);
-
         }
 
         private void CreateIndicesReporterIons(SQLiteCommand cmd)
@@ -243,11 +239,7 @@ namespace SMAQC
 
                     AddColumnsToTable(connection, "scan_results", columnsToAdd);
                 }
-
-
             } // End Using
-
-
         }
 
         /// <summary>
@@ -571,7 +563,6 @@ namespace SMAQC
                         return true;
                     }
                 }
-
             }
 
             return false;

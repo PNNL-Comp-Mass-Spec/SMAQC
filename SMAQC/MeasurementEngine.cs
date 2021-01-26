@@ -5,7 +5,6 @@ namespace SMAQC
 {
     internal class MeasurementEngine
     {
-
         private readonly List<string> mMeasurementsToRun;
         private readonly MeasurementFactory mFactory;
         private readonly SystemLogManager mSystemLogManager;
@@ -21,7 +20,6 @@ namespace SMAQC
             mFactory = new MeasurementFactory(measurement);
             mMeasurementsToRun = measurementsToRun;
             mSystemLogManager = systemLogManager;
-
         }
 
         /// <summary>
@@ -30,7 +28,6 @@ namespace SMAQC
         /// <returns></returns>
         public Dictionary<string, string> RunMeasurements()
         {
-
             mFactory.ResetMeasurements();
 
             // Results dictionary
@@ -68,6 +65,5 @@ namespace SMAQC
 
             return dctResults;
         }
-
     }
 }

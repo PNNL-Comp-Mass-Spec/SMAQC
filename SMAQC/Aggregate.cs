@@ -37,7 +37,6 @@ namespace SMAQC
         /// </summary>
         private string m_CurrentDataset = "";
 
-
         /// <summary>
         /// Constructor
         /// </summary>
@@ -64,7 +63,6 @@ namespace SMAQC
 
             // Ensure temp.txt does not exist ... if program closed file not removed and on restart crashes
             CheckTempFileNotExist();
-
         }
 
         // Destructor
@@ -82,7 +80,6 @@ namespace SMAQC
             if (File.Exists(file))
             {
                 File.Delete(file);
-
             }
         }
 
@@ -194,7 +191,6 @@ namespace SMAQC
         // This function verifies that the filename is associated with m_CurrentDataset
         private bool IsAssociatedWithCurrentDataset(string filename)
         {
-
             // Get filename without extension
             filename = Path.GetFileNameWithoutExtension(filename);
 
@@ -229,6 +225,5 @@ namespace SMAQC
         {
             m_CurrentDataset = datasetName;
         }
-
     }
 }

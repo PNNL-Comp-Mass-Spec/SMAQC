@@ -64,7 +64,6 @@ namespace SMAQC
         {
             try
             {
-
                 dbConn.SetQuery(query);
 
                 if (mShowQueryText)
@@ -97,7 +96,6 @@ namespace SMAQC
         /// <remarks>Call SetQuery prior to calling this method</remarks>
         public bool ExecuteNonQuery()
         {
-
             try
             {
                 var status = dbConn.ExecuteNonQuery();
@@ -108,7 +106,6 @@ namespace SMAQC
                 Console.WriteLine("Error in ExecuteNonQuery: " + ex.Message);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -190,6 +187,5 @@ namespace SMAQC
         {
             ErrorEvent?.Invoke(errorMessage);
         }
-
     }
 }
