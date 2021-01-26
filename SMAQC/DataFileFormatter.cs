@@ -9,7 +9,7 @@ namespace SMAQC
     {
         /// <summary>
         /// List of files that need to be reformatted
-        /// e.g. ScanStats, ScanStatsEx, SICstats
+        /// e.g. ScanStats, ScanStatsEx, SICStats
         /// Keys are filename suffixes
         /// Values are the known columns that we want to load from the file
         /// </summary>
@@ -72,8 +72,8 @@ namespace SMAQC
                     "Source Current (uA)"}));
 
 
-            // SICstats columns
-            mValidFilesToReFormat.Add("SICstats",
+            // SICStats columns
+            mValidFilesToReFormat.Add("SICStats",
                FieldCleaner(new List<string> {
                     "Dataset",
                     "ParentIonIndex",
