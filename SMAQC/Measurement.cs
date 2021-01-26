@@ -89,7 +89,7 @@ namespace SMAQC
         /// <summary>
         /// Cached data for DS_1
         /// </summary>
-        /// <remarks>Keys are the number of spectra that a peptide was observed in (passing filters) and values are the number of peptides identified by Key spectra</param></remarks>
+        /// <remarks>Keys are the number of spectra that a peptide was observed in (passing filters) and values are the number of peptides identified by Key spectra</remarks>
         private readonly Dictionary<int, int> mPeptideSamplingStats = new Dictionary<int, int>();
 
         /// <summary>
@@ -127,6 +127,7 @@ namespace SMAQC
         /// <summary>
         /// Cached data for MS1_5: Delta mass, in ppm
         /// </summary>
+        // ReSharper disable once IdentifierTypo
         private readonly List<double> mCachedDelMppm = new List<double>();
 
         private bool mMS2QuartileCountsCached;
@@ -315,7 +316,7 @@ namespace SMAQC
                 else
                     temp_difference = double.Parse(measurementResults["ScanTimePeakApex"]) - double.Parse(measurementResults["ScanTime1"]);
 
-                // If difference is greater than 4 minutes, then increment the counter
+                // If difference is greater than 4 minutes, increment the counter
                 if (temp_difference >= 4.00)
                 {
                     psmCountLateOrEarly++;
@@ -1702,7 +1703,9 @@ namespace SMAQC
             }
 
             if (scansProcessed > scanCountMS2 + 1 && scansProcessed > scanCountMS2 * 1.01)
+            {
                 Console.WriteLine("Possible bug in Cache_MS2_4_Data, running_scan_count >> scanCountMS2: " + scansProcessed + " vs. " + scanCountMS2);
+            }
 
             mMS2QuartileCountsCached = true;
         }
