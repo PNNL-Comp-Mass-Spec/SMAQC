@@ -7,7 +7,7 @@ using PHRPReader;
 
 namespace SMAQC
 {
-    class Filter
+    internal class Filter
     {
 
         public readonly DBWrapper mDBWrapper;
@@ -47,24 +47,19 @@ namespace SMAQC
         {
             var value = fileToLoad.IndexOf("_ScanStatsEx.txt", StringComparison.OrdinalIgnoreCase);
 
-            if (value >= 0)
-            {
-                return true;
-            }
-
-            return false;
+            return value >= 0;
         }
 
         /// <summary>
         /// Create a bulk-insert compatible file
         /// </summary>
-        /// <param name="targetFilePath"></param>
         /// <param name="filePathToLoad"></param>
+        /// <param name="targetFilePath"></param>
         private void CreateBulkInsertDataFile(string filePathToLoad, string targetFilePath)
         {
             var lineNumber = 0;
 
-            var tabChar = "\t";
+            const string tabChar = "\t";
 
             // Split on tab characters
             var delimiters = new[] { '\t' };
@@ -209,7 +204,7 @@ namespace SMAQC
 
                 var peptideMassCalculator = new clsPeptideMassCalculator();
 
-                var reader = new clsPHRPReader(inputFilePath, clsPHRPReader.ePeptideHitResultType.Unknown, blnLoadModsAndSeqInfo, blnLoadMSGFResults, blnLoadScanStats)
+                var reader = new clsPHRPReader(inputFilePath, clsPHRPReader.PeptideHitResultTypes.Unknown, loadModsAndSeqInfo, loadMSGFResults, loadScanStats)
                 {
                     EchoMessagesToConsole = false,
                     SkipDuplicatePSMs = true
@@ -276,7 +271,7 @@ namespace SMAQC
                 // Regex to match keratin proteins
                 var reKeratinProtein = clsMSGFResultsSummarizer.GetKeratinRegEx();
 
-                // Regex to match trypsin proteins
+                // RegEx to match trypsin proteins
                 var reTrypsinProtein = clsMSGFResultsSummarizer.GetTrypsinRegEx();
 
                 // Read the data using PHRP Reader
@@ -286,13 +281,15 @@ namespace SMAQC
                 while (reader.MoveNext())
                 {
                     var currentPSM = reader.CurrentPSM;
-                    lineNumber += 1;
+                    lineNumber++;
 
                     clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(currentPSM.Peptide, out var currentPeptide, out _, out _);
 
                     if (prevScan == currentPSM.ScanNumberStart && prevCharge == currentPSM.Charge && prevPeptide == currentPeptide)
+                    {
                         // Skip this entry (same peptide, different protein)
                         continue;
+                    }
 
                     if (bestPeptideScan > 0 && !(bestPeptideScan == currentPSM.ScanNumberStart && bestPeptideCharge == currentPSM.Charge))
                     {
@@ -487,17 +484,17 @@ namespace SMAQC
             mSystemLogManager.AddApplicationLogError(message);
         }
 
-        void mPHRPReader_ErrorEvent(string message, Exception ex)
+        private void mPHRPReader_ErrorEvent(string message, Exception ex)
         {
             mSystemLogManager.AddApplicationLogError("PHRPReader error: " + message);
         }
 
-        void mPHRPReader_MessageEvent(string message)
+        private void mPHRPReader_MessageEvent(string message)
         {
             mSystemLogManager.AddApplicationLog(message);
         }
 
-        void mPHRPReader_WarningEvent(string message)
+        private void mPHRPReader_WarningEvent(string message)
         {
             mSystemLogManager.AddApplicationLogWarning("PHRPReader warning: " + message);
         }

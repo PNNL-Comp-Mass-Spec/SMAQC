@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace SMAQC
 {
-    class Aggregate
+    internal class Aggregate
     {
         private const string SCAN_STATS_FILENAME_SUFFIX = "_ScanStats.txt";
 
@@ -18,19 +18,19 @@ namespace SMAQC
         /// List of MASIC files to import
         /// Keys are file names, values are true if required or false if optional
         /// </summary>
-        readonly Dictionary<string, bool> MasicImportFiles;
+        private readonly Dictionary<string, bool> MasicImportFiles;
 
         /// <summary>
         /// List of X!Tandem files to import
         /// Keys are file names, values are true if required or false if optional
         /// </summary>
         /// <remarks>This is only uses if not using PHRP Reader</remarks>
-        readonly Dictionary<string, bool> XTandemImportFiles;
+        private readonly Dictionary<string, bool> XTandemImportFiles;
 
         /// <summary>
         /// List of valid datasets
         /// </summary>
-        readonly List<string> ValidDataSets = new List<string>();
+        private readonly List<string> ValidDataSets = new List<string>();
 
         /// <summary>
         /// Current running dataset
@@ -144,7 +144,7 @@ namespace SMAQC
         /// <param name="file_ext">File extension to match, typically *.txt</param>
         /// <param name="importFiles">Files to find; keys are filename suffixes, values are True if required or false if optional</param>
         /// <returns>Dictionary where Keys are file paths and Values are lists of header column suffixes to ignore</returns>
-        private Dictionary<string, List<string>> GetFileImportList(string file_ext, Dictionary<string, bool> importFiles)
+        private Dictionary<string, List<string>> GetFileImportList(string file_ext, IReadOnlyDictionary<string, bool> importFiles)
         {
             // Keys are file paths; values are lists of header column suffixes to ignore
             var fileImportList = new Dictionary<string, List<string>>();
@@ -200,21 +200,17 @@ namespace SMAQC
 
             // Now check for dataset name in filename
             // If found a valid file in a certain dataset
-            if (filename != null && filename.StartsWith(m_CurrentDataset, StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-            return false;
+            return filename?.StartsWith(m_CurrentDataset, StringComparison.OrdinalIgnoreCase) == true;
         }
 
         // This function verifies if a filename is in our import list
         // Known_dataset is for if we have already set a running dataset
-        private bool IsKnownImportFile(string filename, Dictionary<string, bool> importFiles)
+        private bool IsKnownImportFile(string filename, IReadOnlyDictionary<string, bool> importFiles)
         {
             // Get filename without extension
             filename = Path.GetFileNameWithoutExtension(filename);
 
-            if (filename == null || !filename.StartsWith(m_CurrentDataset, StringComparison.OrdinalIgnoreCase))
+            if (filename?.StartsWith(m_CurrentDataset, StringComparison.OrdinalIgnoreCase) != true)
                 return false;
 
             if (filename.Length < m_CurrentDataset.Length + 1)

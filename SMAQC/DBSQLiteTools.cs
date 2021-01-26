@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace SMAQC
 {
-    class DBSQLiteTools
+    internal class DBSQLiteTools
     {
 
         private readonly Regex mNonAlphanumericMatcher;
@@ -313,8 +314,6 @@ namespace SMAQC
 
         private string GetTableCreateSql(string tableName)
         {
-            var sql = string.Empty;
-
             switch (tableName)
             {
                 case "scan_results":
@@ -337,7 +336,7 @@ namespace SMAQC
                         "MS2_RepIon_All", "MS2_RepIon_1Missing", "MS2_RepIon_2Missing", "MS2_RepIon_3Missing"
                     };
 
-                    sql = "CREATE TABLE [scan_results] ("
+                    return "CREATE TABLE [scan_results] ("
                           + "[result_id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
                           + "[scan_id] INTEGER NOT NULL,"
                           + "[instrument_id] VARCHAR NOT NULL,"
@@ -345,10 +344,9 @@ namespace SMAQC
                           + "[scan_date] VARCHAR NOT NULL,"
                           + VarcharColumnNamesToSql(metricNames)
                         + ")";
-                    break;
 
                 case "temp_ScanStats":
-                    sql = "CREATE TABLE [temp_ScanStats] ("
+                    return "CREATE TABLE [temp_ScanStats] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Dataset] INTEGER NOT NULL,"
@@ -363,10 +361,9 @@ namespace SMAQC
                         + "[IonCountRaw] INTEGER NULL,"
                         + "[ScanTypeName] VARCHAR NULL"
                         + ")";
-                    break;
 
                 case "temp_ScanStatsEx":
-                    sql = "CREATE TABLE [temp_ScanStatsEx] ("
+                    return "CREATE TABLE [temp_ScanStatsEx] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Dataset] INTEGER NOT NULL,"
@@ -391,10 +388,9 @@ namespace SMAQC
                         + "[Source_Voltage] FLOAT NULL,"
                         + "[Source_Current] FLOAT NULL"
                         + ")";
-                    break;
 
                 case "temp_SICStats":
-                    sql = "CREATE TABLE [temp_SICStats] ("
+                    return "CREATE TABLE [temp_SICStats] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Dataset] INTEGER NOT NULL,"
@@ -423,10 +419,9 @@ namespace SMAQC
                         + "[PeakKSStat] FLOAT NOT NULL,"
                         + "[StatMomentsDataCountUsed] INTEGER NOT NULL"
                         + ")";
-                    break;
 
                 case "temp_ReporterIons":
-                    sql = "CREATE TABLE [temp_ReporterIons] ("
+                    return "CREATE TABLE [temp_ReporterIons] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Dataset] INTEGER NOT NULL,"
@@ -470,10 +465,9 @@ namespace SMAQC
 
                         + "[Weighted_Avg_Pct_Intensity_Correction] FLOAT NOT NULL"
                         + ")";
-                    break;
 
                 case "temp_xt":
-                    sql = "CREATE TABLE [temp_xt] ("
+                    return "CREATE TABLE [temp_xt] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Result_ID] INTEGER NOT NULL,"
@@ -494,19 +488,17 @@ namespace SMAQC
                         + "[Peptide_Intensity_Log] FLOAT NOT NULL,"
                         + "[DelM_PPM] FLOAT NULL"
                         + ")";
-                    break;
 
                 case "temp_xt_ResultToSeqMap":
-                    sql = "CREATE TABLE [temp_xt_ResultToSeqMap] ("
+                    return "CREATE TABLE [temp_xt_ResultToSeqMap] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Result_ID] INTEGER NOT NULL,"
                         + "[Unique_Seq_ID] INTEGER NOT NULL"
                         + ")";
-                    break;
 
                 case "temp_xt_SeqToProteinMap":
-                    sql = "CREATE TABLE [temp_xt_SeqToProteinMap] ("
+                    return "CREATE TABLE [temp_xt_SeqToProteinMap] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Unique_Seq_ID] INTEGER NOT NULL,"
@@ -516,10 +508,9 @@ namespace SMAQC
                         + "[Protein_Expectation_Value_Log] FLOAT NOT NULL,"
                         + "[Protein_Intensity_Log] FLOAT NOT NULL"
                         + ")";
-                    break;
 
                 case "temp_PSMs":
-                    sql = "CREATE TABLE [temp_PSMs] ("
+                    return "CREATE TABLE [temp_PSMs] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Result_ID] INTEGER NOT NULL,"
@@ -538,12 +529,10 @@ namespace SMAQC
                         + "[MissedCleavages] INTEGER NOT NULL,"
                         + "[TrypsinPeptide] INTEGER NOT NULL"
                         + ")";
-                    break;
 
+                default:
+                    throw new ArgumentException(nameof(tableName));
             }
-
-            return sql;
-
         }
 
         /// <summary>
@@ -563,7 +552,7 @@ namespace SMAQC
                 if (columnList.Length > 0)
                     columnList.Append(",");
 
-                columnList.Append("[" + metric + "] VARCHAR NULL");
+                columnList.AppendFormat("[{0}] VARCHAR NULL", metric);
             }
 
             return columnList.ToString();

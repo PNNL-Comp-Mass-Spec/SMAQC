@@ -4,12 +4,12 @@ using PRISM;
 
 namespace SMAQC
 {
-    class SystemLogManager
+    internal class SystemLogManager
     {
 
         private readonly string mApplicationLogFileName;
 
-        StreamWriter mApplicationLogFile;
+        private StreamWriter mApplicationLogFile;
 
         /// <summary>
         /// Constructor

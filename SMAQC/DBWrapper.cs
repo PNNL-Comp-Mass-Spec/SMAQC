@@ -4,13 +4,13 @@ using System.IO;
 
 namespace SMAQC
 {
-    class DBWrapper
+    internal class DBWrapper
     {
         // Delegate function for error events
         public delegate void DBErrorEventHandler(string errorMessage);
         public event DBErrorEventHandler ErrorEvent;
 
-        readonly DBInterface dbConn;
+        private readonly DBInterface dbConn;
         private readonly string[] db_tables = {
             "temp_ScanStats", "temp_ScanStatsEx", "temp_SICStats",
             "temp_xt", "temp_xt_ResultToSeqMap", "temp_xt_SeqToProteinMap",
@@ -186,7 +186,7 @@ namespace SMAQC
             dbConn.ExecutePHRPInsert(dctData, lineNumber);
         }
 
-        void dbConn_ErrorEvent(string errorMessage)
+        private void dbConn_ErrorEvent(string errorMessage)
         {
             ErrorEvent?.Invoke(errorMessage);
         }

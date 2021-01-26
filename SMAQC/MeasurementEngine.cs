@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace SMAQC
 {
-    class MeasurementEngine
+    internal class MeasurementEngine
     {
 
-        readonly List<string> mMeasurementsToRun;
-        readonly MeasurementFactory mFactory;
-        readonly SystemLogManager mSystemLogManager;
+        private readonly List<string> mMeasurementsToRun;
+        private readonly MeasurementFactory mFactory;
+        private readonly SystemLogManager mSystemLogManager;
 
         /// <summary>
         /// Constructor
@@ -40,7 +40,7 @@ namespace SMAQC
             foreach (var measurementName in mMeasurementsToRun)
             {
                 var startTime = DateTime.UtcNow;
-                measurementsStarted += 1;
+                measurementsStarted++;
                 var percentComplete = measurementsStarted / (double)mMeasurementsToRun.Count * 100;
 
                 try

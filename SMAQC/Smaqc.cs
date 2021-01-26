@@ -68,7 +68,7 @@ namespace SMAQC
         // Measurement results
         private static Dictionary<string, string> mResults = new Dictionary<string, string>();
 
-        private const string SMAQC_BUILD_DATE = "February 24, 2020";
+        private const string SMAQC_BUILD_DATE = "January 25, 2021";
 
         // Define the filename suffixes
         private static readonly string[] mMasicFileExtensions = { "_ScanStats", "_ScanStatsEx", "_SICStats", "_ReporterIons" };
@@ -85,7 +85,7 @@ namespace SMAQC
             "Keratin_2A", "Keratin_2C", "P_4A", "P_4B", "Trypsin_2A", "Trypsin_2C",
             "MS2_RepIon_All", "MS2_RepIon_1Missing", "MS2_RepIon_2Missing", "MS2_RepIon_3Missing"};
 
-        static int Main(string[] args)
+        private static int Main(string[] args)
         {
 
             var random = new Random();
@@ -265,7 +265,7 @@ namespace SMAQC
                         foreach (var candidateFile in masicFileList)
                         {
                             var fileName = Path.GetFileNameWithoutExtension(candidateFile.Key);
-                            if (fileName != null && fileName.EndsWith(fileSuffix, StringComparison.OrdinalIgnoreCase))
+                            if (fileName?.EndsWith(fileSuffix, StringComparison.OrdinalIgnoreCase) == true)
                             {
                                 matchFound = true;
                                 break;
@@ -437,7 +437,9 @@ namespace SMAQC
                 if (commandLineParser.RetrieveValueForParameter("DB", out value))
                 {
                     if (string.IsNullOrWhiteSpace(value))
+                    {
                         ShowErrorMessage("/DB does not have a value; not overriding the database folder path");
+                    }
                     else
                     {
                         mOptions.DBFolderPath = value;
@@ -447,7 +449,9 @@ namespace SMAQC
                 if (commandLineParser.RetrieveValueForParameter("I", out value))
                 {
                     if (string.IsNullOrWhiteSpace(value))
+                    {
                         ShowErrorMessage("/I does not have a value; not overriding the Instrument ID");
+                    }
                     else
                     {
                         mOptions.Instrument_id = value;
@@ -457,7 +461,9 @@ namespace SMAQC
                 if (commandLineParser.RetrieveValueForParameter("M", out value))
                 {
                     if (string.IsNullOrWhiteSpace(value))
+                    {
                         ShowErrorMessage("/M does not have a value; not customizing the metrics to compute");
+                    }
                     else
                     {
                         mOptions.MeasurementsFile = value;
@@ -562,7 +568,7 @@ namespace SMAQC
         /// <param name="randomId"></param>
         /// <param name="scanId"></param>
         /// <param name="measurementsToRun"></param>
-        static void AddScanResults(string instrumentId, int randomId, int scanId, IReadOnlyCollection<string> measurementsToRun)
+        private static void AddScanResults(string instrumentId, int randomId, int scanId, IReadOnlyCollection<string> measurementsToRun)
         {
 
             // Query to store data in scan_results
@@ -590,21 +596,21 @@ namespace SMAQC
             // Append each metric, e.g. `C_1A`
             foreach (var item in measurementsToRun)
             {
-                mQueryBuilder.Append(", `" + item + "`");
+                mQueryBuilder.AppendFormat(", `{0}`", item);
             }
             mQueryBuilder.Append(") VALUES (");
 
             // Append the metadata values
-            mQueryBuilder.Append("'" + scanId + "',");
-            mQueryBuilder.Append("'" + instrumentId + "',");
-            mQueryBuilder.Append("'" + randomId + "',");
+            mQueryBuilder.AppendFormat("'{0}',", scanId);
+            mQueryBuilder.AppendFormat("'{0}',", instrumentId);
+            mQueryBuilder.AppendFormat("'{0}',", randomId);
 
             mQueryBuilder.Append(mDBWrapper.GetDateTime());
 
             // Append the metric values (as strings), e.g. '3.2342'
             foreach (var item in measurementsToRun)
             {
-                mQueryBuilder.Append(", '" + mResults[item] + "'");
+                mQueryBuilder.AppendFormat(", '{0}'", mResults[item]);
             }
 
             mQueryBuilder.Append(");");
@@ -617,7 +623,7 @@ namespace SMAQC
         /// </summary>
         /// <returns></returns>
         /// <remarks>Multiple datasets processed at once will have the same Result_ID</remarks>
-        static int DetermineResultId()
+        private static int DetermineResultId()
         {
             // In the scan_results table, result_id is PRIMARY KEY AUTOINCREMENT
             // scan_id is inserted into the table, but is actually equivalent to result_id
@@ -643,13 +649,15 @@ namespace SMAQC
         /// </summary>
         /// <param name="measurementsToRunFile"></param>
         /// <returns></returns>
-        static List<string> LoadMeasurementInfoFile(string measurementsToRunFile)
+        private static List<string> LoadMeasurementInfoFile(string measurementsToRunFile)
         {
             var useDefaultMetrics = false;
             var measurementsToRun = new List<string>();
 
             if (string.IsNullOrEmpty(measurementsToRunFile))
+            {
                 useDefaultMetrics = true;
+            }
             else
             {
                 var fiMeasurementsToRunFile = new FileInfo(measurementsToRunFile);

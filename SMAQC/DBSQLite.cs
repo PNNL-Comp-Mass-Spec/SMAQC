@@ -8,7 +8,7 @@ using System.Data.Common;
 
 namespace SMAQC
 {
-    class DBSQLite : DBInterface
+    internal class DBSQLite : DBInterface
     {
         /// <summary>
         /// SQLite connection
@@ -34,9 +34,9 @@ namespace SMAQC
 
         private Dictionary<string, int> mErrorMessages;
 
-        SQLiteCommand mPHRPInsertCommand;
+        private SQLiteCommand mPHRPInsertCommand;
 
-        Dictionary<string, int> mPHRPFieldsForInsert;
+        private Dictionary<string, int> mPHRPFieldsForInsert;
 
 
         /// <summary>
@@ -518,7 +518,7 @@ namespace SMAQC
         /// <param name="excludedColumnNameSuffixes">Columns that end in any of these suffixes will be skipped</param>
         /// <param name="fieldEnabledByIndex"></param>
         /// <returns>List of database column names</returns>
-        List<string> GetColumnsForSQLiteBulkInsert(
+        private List<string> GetColumnsForSQLiteBulkInsert(
             string filePath,
             IReadOnlyCollection<string> excludedColumnNameSuffixes,
             out Dictionary<int, bool> fieldEnabledByIndex)
@@ -575,7 +575,7 @@ namespace SMAQC
             return filteredList;
         }
 
-        List<string> SQLiteBulkInsert_TokenizeLine(string line)
+        private List<string> SQLiteBulkInsert_TokenizeLine(string line)
         {
             // Split given data files by tab
             var delimiters = new[] { '\t' };
@@ -592,17 +592,17 @@ namespace SMAQC
             return parts;
         }
 
-        string SQLiteBulkInsert_BuildSQL_Line(string table, IReadOnlyList<string> dbColumns)
+        private string SQLiteBulkInsert_BuildSQL_Line(string table, IReadOnlyList<string> dbColumns)
         {
             var sbSql = new System.Text.StringBuilder();
 
             // Build base
-            sbSql.Append("INSERT INTO " + table + " (");
+            sbSql.AppendFormat("INSERT INTO {0} (", table);
 
             // Build commands
             for (var i = 0; i < dbColumns.Count; i++)
             {
-                sbSql.Append("`" + dbColumns[i] + "`");
+                sbSql.AppendFormat("`{0}`", dbColumns[i]);
                 if (i < dbColumns.Count - 1)
                     sbSql.Append(",");
             }
@@ -613,7 +613,7 @@ namespace SMAQC
             // Build value list
             for (var i = 0; i < dbColumns.Count; i++)
             {
-                sbSql.Append("@" + i);
+                sbSql.AppendFormat("@{0}", i);
                 if (i < dbColumns.Count - 1)
                     sbSql.Append(",");
             }
@@ -629,7 +629,7 @@ namespace SMAQC
         /// </Summary>
         /// <Param name="field"></param>
         /// <Returns></returns>
-        string SQLiteBulkInsert_CleanFields(string field)
+        private string SQLiteBulkInsert_CleanFields(string field)
         {
             var cleanedField = field;
 
@@ -664,7 +664,7 @@ namespace SMAQC
             return "strftime('%Y-%m-%d %H:%M:%S','now', 'localtime')";
         }
 
-        void OnErrorEvent(string errorMessage)
+        private void OnErrorEvent(string errorMessage)
         {
             ErrorEvent?.Invoke(errorMessage);
         }

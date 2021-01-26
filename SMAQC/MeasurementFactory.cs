@@ -3,7 +3,7 @@ using System;
 
 namespace SMAQC
 {
-    class MeasurementFactory
+    internal class MeasurementFactory
     {
 
         public Measurement mMeasurement;

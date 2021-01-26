@@ -16,9 +16,9 @@ namespace SMAQC
     /// They are loaded via reflection, specifically
     /// mMeasurement.GetType().GetMethod(methodName)
     /// </remarks>
-    class Measurement
+    internal class Measurement
     {
-        struct udtPeptideEntry
+        private struct udtPeptideEntry
         {
             public int Scan;
             public int Charge;
@@ -58,38 +58,38 @@ namespace SMAQC
         private readonly Dictionary<eCachedResult, double> m_ResultsStorage = new Dictionary<eCachedResult, double>();
 
         // Cached data for computing median peak widths
-        bool m_MedianPeakWidthDataCached;
-        List<int> m_MPWCached_BestScan;										// Best Scan Number for each peptide
-        Dictionary<int, double> m_MPWCached_FWHMinScans;					// Full width at half max, in scans; keys are FragScanNumbers
-        Dictionary<int, int> m_MPWCached_OptimalPeakApexScanNumber;			// Optimal peak apex scan number; keys are FragScanNumbers
-        Dictionary<int, double> m_MPWCached_ScanTime;						// Scan time for given scan number; keys are scan numbers
+        private bool m_MedianPeakWidthDataCached;
+        private List<int> m_MPWCached_BestScan;										// Best Scan Number for each peptide
+        private Dictionary<int, double> m_MPWCached_FWHMinScans;					// Full width at half max, in scans; keys are FragScanNumbers
+        private Dictionary<int, int> m_MPWCached_OptimalPeakApexScanNumber;			// Optimal peak apex scan number; keys are FragScanNumbers
+        private Dictionary<int, double> m_MPWCached_ScanTime;						// Scan time for given scan number; keys are scan numbers
 
         // Cached data for PSM stats by charge
-        Dictionary<int, int> m_Cached_PSM_Stats_by_Charge;					// Number of filter-passing PSMs for each charge state
+        private Dictionary<int, int> m_Cached_PSM_Stats_by_Charge;					// Number of filter-passing PSMs for each charge state
 
         // Cached data for DS_1
-        Dictionary<int, int> m_PeptideSamplingStats;						// Keys are the number of spectra that a peptide was observed in (passing filters) and values are the number of peptides identified by Key spectra</param>
+        private Dictionary<int, int> m_PeptideSamplingStats;						// Keys are the number of spectra that a peptide was observed in (passing filters) and values are the number of peptides identified by Key spectra</param>
 
         // Cached data for DS_3
-        List<double> m_Cached_DS3;											// Stores MS1 max / MS1 sampled abundance
-        List<double> m_Cached_DS3_Bottom50pct;                              // Stores MS1 max / MS1 sampled abundance for ratios in the bottom 50%
+        private List<double> m_Cached_DS3;											// Stores MS1 max / MS1 sampled abundance
+        private List<double> m_Cached_DS3_Bottom50pct;                              // Stores MS1 max / MS1 sampled abundance for ratios in the bottom 50%
 
         // Cached data for MS1_2
-        List<double> m_Cached_BasePeakSignalToNoiseRatio;
-        List<double> m_Cached_TotalIonIntensity;
+        private List<double> m_Cached_BasePeakSignalToNoiseRatio;
+        private List<double> m_Cached_TotalIonIntensity;
 
         // Cached data for MS1_3
-        double m_Cached_PeakMaxIntensity_5thPercentile;
-        double m_Cached_PeakMaxIntensity_95thPercentile;
+        private double m_Cached_PeakMaxIntensity_5thPercentile;
+        private double m_Cached_PeakMaxIntensity_95thPercentile;
 
         /// <summary>
         /// PeakMaxIntensity for each filter-passing PSM
         /// </summary>
-        List<double> m_Cached_MS1_3;
+        private List<double> m_Cached_MS1_3;
 
         // Cached data for MS1_5
-        List<double> m_Cached_DelM;												// Delta mass
-        List<double> m_Cached_DelM_ppm;                                         // Delta mass, in ppm
+        private List<double> m_Cached_DelM;												// Delta mass
+        private List<double> m_Cached_DelM_ppm;                                         // Delta mass, in ppm
 
         // Cached data for MS4
         bool m_MS2_4_Counts_Cached;
@@ -120,10 +120,8 @@ namespace SMAQC
         /// <param name="value"></param>
         private void AddUpdateResultsStorage(eCachedResult entryType, double value)
         {
-            if (m_ResultsStorage.ContainsKey(entryType))
-                m_ResultsStorage[entryType] = value;
-            else
-                m_ResultsStorage.Add(entryType, value);
+            // Add/update the dictionary
+            m_ResultsStorage[entryType] = value;
         }
 
         /// <summary>
@@ -209,10 +207,7 @@ namespace SMAQC
 
         private bool PeptideScorePassesFilter(double peptideScore)
         {
-            if (peptideScore <= MSGF_SPECPROB_THRESHOLD)
-                return true;
-
-            return false;
+            return peptideScore <= MSGF_SPECPROB_THRESHOLD;
         }
 
         /// <summary>
@@ -275,7 +270,7 @@ namespace SMAQC
                 // If difference is greater than 4 minutes, then increment the counter
                 if (temp_difference >= 4.00)
                 {
-                    psmCountLateOrEarly += 1;
+                    psmCountLateOrEarly++;
                 }
 
                 psmCountTotal++;
@@ -530,7 +525,7 @@ namespace SMAQC
             while (m_DBInterface.ReadNextRow(fields1, out measurementResults) && measurementResults.Count > 0)
             {
 
-                clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(measurementResults["Peptide_Sequence"], out var peptideResidues, out var peptidePrefix, out var peptideSuffix);
+                clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(measurementResults["Peptide_Sequence"], out var peptideResidues, out _, out _);
 
                 var currentPeptide = new udtPeptideEntry();
 
@@ -995,7 +990,7 @@ namespace SMAQC
             if (m_Cached_BasePeakSignalToNoiseRatio == null || m_Cached_BasePeakSignalToNoiseRatio.Count == 0)
                 Cache_MS1_2_Data();
 
-            if (m_Cached_BasePeakSignalToNoiseRatio != null && m_Cached_BasePeakSignalToNoiseRatio.Count > 0)
+            if (m_Cached_BasePeakSignalToNoiseRatio?.Count > 0)
             {
                 median = ComputeMedian(m_Cached_BasePeakSignalToNoiseRatio);
             }
@@ -1015,7 +1010,7 @@ namespace SMAQC
             var median = ComputeMedian(m_Cached_TotalIonIntensity);
 
             // Divide by 1000
-            median = median / 1000;
+            median /= 1000;
 
             return PRISM.StringUtilities.ValueToString(median, 5, 100000000);
         }
@@ -1295,13 +1290,13 @@ namespace SMAQC
                 {
                     if (bpiCurrent > 0 && bpiPrevious / bpiCurrent > foldThreshold)
                     {
-                        countMS1Fall10x += 1;
+                        countMS1Fall10x++;
 
                     }
 
                     if (bpiPrevious > 0 && bpiCurrent / bpiPrevious > foldThreshold)
                     {
-                        countMS1Jump10x += 1;
+                        countMS1Jump10x++;
                     }
                 }
 
@@ -1693,13 +1688,11 @@ namespace SMAQC
 
             while (m_DBInterface.ReadNextRow(fields2, out measurementResults) && measurementResults.Count > 0)
             {
-                var passedFilter = false;
+                // Compare the peptide_score vs. the threshold
+                var passedFilter = double.TryParse(measurementResults["Peptide_Score"], out var peptideScore) &&
+                                   PeptideScorePassesFilter(peptideScore);
 
                 // Compare the peptide_score vs. the threshold
-                if (double.TryParse(measurementResults["Peptide_Score"], out var peptideScore) && PeptideScorePassesFilter(peptideScore))
-                {
-                    passedFilter = true;
-                }
 
                 // Compare the running count to scanCountMS2 to determine the quartile
                 if (scansProcessed < scanCountMS2 * 0.25)
@@ -2209,12 +2202,12 @@ namespace SMAQC
                 else
                     sbSql.Append(", ");
 
-                sbSql.Append("SUM (IfNull([" + column + "], 0)) AS [" + column + "_Sum], ");
-                sbSql.Append("SUM (CASE WHEN IfNull([" + column + "], 0) = 0 Then 0 Else 1 End) AS [" + column + "_Count]");
+                sbSql.AppendFormat("SUM (IfNull([{0}], 0)) AS [{0}_Sum], ", column);
+                sbSql.AppendFormat("SUM (CASE WHEN IfNull([{0}], 0) = 0 Then 0 Else 1 End) AS [{0}_Count]", column);
             }
 
             sbSql.Append(" FROM temp_ReporterIons");
-            sbSql.Append(" WHERE random_id=" + m_Random_ID);
+            sbSql.AppendFormat(" WHERE random_id={0}", m_Random_ID);
 
             m_DBInterface.SetQuery(sbSql.ToString());
 
@@ -2262,15 +2255,15 @@ namespace SMAQC
                 else
                     sbSql.Append(" + ");
 
-                sbSql.Append("CASE WHEN [" + column + "] > " + thresholdText + " Then 1 Else 0 End");
+                sbSql.AppendFormat("CASE WHEN [{0}] > {1} Then 1 Else 0 End", column, thresholdText);
             }
 
             sbSql.Append(" AS ReporterIonCount");
             sbSql.Append(" FROM temp_ReporterIons INNER JOIN ");
-            sbSql.Append("   temp_PSMs ON temp_ReporterIons.ScanNumber = temp_PSMs.scan AND " +
-                         "   temp_ReporterIons.random_id = temp_PSMs.random_id ");
-            sbSql.Append(" WHERE temp_PSMs.random_id=" + m_Random_ID);
-            sbSql.Append("   AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
+            sbSql.Append("   temp_PSMs ON temp_ReporterIons.ScanNumber = temp_PSMs.scan AND ");
+            sbSql.Append("   temp_ReporterIons.random_id = temp_PSMs.random_id ");
+            sbSql.AppendFormat(" WHERE temp_PSMs.random_id={0}", m_Random_ID);
+            sbSql.AppendFormat("   AND temp_PSMs.MSGFSpecProb <= {0}", MSGF_SPECPROB_THRESHOLD);
 
             var sql = " SELECT COUNT(*) AS PSMs" +
                       " FROM (" + sbSql + ") AS FilterQ" +
@@ -2294,7 +2287,7 @@ namespace SMAQC
             if (mIgnoreReporterIons)
                 return new List<string>();
 
-            if (mReporterIonColumns != null && mReporterIonColumns.Count > 0)
+            if (mReporterIonColumns?.Count > 0)
                 return mReporterIonColumns;
 
             var columnList = m_DBInterface.GetTableColumns("temp_ReporterIons");
@@ -2316,11 +2309,11 @@ namespace SMAQC
                 else
                     sbSql.Append(", ");
 
-                sbSql.Append("SUM (CASE WHEN [" + column + "] IS NULL Then 0 Else 1 End) AS [" + column + "]");
+                sbSql.AppendFormat("SUM (CASE WHEN [{0}] IS NULL Then 0 Else 1 End) AS [{0}]", column);
             }
 
             sbSql.Append(" FROM temp_ReporterIons");
-            sbSql.Append(" WHERE random_id=" + m_Random_ID);
+            sbSql.AppendFormat(" WHERE random_id={0}", m_Random_ID);
 
             m_DBInterface.SetQuery(sbSql.ToString());
 

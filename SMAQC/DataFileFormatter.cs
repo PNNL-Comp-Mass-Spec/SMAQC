@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace SMAQC
 {
-    class DataFileFormatter
+    internal class DataFileFormatter
     {
         /// <summary>
         /// List of files that need to be reformatted

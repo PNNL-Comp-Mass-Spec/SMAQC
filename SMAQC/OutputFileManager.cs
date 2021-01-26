@@ -4,7 +4,7 @@ using System.IO;
 
 namespace SMAQC
 {
-    class OutputFileManager
+    internal class OutputFileManager
     {
         /// <summary>
         /// Database wrapper
