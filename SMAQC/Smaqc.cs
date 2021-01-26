@@ -85,7 +85,7 @@ namespace SMAQC
             "Keratin_2A", "Keratin_2C", "P_4A", "P_4B", "Trypsin_2A", "Trypsin_2C",
             "MS2_RepIon_All", "MS2_RepIon_1Missing", "MS2_RepIon_2Missing", "MS2_RepIon_3Missing"};
 
-        private static int Main(string[] args)
+        private static int Main()
         {
             var random = new Random();
             var randomId = random.Next();
@@ -376,11 +376,6 @@ namespace SMAQC
             }
 
             return 0;
-        }
-
-        private static string GetAppPath()
-        {
-            return System.Reflection.Assembly.GetExecutingAssembly().Location;
         }
 
         private static string GetAppVersion()
