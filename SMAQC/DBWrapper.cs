@@ -12,8 +12,8 @@ namespace SMAQC
         public delegate void DBErrorEventHandler(string errorMessage);
         public event DBErrorEventHandler ErrorEvent;
 
-        private readonly IDBInterface dbConn;
-        private readonly string[] db_tables = {
+        private readonly IDBInterface mDatabaseConnection;
+        private readonly string[] mDatabaseTables = {
             "temp_ScanStats", "temp_ScanStatsEx", "temp_SICStats",
             "temp_xt", "temp_xt_ResultToSeqMap", "temp_xt_SeqToProteinMap",
             "temp_PSMs", "temp_ReporterIons" };
@@ -31,12 +31,12 @@ namespace SMAQC
             var databaseFilePath = Path.Combine(databaseDirectoryPath, "SMAQC.s3db");
 
             // Create db conn
-            dbConn = new DBSQLite(databaseFilePath);
+            mDatabaseConnection = new DBSQLite(databaseFilePath);
 
             // Verify that the required columns are present
 
             // Attach the event handler
-            dbConn.ErrorEvent += DatabaseConnection_ErrorEvent;
+            mDatabaseConnection.ErrorEvent += DatabaseConnection_ErrorEvent;
 
             mShowQueryText = showQueryText;
         }
@@ -46,7 +46,7 @@ namespace SMAQC
         /// </summary>
         public void ClearTempTables()
         {
-            dbConn.ClearTempTables(db_tables);
+            mDatabaseConnection.ClearTempTables(mDatabaseTables);
         }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace SMAQC
         /// <param name="random_id"></param>
         public void ClearTempTables(int random_id)
         {
-            dbConn.ClearTempTables(db_tables, random_id);
+            mDatabaseConnection.ClearTempTables(mDatabaseTables, random_id);
         }
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace SMAQC
         {
             try
             {
-                dbConn.SetQuery(query);
+                mDatabaseConnection.SetQuery(query);
 
                 if (mShowQueryText)
                 {
@@ -88,7 +88,7 @@ namespace SMAQC
         /// <param name="excludedColumnNameSuffixes">Column name suffixes to ignore</param>
         public void BulkInsert(string targetTable, string sourceFile, List<string> excludedColumnNameSuffixes)
         {
-            dbConn.BulkInsert(targetTable, sourceFile, excludedColumnNameSuffixes);
+            mDatabaseConnection.BulkInsert(targetTable, sourceFile, excludedColumnNameSuffixes);
         }
 
         /// <summary>
@@ -100,7 +100,7 @@ namespace SMAQC
         {
             try
             {
-                var status = dbConn.ExecuteNonQuery();
+                var status = mDatabaseConnection.ExecuteNonQuery();
                 return status;
             }
             catch (NullReferenceException ex)
@@ -116,7 +116,7 @@ namespace SMAQC
         /// <remarks>Call SetQuery prior to calling this method</remarks>
         public void InitReader()
         {
-            dbConn.InitReader();
+            mDatabaseConnection.InitReader();
         }
 
         /// <summary>
@@ -128,7 +128,7 @@ namespace SMAQC
         /// <remarks>This method differs from ReadNextRow since here we close the reader after reading a single row of data</remarks>
         public bool ReadSingleLine(string[] columnNames, out Dictionary<string, string> dctData)
         {
-            var status = dbConn.ReadSingleLine(columnNames, out dctData);
+            var status = mDatabaseConnection.ReadSingleLine(columnNames, out dctData);
 
             return status;
         }
@@ -141,7 +141,7 @@ namespace SMAQC
         /// <returns>True if success, false if no further rows to read</returns>
         public bool ReadNextRow(string[] columnNames, out Dictionary<string, string> dctData)
         {
-            dbConn.ReadNextRow(columnNames, out dctData);
+            mDatabaseConnection.ReadNextRow(columnNames, out dctData);
 
             return true;
         }
@@ -152,7 +152,7 @@ namespace SMAQC
         /// <returns>Function name, including format codes to convert date and time to a string</returns>
         public string GetDateTime()
         {
-            return dbConn.GetDateTime();
+            return mDatabaseConnection.GetDateTime();
         }
 
         /// <summary>
@@ -161,26 +161,26 @@ namespace SMAQC
         /// <param name="tableName"></param>
         public List<string> GetTableColumns(string tableName)
         {
-            return dbConn.GetTableColumns(tableName);
+            return mDatabaseConnection.GetTableColumns(tableName);
         }
 
         /// <summary>
         /// Initialize the command for inserting PHRP data
         /// </summary>
-        /// <param name="dbtrans"></param>
-        public bool InitPHRPInsertCommand(out System.Data.Common.DbTransaction dbTrans)
+        /// <param name="dbTransaction"></param>
+        public bool InitPHRPInsertCommand(out System.Data.Common.DbTransaction dbTransaction)
         {
-            return dbConn.InitPHRPInsertCommand(out dbTrans);
+            return mDatabaseConnection.InitPHRPInsertCommand(out dbTransaction);
         }
 
         /// <summary>
         /// Add new PHRP data
         /// </summary>
-        /// <param name="dctdata"></param>
-        /// <param name="line_num"></param>
+        /// <param name="dctData"></param>
+        /// <param name="lineNumber"></param>
         public void ExecutePHRPInsertCommand(Dictionary<string, string> dctData, int lineNumber)
         {
-            dbConn.ExecutePHRPInsert(dctData, lineNumber);
+            mDatabaseConnection.ExecutePHRPInsert(dctData, lineNumber);
         }
 
         private void DatabaseConnection_ErrorEvent(string errorMessage)

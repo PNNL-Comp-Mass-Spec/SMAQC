@@ -180,17 +180,17 @@ namespace SMAQC
             var sql = SQLiteBulkInsert_BuildSQL_Line(targetTable, columnNames);
             var previousLine = string.Empty;
 
-            using (var myCommand = mConnection.CreateCommand())
+            using (var cmd = mConnection.CreateCommand())
             {
-                myCommand.CommandText = "PRAGMA synchronous=OFF";
-                ExecuteCommand(myCommand, -1);
+                cmd.CommandText = "PRAGMA synchronous=OFF";
+                ExecuteCommand(cmd, -1);
             }
 
             using (DbTransaction dbTrans = mConnection.BeginTransaction())
             {
-                using (var myCommand = mConnection.CreateCommand())
+                using (var cmd = mConnection.CreateCommand())
                 {
-                    myCommand.CommandText = sql;
+                    cmd.CommandText = sql;
 
                     using (var file = new StreamReader(sourceFile))
                     {
@@ -224,13 +224,11 @@ namespace SMAQC
                             {
                                 if (columnEnabledByIndex[i])
                                 {
-                                    myCommand.Parameters.AddWithValue("@" + i, values[i]);
+                                    cmd.Parameters.AddWithValue("@" + i, values[i]);
                                 }
                             }
 
-                            // Now that all columns + values are in our system
-
-                            ExecuteCommand(myCommand, lineNumber);
+                            ExecuteCommand(cmd, lineNumber);
 
                             previousLine = string.Copy(line);
                         }
@@ -262,11 +260,11 @@ namespace SMAQC
             }
         }
 
-        private void ExecuteCommand(IDbCommand myCommand, int lineNumber)
+        private void ExecuteCommand(IDbCommand cmd, int lineNumber)
         {
             try
             {
-                myCommand.ExecuteNonQuery();
+                cmd.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
@@ -372,10 +370,10 @@ namespace SMAQC
             else
                 mErrorMessages.Clear();
 
-            using (var myCommand = mConnection.CreateCommand())
+            using (var cmd = mConnection.CreateCommand())
             {
-                myCommand.CommandText = "PRAGMA synchronous=OFF";
-                ExecuteCommand(myCommand, -1);
+                cmd.CommandText = "PRAGMA synchronous=OFF";
+                ExecuteCommand(cmd, -1);
             }
 
             dbTransaction = mConnection.BeginTransaction();
@@ -386,8 +384,8 @@ namespace SMAQC
         /// <summary>
         /// Add new PHRP data
         /// </summary>
-        /// <param name="dctdata"></param>
-        /// <param name="line_num"></param>
+        /// <param name="dctData"></param>
+        /// <param name="lineNumber"></param>
         public void ExecutePHRPInsert(Dictionary<string, string> dctData, int lineNumber)
         {
             if (mPHRPInsertCommand == null)
@@ -619,27 +617,27 @@ namespace SMAQC
         /// <param name="columnName"></param>
         private string SQLiteBulkInsert_CleanColumns(string columnName)
         {
-            var cleanedcolumnName = columnName;
+            var cleanedColumnName = columnName;
 
             // Replace blanks with _
-            if (cleanedcolumnName.Contains(" "))
+            if (cleanedColumnName.Contains(" "))
             {
-                cleanedcolumnName = cleanedcolumnName.Replace(" ", "_");
+                cleanedColumnName = cleanedColumnName.Replace(" ", "_");
             }
 
             // Replace all instances of _(
-            while (cleanedcolumnName.Contains("_("))
+            while (cleanedColumnName.Contains("_("))
             {
-                cleanedcolumnName = cleanedcolumnName.Remove(cleanedcolumnName.IndexOf("_(", StringComparison.Ordinal));
+                cleanedColumnName = cleanedColumnName.Remove(cleanedColumnName.IndexOf("_(", StringComparison.Ordinal));
             }
 
             // Replace all instances of (
-            while (cleanedcolumnName.Contains("("))
+            while (cleanedColumnName.Contains("("))
             {
-                cleanedcolumnName = cleanedcolumnName.Remove(cleanedcolumnName.IndexOf("(", StringComparison.Ordinal));
+                cleanedColumnName = cleanedColumnName.Remove(cleanedColumnName.IndexOf("(", StringComparison.Ordinal));
             }
 
-            return cleanedcolumnName;
+            return cleanedColumnName;
         }
 
         /// <summary>

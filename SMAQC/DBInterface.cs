@@ -75,14 +75,14 @@ namespace SMAQC
         /// <summary>
         /// Initialize the command for inserting PHRP data
         /// </summary>
-        /// <param name="dbtrans"></param>
-        bool InitPHRPInsertCommand(out System.Data.Common.DbTransaction dbTrans);
+        /// <param name="dbTransaction"></param>
+        bool InitPHRPInsertCommand(out System.Data.Common.DbTransaction dbTransaction);
 
         /// <summary>
         /// Add new PHRP data
         /// </summary>
-        /// <param name="dctdata"></param>
-        /// <param name="line_num"></param>
+        /// <param name="dctData"></param>
+        /// <param name="lineNumber"></param>
         void ExecutePHRPInsert(Dictionary<string, string> dctData, int lineNumber);
 
         /// <summary>

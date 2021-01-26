@@ -2133,23 +2133,23 @@ namespace SMAQC
             if (cachedThreshold > -1)
                 return cachedThreshold;
 
-            var sbSql = new StringBuilder();
+            var sql = new StringBuilder();
 
             foreach (var column in ionColumns)
             {
-                if (sbSql.Length == 0)
-                    sbSql.Append("SELECT ");
+                if (sql.Length == 0)
+                    sql.Append("SELECT ");
                 else
-                    sbSql.Append(", ");
+                    sql.Append(", ");
 
-                sbSql.AppendFormat("SUM (IfNull([{0}], 0)) AS [{0}_Sum], ", column);
-                sbSql.AppendFormat("SUM (CASE WHEN IfNull([{0}], 0) = 0 Then 0 Else 1 End) AS [{0}_Count]", column);
+                sql.AppendFormat("SUM (IfNull([{0}], 0)) AS [{0}_Sum], ", column);
+                sql.AppendFormat("SUM (CASE WHEN IfNull([{0}], 0) = 0 Then 0 Else 1 End) AS [{0}_Count]", column);
             }
 
-            sbSql.Append(" FROM temp_ReporterIons");
-            sbSql.AppendFormat(" WHERE random_id={0}", mRandomId);
+            sql.Append(" FROM temp_ReporterIons");
+            sql.AppendFormat(" WHERE random_id={0}", mRandomId);
 
-            mDBInterface.SetQuery(sbSql.ToString());
+            mDBInterface.SetQuery(sql.ToString());
 
             var columnNames = (from item in ionColumns select item + "_Sum").ToList();
             columnNames.AddRange((from item in ionColumns select item + "_Count").ToList());
@@ -2185,31 +2185,32 @@ namespace SMAQC
 
         private int CountPSMsWithNumObservedReporterIons(IEnumerable<string> ionColumns, double threshold, int reporterIonObsCount)
         {
-            var sbSql = new StringBuilder();
+            var sql = new StringBuilder();
             var thresholdText = threshold.ToString("0.000");
 
             foreach (var column in ionColumns)
             {
-                if (sbSql.Length == 0)
-                    sbSql.Append("SELECT ");
+                if (sql.Length == 0)
+                    sql.Append("SELECT ");
                 else
-                    sbSql.Append(" + ");
+                    sql.Append(" + ");
 
-                sbSql.AppendFormat("CASE WHEN [{0}] > {1} Then 1 Else 0 End", column, thresholdText);
+                sql.AppendFormat("CASE WHEN [{0}] > {1} Then 1 Else 0 End", column, thresholdText);
             }
 
-            sbSql.Append(" AS ReporterIonCount");
-            sbSql.Append(" FROM temp_ReporterIons INNER JOIN ");
-            sbSql.Append("   temp_PSMs ON temp_ReporterIons.ScanNumber = temp_PSMs.scan AND ");
-            sbSql.Append("   temp_ReporterIons.random_id = temp_PSMs.random_id ");
-            sbSql.AppendFormat(" WHERE temp_PSMs.random_id={0}", mRandomId);
-            sbSql.AppendFormat("   AND temp_PSMs.MSGFSpecProb <= {0}", MSGF_SPECPROB_THRESHOLD);
+            sql.Append(" AS ReporterIonCount");
+            sql.Append(" FROM temp_ReporterIons INNER JOIN ");
+            sql.Append("   temp_PSMs ON temp_ReporterIons.ScanNumber = temp_PSMs.scan AND ");
+            sql.Append("   temp_ReporterIons.random_id = temp_PSMs.random_id ");
+            sql.AppendFormat(" WHERE temp_PSMs.random_id={0}", mRandomId);
+            sql.AppendFormat("   AND temp_PSMs.MSGFSpecProb <= {0}", MSGF_SPECPROB_THRESHOLD);
 
-            var sql = " SELECT COUNT(*) AS PSMs" +
-                      " FROM (" + sbSql + ") AS FilterQ" +
-                      " WHERE ReporterIonCount = " + reporterIonObsCount;
+            var countQuery =
+                " SELECT COUNT(*) AS PSMs" +
+                " FROM (" + sql + ") AS FilterQ" +
+                " WHERE ReporterIonCount = " + reporterIonObsCount;
 
-            mDBInterface.SetQuery(sql);
+            mDBInterface.SetQuery(countQuery);
 
             string[] columnNames = { "PSMs" };
 
@@ -2239,22 +2240,22 @@ namespace SMAQC
                 return mReporterIonColumns;
             }
 
-            var sbSql = new StringBuilder();
+            var sql = new StringBuilder();
 
             foreach (var column in ionColumns)
             {
-                if (sbSql.Length == 0)
-                    sbSql.Append("SELECT ");
+                if (sql.Length == 0)
+                    sql.Append("SELECT ");
                 else
-                    sbSql.Append(", ");
+                    sql.Append(", ");
 
-                sbSql.AppendFormat("SUM (CASE WHEN [{0}] IS NULL Then 0 Else 1 End) AS [{0}]", column);
+                sql.AppendFormat("SUM (CASE WHEN [{0}] IS NULL Then 0 Else 1 End) AS [{0}]", column);
             }
 
-            sbSql.Append(" FROM temp_ReporterIons");
-            sbSql.AppendFormat(" WHERE random_id={0}", mRandomId);
+            sql.Append(" FROM temp_ReporterIons");
+            sql.AppendFormat(" WHERE random_id={0}", mRandomId);
 
-            mDBInterface.SetQuery(sbSql.ToString());
+            mDBInterface.SetQuery(sql.ToString());
 
             var columnNames = ionColumns.ToArray();
 

@@ -42,11 +42,11 @@ namespace SMAQC
             AddApplicationLog("Loading Assemblies");
 
             // Fetch assemblies + log to file
-            var MyDomain = AppDomain.CurrentDomain;
-            var AssembliesLoaded = MyDomain.GetAssemblies();
-            foreach (var MyAssembly in AssembliesLoaded)
+            var appDomain = AppDomain.CurrentDomain;
+
+            foreach (var assembly in appDomain.GetAssemblies())
             {
-                AddApplicationLog(MyAssembly.FullName);
+                AddApplicationLog(assembly.FullName);
             }
 
             Console.WriteLine();
