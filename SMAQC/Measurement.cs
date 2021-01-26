@@ -598,7 +598,7 @@ namespace SMAQC
                 }
 
                 // Keep track of the scan number for the best score
-                if (Math.Abs(bestScore - psm.Score) < Single.Epsilon)
+                if (Math.Abs(bestScore - psm.Score) < float.Epsilon)
                 {
                     PsmBestScan.Add(psm.Scan);
                 }
@@ -1707,12 +1707,6 @@ namespace SMAQC
 
         private void UpdateMS2_4_QuartileStats(int quartile, bool passedFilter)
         {
-            /*
-              int newValue;
-              newValue = m_Cached_MS2_QuartileCounts.ScanCount[quartile];
-              m_Cached_MS2_QuartileCounts.ScanCount[quartile] = newValue;
-            */
-
             mMS2QuartileScanCounts[quartile]++;
 
             if (passedFilter)
