@@ -21,13 +21,6 @@ namespace SMAQC
         private readonly Dictionary<string, bool> MasicImportFiles;
 
         /// <summary>
-        /// List of X!Tandem files to import
-        /// Keys are file names, values are true if required or false if optional
-        /// </summary>
-        /// <remarks>This is only uses if not using PHRP Reader</remarks>
-        private readonly Dictionary<string, bool> XTandemImportFiles;
-
-        /// <summary>
         /// List of valid datasets
         /// </summary>
         private readonly List<string> ValidDataSets = new List<string>();
@@ -43,23 +36,16 @@ namespace SMAQC
         /// <param name="folderToSearch"></param>
         public Aggregate(string folderToSearch)
         {
-            // Set file dir
             m_DataFolder = folderToSearch;
 
             // Set valid import files
             MasicImportFiles = new Dictionary<string, bool>(StringComparer.CurrentCultureIgnoreCase);
-            XTandemImportFiles = new Dictionary<string, bool>(StringComparer.CurrentCultureIgnoreCase);
-
             // Masic files (scanstats and sicstats are required, ScanStatsEx and ReporterIons are optional)
             MasicImportFiles.Add("ScanStats", true);
             MasicImportFiles.Add("ScanStatsEx", false);
             MasicImportFiles.Add("SICStats", true);
             MasicImportFiles.Add("ReporterIons", false);
 
-            // X!tandem files (only use this if not using PHRP Reader)
-            XTandemImportFiles.Add("xt", true);
-            XTandemImportFiles.Add("xt_ResultToSeqMap", true);
-            XTandemImportFiles.Add("xt_SeqToProteinMap", true);
 
             // Ensure temp.txt does not exist ... if program closed file not removed and on restart crashes
             CheckTempFileNotExist();
@@ -69,7 +55,6 @@ namespace SMAQC
         ~Aggregate()
         {
             MasicImportFiles.Clear();
-            XTandemImportFiles.Clear();
             ValidDataSets.Clear();
         }
 
@@ -122,17 +107,6 @@ namespace SMAQC
         public Dictionary<string, List<string>> GetMasicFileImportList(string file_ext)
         {
             return GetFileImportList(file_ext, MasicImportFiles);
-        }
-
-        /// <summary>
-        /// Find the X!Tandem related files for dataset m_CurrentDataset in m_DataFolder
-        /// </summary>
-        /// <param name="file_ext">File extension to match, typically *.txt</param>
-        /// <returns>Dictionary where Keys are file paths and Values are lists of header column suffixes to ignore</returns>
-        [Obsolete("Unused")]
-        private Dictionary<string, List<string>> GetXTandemFileImportList(string file_ext)
-        {
-            return GetFileImportList(file_ext, XTandemImportFiles);
         }
 
         /// <summary>

@@ -45,7 +45,6 @@ namespace SMAQC
         }
 
         // Constants
-        // private const int XTANDEM_LOG_EVALUE_THRESHOLD = -2;
         public const double MSGF_SPECPROB_THRESHOLD = 1e-12;
 
         // DB interface object
