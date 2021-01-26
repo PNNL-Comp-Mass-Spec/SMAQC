@@ -311,7 +311,7 @@ namespace SMAQC
                                     + " ORDER BY Scan;");
 
             // This list stores scan numbers and elution times for filter-passing peptides; duplicate scans are not allowed
-            var lstFilterPassingPeptides = new SortedList<int, double>();
+            var filterPassingPeptides = new SortedList<int, double>();
 
             string[] fields = { "Scan", "ScanNumber", "ScanTime1" };
 
@@ -325,9 +325,9 @@ namespace SMAQC
                     if (double.TryParse(measurementResults["ScanTime1"], out var scanTime))
                     {
 
-                        if (!lstFilterPassingPeptides.ContainsKey(scanNumber))
+                        if (!filterPassingPeptides.ContainsKey(scanNumber))
                         {
-                            lstFilterPassingPeptides.Add(scanNumber, scanTime);
+                            filterPassingPeptides.Add(scanNumber, scanTime);
                         }
                     }
                 }
@@ -342,37 +342,37 @@ namespace SMAQC
             double C2AScanTimeStart = 0;
             double C2AScanTimeEnd = 0;
 
-            if (lstFilterPassingPeptides.Count > 0)
+            if (filterPassingPeptides.Count > 0)
             {
 
                 // Determine the scan numbers at which the 25th and 75th percentiles are located
-                index25th = (int)(lstFilterPassingPeptides.Count * 0.25);
-                index75th = (int)(lstFilterPassingPeptides.Count * 0.75);
+                index25th = (int)(filterPassingPeptides.Count * 0.25);
+                index75th = (int)(filterPassingPeptides.Count * 0.75);
 
-                if (index25th >= lstFilterPassingPeptides.Count)
-                    index25th = lstFilterPassingPeptides.Count - 1;
+                if (index25th >= filterPassingPeptides.Count)
+                    index25th = filterPassingPeptides.Count - 1;
 
-                if (index75th >= lstFilterPassingPeptides.Count)
-                    index75th = lstFilterPassingPeptides.Count - 1;
+                if (index75th >= filterPassingPeptides.Count)
+                    index75th = filterPassingPeptides.Count - 1;
 
                 if (index75th < index25th)
                     index75th = index25th;
             }
 
-            if (index25th >= 0 && index25th < lstFilterPassingPeptides.Count && index75th < lstFilterPassingPeptides.Count)
+            if (index25th >= 0 && index25th < filterPassingPeptides.Count && index75th < filterPassingPeptides.Count)
             {
-                C2AScanStart = lstFilterPassingPeptides.Keys[index25th];
-                C2AScanEnd = lstFilterPassingPeptides.Keys[index75th];
+                C2AScanStart = filterPassingPeptides.Keys[index25th];
+                C2AScanEnd = filterPassingPeptides.Keys[index75th];
 
-                C2AScanTimeStart = lstFilterPassingPeptides.Values[index25th];
-                C2AScanTimeEnd = lstFilterPassingPeptides.Values[index75th];
+                C2AScanTimeStart = filterPassingPeptides.Values[index25th];
+                C2AScanTimeEnd = filterPassingPeptides.Values[index75th];
             }
 
-            if (lstFilterPassingPeptides.Count > 0)
+            if (filterPassingPeptides.Count > 0)
             {
                 // Add to global list for use with MS_2A/B
                 // ScanFirstFilterPassingPeptide is the scan number of the first filter-passing peptide
-                AddUpdateResultsStorage(eCachedResult.ScanFirstFilterPassingPeptide, lstFilterPassingPeptides.Keys.Min());
+                AddUpdateResultsStorage(eCachedResult.ScanFirstFilterPassingPeptide, filterPassingPeptides.Keys.Min());
             }
 
             // Cache the scan numbers at the start and end of the interquartile region
@@ -407,7 +407,7 @@ namespace SMAQC
                                     + " ORDER BY Scan;");
 
             // This list keeps track of the scan numbers already processed so that we can avoid double-counting a scan number
-            var lstScansWithFilterPassingIDs = new SortedSet<int>();
+            var scansWithFilterPassingIDs = new SortedSet<int>();
 
             var timeMinutesC2A = GetStoredValue(eCachedResult.C2A_TimeMinutes, 0);
             var scanStartC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanStart, 0);
@@ -422,16 +422,16 @@ namespace SMAQC
                 // Filter-passing peptide; Append to the dictionary
                 if (int.TryParse(measurementResults["ScanNumber"], out var scanNumber))
                 {
-                    if (scanNumber >= scanStartC2A && scanNumber <= scanEndC2A && !lstScansWithFilterPassingIDs.Contains(scanNumber))
+                    if (scanNumber >= scanStartC2A && scanNumber <= scanEndC2A && !scansWithFilterPassingIDs.Contains(scanNumber))
                     {
-                        lstScansWithFilterPassingIDs.Add(scanNumber);
+                        scansWithFilterPassingIDs.Add(scanNumber);
                     }
                 }
             }
 
             if (timeMinutesC2A > 0)
             {
-                var answer = lstScansWithFilterPassingIDs.Count / timeMinutesC2A;
+                var answer = scansWithFilterPassingIDs.Count / timeMinutesC2A;
 
                 // Round the result
                 return PRISM.StringUtilities.DblToString(answer, 4, 0.00001);
@@ -508,7 +508,7 @@ namespace SMAQC
         private void Cache_MedianPeakWidth_Data()
         {
 
-            var lstPSMs = new List<udtPeptideEntry>();							// Cached, filter-passing peptide-spectrum matches
+            var psms = new List<udtPeptideEntry>();					            		// Cached, filter-passing peptide-spectrum matches
 
             m_MPWCached_BestScan = new List<int>();										// Best Scan Number for each peptide
             m_MPWCached_FWHMinScans = new Dictionary<int, double>();					// Full width at half max, in scans; keys are FragScanNumbers
@@ -540,7 +540,7 @@ namespace SMAQC
                         if (double.TryParse(measurementResults["Peptide_Score"], out currentPeptide.Score))
                         {
                             currentPeptide.Peptide_Sequence = peptideResidues;
-                            lstPSMs.Add(currentPeptide);
+                            psms.Add(currentPeptide);
                         }
                     }
                 }
@@ -548,7 +548,7 @@ namespace SMAQC
             }
 
             // Sort by peptide sequence, then charge, then scan number
-            var lstPSMsSorted = from item in lstPSMs
+            var sortedPSMs = from item in psms
                                 orderby item.Peptide_Sequence, item.Charge, item.Scan
                                 select item;
 
@@ -558,7 +558,7 @@ namespace SMAQC
             };
 
             // Parse the sorted data
-            foreach (var psm in lstPSMsSorted)
+            foreach (var psm in sortedPSMs)
             {
                 double bestScore;
 
@@ -813,9 +813,9 @@ namespace SMAQC
 
             m_DBInterface.ReadSingleLine(fields, out var measurementResults);
 
-            var intScanCount = int.Parse(measurementResults["ScanCount"]);
+            var scanCount = int.Parse(measurementResults["ScanCount"]);
 
-            return intScanCount;
+            return scanCount;
         }
 
         /// <summary>
@@ -831,7 +831,7 @@ namespace SMAQC
                                 + " WHERE random_id=" + m_Random_ID
                                 + "   AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
 
-            var mzlist = new SortedSet<double>();
+            var mzList = new SortedSet<double>();
 
             string[] fields = { "Peptide_MH", "Charge" };
 
@@ -839,16 +839,15 @@ namespace SMAQC
 
             while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
             {
-
                 var mz = mPeptideMassCalculator.ConvoluteMass(double.Parse(measurementResults["Peptide_MH"]), 1, int.Parse(measurementResults["Charge"]));
 
-                if (!mzlist.Contains(mz))
-                    mzlist.Add(mz);
+                if (!mzList.Contains(mz))
+                    mzList.Add(mz);
 
             }
 
             // Compute the median
-            var median = ComputeMedian(mzlist.ToList());
+            var median = ComputeMedian(mzList.ToList());
 
             // Round the result
             return PRISM.StringUtilities.DblToString(median, 4, 0.00001);
@@ -967,7 +966,7 @@ namespace SMAQC
                 + " ORDER BY temp_ScanStats.ScanNumber;");
 
 
-            var lstValues = new List<double>();
+            var values = new List<double>();
 
             string[] fields = { "Ion_Injection_Time" };
 
@@ -976,10 +975,10 @@ namespace SMAQC
             while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
             {
                 // Add to the filter list
-                lstValues.Add(double.Parse(measurementResults["Ion_Injection_Time"]));
+                values.Add(double.Parse(measurementResults["Ion_Injection_Time"]));
             }
 
-            var median = ComputeMedian(lstValues);
+            var median = ComputeMedian(values);
 
             return PRISM.StringUtilities.ValueToString(median, 5);
         }
@@ -1170,7 +1169,7 @@ namespace SMAQC
                 + "   AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
 
             // Ratio of PeakMaxIntensity over ParentIonIntensity
-            var lstResult = new List<double>();
+            var values = new List<double>();
 
             string[] fields = { "ParentIonIntensity", "PeakMaxIntensity" };
 
@@ -1187,12 +1186,12 @@ namespace SMAQC
                 else
                     ratioPeakMaxToParentIonIntensity = 0;
 
-                lstResult.Add(ratioPeakMaxToParentIonIntensity);
+                values.Add(ratioPeakMaxToParentIonIntensity);
 
             }
 
             // Sort the values
-            lstResult.Sort();
+            values.Sort();
 
             // Stores MS1 max / MS1 sampled abundance
             m_Cached_DS3 = new List<double>();
@@ -1201,16 +1200,16 @@ namespace SMAQC
             m_Cached_DS3_Bottom50pct = new List<double>();
 
             // Loop through all keys
-            for (var i = 0; i < lstResult.Count; i++)
+            for (var i = 0; i < values.Count; i++)
             {
 
                 // Add to the list
-                m_Cached_DS3.Add(lstResult[i]);
+                m_Cached_DS3.Add(values[i]);
 
-                if ((i + 1) / (double)lstResult.Count <= 0.5)
+                if ((i + 1) / (double)values.Count <= 0.5)
                 {
                     // In valid bottom 50% so add to DS3_Bottom50pct
-                    m_Cached_DS3_Bottom50pct.Add(lstResult[i]);
+                    m_Cached_DS3_Bottom50pct.Add(values[i]);
                 }
 
             }
@@ -1347,14 +1346,15 @@ namespace SMAQC
                 return "0";
             }
 
-            var lstAbsDelM = new List<double>(m_Cached_DelM.Count);
+            // Take the absolute value of each DelM value and store in a list
+            var values = new List<double>(m_Cached_DelM.Count);
 
             foreach (var value in m_Cached_DelM)
             {
-                lstAbsDelM.Add(Math.Abs(value));
+                values.Add(Math.Abs(value));
             }
 
-            var average = lstAbsDelM.Average();
+            var average = values.Average();
 
             // Round the result
             return PRISM.StringUtilities.DblToString(average, 6, 0.0000001);
@@ -1394,7 +1394,7 @@ namespace SMAQC
             // Sort the DelM_ppm values
             m_Cached_DelM_ppm.Sort();
 
-            var lstInterquartilePPMErrors = new List<double>();
+            var interquartilePPMErrors = new List<double>();
 
             // Calculate inter_quartile start and end
             var interQuartileStart = (int)Math.Round(0.25 * m_Cached_DelM_ppm.Count);
@@ -1405,11 +1405,11 @@ namespace SMAQC
             {
                 if (i >= interQuartileStart && i <= interQuartileEnd)
                 {
-                    lstInterquartilePPMErrors.Add(m_Cached_DelM_ppm[i]);
+                    interquartilePPMErrors.Add(m_Cached_DelM_ppm[i]);
                 }
             }
 
-            var median = ComputeMedian(lstInterquartilePPMErrors);
+            var median = ComputeMedian(interquartilePPMErrors);
 
             // Round the result
             return PRISM.StringUtilities.DblToString(median, 3, 0.0001);
@@ -1435,27 +1435,28 @@ namespace SMAQC
             while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
             {
                 // Calculate the theoretical monoisotopic mass of the peptide
-                var theoMonoMass = mPeptideMassCalculator.ConvoluteMass(double.Parse(measurementResults["Peptide_MH"]), 1, 0);
+                var theoreticalMonoMass = mPeptideMassCalculator.ConvoluteMass(double.Parse(measurementResults["Peptide_MH"]), 1, 0);
 
                 // Compute observed precursor mass, as monoisotopic mass
                 var observedCharge = int.Parse(measurementResults["Charge"]);
                 var observedMonoMass = mPeptideMassCalculator.ConvoluteMass(double.Parse(measurementResults["MZ"]), observedCharge, 0);
 
-                var delm = observedMonoMass - theoMonoMass;
+                var deltaMass = observedMonoMass - theoreticalMonoMass;
 
-                // Correct the delm value by assuring that it is between -0.5 and5 0.5
+                // Correct the deltaMass value by assuring that it is between -0.5 and5 0.5
                 // This corrects for the instrument choosing the 2nd or 3rd isotope of an isotopic distribution as the parent ion
-                while (delm < -0.5)
-                    delm += massC13;
+                while (deltaMass < -0.5)
+                    deltaMass += massC13;
 
-                while (delm > 0.5)
-                    delm -= massC13;
+                while (deltaMass > 0.5)
+                    deltaMass -= massC13;
 
+                // ReSharper disable once IdentifierTypo
                 double delMppm = 0;
 
-                if (theoMonoMass > 0)
+                if (theoreticalMonoMass > 0)
                 {
-                    delMppm = delm / (theoMonoMass / 1000000);
+                    delMppm = deltaMass / (theoreticalMonoMass / 1000000);
                 }
 
                 if (Math.Abs(delMppm) > 200)
@@ -1463,7 +1464,7 @@ namespace SMAQC
                     Console.WriteLine("Large DelM_PPM: " + delMppm);
                 }
 
-                m_Cached_DelM.Add(delm);
+                m_Cached_DelM.Add(deltaMass);
 
                 m_Cached_DelM_ppm.Add(delMppm);
 

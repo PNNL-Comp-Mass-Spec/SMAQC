@@ -182,18 +182,18 @@ namespace SMAQC
             var sql = SQLiteBulkInsert_BuildSQL_Line(targetTable, fieldNames);
             var previousLine = string.Empty;
 
-            using (var mycommand = mConnection.CreateCommand())
+            using (var myCommand = mConnection.CreateCommand())
             {
-                mycommand.CommandText = "PRAGMA synchronous=OFF";
-                ExecuteCommand(mycommand, -1);
+                myCommand.CommandText = "PRAGMA synchronous=OFF";
+                ExecuteCommand(myCommand, -1);
             }
 
             using (DbTransaction dbTrans = mConnection.BeginTransaction())
             {
-                using (var mycommand = mConnection.CreateCommand())
+                using (var myCommand = mConnection.CreateCommand())
                 {
 
-                    mycommand.CommandText = sql;
+                    myCommand.CommandText = sql;
 
                     using (var file = new StreamReader(sourceFile))
                     {
@@ -227,13 +227,13 @@ namespace SMAQC
                             {
                                 if (fieldEnabledByIndex[i])
                                 {
-                                    mycommand.Parameters.AddWithValue("@" + i, values[i]);
+                                    myCommand.Parameters.AddWithValue("@" + i, values[i]);
                                 }
                             }
 
                             // Now that all fields + values are in our system
 
-                            ExecuteCommand(mycommand, lineNumber);
+                            ExecuteCommand(myCommand, lineNumber);
 
                             previousLine = string.Copy(line);
 
@@ -267,11 +267,11 @@ namespace SMAQC
             }
         }
 
-        private void ExecuteCommand(IDbCommand mycommand, int lineNumber)
+        private void ExecuteCommand(IDbCommand myCommand, int lineNumber)
         {
             try
             {
-                mycommand.ExecuteNonQuery();
+                myCommand.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
@@ -381,10 +381,10 @@ namespace SMAQC
             else
                 mErrorMessages.Clear();
 
-            using (var mycommand = mConnection.CreateCommand())
+            using (var myCommand = mConnection.CreateCommand())
             {
-                mycommand.CommandText = "PRAGMA synchronous=OFF";
-                ExecuteCommand(mycommand, -1);
+                myCommand.CommandText = "PRAGMA synchronous=OFF";
+                ExecuteCommand(myCommand, -1);
             }
 
             dbTrans = mConnection.BeginTransaction();

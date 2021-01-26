@@ -13,13 +13,13 @@ namespace SMAQC
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="lstMeasurementsToRun"></param>
+        /// <param name="measurementsToRun"></param>
         /// <param name="measurement"></param>
         /// <param name="systemLogManager"></param>
-        public MeasurementEngine(List<string> lstMeasurementsToRun, Measurement measurement, SystemLogManager systemLogManager)
+        public MeasurementEngine(List<string> measurementsToRun, Measurement measurement, SystemLogManager systemLogManager)
         {
             mFactory = new MeasurementFactory(measurement);
-            mMeasurementsToRun = lstMeasurementsToRun;
+            mMeasurementsToRun = measurementsToRun;
             mSystemLogManager = systemLogManager;
 
         }

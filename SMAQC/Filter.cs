@@ -41,11 +41,11 @@ namespace SMAQC
         /// <summary>
         /// Returns true if processing the extended scan stats file (_ScanStatsEx.txt)
         /// </summary>
-        /// <param name="file_to_load"></param>
+        /// <param name="fileToLoad"></param>
         /// <returns></returns>
-        public bool ScanStatsExBugFixer(string file_to_load)
+        public bool ScanStatsExBugFixer(string fileToLoad)
         {
-            var value = file_to_load.IndexOf("_ScanStatsEx.txt", StringComparison.OrdinalIgnoreCase);
+            var value = fileToLoad.IndexOf("_ScanStatsEx.txt", StringComparison.OrdinalIgnoreCase);
 
             if (value >= 0)
             {
@@ -60,7 +60,7 @@ namespace SMAQC
         /// </summary>
         /// <param name="targetFilePath"></param>
         /// <param name="filePathToLoad"></param>
-        private void CreateBulkInsertableDataFile(string filePathToLoad, string targetFilePath)
+        private void CreateBulkInsertDataFile(string filePathToLoad, string targetFilePath)
         {
             var lineNumber = 0;
 
@@ -170,12 +170,12 @@ namespace SMAQC
 
                     // Parse and format the file for bulk insert queries
                     // Will add columns instrument_id and random_id
-                    CreateBulkInsertableDataFile(reformattedFilePath, tempFilePath);
+                    CreateBulkInsertDataFile(reformattedFilePath, tempFilePath);
                 }
                 else
                 {
                     // Will add columns instrument_id and random_id
-                    CreateBulkInsertableDataFile(filePath, tempFilePath);
+                    CreateBulkInsertDataFile(filePath, tempFilePath);
                 }
 
 
@@ -185,27 +185,27 @@ namespace SMAQC
 
                 mDBWrapper.BulkInsert(targetTable, tempFilePath, excludedFieldNameSuffixes);
 
-                // Delete the tempfile
+                // Delete the temporary file
                 File.Delete(tempFilePath);
             }
         }
 
-        public bool LoadFilesUsingPHRP(string inputFolderPath, string sDataset)
+        public bool LoadFilesUsingPHRP(string inputFolderPath, string dataset)
         {
 
             // Look for a valid input file
-            var inputFilePath = clsPHRPReader.AutoDetermineBestInputFile(inputFolderPath, sDataset);
+            var inputFilePath = clsPHRPReader.AutoDetermineBestInputFile(inputFolderPath, dataset);
 
             if (string.IsNullOrEmpty(inputFilePath))
             {
-                throw new FileNotFoundException("Valid input file not found for dataset " + sDataset + " in folder " + inputFolderPath);
+                throw new FileNotFoundException("Valid input file not found for dataset " + dataset + " in folder " + inputFolderPath);
             }
 
             try
             {
-                const bool blnLoadModsAndSeqInfo = true;
-                const bool blnLoadMSGFResults = true;
-                const bool blnLoadScanStats = false;
+                const bool loadModsAndSeqInfo = true;
+                const bool loadMSGFResults = true;
+                const bool loadScanStats = false;
 
                 var peptideMassCalculator = new clsPeptideMassCalculator();
 
@@ -221,15 +221,15 @@ namespace SMAQC
                 reader.WarningEvent += mPHRPReader_WarningEvent;
 
                 // Report any errors cached during instantiation of mPHRPReader
-                foreach (var strMessage in reader.ErrorMessages.Distinct())
+                foreach (var message in reader.ErrorMessages.Distinct())
                 {
-                    mSystemLogManager.AddApplicationLogError("Error: " + strMessage);
+                    mSystemLogManager.AddApplicationLogError("Error: " + message);
                 }
 
                 // Report any warnings cached during instantiation of mPHRPReader
-                foreach (var strMessage in reader.WarningMessages.Distinct())
+                foreach (var message in reader.WarningMessages.Distinct())
                 {
-                    mSystemLogManager.AddApplicationLogWarning("Warning: " + strMessage);
+                    mSystemLogManager.AddApplicationLogWarning("Warning: " + message);
                 }
                 if (reader.WarningMessages.Count > 0)
                     Console.WriteLine();
@@ -288,9 +288,9 @@ namespace SMAQC
                     var currentPSM = reader.CurrentPSM;
                     lineNumber += 1;
 
-                    clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(currentPSM.Peptide, out var strCurrentPeptide, out _, out _);
+                    clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(currentPSM.Peptide, out var currentPeptide, out _, out _);
 
-                    if (prevScan == currentPSM.ScanNumberStart && prevCharge == currentPSM.Charge && prevPeptide == strCurrentPeptide)
+                    if (prevScan == currentPSM.ScanNumberStart && prevCharge == currentPSM.Charge && prevPeptide == currentPeptide)
                         // Skip this entry (same peptide, different protein)
                         continue;
 
@@ -408,7 +408,7 @@ namespace SMAQC
 
                     prevScan = currentPSM.ScanNumberStart;
                     prevCharge = currentPSM.Charge;
-                    prevPeptide = string.Copy(strCurrentPeptide);
+                    prevPeptide = string.Copy(currentPeptide);
 
                 }
 

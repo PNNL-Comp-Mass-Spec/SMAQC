@@ -97,8 +97,8 @@ namespace SMAQC
             try
             {
                 // Get list of files in specified directory matching file_ext
-                var fidir = new DirectoryInfo(m_DataFolder);
-                filePaths = fidir.GetFiles("*" + SCAN_STATS_FILENAME_SUFFIX);
+                var inputDirectory = new DirectoryInfo(m_DataFolder);
+                filePaths = inputDirectory.GetFiles("*" + SCAN_STATS_FILENAME_SUFFIX);
             }
             catch (DirectoryNotFoundException)
             {

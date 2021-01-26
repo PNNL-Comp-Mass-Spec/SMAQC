@@ -91,20 +91,20 @@ namespace SMAQC
             var random = new Random();
             var randomId = random.Next();
 
-            var objParseCommandLine = new clsParseCommandLine();
+            var commandLineParser = new clsParseCommandLine();
             var success = false;
 
             mOptions.Clear();
 
-            if (objParseCommandLine.ParseCommandLine())
+            if (commandLineParser.ParseCommandLine())
             {
-                if (SetOptionsUsingCommandLineParameters(objParseCommandLine))
+                if (SetOptionsUsingCommandLineParameters(commandLineParser))
                     success = true;
             }
 
             if (!success ||
-                objParseCommandLine.NeedToShowHelp ||
-                objParseCommandLine.ParameterCount + objParseCommandLine.NonSwitchParameterCount == 0 ||
+                commandLineParser.NeedToShowHelp ||
+                commandLineParser.ParameterCount + commandLineParser.NonSwitchParameterCount == 0 ||
                 string.IsNullOrEmpty(mOptions.InputFolderPath))
             {
                 ShowProgramHelp();
@@ -145,7 +145,7 @@ namespace SMAQC
             {
 
                 // Obtain the list of measurements to run
-                var lstMeasurementsToRun = LoadMeasurementInfoFile(mOptions.MeasurementsFile);
+                var measurementsToRun = LoadMeasurementInfoFile(mOptions.MeasurementsFile);
 
                 try
                 {
@@ -159,13 +159,13 @@ namespace SMAQC
 
                     mAggregate = new Aggregate(mOptions.InputFolderPath);
                     mMeasurement = new Measurement(randomId, mDBWrapper);
-                    mMeasurementEngine = new MeasurementEngine(lstMeasurementsToRun, mMeasurement, mSystemLogManager);
+                    mMeasurementEngine = new MeasurementEngine(measurementsToRun, mMeasurement, mSystemLogManager);
                     mFilter = new Filter(mDBWrapper, mOptions.Instrument_id, randomId, mSystemLogManager);
                     mOutputFileManager = new OutputFileManager(mDBWrapper, GetAppVersion(), mMetricNames);
 
                     try
                     {
-                        var errorCode = ProcessDatasets(randomId, lstMeasurementsToRun);
+                        var errorCode = ProcessDatasets(randomId, measurementsToRun);
                         if (errorCode != 0)
                         {
                             Thread.Sleep(1500);
@@ -217,9 +217,9 @@ namespace SMAQC
         /// Process the datasets in the specified input folder
         /// </summary>
         /// <param name="randomId"></param>
-        /// <param name="lstMeasurementsToRun"></param>
+        /// <param name="measurementsToRun"></param>
         /// <returns>0 if success, otherwise an error code</returns>
-        private static int ProcessDatasets(int randomId, IReadOnlyCollection<string> lstMeasurementsToRun)
+        private static int ProcessDatasets(int randomId, IReadOnlyCollection<string> measurementsToRun)
         {
 
             mSystemLogManager.AddApplicationLog("Searching for Text Files...");
@@ -258,21 +258,21 @@ namespace SMAQC
                     var reporterIonsMissing = false;
 
                     // Find the missing files
-                    foreach (var sSuffix in mMasicFileExtensions)
+                    foreach (var fileSuffix in mMasicFileExtensions)
                     {
-                        var bMatchFound = false;
+                        var matchFound = false;
 
                         foreach (var candidateFile in masicFileList)
                         {
-                            var sFileName = Path.GetFileNameWithoutExtension(candidateFile.Key);
-                            if (sFileName != null && sFileName.EndsWith(sSuffix, true, System.Globalization.CultureInfo.CurrentCulture))
+                            var fileName = Path.GetFileNameWithoutExtension(candidateFile.Key);
+                            if (fileName != null && fileName.EndsWith(fileSuffix, StringComparison.OrdinalIgnoreCase))
                             {
-                                bMatchFound = true;
+                                matchFound = true;
                                 break;
                             }
                         }
 
-                        if (bMatchFound)
+                        if (matchFound)
                             continue;
 
                         if (string.Equals(sSuffix, "_ScanStats", StringComparison.InvariantCultureIgnoreCase))
@@ -296,7 +296,7 @@ namespace SMAQC
                         }
                         else
                         {
-                            mSystemLogManager.AddApplicationLog("  Missing unrecognized file: " + datasetName + sSuffix + ".txt");
+                            mSystemLogManager.AddApplicationLog("  Missing unrecognized file: " + datasetName + fileSuffix + ".txt");
                         }
                     }
 
@@ -353,7 +353,7 @@ namespace SMAQC
 
                     // Store the results
                     mSystemLogManager.AddApplicationLog("Saving Scan Results");
-                    AddScanResults(mOptions.Instrument_id, randomId, scanId, lstMeasurementsToRun);
+                    AddScanResults(mOptions.Instrument_id, randomId, scanId, measurementsToRun);
 
                     // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                     if (!KEEP_TEMP_DATA_AT_END)
@@ -399,18 +399,18 @@ namespace SMAQC
             return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version + " (" + SMAQC_BUILD_DATE + ")";
         }
 
-        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine objParseCommandLine)
+        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
         {
             // Returns True if no problems; otherwise, returns false
-            var lstValidParameters = new List<string> { "O", "DB", "I", "M" };
+            var validParameters = new List<string> { "O", "DB", "I", "M" };
 
             try
             {
                 // Make sure no invalid parameters are present
-                if (objParseCommandLine.InvalidParametersPresent(lstValidParameters))
+                if (commandLineParser.InvalidParametersPresent(validParameters))
                 {
                     var badArguments = new List<string>();
-                    foreach (var item in objParseCommandLine.InvalidParameters(lstValidParameters))
+                    foreach (var item in commandLineParser.InvalidParameters(validParameters))
                     {
                         badArguments.Add("/" + item);
                     }
@@ -420,47 +420,47 @@ namespace SMAQC
                     return false;
                 }
 
-                // Query objParseCommandLine to see if various parameters are present
-                if (objParseCommandLine.NonSwitchParameterCount > 0)
+                // Query commandLineParser to see if various parameters are present
+                if (commandLineParser.NonSwitchParameterCount > 0)
                 {
-                    mOptions.InputFolderPath = objParseCommandLine.RetrieveNonSwitchParameter(0);
+                    mOptions.InputFolderPath = commandLineParser.RetrieveNonSwitchParameter(0);
                 }
 
-                if (objParseCommandLine.RetrieveValueForParameter("O", out var strValue))
+                if (commandLineParser.RetrieveValueForParameter("O", out var value))
                 {
-                    if (string.IsNullOrWhiteSpace(strValue))
+                    if (string.IsNullOrWhiteSpace(value))
                         ShowErrorMessage("/O does not have a value; not overriding the output file path");
                     else
-                        mOptions.OutputFilePath = strValue;
+                        mOptions.OutputFilePath = value;
                 }
 
-                if (objParseCommandLine.RetrieveValueForParameter("DB", out strValue))
+                if (commandLineParser.RetrieveValueForParameter("DB", out value))
                 {
-                    if (string.IsNullOrWhiteSpace(strValue))
+                    if (string.IsNullOrWhiteSpace(value))
                         ShowErrorMessage("/DB does not have a value; not overriding the database folder path");
                     else
                     {
-                        mOptions.DBFolderPath = strValue;
+                        mOptions.DBFolderPath = value;
                     }
                 }
 
-                if (objParseCommandLine.RetrieveValueForParameter("I", out strValue))
+                if (commandLineParser.RetrieveValueForParameter("I", out value))
                 {
-                    if (string.IsNullOrWhiteSpace(strValue))
+                    if (string.IsNullOrWhiteSpace(value))
                         ShowErrorMessage("/I does not have a value; not overriding the Instrument ID");
                     else
                     {
-                        mOptions.Instrument_id = strValue;
+                        mOptions.Instrument_id = value;
                     }
                 }
 
-                if (objParseCommandLine.RetrieveValueForParameter("M", out strValue))
+                if (commandLineParser.RetrieveValueForParameter("M", out value))
                 {
-                    if (string.IsNullOrWhiteSpace(strValue))
+                    if (string.IsNullOrWhiteSpace(value))
                         ShowErrorMessage("/M does not have a value; not customizing the metrics to compute");
                     else
                     {
-                        mOptions.MeasurementsFile = strValue;
+                        mOptions.MeasurementsFile = value;
                     }
                 }
 
@@ -561,12 +561,12 @@ namespace SMAQC
         /// <param name="instrumentId"></param>
         /// <param name="randomId"></param>
         /// <param name="scanId"></param>
-        /// <param name="lstMeasurementsToRun"></param>
-        static void AddScanResults(string instrumentId, int randomId, int scanId, IReadOnlyCollection<string> lstMeasurementsToRun)
+        /// <param name="measurementsToRun"></param>
+        static void AddScanResults(string instrumentId, int randomId, int scanId, IReadOnlyCollection<string> measurementsToRun)
         {
 
             // Query to store data in scan_results
-            var sql = BuildScanResultsQuery(instrumentId, randomId, scanId, lstMeasurementsToRun);
+            var sql = BuildScanResultsQuery(instrumentId, randomId, scanId, measurementsToRun);
 
             mDBWrapper.SetQuery(sql);
 
@@ -580,15 +580,15 @@ namespace SMAQC
         /// <param name="instrumentId"></param>
         /// <param name="randomId"></param>
         /// <param name="scanId"></param>
-        /// <param name="lstMeasurementsToRun"></param>
+        /// <param name="measurementsToRun"></param>
         /// <returns></returns>
-        private static string BuildScanResultsQuery(string instrumentId, int randomId, int scanId, IReadOnlyCollection<string> lstMeasurementsToRun)
+        private static string BuildScanResultsQuery(string instrumentId, int randomId, int scanId, IReadOnlyCollection<string> measurementsToRun)
         {
             mQueryBuilder.Clear();
             mQueryBuilder.Append("INSERT INTO scan_results ( scan_id, instrument_id, random_id, scan_date");
 
             // Append each metric, e.g. `C_1A`
-            foreach (var item in lstMeasurementsToRun)
+            foreach (var item in measurementsToRun)
             {
                 mQueryBuilder.Append(", `" + item + "`");
             }
@@ -602,7 +602,7 @@ namespace SMAQC
             mQueryBuilder.Append(mDBWrapper.GetDateTime());
 
             // Append the metric values (as strings), e.g. '3.2342'
-            foreach (var item in lstMeasurementsToRun)
+            foreach (var item in measurementsToRun)
             {
                 mQueryBuilder.Append(", '" + mResults[item] + "'");
             }
@@ -646,7 +646,7 @@ namespace SMAQC
         static List<string> LoadMeasurementInfoFile(string measurementsToRunFile)
         {
             var useDefaultMetrics = false;
-            var lstMeasurementsToRun = new List<string>();
+            var measurementsToRun = new List<string>();
 
             if (string.IsNullOrEmpty(measurementsToRunFile))
                 useDefaultMetrics = true;
@@ -671,7 +671,7 @@ namespace SMAQC
                             while (parser.ReadToFollowing("measurement"))
                             {
                                 parser.MoveToAttribute("name");
-                                lstMeasurementsToRun.Add(parser.Value);
+                                measurementsToRun.Add(parser.Value);
 
                                 if (parser.Value.Equals("*", StringComparison.InvariantCulture))
                                 {
@@ -695,12 +695,12 @@ namespace SMAQC
             {
                 var metricNames = (from item in mMetricNames where item != "instrument_id" && item != "random_id" && item != "scan_date" select item);
 
-                lstMeasurementsToRun.Clear();
-                lstMeasurementsToRun.AddRange(metricNames);
+                measurementsToRun.Clear();
+                measurementsToRun.AddRange(metricNames);
 
             }
 
-            return lstMeasurementsToRun;
+            return measurementsToRun;
         }
 
     }
