@@ -639,12 +639,6 @@ namespace SMAQC
 
                 // Round the result
                 return PRISM.StringUtilities.DblToString(median, 2, 0.0001);
-
-                // Implementation notes
-                /*
-                 * result.Count == # OF U COLUMN VALID RESULTS
-                 * Console.WriteLine("MEDIAN={0} -- {1} [POS={2}]", result[pos], result[pos + 1], pos); == HELPFUL FOR DEBUGGING
-                */
             }
 
             return resultText;
