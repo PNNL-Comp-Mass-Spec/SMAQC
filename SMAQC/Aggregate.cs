@@ -130,7 +130,7 @@ namespace SMAQC
             }
             catch (DirectoryNotFoundException)
             {
-                Console.WriteLine("getFileImportList():: Could not find directory {0}!", mInputDirectoryPath);
+                Console.WriteLine("GetFileImportList: Could not find directory {0}!", mInputDirectoryPath);
                 Thread.Sleep(1500);
                 Environment.Exit(1);
             }

@@ -332,7 +332,7 @@ namespace SMAQC
                     }
 
                     // Load the data and store in the database
-                    mSystemLogManager.AddApplicationLog("Parsing and Inserting Data into DB Temp Tables");
+                    mSystemLogManager.AddApplicationLog("Parsing and inserting data into database temp tables");
 
                     // Load data using PHRP
                     mFilter.LoadFilesUsingPHRP(mOptions.InputDirectoryPath, datasetName);
@@ -341,12 +341,12 @@ namespace SMAQC
                     mFilter.LoadFilesAndInsertIntoDB(masicFileList, mMasicFileExtensions, datasetName);
 
                     // Run the measurements
-                    mSystemLogManager.AddApplicationLog("Now running Measurements on " + datasetName);
+                    mSystemLogManager.AddApplicationLog("Now running measurements on " + datasetName);
 
                     mResults = mMeasurementEngine.RunMeasurements();
 
                     // Store the results
-                    mSystemLogManager.AddApplicationLog("Saving Scan Results");
+                    mSystemLogManager.AddApplicationLog("Saving results");
                     AddScanResults(mOptions.InstrumentId, randomId, scanId, measurementsToRun);
 
                     // ReSharper disable once ConditionIsAlwaysTrueOrFalse
@@ -361,11 +361,11 @@ namespace SMAQC
                         // Write the results to a file
                         mOutputFileManager.SaveData(datasetName, mOptions.OutputFilePath, scanId);
 
-                        mSystemLogManager.AddApplicationLog("Scan output has been saved to " + mOptions.OutputFilePath);
+                        mSystemLogManager.AddApplicationLog("Results have been saved to " + mOptions.OutputFilePath);
                     }
                     else
                     {
-                        mSystemLogManager.AddApplicationLog("Scan result saved to SQLite DB (Scan ID=" + scanId + ")");
+                        mSystemLogManager.AddApplicationLog("Results saved to SQLite database (Scan ID=" + scanId + ")");
                     }
 
                     mResults.Clear();

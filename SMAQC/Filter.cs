@@ -169,7 +169,7 @@ namespace SMAQC
 
                 var targetTable = "temp" + targetTableName;
 
-                Console.WriteLine("Populating Table {0}", targetTable);
+                Console.WriteLine("Populating table {0}", targetTable);
 
                 mDBWrapper.BulkInsert(targetTable, tempFilePath, excludedColumnNameSuffixes);
 
