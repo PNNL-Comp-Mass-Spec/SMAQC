@@ -65,10 +65,10 @@ namespace SMAQC
             mSQLiteTools.CreateMissingTables(mConnection);
         }
 
-        /// <Summary>
+        /// <summary>
         /// Clear database temp tables for all data
-        /// </Summary>
-        /// <Param name="tableNames"></param>
+        /// </summary>
+        /// <param name="tableNames"></param>
         public void ClearTempTables(string[] tableNames)
         {
             foreach (var tableName in tableNames)
@@ -84,11 +84,11 @@ namespace SMAQC
             }
         }
 
-        /// <Summary>
+        /// <summary>
         /// Clear database temp tables for given randomId value
-        /// </Summary>
-        /// <Param name="tableNames">Table names</param>
-        /// <Param name="randomId">Random ID for this analysis</param>
+        /// </summary>
+        /// <param name="tableNames">Table names</param>
+        /// <param name="randomId">Random ID for this analysis</param>
         public void ClearTempTables(string[] tableNames, int randomId)
         {
             foreach (var tableName in tableNames)
@@ -326,10 +326,10 @@ namespace SMAQC
             mQuery = string.Empty;
         }
 
-        /// <Summary>
+        /// <summary>
         /// Initialize the command for inserting PHRP data
-        /// </Summary>
-        /// <Param name="dbtrans"></param>
+        /// </summary>
+        /// <param name="dbtrans"></param>
         public bool InitPHRPInsertCommand(out DbTransaction dbTrans)
         {
             mPHRPFieldsForInsert = new Dictionary<string, int>();
@@ -381,11 +381,11 @@ namespace SMAQC
             return true;
         }
 
-        /// <Summary>
+        /// <summary>
         /// Add new PHRP data
-        /// </Summary>
-        /// <Param name="dctdata"></param>
-        /// <Param name="line_num"></param>
+        /// </summary>
+        /// <param name="dctdata"></param>
+        /// <param name="line_num"></param>
         public void ExecutePHRPInsert(Dictionary<string, string> dctData, int lineNumber)
         {
             if (mPHRPInsertCommand == null)
@@ -611,10 +611,10 @@ namespace SMAQC
             return sbSql.ToString();
         }
 
-        /// <Summary>
+        /// <summary>
         /// Replace invalid characters in field names
-        /// </Summary>
-        /// <Param name="field"></param>
+        /// </summary>
+        /// <param name="field"></param>
         private string SQLiteBulkInsert_CleanFields(string field)
         {
             var cleanedField = field;

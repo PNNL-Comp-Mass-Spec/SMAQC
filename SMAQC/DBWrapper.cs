@@ -39,18 +39,18 @@ namespace SMAQC
             mShowQueryText = showQueryText;
         }
 
-        /// <Summary>
+        /// <summary>
         /// Clear db temp tables for all data
-        /// </Summary>
+        /// </summary>
         public void ClearTempTables()
         {
             dbConn.ClearTempTables(db_tables);
         }
 
-        /// <Summary>
+        /// <summary>
         /// Clear db temp tables for all data
-        /// </Summary>
-        /// <Param name="random_id"></param>
+        /// </summary>
+        /// <param name="random_id"></param>
         public void ClearTempTables(int random_id)
         {
             dbConn.ClearTempTables(db_tables, random_id);
@@ -162,20 +162,20 @@ namespace SMAQC
             return dbConn.GetTableColumns(tableName);
         }
 
-        /// <Summary>
+        /// <summary>
         /// Initialize the command for inserting PHRP data
-        /// </Summary>
-        /// <Param name="dbtrans"></param>
+        /// </summary>
+        /// <param name="dbtrans"></param>
         public bool InitPHRPInsertCommand(out System.Data.Common.DbTransaction dbTrans)
         {
             return dbConn.InitPHRPInsertCommand(out dbTrans);
         }
 
-        /// <Summary>
+        /// <summary>
         /// Add new PHRP data
-        /// </Summary>
-        /// <Param name="dctdata"></param>
-        /// <Param name="line_num"></param>
+        /// </summary>
+        /// <param name="dctdata"></param>
+        /// <param name="line_num"></param>
         public void ExecutePHRPInsertCommand(Dictionary<string, string> dctData, int lineNumber)
         {
             dbConn.ExecutePHRPInsert(dctData, lineNumber);

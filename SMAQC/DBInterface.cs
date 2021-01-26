@@ -4,17 +4,17 @@ namespace SMAQC
 {
     internal interface IDBInterface
     {
-        /// <Summary>
+        /// <summary>
         /// Clear database temp tables for all data
-        /// </Summary>
-        /// <Param name="tableNames"></param>
+        /// </summary>
+        /// <param name="tableNames"></param>
         void ClearTempTables(string[] tableNames);
 
-        /// <Summary>
+        /// <summary>
         /// Clear database temp tables for given randomId value
-        /// </Summary>
-        /// <Param name="tableNames">Table names</param>
-        /// <Param name="randomId">Random ID for this analysis</param>
+        /// </summary>
+        /// <param name="tableNames">Table names</param>
+        /// <param name="randomId">Random ID for this analysis</param>
         void ClearTempTables(string[] tableNames, int randomId);
 
         /// <summary>
@@ -72,17 +72,17 @@ namespace SMAQC
         /// <param name="tableName"></param>
         List<string> GetTableColumns(string tableName);
 
-        /// <Summary>
+        /// <summary>
         /// Initialize the command for inserting PHRP data
-        /// </Summary>
-        /// <Param name="dbtrans"></param>
+        /// </summary>
+        /// <param name="dbtrans"></param>
         bool InitPHRPInsertCommand(out System.Data.Common.DbTransaction dbTrans);
 
-        /// <Summary>
+        /// <summary>
         /// Add new PHRP data
-        /// </Summary>
-        /// <Param name="dctdata"></param>
-        /// <Param name="line_num"></param>
+        /// </summary>
+        /// <param name="dctdata"></param>
+        /// <param name="line_num"></param>
         void ExecutePHRPInsert(Dictionary<string, string> dctData, int lineNumber);
 
         /// <summary>
