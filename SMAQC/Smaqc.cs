@@ -527,7 +527,7 @@ namespace SMAQC
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                                       "Program written by Matthew Monroe, in collaboration with computer science students " +
                                       "at Washington State University for the Department of Energy (PNNL, Richland, WA) in 2012"));
-                Console.WriteLine("");
+                Console.WriteLine();
                 Console.WriteLine("Version: " + GetAppVersion());
                 Console.WriteLine();
 

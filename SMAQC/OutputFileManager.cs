@@ -114,10 +114,10 @@ namespace SMAQC
             {
                 file.WriteLine("SMAQC SCANNER RESULTS");
                 file.WriteLine("-----------------------------------------------------------");
-                file.WriteLine("SMAQC Version: " + mSMAQCVersion + "");
-                // file.WriteLine("results from scan id: " + scan_id + "");
-                file.WriteLine("Instrument ID: " + dctResults["instrument_id"] + "");
-                file.WriteLine("Scan Date: " + dctResults["scan_date"] + "");
+                file.WriteLine("SMAQC Version: " + mSMAQCVersion);
+                // file.WriteLine("results from scan id: " + scan_id);
+                file.WriteLine("Instrument ID: " + dctResults["instrument_id"]);
+                file.WriteLine("Scan Date: " + dctResults["scan_date"]);
                 file.WriteLine("[Data]");
                 file.WriteLine("Dataset, Measurement Name, Measurement Value");
 
@@ -143,7 +143,7 @@ namespace SMAQC
                 {
                     // Add: dataset, measurement name,
 
-                    var outLine = string.Format("" + dataset + ", " + pair.Key + ",");
+                    var outLine = string.Format(dataset + ", " + pair.Key + ",");
 
                     // If there is a non-null value
                     if (!pair.Value.Equals("Null"))
@@ -207,7 +207,7 @@ namespace SMAQC
             foreach (var pair in dctValidResults)
             {
                 // Add: dataset, measurement name,
-                var outLine = string.Format("" + dataset + ", " + pair.Key + ",");
+                var outLine = string.Format(dataset + ", " + pair.Key + ",");
 
                 // If there is a non-null value
                 if (!pair.Value.Equals("Null"))
