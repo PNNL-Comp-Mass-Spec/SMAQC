@@ -2,7 +2,7 @@
 
 namespace SMAQC
 {
-    internal interface DBInterface
+    internal interface IDBInterface
     {
         /// <Summary>
         /// Clear database temp tables for all data

@@ -8,7 +8,7 @@ using System.Data.Common;
 
 namespace SMAQC
 {
-    class DBMySQL : DBInterface
+    class DBMySQL : IDBInterface
     {
         public Boolean db_open = false;             // Is db open?
         public string dbinfo;                       // Db info
@@ -61,7 +61,7 @@ namespace SMAQC
         public void setQuery(string myquery)
         {
             // Set query to param
-            query = myquery; 
+            query = myquery;
         }
 
         // For queries that return rows
@@ -218,14 +218,10 @@ namespace SMAQC
                             continue;// Skip this line as we do not want the field listing
                         }
 
-
                         // Console.writeline("start line [{0}]", line);
                         // Console.writeline("sql=[{0}]", mycommand.commandtext);
                         // Fetch values
                         String[] values = SQLiteBulkInsert_TokenizeLine(line);
-
-
-                        
 
                         // Loop through field listing + set parameters
                         for (int i = 0; i < fields.Length; i++)
@@ -235,8 +231,6 @@ namespace SMAQC
                             // Console.writeline("@{0} && values[i]={1}", i, values[i]);
                             mycommand.Parameters.AddWithValue("@" + i, values[i]);
                         }
-
-
 
                         // Console.writeline("end line");
 
@@ -250,8 +244,6 @@ namespace SMAQC
                 }
                 dbTrans.Commit();
             }
-
-
 
             /*
             var bl = new MySqlBulkLoader(conn);
@@ -447,7 +439,6 @@ namespace SMAQC
         {
             return "DATE_FORMAT(NOW(),\"%Y-%m-%d %k:%i:%s\")";
         }
-
 
     }
 }

@@ -8,7 +8,7 @@ using System.Data.Common;
 
 namespace SMAQC
 {
-    internal class DBSQLite : DBInterface
+    internal class DBSQLite : IDBInterface
     {
         /// <summary>
         /// SQLite connection

@@ -10,7 +10,7 @@ namespace SMAQC
         public delegate void DBErrorEventHandler(string errorMessage);
         public event DBErrorEventHandler ErrorEvent;
 
-        private readonly DBInterface dbConn;
+        private readonly IDBInterface dbConn;
         private readonly string[] db_tables = {
             "temp_ScanStats", "temp_ScanStatsEx", "temp_SICStats",
             "temp_xt", "temp_xt_ResultToSeqMap", "temp_xt_SeqToProteinMap",
