@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Data.SQLite;
 
 namespace SMAQC
 {
@@ -29,8 +28,6 @@ namespace SMAQC
         /// </summary>
         /// <remarks>Call SetQuery prior to calling this method</remarks>
         bool ExecuteNonQuery();
-
-        void Open();
 
         /// <summary>
         /// Bulk insert a set of data from sourceFile
