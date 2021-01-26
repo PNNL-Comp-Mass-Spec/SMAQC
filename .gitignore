@@ -111,3 +111,5 @@ UpgradeLog*.XML
 
 *.lnk
 **/.vs/
+/TestData/QC_Mam/SMAQC-log*
+/TestData/TMT/SMAQC-log*
