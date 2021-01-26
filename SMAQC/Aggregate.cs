@@ -54,7 +54,7 @@ namespace SMAQC
             // Masic files (scanstats and sicstats are required, ScanStatsEx and ReporterIons are optional)
             MasicImportFiles.Add("ScanStats", true);
             MasicImportFiles.Add("ScanStatsEx", false);
-            MasicImportFiles.Add("SICstats", true);
+            MasicImportFiles.Add("SICStats", true);
             MasicImportFiles.Add("ReporterIons", false);
 
             // X!tandem files (only use this if not using PHRP Reader)

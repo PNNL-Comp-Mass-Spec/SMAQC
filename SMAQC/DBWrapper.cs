@@ -12,9 +12,9 @@ namespace SMAQC
 
         readonly DBInterface dbConn;
         private readonly string[] db_tables = {
-            "temp_scanstats", "temp_scanstatsex", "temp_sicstats",
-            "temp_xt", "temp_xt_resulttoseqmap", "temp_xt_seqtoproteinmap",
-            "temp_PSMs", "temp_reporterions" };
+            "temp_ScanStats", "temp_ScanStatsEx", "temp_SICStats",
+            "temp_xt", "temp_xt_ResultToSeqMap", "temp_xt_SeqToProteinMap",
+            "temp_PSMs", "temp_ReporterIons" };
 
         private readonly bool mShowQueryText;
 

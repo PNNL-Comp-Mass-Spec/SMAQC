@@ -384,7 +384,7 @@ namespace SMAQC
                     {
                         keratinFlag = 1;
                     }
-                    dctCurrentPeptide.Add("Keratinpeptide", keratinFlag.ToString());
+                    dctCurrentPeptide.Add("KeratinPeptide", keratinFlag.ToString());
 
                     // Store the number of missed cleavages
                     dctCurrentPeptide.Add("MissedCleavages", currentPSM.NumMissedCleavages.ToString());
@@ -395,7 +395,7 @@ namespace SMAQC
                     {
                         trypsinFlag = 1;
                     }
-                    dctCurrentPeptide.Add("Trypsinpeptide", trypsinFlag.ToString());
+                    dctCurrentPeptide.Add("TrypsinPeptide", trypsinFlag.ToString());
 
                     if (bestPeptideScan < 0 || msgfSpecProb < bestPeptideScore)
                     {

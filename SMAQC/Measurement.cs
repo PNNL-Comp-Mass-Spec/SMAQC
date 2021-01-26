@@ -242,13 +242,13 @@ namespace SMAQC
         {
 
             m_DBInterface.SetQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber, t1.OptimalPeakApexScanNumber,"
-                                    + "    temp_scanstats.ScanTime as ScanTime1, t2.ScanTime as ScanTimePeakApex "
-                                    + " FROM temp_PSMs, temp_scanstats, temp_sicstats as t1 "
-                                    + "      INNER JOIN temp_scanstats as t2 on t1.OptimalPeakApexScanNumber=t2.ScanNumber "
+                                    + "    temp_ScanStats.ScanTime as ScanTime1, t2.ScanTime as ScanTimePeakApex "
+                                    + " FROM temp_PSMs, temp_ScanStats, temp_SICStats as t1 "
+                                    + "      INNER JOIN temp_ScanStats as t2 on t1.OptimalPeakApexScanNumber=t2.ScanNumber "
                                     + " WHERE temp_PSMs.Scan = t1.FragScanNumber "
-                                    + "  AND temp_PSMs.Scan = temp_scanstats.ScanNumber "
+                                    + "  AND temp_PSMs.Scan = temp_ScanStats.ScanNumber "
                                     + "  AND temp_PSMs.random_id=" + m_Random_ID
-                                    + "  AND temp_scanstats.random_id=" + m_Random_ID
+                                    + "  AND temp_ScanStats.random_id=" + m_Random_ID
                                     + "  AND t1.random_id=" + m_Random_ID
                                     + "  AND t2.random_id=" + m_Random_ID
                                     + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
@@ -300,12 +300,12 @@ namespace SMAQC
         {
 
             m_DBInterface.SetQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber as ScanNumber,"
-                                    + "    temp_scanstats.ScanTime as ScanTime1 "
-                                    + " FROM temp_PSMs, temp_scanstats, temp_sicstats as t1 "
+                                    + "    temp_ScanStats.ScanTime as ScanTime1 "
+                                    + " FROM temp_PSMs, temp_ScanStats, temp_SICStats as t1 "
                                     + " WHERE temp_PSMs.Scan = t1.FragScanNumber "
-                                    + "  AND temp_PSMs.Scan = temp_scanstats.ScanNumber "
+                                    + "  AND temp_PSMs.Scan = temp_ScanStats.ScanNumber "
                                     + "  AND temp_PSMs.random_id=" + m_Random_ID
-                                    + "  AND temp_scanstats.random_id=" + m_Random_ID
+                                    + "  AND temp_ScanStats.random_id=" + m_Random_ID
                                     + "  AND t1.random_id=" + m_Random_ID + " "
                                     + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
                                     + " ORDER BY Scan;");
@@ -396,12 +396,12 @@ namespace SMAQC
         {
 
             m_DBInterface.SetQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber as ScanNumber,"
-                                    + "    temp_scanstats.ScanTime as ScanTime1 "
-                                    + " FROM temp_PSMs, temp_scanstats, temp_sicstats as t1 "
+                                    + "    temp_ScanStats.ScanTime as ScanTime1 "
+                                    + " FROM temp_PSMs, temp_ScanStats, temp_SICStats as t1 "
                                     + " WHERE temp_PSMs.Scan = t1.FragScanNumber "
-                                    + "  AND temp_PSMs.Scan = temp_scanstats.ScanNumber "
+                                    + "  AND temp_PSMs.Scan = temp_ScanStats.ScanNumber "
                                     + "  AND temp_PSMs.random_id=" + m_Random_ID
-                                    + "  AND temp_scanstats.random_id=" + m_Random_ID
+                                    + "  AND temp_ScanStats.random_id=" + m_Random_ID
                                     + "  AND t1.random_id=" + m_Random_ID
                                     + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
                                     + " ORDER BY Scan;");
@@ -590,7 +590,7 @@ namespace SMAQC
             // Sort the data
             m_MPWCached_BestScan.Sort();
 
-            m_DBInterface.SetQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM temp_sicstats WHERE temp_sicstats.random_id=" + m_Random_ID);
+            m_DBInterface.SetQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM temp_SICStats WHERE temp_SICStats.random_id=" + m_Random_ID);
 
             string[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
 
@@ -606,7 +606,7 @@ namespace SMAQC
                 m_MPWCached_OptimalPeakApexScanNumber.Add(fragScanNumber, int.Parse(measurementResults["OptimalPeakApexScanNumber"]));
             }
 
-            m_DBInterface.SetQuery("SELECT temp_scanstats.ScanNumber, temp_scanstats.ScanTime FROM temp_scanstats WHERE temp_scanstats.random_id=" + m_Random_ID);
+            m_DBInterface.SetQuery("SELECT temp_ScanStats.ScanNumber, temp_ScanStats.ScanTime FROM temp_ScanStats WHERE temp_ScanStats.random_id=" + m_Random_ID);
 
             string[] fields3 = { "ScanNumber", "ScanTime" };
 
@@ -801,8 +801,8 @@ namespace SMAQC
             var scanEndC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanEnd, 0);
 
             m_DBInterface.SetQuery("SELECT COUNT(*) AS ScanCount "
-                + " FROM temp_scanstats "
-                + " WHERE temp_scanstats.random_id=" + m_Random_ID
+                + " FROM temp_ScanStats "
+                + " WHERE temp_ScanStats.random_id=" + m_Random_ID
                 + "   AND ScanType = " + msLevel
                 + "   AND ScanNumber >= " + scanStartC2A
                 + "   AND ScanNumber <= " + scanEndC2A);
@@ -958,13 +958,13 @@ namespace SMAQC
         public string MS1_1()
         {
 
-            m_DBInterface.SetQuery("SELECT temp_scanstatsex.Ion_Injection_Time "
-                + " FROM temp_scanstats, temp_scanstatsex "
-                + " WHERE temp_scanstats.ScanNumber = temp_scanstatsex.ScanNumber "
-                + "  AND temp_scanstatsex.random_id = " + m_Random_ID
-                + "  AND temp_scanstats.random_id = " + m_Random_ID
-                + "  AND temp_scanstats.ScanType = 1 "
-                + " ORDER BY temp_scanstats.ScanNumber;");
+            m_DBInterface.SetQuery("SELECT temp_ScanStatsEx.Ion_Injection_Time "
+                + " FROM temp_ScanStats, temp_ScanStatsEx "
+                + " WHERE temp_ScanStats.ScanNumber = temp_ScanStatsEx.ScanNumber "
+                + "  AND temp_ScanStatsEx.random_id = " + m_Random_ID
+                + "  AND temp_ScanStats.random_id = " + m_Random_ID
+                + "  AND temp_ScanStats.ScanType = 1 "
+                + " ORDER BY temp_ScanStats.ScanNumber;");
 
 
             var lstValues = new List<double>();
@@ -1027,8 +1027,8 @@ namespace SMAQC
             var scanEndC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanEnd, 0);
 
             m_DBInterface.SetQuery("SELECT BasePeakSignalToNoiseRatio, TotalIonIntensity "
-                + " FROM temp_scanstats"
-                + " WHERE temp_scanstats.random_id=" + m_Random_ID
+                + " FROM temp_ScanStats"
+                + " WHERE temp_ScanStats.random_id=" + m_Random_ID
                 + "   AND ScanType = 1 "
                 + "   AND ScanNumber >= " + scanFirstPeptide
                 + "   AND ScanNumber <= " + scanEndC2A);
@@ -1089,13 +1089,13 @@ namespace SMAQC
         private void Cache_MS1_3_Data()
         {
 
-            m_DBInterface.SetQuery("SELECT temp_sicstats.PeakMaxIntensity"
-                + " FROM temp_sicstats, temp_PSMs"
-                + " WHERE temp_sicstats.FragScanNumber=temp_PSMs.Scan"
-                + "   AND temp_sicstats.random_id=" + m_Random_ID
+            m_DBInterface.SetQuery("SELECT temp_SICStats.PeakMaxIntensity"
+                + " FROM temp_SICStats, temp_PSMs"
+                + " WHERE temp_SICStats.FragScanNumber=temp_PSMs.Scan"
+                + "   AND temp_SICStats.random_id=" + m_Random_ID
                 + "   AND temp_PSMs.random_id=" + m_Random_ID
                 + "   AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
-                + " ORDER BY temp_sicstats.PeakMaxIntensity, temp_PSMs.Result_ID DESC;");
+                + " ORDER BY temp_SICStats.PeakMaxIntensity, temp_PSMs.Result_ID DESC;");
 
             // This list stores the max peak intensity for each PSM, using data between the 5th and 95th percentiles
             var maxPeakIntensities = new List<double>();
@@ -1163,9 +1163,9 @@ namespace SMAQC
         {
 
             m_DBInterface.SetQuery("SELECT ParentIonIntensity, PeakMaxIntensity"
-                + " FROM temp_sicstats, temp_PSMs "
-                + " WHERE temp_sicstats.FragScanNumber=temp_PSMs.Scan"
-                + "   AND temp_sicstats.random_id=" + m_Random_ID
+                + " FROM temp_SICStats, temp_PSMs "
+                + " WHERE temp_SICStats.FragScanNumber=temp_PSMs.Scan"
+                + "   AND temp_SICStats.random_id=" + m_Random_ID
                 + "   AND temp_PSMs.random_id=" + m_Random_ID
                 + "   AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
 
@@ -1266,8 +1266,8 @@ namespace SMAQC
         {
 
             m_DBInterface.SetQuery("SELECT ScanNumber, BasePeakIntensity  "
-                + " FROM temp_scanstats "
-                + " WHERE temp_scanstats.random_id=" + m_Random_ID
+                + " FROM temp_ScanStats "
+                + " WHERE temp_ScanStats.random_id=" + m_Random_ID
                 + "   AND ScanType = 1");
 
             double bpiPrevious = -1;
@@ -1418,9 +1418,9 @@ namespace SMAQC
         private void Cache_MS1_5_Data()
         {
 
-            m_DBInterface.SetQuery("SELECT temp_PSMs.Peptide_MH, temp_PSMs.Charge, temp_sicstats.MZ, temp_PSMs.DelM_Da, temp_PSMs.DelM_PPM"
-                    + " FROM temp_PSMs, temp_sicstats"
-                    + " WHERE temp_sicstats.FragScanNumber=temp_PSMs.Scan AND temp_sicstats.random_id=" + m_Random_ID + " AND temp_PSMs.random_id=" + m_Random_ID
+            m_DBInterface.SetQuery("SELECT temp_PSMs.Peptide_MH, temp_PSMs.Charge, temp_SICStats.MZ, temp_PSMs.DelM_Da, temp_PSMs.DelM_PPM"
+                    + " FROM temp_PSMs, temp_SICStats"
+                    + " WHERE temp_SICStats.FragScanNumber=temp_PSMs.Scan AND temp_SICStats.random_id=" + m_Random_ID + " AND temp_PSMs.random_id=" + m_Random_ID
                     + " AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
 
             const double massC13 = 1.00335483;
@@ -1479,9 +1479,9 @@ namespace SMAQC
         public string MS2_1()
         {
 
-            m_DBInterface.SetQuery("SELECT temp_scanstatsex.Ion_Injection_Time "
-                + " FROM temp_PSMs, temp_scanstatsex "
-                + " WHERE temp_PSMs.Scan=temp_scanstatsex.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_scanstatsex.random_id=" + m_Random_ID
+            m_DBInterface.SetQuery("SELECT temp_ScanStatsEx.Ion_Injection_Time "
+                + " FROM temp_PSMs, temp_ScanStatsEx "
+                + " WHERE temp_PSMs.Scan=temp_ScanStatsEx.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_ScanStatsEx.random_id=" + m_Random_ID
                 + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
 
             var filterList = new List<double>();
@@ -1509,9 +1509,9 @@ namespace SMAQC
         public string MS2_2()
         {
 
-            m_DBInterface.SetQuery("SELECT temp_scanstats.BasePeakSignalToNoiseRatio "
-                + " FROM temp_PSMs, temp_scanstats "
-                + " WHERE temp_PSMs.Scan=temp_scanstats.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_scanstats.random_id=" + m_Random_ID
+            m_DBInterface.SetQuery("SELECT temp_ScanStats.BasePeakSignalToNoiseRatio "
+                + " FROM temp_PSMs, temp_ScanStats "
+                + " WHERE temp_PSMs.Scan=temp_ScanStats.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_ScanStats.random_id=" + m_Random_ID
                 + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
 
             var filterList = new List<double>();
@@ -1550,9 +1550,9 @@ namespace SMAQC
         public string MS2_3()
         {
 
-            m_DBInterface.SetQuery("SELECT temp_scanstats.IonCountRaw "
-                + " FROM temp_PSMs, temp_scanstats "
-                + " WHERE temp_PSMs.Scan=temp_scanstats.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_scanstats.random_id=" + m_Random_ID
+            m_DBInterface.SetQuery("SELECT temp_ScanStats.IonCountRaw "
+                + " FROM temp_PSMs, temp_ScanStats "
+                + " WHERE temp_PSMs.Scan=temp_ScanStats.ScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_ScanStats.random_id=" + m_Random_ID
                 + "  AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
 
             var filterList = new List<double>();
@@ -1650,9 +1650,9 @@ namespace SMAQC
         {
 
             m_DBInterface.SetQuery("SELECT COUNT(*) as MS2ScanCount "
-                + " FROM (SELECT DISTINCT temp_PSMs.Scan, temp_sicstats.PeakMaxIntensity "
-                + "       FROM temp_PSMs, temp_sicstats "
-                + "       WHERE temp_PSMs.Scan=temp_sicstats.FragScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_sicstats.random_id=" + m_Random_ID
+                + " FROM (SELECT DISTINCT temp_PSMs.Scan, temp_SICStats.PeakMaxIntensity "
+                + "       FROM temp_PSMs, temp_SICStats "
+                + "       WHERE temp_PSMs.Scan=temp_SICStats.FragScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_SICStats.random_id=" + m_Random_ID
                 + "      ) LookupQ;");
 
             string[] fields1 = { "MS2ScanCount" };
@@ -1665,11 +1665,11 @@ namespace SMAQC
             // Note that we sort by ascending PeakMaxIntensity
             // Thus, quartile 1 in m_Cached_MS2_4_Counts will have the lowest abundance peptides
 
-            m_DBInterface.SetQuery("SELECT temp_PSMs.Scan, temp_sicstats.PeakMaxIntensity, Min(temp_PSMs.MSGFSpecProb) AS Peptide_Score "
-                + " FROM temp_PSMs, temp_sicstats"
-                + " WHERE temp_PSMs.Scan=temp_sicstats.FragScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_sicstats.random_id=" + m_Random_ID
-                + " GROUP BY temp_PSMs.Scan, temp_sicstats.PeakMaxIntensity "
-                + " ORDER BY temp_sicstats.PeakMaxIntensity;");
+            m_DBInterface.SetQuery("SELECT temp_PSMs.Scan, temp_SICStats.PeakMaxIntensity, Min(temp_PSMs.MSGFSpecProb) AS Peptide_Score "
+                + " FROM temp_PSMs, temp_SICStats"
+                + " WHERE temp_PSMs.Scan=temp_SICStats.FragScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_SICStats.random_id=" + m_Random_ID
+                + " GROUP BY temp_PSMs.Scan, temp_SICStats.PeakMaxIntensity "
+                + " ORDER BY temp_SICStats.PeakMaxIntensity;");
 
             // Keys are quartile (1,2,3,4); values are the number of MS/MS scans in the quartile
             m_Cached_MS2_4_Counts.ScanCount = new Dictionary<int, int>();
@@ -2025,7 +2025,7 @@ namespace SMAQC
                                    + "        FROM temp_PSMs "
                                    + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
                                    + "          AND random_id=" + m_Random_ID
-                                   + "          AND Keratinpeptide = 1"
+                                   + "          AND KeratinPeptide = 1"
                                    + "        GROUP BY Scan ) StatsQ "
                                    + " WHERE Cleavage_State >= 0");
 
@@ -2053,7 +2053,7 @@ namespace SMAQC
                                    + "        FROM temp_PSMs "
                                    + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
                                    + "          AND random_id=" + m_Random_ID
-                                   + "          AND Keratinpeptide = 1"
+                                   + "          AND KeratinPeptide = 1"
                                    + "        GROUP BY Unique_Seq_ID ) StatsQ "
                                    + " WHERE Cleavage_State >= 0");
 
@@ -2081,7 +2081,7 @@ namespace SMAQC
                                    + "        FROM temp_PSMs "
                                    + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
                                    + "          AND random_id=" + m_Random_ID
-                                   + "          AND Trypsinpeptide = 1"
+                                   + "          AND TrypsinPeptide = 1"
                                    + "        GROUP BY Scan ) StatsQ "
                                    + " WHERE Cleavage_State >= 0");
 
@@ -2109,7 +2109,7 @@ namespace SMAQC
                                    + "        FROM temp_PSMs "
                                    + "        WHERE MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
                                    + "          AND random_id=" + m_Random_ID
-                                   + "          AND Trypsinpeptide = 1"
+                                   + "          AND TrypsinPeptide = 1"
                                    + "        GROUP BY Unique_Seq_ID ) StatsQ "
                                    + " WHERE Cleavage_State >= 0");
 
@@ -2172,7 +2172,7 @@ namespace SMAQC
         private int MS2_RepIon_Lookup(int numMissingReporterIons)
         {
             // Determine the reporter ion mode by looking for non-null values
-            // a) Make a list of all of the "Ion_" columns in table temp_reporterions
+            // a) Make a list of all of the "Ion_" columns in table temp_ReporterIons
             // b) Find the columns with at least one non-null value
             //    - Compute the average of all non-zero values
             //    - Define MinimumThreshold = GlobalAverage / 1000
@@ -2211,7 +2211,7 @@ namespace SMAQC
                 sbSql.Append("SUM (CASE WHEN IfNull([" + column + "], 0) = 0 Then 0 Else 1 End) AS [" + column + "_Count]");
             }
 
-            sbSql.Append(" FROM temp_reporterions");
+            sbSql.Append(" FROM temp_ReporterIons");
             sbSql.Append(" WHERE random_id=" + m_Random_ID);
 
             m_DBInterface.SetQuery(sbSql.ToString());
@@ -2264,9 +2264,9 @@ namespace SMAQC
             }
 
             sbSql.Append(" AS ReporterIonCount");
-            sbSql.Append(" FROM temp_reporterions INNER JOIN ");
-            sbSql.Append("   temp_psms ON temp_reporterions.ScanNumber = temp_PSMs.scan AND " +
-                         "   temp_reporterions.random_id = temp_PSMs.random_id ");
+            sbSql.Append(" FROM temp_ReporterIons INNER JOIN ");
+            sbSql.Append("   temp_PSMs ON temp_ReporterIons.ScanNumber = temp_PSMs.scan AND " +
+                         "   temp_ReporterIons.random_id = temp_PSMs.random_id ");
             sbSql.Append(" WHERE temp_PSMs.random_id=" + m_Random_ID);
             sbSql.Append("   AND temp_PSMs.MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD);
 
@@ -2295,7 +2295,7 @@ namespace SMAQC
             if (mReporterIonColumns != null && mReporterIonColumns.Count > 0)
                 return mReporterIonColumns;
 
-            var columnList = m_DBInterface.GetTableColumns("temp_reporterions");
+            var columnList = m_DBInterface.GetTableColumns("temp_ReporterIons");
             var ionColumns = columnList.Where(column => column.StartsWith("Ion_")).ToList();
 
             if (ionColumns.Count == 0)
@@ -2317,7 +2317,7 @@ namespace SMAQC
                 sbSql.Append("SUM (CASE WHEN [" + column + "] IS NULL Then 0 Else 1 End) AS [" + column + "]");
             }
 
-            sbSql.Append(" FROM temp_reporterions");
+            sbSql.Append(" FROM temp_ReporterIons");
             sbSql.Append(" WHERE random_id=" + m_Random_ID);
 
             m_DBInterface.SetQuery(sbSql.ToString());

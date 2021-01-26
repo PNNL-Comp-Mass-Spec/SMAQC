@@ -37,19 +37,19 @@ namespace SMAQC
                     cmd.ExecuteNonQuery();
 
                     // MASIC ScanStats
-                    cmd.CommandText = GetTableCreateSql("temp_scanstats");
+                    cmd.CommandText = GetTableCreateSql("temp_ScanStats");
                     cmd.ExecuteNonQuery();
 
                     // MASIC ScanStatsEx
-                    cmd.CommandText = GetTableCreateSql("temp_scanstatsex");
+                    cmd.CommandText = GetTableCreateSql("temp_ScanStatsEx");
                     cmd.ExecuteNonQuery();
 
                     // MASIC SICStats
-                    cmd.CommandText = GetTableCreateSql("temp_sicstats");
+                    cmd.CommandText = GetTableCreateSql("temp_SICStats");
                     cmd.ExecuteNonQuery();
 
                     // MASIC ReporterIons
-                    cmd.CommandText = GetTableCreateSql("temp_reporterions");
+                    cmd.CommandText = GetTableCreateSql("temp_ReporterIons");
                     cmd.ExecuteNonQuery();
 
                     // X!Tandem results
@@ -57,11 +57,11 @@ namespace SMAQC
                     cmd.ExecuteNonQuery();
 
                     // ResultToSeqMap
-                    cmd.CommandText = GetTableCreateSql("temp_xt_resulttoseqmap");
+                    cmd.CommandText = GetTableCreateSql("temp_xt_ResultToSeqMap");
                     cmd.ExecuteNonQuery();
 
                     // SeqToProteinMap
-                    cmd.CommandText = GetTableCreateSql("temp_xt_seqtoproteinmap");
+                    cmd.CommandText = GetTableCreateSql("temp_xt_SeqToProteinMap");
                     cmd.ExecuteNonQuery();
 
                     // PSMs returned by PHRPReader
@@ -85,16 +85,16 @@ namespace SMAQC
 
         private void CreateIndicesMasic(SQLiteCommand cmd)
         {
-            CreatePrimaryKey(cmd, "temp_scanstats", "random_id", "ScanNumber");
-            CreatePrimaryKey(cmd, "temp_scanstatsex", "random_id", "ScanNumber");
-            CreatePrimaryKey(cmd, "temp_sicstats", "random_id", "ParentIonIndex", "FragScanNumber");
+            CreatePrimaryKey(cmd, "temp_ScanStats", "random_id", "ScanNumber");
+            CreatePrimaryKey(cmd, "temp_ScanStatsEx", "random_id", "ScanNumber");
+            CreatePrimaryKey(cmd, "temp_SICStats", "random_id", "ParentIonIndex", "FragScanNumber");
 
-            CreateIndex(cmd, "temp_scanstats", "ScanNumber");
-            CreateIndex(cmd, "temp_scanstatsex", "ScanNumber");
+            CreateIndex(cmd, "temp_ScanStats", "ScanNumber");
+            CreateIndex(cmd, "temp_ScanStatsEx", "ScanNumber");
 
-            CreateIndex(cmd, "temp_sicstats", "ParentIonIndex");
-            CreateIndex(cmd, "temp_sicstats", "FragScanNumber");
-            CreateIndex(cmd, "temp_sicstats", "OptimalPeakApexScanNumber");
+            CreateIndex(cmd, "temp_SICStats", "ParentIonIndex");
+            CreateIndex(cmd, "temp_SICStats", "FragScanNumber");
+            CreateIndex(cmd, "temp_SICStats", "OptimalPeakApexScanNumber");
 
             CreateIndicesReporterIons(cmd);
 
@@ -102,8 +102,8 @@ namespace SMAQC
 
         private void CreateIndicesReporterIons(SQLiteCommand cmd)
         {
-            CreatePrimaryKey(cmd, "temp_reporterions", "random_id", "ScanNumber");
-            CreateIndex(cmd, "temp_reporterions", "ScanNumber");
+            CreatePrimaryKey(cmd, "temp_ReporterIons", "random_id", "ScanNumber");
+            CreateIndex(cmd, "temp_ReporterIons", "ScanNumber");
         }
 
         private void CreateIndicesXTandem(SQLiteCommand cmd)
@@ -111,10 +111,10 @@ namespace SMAQC
             CreateIndex(cmd, "temp_xt", "Scan");
             CreateIndex(cmd, "temp_xt", "Peptide_Expectation_Value_Log");
 
-            CreateIndex(cmd, "temp_xt_resulttoseqmap", "Result_ID");
-            CreateIndex(cmd, "temp_xt_resulttoseqmap", "Unique_Seq_ID");
+            CreateIndex(cmd, "temp_xt_ResultToSeqMap", "Result_ID");
+            CreateIndex(cmd, "temp_xt_ResultToSeqMap", "Unique_Seq_ID");
 
-            CreateIndex(cmd, "temp_xt_seqtoproteinmap", "Unique_Seq_ID");
+            CreateIndex(cmd, "temp_xt_SeqToProteinMap", "Unique_Seq_ID");
         }
 
         private void CreateIndicesPHRP(SQLiteCommand cmd)
@@ -165,31 +165,31 @@ namespace SMAQC
                     CreateIndicesPHRP(cmd);
                 }
 
-                if (!TableHasColumn(connection, "temp_PSMs", "Keratinpeptide"))
+                if (!TableHasColumn(connection, "temp_PSMs", "KeratinPeptide"))
                 {
                     var columnsToAdd = new List<string>
                     {
-                        "Keratinpeptide",
+                        "KeratinPeptide",
                         "MissedCleavages"
                     };
 
                     AddColumnsToTable(connection, "temp_PSMs", columnsToAdd);
                 }
 
-                if (!TableHasColumn(connection, "temp_PSMs", "Trypsinpeptide"))
+                if (!TableHasColumn(connection, "temp_PSMs", "TrypsinPeptide"))
                 {
                     var columnsToAdd = new List<string>
                     {
-                        "Trypsinpeptide"
+                        "TrypsinPeptide"
                     };
 
                     AddColumnsToTable(connection, "temp_PSMs", columnsToAdd);
                 }
 
-                if (!TableExists(connection, "temp_reporterions"))
+                if (!TableExists(connection, "temp_ReporterIons"))
                 {
                     // ReporterIons from MASIC
-                    cmd.CommandText = GetTableCreateSql("temp_reporterions");
+                    cmd.CommandText = GetTableCreateSql("temp_ReporterIons");
                     cmd.ExecuteNonQuery();
 
                     CreateIndicesReporterIons(cmd);
@@ -347,8 +347,8 @@ namespace SMAQC
                         + ")";
                     break;
 
-                case "temp_scanstats":
-                    sql = "CREATE TABLE [temp_scanstats] ("
+                case "temp_ScanStats":
+                    sql = "CREATE TABLE [temp_ScanStats] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Dataset] INTEGER NOT NULL,"
@@ -365,8 +365,8 @@ namespace SMAQC
                         + ")";
                     break;
 
-                case "temp_scanstatsex":
-                    sql = "CREATE TABLE [temp_scanstatsex] ("
+                case "temp_ScanStatsEx":
+                    sql = "CREATE TABLE [temp_ScanStatsEx] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Dataset] INTEGER NOT NULL,"
@@ -393,8 +393,8 @@ namespace SMAQC
                         + ")";
                     break;
 
-                case "temp_sicstats":
-                    sql = "CREATE TABLE [temp_sicstats] ("
+                case "temp_SICStats":
+                    sql = "CREATE TABLE [temp_SICStats] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Dataset] INTEGER NOT NULL,"
@@ -425,8 +425,8 @@ namespace SMAQC
                         + ")";
                     break;
 
-                case "temp_reporterions":
-                    sql = "CREATE TABLE [temp_reporterions] ("
+                case "temp_ReporterIons":
+                    sql = "CREATE TABLE [temp_ReporterIons] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Dataset] INTEGER NOT NULL,"
@@ -496,8 +496,8 @@ namespace SMAQC
                         + ")";
                     break;
 
-                case "temp_xt_resulttoseqmap":
-                    sql = "CREATE TABLE [temp_xt_resulttoseqmap] ("
+                case "temp_xt_ResultToSeqMap":
+                    sql = "CREATE TABLE [temp_xt_ResultToSeqMap] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Result_ID] INTEGER NOT NULL,"
@@ -505,8 +505,8 @@ namespace SMAQC
                         + ")";
                     break;
 
-                case "temp_xt_seqtoproteinmap":
-                    sql = "CREATE TABLE [temp_xt_seqtoproteinmap] ("
+                case "temp_xt_SeqToProteinMap":
+                    sql = "CREATE TABLE [temp_xt_SeqToProteinMap] ("
                         + "[instrument_id] INTEGER NOT NULL,"
                         + "[random_id] INTEGER NOT NULL,"
                         + "[Unique_Seq_ID] INTEGER NOT NULL,"
@@ -534,9 +534,9 @@ namespace SMAQC
                         + "[Unique_Seq_ID] INTEGER NOT NULL,"
                         + "[Cleavage_State] INTEGER NOT NULL,"
                         + "[Phosphopeptide] INTEGER NOT NULL,"
-                        + "[Keratinpeptide] INTEGER NOT NULL,"
+                        + "[KeratinPeptide] INTEGER NOT NULL,"
                         + "[MissedCleavages] INTEGER NOT NULL,"
-                        + "[Trypsinpeptide] INTEGER NOT NULL"
+                        + "[TrypsinPeptide] INTEGER NOT NULL"
                         + ")";
                     break;
 

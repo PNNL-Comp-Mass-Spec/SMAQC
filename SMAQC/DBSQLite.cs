@@ -161,14 +161,14 @@ namespace SMAQC
             // Values are True if the field should be used and false if it should not be used
             var fieldNames = GetColumnsForSQLiteBulkInsert(sourceFile, excludedColumnNameSuffixes, out var fieldEnabledByIndex);
 
-            if (string.Equals(targetTable, "temp_reporterions", StringComparison.InvariantCultureIgnoreCase))
+            if (string.Equals(targetTable, "temp_ReporterIons", StringComparison.OrdinalIgnoreCase))
             {
                 // Auto-add the reporter ion columns
-                var ionColumns = (from item in fieldNames where item.ToLower().StartsWith("ion_") select item).ToList();
+                var ionColumns = (from item in fieldNames where item.StartsWith("ion_", StringComparison.OrdinalIgnoreCase) select item).ToList();
 
                 if (ionColumns.Count > 0)
                 {
-                    mSQLiteTools.AssureColumnsExist(mConnection, "temp_reporterions", ionColumns, "FLOAT");
+                    mSQLiteTools.AssureColumnsExist(mConnection, "temp_ReporterIons", ionColumns, "FLOAT");
                 }
             }
 
@@ -363,9 +363,9 @@ namespace SMAQC
                 "Unique_Seq_ID",
                 "Cleavage_State",
                 "Phosphopeptide",
-                "Keratinpeptide",
+                "KeratinPeptide",
                 "MissedCleavages",
-                "Trypsinpeptide"
+                "TrypsinPeptide"
             };
 
             mPHRPInsertCommand.CommandText = SQLiteBulkInsert_BuildSQL_Line("temp_PSMs", dbColumns);
