@@ -657,16 +657,18 @@ namespace SMAQC
             for (var i = 0; i < PsmBestScan.Count; i++)
             {
                 var bestScan = PsmBestScan[i];
+                var scanCenter = PsmOptimalPeakApexScanNumber[bestScan];
+                var halfWidth = (int)Math.Ceiling(PsmFWHMinScans[bestScan] / 2);
 
                 // Find index + optimal peak apex scan +- FWHM for each result (columns: m,o)
-                var optimalPeakApexScanMinusFWHM = PsmOptimalPeakApexScanNumber[bestScan] - (int)Math.Ceiling(PsmFWHMinScans[bestScan] / 2);
-                var optimalPeakApexScanPlusFWHM = PsmOptimalPeakApexScanNumber[bestScan] + (int)Math.Ceiling(PsmFWHMinScans[bestScan] / 2);
+                var startScan = scanCenter - halfWidth;
+                var endScan = scanCenter + halfWidth;
 
                 // Find other columns [n,p, q,r,t]
 
-                if (PsmScanTime.TryGetValue(optimalPeakApexScanMinusFWHM, out var startTime))
+                if (PsmScanTime.TryGetValue(startScan, out var startTime))
                 {
-                    if (PsmScanTime.TryGetValue(optimalPeakApexScanPlusFWHM, out var endTime))
+                    if (PsmScanTime.TryGetValue(endScan, out var endTime))
                     {
                         var peakWidthSeconds = (endTime - startTime) * 60;
                         var percent = (i + 1) / (double)PsmBestScan.Count;
