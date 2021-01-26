@@ -2211,7 +2211,7 @@ namespace SMAQC
             if (phosphoPeptides)
                 return " AND Phosphopeptide = 1";
 
-            return "";
+            return string.Empty;
         }
 
         /// <summary>

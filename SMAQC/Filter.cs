@@ -94,7 +94,7 @@ namespace SMAQC
                     {
                         if (dataValue.Equals("[PAD]"))
                         {
-                            filteredData.Add("");
+                            filteredData.Add(string.Empty);
                         }
                         else
                         {

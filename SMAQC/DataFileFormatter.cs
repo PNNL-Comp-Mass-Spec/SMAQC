@@ -21,7 +21,7 @@ namespace SMAQC
         /// <summary>
         /// Temporary file path with scrubbed data
         /// </summary>
-        private string mTempFilePath = "";
+        private string mTempFilePath = string.Empty;
 
         /// <summary>
         /// Constructor
@@ -249,7 +249,7 @@ namespace SMAQC
                     while (dataToWrite.Count < knownColumnCount)
                     {
                         // Missing columns for this line; add them
-                        dataToWrite.Add("");
+                        dataToWrite.Add(string.Empty);
                     }
 
                     // Write line
@@ -406,7 +406,7 @@ namespace SMAQC
                 updatedName = updatedName.Replace(" ", "_");
 
                 // Step #3 replace all forward slashes with empty string, e.g. change m/z to mz
-                updatedName = updatedName.Replace("/", "");
+                updatedName = updatedName.Replace("/", string.Empty);
 
                 updatedColumnNames.Add(updatedName);
             }

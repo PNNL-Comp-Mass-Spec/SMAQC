@@ -28,7 +28,7 @@ namespace SMAQC
         /// <summary>
         /// Current running dataset
         /// </summary>
-        private string m_CurrentDataset = "";
+        private string m_CurrentDataset = string.Empty;
 
         /// <summary>
         /// Constructor

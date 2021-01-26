@@ -122,7 +122,7 @@ namespace SMAQC
 
         private string AlphanumericOnly(string objectName)
         {
-            var cleanName = mNonAlphanumericMatcher.Replace(objectName, "");
+            var cleanName = mNonAlphanumericMatcher.Replace(objectName, string.Empty);
             return cleanName;
         }
 
