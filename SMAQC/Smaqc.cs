@@ -660,7 +660,7 @@ namespace SMAQC
                                 parser.MoveToAttribute("name");
                                 measurementsToRun.Add(parser.Value);
 
-                                if (parser.Value.Equals("*", StringComparison.InvariantCulture))
+                                if (parser.Value.Equals("*", StringComparison.OrdinalIgnoreCase))
                                 {
                                     useDefaultMetrics = true;
                                     break;
