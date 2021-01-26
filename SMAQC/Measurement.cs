@@ -28,15 +28,6 @@ namespace SMAQC
             public double Score;
         }
 
-        private struct MsMsQuartileCounts
-        {
-            // Keys are quartile (1,2,3,4); values are the number of MS/MS scans in the quartile
-            public Dictionary<int, int> ScanCount;
-
-            // Keys are quartile (1,2,3,4); values are the number of confidently identified MS/MS scans in the quartile (MSGFSpecProb less than 1E-12)
-            public Dictionary<int, int> PassFilt;
-        }
-
         private enum CachedResultTypes
         {
             ScanFirstFilterPassingPeptide = 0,
@@ -46,7 +37,6 @@ namespace SMAQC
             ReporterIonNoiseThreshold = 4
         }
 
-        // Constants
         public const double MSGF_SPECPROB_THRESHOLD = 1e-12;
 
         /// <summary>
@@ -59,51 +49,109 @@ namespace SMAQC
         /// </summary>
         private readonly int mRandomId;
 
+        /// <summary>
+        /// Some measurements have data required by others ... will be stored here
+        /// </summary>
+        private readonly Dictionary<CachedResultTypes, double> mResultsStorage = new Dictionary<CachedResultTypes, double>();
 
+        private bool mMedianPeakWidthDataCached;
 
-        // Some measurements have data required by others ... will be stored here
-        private readonly Dictionary<CachedResultTypes, double> m_ResultsStorage = new Dictionary<CachedResultTypes, double>();
+        /// <summary>
+        /// Best Scan Number for each peptide
+        /// </summary>
+        /// <remarks>Used when computing median peak widths</remarks>
+        private readonly List<int> PsmBestScan = new List<int>();
 
-        // Cached data for computing median peak widths
-        private bool m_MedianPeakWidthDataCached;
-        private List<int> m_MPWCached_BestScan;										// Best Scan Number for each peptide
-        private Dictionary<int, double> m_MPWCached_FWHMinScans;					// Full width at half max, in scans; keys are FragScanNumbers
-        private Dictionary<int, int> m_MPWCached_OptimalPeakApexScanNumber;			// Optimal peak apex scan number; keys are FragScanNumbers
-        private Dictionary<int, double> m_MPWCached_ScanTime;						// Scan time for given scan number; keys are scan numbers
+        /// <summary>
+        /// Full width at half max, in scans; keys are FragScanNumbers
+        /// </summary>
+        /// <remarks>Used when computing median peak widths</remarks>
+        private readonly Dictionary<int, double> PsmFWHMinScans = new Dictionary<int, double>();
 
-        // Cached data for PSM stats by charge
-        private Dictionary<int, int> m_Cached_PSM_Stats_by_Charge;					// Number of filter-passing PSMs for each charge state
+        /// <summary>
+        /// Optimal peak apex scan number; keys are FragScanNumbers
+        /// </summary>
+        /// <remarks>Used when computing median peak widths</remarks>
+        private readonly Dictionary<int, int> PsmOptimalPeakApexScanNumber = new Dictionary<int, int>();
 
-        // Cached data for DS_1
-        private Dictionary<int, int> m_PeptideSamplingStats;						// Keys are the number of spectra that a peptide was observed in (passing filters) and values are the number of peptides identified by Key spectra</param>
+        /// <summary>
+        /// Scan time for given scan number; keys are scan numbers
+        /// </summary>
+        /// <remarks>Used when computing median peak widths</remarks>
+        private readonly Dictionary<int, double> PsmScanTime = new Dictionary<int, double>();
 
-        // Cached data for DS_3
-        private List<double> m_Cached_DS3;											// Stores MS1 max / MS1 sampled abundance
-        private List<double> m_Cached_DS3_Bottom50pct;                              // Stores MS1 max / MS1 sampled abundance for ratios in the bottom 50%
+        /// <summary>
+        /// Cached data for PSM stats by charge
+        /// </summary>
+        /// <remarks>Number of filter-passing PSMs for each charge state</remarks>
+        private readonly Dictionary<int, int> mCachedPSMStatsByCharge = new Dictionary<int, int>();
 
-        // Cached data for MS1_2
-        private List<double> m_Cached_BasePeakSignalToNoiseRatio;
-        private List<double> m_Cached_TotalIonIntensity;
+        /// <summary>
+        /// Cached data for DS_1
+        /// </summary>
+        /// <remarks>Keys are the number of spectra that a peptide was observed in (passing filters) and values are the number of peptides identified by Key spectra</param></remarks>
+        private readonly Dictionary<int, int> mPeptideSamplingStats = new Dictionary<int, int>();
 
-        // Cached data for MS1_3
-        private double m_Cached_PeakMaxIntensity_5thPercentile;
-        private double m_Cached_PeakMaxIntensity_95thPercentile;
+        /// <summary>
+        /// Cached data for DS_3: Stores MS1 max / MS1 sampled abundance
+        /// </summary>
+        private readonly List<double> mCachedDS3 = new List<double>();
+
+        /// <summary>
+        /// Cached data for DS_3: Stores MS1 max / MS1 sampled abundance for ratios in the bottom 50%
+        /// </summary>
+        private readonly List<double> mCachedDS3_Bottom50pct = new List<double>();
+
+        /// <summary>
+        /// Cached data for MS1_2
+        /// </summary>
+        private readonly List<double> mCachedBasePeakSignalToNoiseRatio = new List<double>();
+        private readonly List<double> mCachedTotalIonIntensity = new List<double>();
+
+        /// <summary>
+        /// Cached data for MS1_3
+        /// </summary>
+        private double mCachedPeakMaxIntensity_5thPercentile;
+        private double mCachedPeakMaxIntensity_95thPercentile;
 
         /// <summary>
         /// PeakMaxIntensity for each filter-passing PSM
         /// </summary>
-        private List<double> m_Cached_MS1_3;
+        private readonly List<double> mCachedMS1_3 = new List<double>();
 
-        // Cached data for MS1_5
-        private List<double> m_Cached_DelM;												// Delta mass
-        private List<double> m_Cached_DelM_ppm;                                         // Delta mass, in ppm
+        /// <summary>
+        /// Cached data for MS1_5: Delta mass
+        /// </summary>
+        private readonly List<double> mCachedDelM = new List<double>();
 
-        // Cached data for MS4
-        private bool m_MS2_QuartileCounts_Cached;
-        private MsMsQuartileCounts m_Cached_MS2_QuartileCounts;
+        /// <summary>
+        /// Cached data for MS1_5: Delta mass, in ppm
+        /// </summary>
+        private readonly List<double> mCachedDelMppm = new List<double>();
 
-        // Cached data for the ReporterIon metrics
-        private List<string> mReporterIonColumns;
+        private bool mMS2QuartileCountsCached;
+
+        /// <summary>
+        /// Cached data for MS4: scan counts
+        /// </summary>
+        /// <remarks>
+        /// Keys are quartile (1,2,3,4); values are the number of MS/MS scans in the quartile
+        /// </remarks>
+        private readonly Dictionary<int, int> mMS2QuartileScanCounts = new Dictionary<int, int>();
+
+        /// <summary>
+        /// Cached data for MS4: confident PSMs
+        /// </summary>
+        /// <remarks>
+        /// Keys are quartile (1,2,3,4); values are the number of confidently identified MS/MS scans in the quartile (MSGFSpecProb less than 1E-12)
+        /// </remarks>
+        private readonly Dictionary<int, int> mMS2QuartileConfidentPSMs = new Dictionary<int, int>();
+
+        /// <summary>
+        /// Cached data for the ReporterIon metrics
+        /// </summary>
+        private readonly List<string> mReporterIonColumns = new List<string>();
+
         private bool mIgnoreReporterIons;
 
         private readonly clsPeptideMassCalculator mPeptideMassCalculator;
@@ -138,34 +186,34 @@ namespace SMAQC
         {
             mResultsStorage.Clear();
 
-            m_MedianPeakWidthDataCached = false;
-            m_MPWCached_BestScan?.Clear();
-            m_MPWCached_FWHMinScans?.Clear();
-            m_MPWCached_OptimalPeakApexScanNumber?.Clear();
-            m_MPWCached_ScanTime?.Clear();
+            mMedianPeakWidthDataCached = false;
+            PsmBestScan.Clear();
+            PsmFWHMinScans.Clear();
+            PsmOptimalPeakApexScanNumber.Clear();
+            PsmScanTime.Clear();
 
-            m_Cached_PSM_Stats_by_Charge?.Clear();
+            mCachedPSMStatsByCharge.Clear();
 
-            m_PeptideSamplingStats?.Clear();
+            mPeptideSamplingStats.Clear();
 
-            m_Cached_DS3?.Clear();
-            m_Cached_DS3_Bottom50pct?.Clear();
+            mCachedDS3.Clear();
+            mCachedDS3_Bottom50pct.Clear();
 
-            m_Cached_BasePeakSignalToNoiseRatio?.Clear();
-            m_Cached_TotalIonIntensity?.Clear();
+            mCachedBasePeakSignalToNoiseRatio.Clear();
+            mCachedTotalIonIntensity.Clear();
 
-            m_Cached_PeakMaxIntensity_5thPercentile = 0;
-            m_Cached_PeakMaxIntensity_95thPercentile = 0;
-            m_Cached_MS1_3?.Clear();
+            mCachedPeakMaxIntensity_5thPercentile = 0;
+            mCachedPeakMaxIntensity_95thPercentile = 0;
+            mCachedMS1_3.Clear();
 
-            m_Cached_DelM?.Clear();
-            m_Cached_DelM_ppm?.Clear();
+            mCachedDelM.Clear();
+            mCachedDelMppm.Clear();
 
-            m_MS2_QuartileCounts_Cached = false;
-            m_Cached_MS2_QuartileCounts.ScanCount?.Clear();
-            m_Cached_MS2_QuartileCounts.PassFilt?.Clear();
+            mMS2QuartileCountsCached = false;
+            mMS2QuartileScanCounts.Clear();
+            mMS2QuartileConfidentPSMs.Clear();
 
-            mReporterIonColumns?.Clear();
+            mReporterIonColumns.Clear();
             mIgnoreReporterIons = false;
         }
 
@@ -493,11 +541,6 @@ namespace SMAQC
         {
             var psms = new List<PeptideEntry>();					            		// Cached, filter-passing peptide-spectrum matches
 
-            m_MPWCached_BestScan = new List<int>();										// Best Scan Number for each peptide
-            m_MPWCached_FWHMinScans = new Dictionary<int, double>();					// Full width at half max, in scans; keys are FragScanNumbers
-            m_MPWCached_OptimalPeakApexScanNumber = new Dictionary<int, int>();			// Optimal peak apex scan number; keys are FragScanNumbers
-            m_MPWCached_ScanTime = new Dictionary<int, double>();						// Scan time for given scan number; keys are scan numbers
-
             mDBInterface.SetQuery("SELECT Scan, Charge, Peptide_Sequence, MSGFSpecProb AS Peptide_Score"
                                 + " FROM temp_PSMs "
                                 + " WHERE random_id=" + mRandomId);
@@ -557,7 +600,7 @@ namespace SMAQC
                 // Keep track of the scan number for the best score
                 if (Math.Abs(bestScore - psm.Score) < Single.Epsilon)
                 {
-                    m_MPWCached_BestScan.Add(psm.Scan);
+                    PsmBestScan.Add(psm.Scan);
                 }
 
                 // Update previous values for next loop
@@ -568,7 +611,7 @@ namespace SMAQC
             }
 
             // Sort the data
-            m_MPWCached_BestScan.Sort();
+            PsmBestScan.Sort();
 
             mDBInterface.SetQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM temp_SICStats WHERE temp_SICStats.random_id=" + mRandomId);
 
@@ -582,8 +625,8 @@ namespace SMAQC
             {
                 var fragScanNumber = int.Parse(measurementResults["FragScanNumber"]);
 
-                m_MPWCached_FWHMinScans.Add(fragScanNumber, double.Parse(measurementResults["FWHMInScans"]));
-                m_MPWCached_OptimalPeakApexScanNumber.Add(fragScanNumber, int.Parse(measurementResults["OptimalPeakApexScanNumber"]));
+                PsmFWHMinScans.Add(fragScanNumber, double.Parse(measurementResults["FWHMInScans"]));
+                PsmOptimalPeakApexScanNumber.Add(fragScanNumber, int.Parse(measurementResults["OptimalPeakApexScanNumber"]));
             }
 
             mDBInterface.SetQuery("SELECT temp_ScanStats.ScanNumber, temp_ScanStats.ScanTime FROM temp_ScanStats WHERE temp_ScanStats.random_id=" + mRandomId);
@@ -595,36 +638,38 @@ namespace SMAQC
             // Fetch columns h-i
             while (mDBInterface.ReadNextRow(scanStatsColumnNames, out measurementResults) && measurementResults.Count > 0)
             {
-                m_MPWCached_ScanTime.Add(int.Parse(measurementResults["ScanNumber"]), double.Parse(measurementResults["ScanTime"]));
+                PsmScanTime.Add(int.Parse(measurementResults["ScanNumber"]), double.Parse(measurementResults["ScanTime"]));
             }
 
-            m_MedianPeakWidthDataCached = true;
+            mMedianPeakWidthDataCached = true;
         }
 
         private string ComputeMedianPeakWidth(double startScanRelative, double endScanRelative)
         {
             var result = new List<double>();
 
-            if (!m_MedianPeakWidthDataCached)
+            if (!mMedianPeakWidthDataCached)
             {
                 Cache_MedianPeakWidth_Data();
             }
 
             // Loop through the list of best scans
-            for (var i = 0; i < m_MPWCached_BestScan.Count; i++)
+            for (var i = 0; i < PsmBestScan.Count; i++)
             {
+                var bestScan = PsmBestScan[i];
+
                 // Find index + optimal peak apex scan +- FWHM for each result (columns: m,o)
-                var optimalPeakApexScanMinusFWHM = m_MPWCached_OptimalPeakApexScanNumber[m_MPWCached_BestScan[i]] - (int)Math.Ceiling(m_MPWCached_FWHMinScans[m_MPWCached_BestScan[i]] / 2);
-                var optimalPeakApexScanPlusFWHM = m_MPWCached_OptimalPeakApexScanNumber[m_MPWCached_BestScan[i]] + (int)Math.Ceiling(m_MPWCached_FWHMinScans[m_MPWCached_BestScan[i]] / 2);
+                var optimalPeakApexScanMinusFWHM = PsmOptimalPeakApexScanNumber[bestScan] - (int)Math.Ceiling(PsmFWHMinScans[bestScan] / 2);
+                var optimalPeakApexScanPlusFWHM = PsmOptimalPeakApexScanNumber[bestScan] + (int)Math.Ceiling(PsmFWHMinScans[bestScan] / 2);
 
                 // Find other columns [n,p, q,r,t]
 
-                if (m_MPWCached_ScanTime.TryGetValue(optimalPeakApexScanMinusFWHM, out var startTime))
+                if (PsmScanTime.TryGetValue(optimalPeakApexScanMinusFWHM, out var startTime))
                 {
-                    if (m_MPWCached_ScanTime.TryGetValue(optimalPeakApexScanPlusFWHM, out var endTime))
+                    if (PsmScanTime.TryGetValue(optimalPeakApexScanPlusFWHM, out var endTime))
                     {
                         var peakWidthSeconds = (endTime - startTime) * 60;
-                        var percent = (i + 1) / (double)m_MPWCached_BestScan.Count;
+                        var percent = (i + 1) / (double)PsmBestScan.Count;
 
                         // check for valid range data then add to our results
                         if (percent >= startScanRelative && percent <= endScanRelative)
@@ -658,16 +703,18 @@ namespace SMAQC
         {
             double result = 0;
 
-            if (m_PeptideSamplingStats == null || m_PeptideSamplingStats.Count == 0)
+            if (mPeptideSamplingStats.Count == 0)
+            {
                 Cache_DS_1_Data();
+            }
 
             // Calculate the value; return 0 if number of peptides identified with 2 spectra is 0
 
-            if (m_PeptideSamplingStats != null && m_PeptideSamplingStats.TryGetValue(2, out var numPeptidesWithTwoSpectra))
+            if (mPeptideSamplingStats.TryGetValue(2, out var numPeptidesWithTwoSpectra))
             {
                 if (numPeptidesWithTwoSpectra > 0)
                 {
-                    if (!m_PeptideSamplingStats.TryGetValue(1, out var numPeptidesWithOneSpectrum))
+                    if (!mPeptideSamplingStats.TryGetValue(1, out var numPeptidesWithOneSpectrum))
                         numPeptidesWithOneSpectrum = 0;
 
                     result = numPeptidesWithOneSpectrum / (double)numPeptidesWithTwoSpectra;
@@ -687,16 +734,18 @@ namespace SMAQC
 
             double result = 0;
 
-            if (m_PeptideSamplingStats == null || m_PeptideSamplingStats.Count == 0)
+            if (mPeptideSamplingStats.Count == 0)
+            {
                 Cache_DS_1_Data();
+            }
 
             // Calculate the value; return 0 if number of peptides identified with 3 spectra is 0
 
-            if (m_PeptideSamplingStats != null && m_PeptideSamplingStats.TryGetValue(3, out var numPeptidesWithThreeSpectra))
+            if (mPeptideSamplingStats.TryGetValue(3, out var numPeptidesWithThreeSpectra))
             {
                 if (numPeptidesWithThreeSpectra > 0)
                 {
-                    if (!m_PeptideSamplingStats.TryGetValue(2, out var numPeptidesWithTwoSpectra))
+                    if (!mPeptideSamplingStats.TryGetValue(2, out var numPeptidesWithTwoSpectra))
                         numPeptidesWithTwoSpectra = 0;
 
                     result = numPeptidesWithTwoSpectra / (double)numPeptidesWithThreeSpectra;
@@ -722,7 +771,7 @@ namespace SMAQC
                                 + "        GROUP BY Unique_Seq_ID ) CountQ "
                                 + " GROUP BY Spectra;");
 
-            m_PeptideSamplingStats = new Dictionary<int, int>();
+            mPeptideSamplingStats.Clear();
 
             string[] columnNames = { "Spectra", "Peptides" };
 
@@ -733,7 +782,7 @@ namespace SMAQC
                 var spectra = int.Parse(measurementResults["Spectra"]);
                 var peptides = int.Parse(measurementResults["Peptides"]);
 
-                m_PeptideSamplingStats.Add(spectra, peptides);
+                mPeptideSamplingStats.Add(spectra, peptides);
             }
         }
 
@@ -818,14 +867,14 @@ namespace SMAQC
         {
             double result = 0;
 
-            if (m_Cached_PSM_Stats_by_Charge == null || m_Cached_PSM_Stats_by_Charge.Count == 0)
+            if (mCachedPSMStatsByCharge.Count == 0)
             {
                 Cache_IS3_Data();
             }
 
-            if (m_Cached_PSM_Stats_by_Charge != null && m_Cached_PSM_Stats_by_Charge.TryGetValue(1, out var psmCountCharge1))
+            if (mCachedPSMStatsByCharge.TryGetValue(1, out var psmCountCharge1))
             {
-                if (m_Cached_PSM_Stats_by_Charge.TryGetValue(2, out var psmCountCharge2))
+                if (mCachedPSMStatsByCharge.TryGetValue(2, out var psmCountCharge2))
                     result = psmCountCharge1 / (double)psmCountCharge2;
             }
 
@@ -840,14 +889,14 @@ namespace SMAQC
         {
             double result = 0;
 
-            if (m_Cached_PSM_Stats_by_Charge == null || m_Cached_PSM_Stats_by_Charge.Count == 0)
+            if (mCachedPSMStatsByCharge.Count == 0)
             {
                 Cache_IS3_Data();
             }
 
-            if (m_Cached_PSM_Stats_by_Charge != null && m_Cached_PSM_Stats_by_Charge.TryGetValue(2, out var psmCountCharge2))
+            if (mCachedPSMStatsByCharge.TryGetValue(2, out var psmCountCharge2))
             {
-                if (m_Cached_PSM_Stats_by_Charge.TryGetValue(3, out var psmCountCharge3))
+                if (mCachedPSMStatsByCharge.TryGetValue(3, out var psmCountCharge3))
                     result = psmCountCharge3 / (double)psmCountCharge2;
             }
 
@@ -862,14 +911,14 @@ namespace SMAQC
         {
             double result = 0;
 
-            if (m_Cached_PSM_Stats_by_Charge == null || m_Cached_PSM_Stats_by_Charge.Count == 0)
+            if (mCachedPSMStatsByCharge.Count == 0)
             {
                 Cache_IS3_Data();
             }
 
-            if (m_Cached_PSM_Stats_by_Charge != null && m_Cached_PSM_Stats_by_Charge.TryGetValue(2, out var psmCountCharge2))
+            if (mCachedPSMStatsByCharge.TryGetValue(2, out var psmCountCharge2))
             {
-                if (m_Cached_PSM_Stats_by_Charge.TryGetValue(4, out var psmCountCharge4))
+                if (mCachedPSMStatsByCharge.TryGetValue(4, out var psmCountCharge4))
                     result = psmCountCharge4 / (double)psmCountCharge2;
             }
 
@@ -888,16 +937,16 @@ namespace SMAQC
 
             mDBInterface.InitReader();
 
-            m_Cached_PSM_Stats_by_Charge = new Dictionary<int, int>();
+            mCachedPSMStatsByCharge.Clear();
 
-            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
+            while (mDBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 if (int.TryParse(measurementResults["Charge"], out var charge))
                 {
                     if (int.TryParse(measurementResults["PSMs"], out var psmCount))
                     {
-                        if (!m_Cached_PSM_Stats_by_Charge.ContainsKey(charge))
-                            m_Cached_PSM_Stats_by_Charge.Add(charge, psmCount);
+                        if (!mCachedPSMStatsByCharge.ContainsKey(charge))
+                            mCachedPSMStatsByCharge.Add(charge, psmCount);
                     }
                 }
             }
@@ -940,12 +989,14 @@ namespace SMAQC
         {
             var median = 0.00;
 
-            if (m_Cached_BasePeakSignalToNoiseRatio == null || m_Cached_BasePeakSignalToNoiseRatio.Count == 0)
-                Cache_MS1_2_Data();
-
-            if (m_Cached_BasePeakSignalToNoiseRatio?.Count > 0)
+            if (mCachedBasePeakSignalToNoiseRatio.Count == 0)
             {
-                median = ComputeMedian(m_Cached_BasePeakSignalToNoiseRatio);
+                Cache_MS1_2_Data();
+            }
+
+            if (mCachedBasePeakSignalToNoiseRatio.Count > 0)
+            {
+                median = ComputeMedian(mCachedBasePeakSignalToNoiseRatio);
             }
 
             return PRISM.StringUtilities.ValueToString(median, 5);
@@ -956,10 +1007,12 @@ namespace SMAQC
         /// </summary>
         public string MS1_2B()
         {
-            if (m_Cached_TotalIonIntensity == null || m_Cached_TotalIonIntensity.Count == 0)
+            if (mCachedTotalIonIntensity.Count == 0)
+            {
                 Cache_MS1_2_Data();
+            }
 
-            var median = ComputeMedian(m_Cached_TotalIonIntensity);
+            var median = ComputeMedian(mCachedTotalIonIntensity);
 
             // Divide by 1000
             median /= 1000;
@@ -983,13 +1036,13 @@ namespace SMAQC
 
             mDBInterface.InitReader();
 
-            m_Cached_BasePeakSignalToNoiseRatio = new List<double>();
-            m_Cached_TotalIonIntensity = new List<double>();
+            mCachedBasePeakSignalToNoiseRatio.Clear();
+            mCachedTotalIonIntensity.Clear();
 
             while (mDBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
-                m_Cached_BasePeakSignalToNoiseRatio.Add(double.Parse(measurementResults["BasePeakSignalToNoiseRatio"]));
-                m_Cached_TotalIonIntensity.Add(double.Parse(measurementResults["TotalIonIntensity"]));
+                mCachedBasePeakSignalToNoiseRatio.Add(double.Parse(measurementResults["BasePeakSignalToNoiseRatio"]));
+                mCachedTotalIonIntensity.Add(double.Parse(measurementResults["TotalIonIntensity"]));
             }
         }
 
@@ -1001,10 +1054,15 @@ namespace SMAQC
         {
             double final = 0;
 
-            Cache_MS1_3_Data();
+            if (mCachedMS1_3.Count == 0)
+            {
+                Cache_MS1_3_Data();
+            }
 
-            if (m_Cached_PeakMaxIntensity_5thPercentile > 0)
-                final = m_Cached_PeakMaxIntensity_95thPercentile / m_Cached_PeakMaxIntensity_5thPercentile;
+            if (mCachedPeakMaxIntensity_5thPercentile > 0)
+            {
+                final = mCachedPeakMaxIntensity_95thPercentile / mCachedPeakMaxIntensity_5thPercentile;
+            }
 
             // Round the result
             return PRISM.StringUtilities.DblToString(final, 3, 0.0001);
@@ -1016,10 +1074,12 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS1_3B()
         {
-            if (m_Cached_MS1_3 == null || m_Cached_MS1_3.Count == 0)
+            if (mCachedMS1_3.Count == 0)
+            {
                 Cache_MS1_3_Data();
+            }
 
-            var median = ComputeMedian(m_Cached_MS1_3);
+            var median = ComputeMedian(mCachedMS1_3);
 
             // Round based on the magnitude of the intensity
 
@@ -1046,27 +1106,27 @@ namespace SMAQC
 
             mDBInterface.InitReader();
 
-            m_Cached_PeakMaxIntensity_5thPercentile = 0;
-            m_Cached_PeakMaxIntensity_95thPercentile = 0;
-            m_Cached_MS1_3 = new List<double>();
+            mCachedPeakMaxIntensity_5thPercentile = 0;
+            mCachedPeakMaxIntensity_95thPercentile = 0;
+            mCachedMS1_3.Clear();
 
-            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
+            while (mDBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 // Add to the filter list
-                m_Cached_MS1_3.Add(double.Parse(measurementResults["PeakMaxIntensity"]));
+                mCachedMS1_3.Add(double.Parse(measurementResults["PeakMaxIntensity"]));
             }
 
-            if (m_Cached_MS1_3.Count > 0)
+            if (mCachedMS1_3.Count > 0)
             {
                 // Store values between the 5th and 95th percentiles
-                for (var i = 0; i < m_Cached_MS1_3.Count; i++)
+                for (var i = 0; i < mCachedMS1_3.Count; i++)
                 {
                     // Check if between 5-95%
-                    var percent = i / (double)m_Cached_MS1_3.Count;
+                    var percent = i / (double)mCachedMS1_3.Count;
                     if (percent >= 0.05 && percent <= 0.95)
                     {
                         // Add to the MPI list
-                        maxPeakIntensities.Add(m_Cached_MS1_3[i]);
+                        maxPeakIntensities.Add(mCachedMS1_3[i]);
                     }
                 }
             }
@@ -1074,8 +1134,8 @@ namespace SMAQC
             if (maxPeakIntensities.Count > 0)
             {
                 // Calculate final values
-                m_Cached_PeakMaxIntensity_5thPercentile = maxPeakIntensities.Min();
-                m_Cached_PeakMaxIntensity_95thPercentile = maxPeakIntensities.Max();
+                mCachedPeakMaxIntensity_5thPercentile = maxPeakIntensities.Min();
+                mCachedPeakMaxIntensity_95thPercentile = maxPeakIntensities.Max();
             }
         }
 
@@ -1128,21 +1188,21 @@ namespace SMAQC
             values.Sort();
 
             // Stores MS1 max / MS1 sampled abundance
-            m_Cached_DS3 = new List<double>();
+            mCachedDS3.Clear();
 
             // Stores MS1 max / MS1 sampled abundance for ratios in the bottom 50%
-            m_Cached_DS3_Bottom50pct = new List<double>();
+            mCachedDS3_Bottom50pct.Clear();
 
             // Loop through all keys
             for (var i = 0; i < values.Count; i++)
             {
                 // Add to the list
-                m_Cached_DS3.Add(values[i]);
+                mCachedDS3.Add(values[i]);
 
                 if ((i + 1) / (double)values.Count <= 0.5)
                 {
                     // In valid bottom 50% so add to DS3_Bottom50pct
-                    m_Cached_DS3_Bottom50pct.Add(values[i]);
+                    mCachedDS3_Bottom50pct.Add(values[i]);
                 }
             }
         }
@@ -1153,16 +1213,16 @@ namespace SMAQC
         /// <param name="bottom50Pct">Set to true to limit to the bottom 50% of peptides by abundance</param>
         private string DS_3_Shared(bool bottom50Pct)
         {
-            if (m_Cached_DS3 == null || m_Cached_DS3.Count == 0)
+            if (mCachedDS3.Count == 0)
             {
                 DS_3_CacheData();
             }
 
             double median;
             if (bottom50Pct)
-                median = ComputeMedian(m_Cached_DS3_Bottom50pct);
+                median = ComputeMedian(mCachedDS3_Bottom50pct);
             else
-                median = ComputeMedian(m_Cached_DS3);
+                median = ComputeMedian(mCachedDS3);
 
             // Round the result
             return PRISM.StringUtilities.DblToString(median, 3, 0.0001);
@@ -1240,13 +1300,15 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS1_5A()
         {
-            if (m_Cached_DelM == null || m_Cached_DelM.Count == 0)
+            if (mCachedDelM.Count == 0)
+            {
                 Cache_MS1_5_Data();
+            }
 
-            if (m_Cached_DelM == null || m_Cached_DelM.Count == 0)
+            if (mCachedDelM.Count == 0)
                 return "0";
 
-            var median = ComputeMedian(m_Cached_DelM);
+            var median = ComputeMedian(mCachedDelM);
 
             // Round the result
             return PRISM.StringUtilities.DblToString(median, 6, 0.0000001);
@@ -1258,18 +1320,18 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS1_5B()
         {
-            if (m_Cached_DelM == null || m_Cached_DelM.Count == 0)
-                Cache_MS1_5_Data();
-
-            if (m_Cached_DelM == null || m_Cached_DelM.Count == 0)
+            if (mCachedDelM.Count == 0)
             {
-                return "0";
+                Cache_MS1_5_Data();
             }
 
-            // Take the absolute value of each DelM value and store in a list
-            var values = new List<double>(m_Cached_DelM.Count);
+            if (mCachedDelM.Count == 0)
+                return "0";
 
-            foreach (var value in m_Cached_DelM)
+            // Take the absolute value of each DelM value and store in a list
+            var values = new List<double>(mCachedDelM.Count);
+
+            foreach (var value in mCachedDelM)
             {
                 values.Add(Math.Abs(value));
             }
@@ -1286,13 +1348,15 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS1_5C()
         {
-            if (m_Cached_DelM_ppm == null || m_Cached_DelM_ppm.Count == 0)
+            if (mCachedDelMppm.Count == 0)
+            {
                 Cache_MS1_5_Data();
+            }
 
-            if (m_Cached_DelM_ppm == null || m_Cached_DelM_ppm.Count == 0)
+            if (mCachedDelMppm.Count == 0)
                 return "0";
 
-            var median = ComputeMedian(m_Cached_DelM_ppm);
+            var median = ComputeMedian(mCachedDelMppm);
 
             return PRISM.StringUtilities.DblToString(median, 3, 0.0001);
         }
@@ -1303,27 +1367,29 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS1_5D()
         {
-            if (m_Cached_DelM_ppm == null || m_Cached_DelM_ppm.Count == 0)
+            if (mCachedDelMppm.Count == 0)
+            {
                 Cache_MS1_5_Data();
+            }
 
-            if (m_Cached_DelM_ppm == null || m_Cached_DelM_ppm.Count == 0)
+            if (mCachedDelMppm.Count == 0)
                 return "0";
 
             // Sort the DelM_ppm values
-            m_Cached_DelM_ppm.Sort();
+            mCachedDelMppm.Sort();
 
             var interquartilePPMErrors = new List<double>();
 
             // Calculate inter_quartile start and end
-            var interQuartileStart = (int)Math.Round(0.25 * m_Cached_DelM_ppm.Count);
-            var interQuartileEnd = (int)Math.Round(0.75 * m_Cached_DelM_ppm.Count);
+            var interQuartileStart = (int)Math.Round(0.25 * mCachedDelMppm.Count);
+            var interQuartileEnd = (int)Math.Round(0.75 * mCachedDelMppm.Count);
 
             // Loop through the cached ppm errors
-            for (var i = 0; i < m_Cached_DelM_ppm.Count; i++)
+            for (var i = 0; i < mCachedDelMppm.Count; i++)
             {
                 if (i >= interQuartileStart && i <= interQuartileEnd)
                 {
-                    interquartilePPMErrors.Add(m_Cached_DelM_ppm[i]);
+                    interquartilePPMErrors.Add(mCachedDelMppm[i]);
                 }
             }
 
@@ -1346,8 +1412,8 @@ namespace SMAQC
 
             mDBInterface.InitReader();
 
-            m_Cached_DelM = new List<double>();
-            m_Cached_DelM_ppm = new List<double>();
+            mCachedDelM.Clear();
+            mCachedDelMppm.Clear();
 
             while (mDBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
@@ -1381,9 +1447,9 @@ namespace SMAQC
                     Console.WriteLine("Large DelM_PPM: " + delMppm);
                 }
 
-                m_Cached_DelM.Add(deltaMass);
+                mCachedDelM.Add(deltaMass);
 
-                m_Cached_DelM_ppm.Add(delMppm);
+                mCachedDelMppm.Add(delMppm);
             }
         }
 
@@ -1488,8 +1554,10 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_4A()
         {
-            if (!m_MS2_QuartileCounts_Cached)
+            if (!mMS2QuartileCountsCached)
+            {
                 Cache_MS2_4_Data();
+            }
 
             var result = Compute_MS2_4_Ratio(1);
             return PRISM.StringUtilities.DblToString(result, 4, 0.00001);
@@ -1501,8 +1569,10 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_4B()
         {
-            if (!m_MS2_QuartileCounts_Cached)
+            if (!mMS2QuartileCountsCached)
+            {
                 Cache_MS2_4_Data();
+            }
 
             var result = Compute_MS2_4_Ratio(2);
             return PRISM.StringUtilities.DblToString(result, 4, 0.00001);
@@ -1514,8 +1584,10 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_4C()
         {
-            if (!m_MS2_QuartileCounts_Cached)
+            if (!mMS2QuartileCountsCached)
+            {
                 Cache_MS2_4_Data();
+            }
 
             var result = Compute_MS2_4_Ratio(3);
             return PRISM.StringUtilities.DblToString(result, 4, 0.00001);
@@ -1527,8 +1599,10 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_4D()
         {
-            if (!m_MS2_QuartileCounts_Cached)
+            if (!mMS2QuartileCountsCached)
+            {
                 Cache_MS2_4_Data();
+            }
 
             var result = Compute_MS2_4_Ratio(4);
             return PRISM.StringUtilities.DblToString(result, 4, 0.00001);
@@ -1538,11 +1612,11 @@ namespace SMAQC
         {
             double result = 0;
 
-            if (m_Cached_MS2_QuartileCounts.ScanCount.TryGetValue(quartile, out var scanCountTotal))
+            if (mMS2QuartileScanCounts.TryGetValue(quartile, out var scanCountTotal))
             {
                 if (scanCountTotal > 0)
                 {
-                    result = m_Cached_MS2_QuartileCounts.PassFilt[quartile] / (double)scanCountTotal;
+                    result = mMS2QuartileConfidentPSMs[quartile] / (double)scanCountTotal;
                 }
             }
 
@@ -1565,7 +1639,7 @@ namespace SMAQC
             var scanCountMS2 = int.Parse(measurementResults["MS2ScanCount"]);
 
             // Note that we sort by ascending PeakMaxIntensity
-            // Thus, quartile 1 in m_Cached_MS2_QuartileCounts will have the lowest abundance peptides
+            // Thus, quartile 1 in mMS2QuartileScanCounts and mMS2QuartileConfidentPSMs will have the lowest abundance peptides
 
             mDBInterface.SetQuery("SELECT temp_PSMs.Scan, temp_SICStats.PeakMaxIntensity, Min(temp_PSMs.MSGFSpecProb) AS Peptide_Score "
                 + " FROM temp_PSMs, temp_SICStats"
@@ -1573,16 +1647,14 @@ namespace SMAQC
                 + " GROUP BY temp_PSMs.Scan, temp_SICStats.PeakMaxIntensity "
                 + " ORDER BY temp_SICStats.PeakMaxIntensity;");
 
-            // Keys are quartile (1,2,3,4); values are the number of MS/MS scans in the quartile
-            m_Cached_MS2_QuartileCounts.ScanCount = new Dictionary<int, int>();
+            mMS2QuartileScanCounts.Clear();
 
-            // Keys are quartile (1,2,3,4); values are the number of confidently identified MS/MS scans in the quartile
-            m_Cached_MS2_QuartileCounts.PassFilt = new Dictionary<int, int>();
+            mMS2QuartileConfidentPSMs.Clear();
 
             for (var i = 1; i <= 4; i++)
             {
-                m_Cached_MS2_QuartileCounts.ScanCount.Add(i, 0);
-                m_Cached_MS2_QuartileCounts.PassFilt.Add(i, 0);
+                mMS2QuartileScanCounts.Add(i, 0);
+                mMS2QuartileConfidentPSMs.Add(i, 0);
             }
 
             var scansProcessed = 1;
@@ -1630,7 +1702,7 @@ namespace SMAQC
             if (scansProcessed > scanCountMS2 + 1 && scansProcessed > scanCountMS2 * 1.01)
                 Console.WriteLine("Possible bug in Cache_MS2_4_Data, running_scan_count >> scanCountMS2: " + scansProcessed + " vs. " + scanCountMS2);
 
-            m_MS2_QuartileCounts_Cached = true;
+            mMS2QuartileCountsCached = true;
         }
 
         private void UpdateMS2_4_QuartileStats(int quartile, bool passedFilter)
@@ -1641,10 +1713,12 @@ namespace SMAQC
               m_Cached_MS2_QuartileCounts.ScanCount[quartile] = newValue;
             */
 
-            m_Cached_MS2_QuartileCounts.ScanCount[quartile]++;
+            mMS2QuartileScanCounts[quartile]++;
 
             if (passedFilter)
-                m_Cached_MS2_QuartileCounts.PassFilt[quartile]++;
+            {
+                mMS2QuartileConfidentPSMs[quartile]++;
+            }
         }
 
         /// <summary>
@@ -2156,7 +2230,7 @@ namespace SMAQC
             if (mIgnoreReporterIons)
                 return new List<string>();
 
-            if (mReporterIonColumns?.Count > 0)
+            if (mReporterIonColumns.Count > 0)
                 return mReporterIonColumns;
 
             var columnList = mDBInterface.GetTableColumns("temp_ReporterIons");
@@ -2164,7 +2238,7 @@ namespace SMAQC
 
             if (ionColumns.Count == 0)
             {
-                mReporterIonColumns = new List<string>();
+                mReporterIonColumns.Clear();
                 mIgnoreReporterIons = true;
                 return mReporterIonColumns;
             }
@@ -2192,18 +2266,18 @@ namespace SMAQC
 
             mDBInterface.ReadSingleLine(columnNames, out var measurementResults);
 
-            var ionColumnsToUse = new List<string>();
+            mReporterIonColumns.Clear();
             foreach (var column in ionColumns)
             {
                 if (!string.IsNullOrWhiteSpace(measurementResults[column]))
                 {
                     var nonNullCount = int.Parse(measurementResults[column]);
                     if (nonNullCount > 0)
-                        ionColumnsToUse.Add(column);
+                    {
+                        mReporterIonColumns.Add(column);
+                    }
                 }
             }
-
-            mReporterIonColumns = ionColumnsToUse;
 
             return mReporterIonColumns;
         }
