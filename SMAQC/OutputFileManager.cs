@@ -49,14 +49,14 @@ namespace SMAQC
 
                 if (filePath.EndsWith(@"\") || Directory.Exists(filePath))
                 {
-                    // User provided a folder path
-                    var diTargetFolder = new DirectoryInfo(filePath);
-                    if (!diTargetFolder.Exists)
+                    // User provided a directory path
+                    var targetDirectory = new DirectoryInfo(filePath);
+                    if (!targetDirectory.Exists)
                     {
-                        Console.WriteLine("Creating folder " + diTargetFolder.FullName);
-                        diTargetFolder.Create();
+                        Console.WriteLine("Creating directory " + targetDirectory.FullName);
+                        targetDirectory.Create();
                     }
-                    targetFilePath = Path.Combine(diTargetFolder.FullName, "SMAQC_results.txt");
+                    targetFilePath = Path.Combine(targetDirectory.FullName, "SMAQC_results.txt");
                 }
                 else
                 {

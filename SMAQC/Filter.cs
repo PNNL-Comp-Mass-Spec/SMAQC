@@ -178,14 +178,14 @@ namespace SMAQC
             }
         }
 
-        public bool LoadFilesUsingPHRP(string inputFolderPath, string dataset)
+        public bool LoadFilesUsingPHRP(string inputDirectoryPath, string dataset)
         {
             // Look for a valid input file
-            var inputFilePath = clsPHRPReader.AutoDetermineBestInputFile(inputFolderPath, dataset);
+            var inputFilePath = clsPHRPReader.AutoDetermineBestInputFile(inputDirectoryPath, dataset);
 
             if (string.IsNullOrEmpty(inputFilePath))
             {
-                throw new FileNotFoundException("Valid input file not found for dataset " + dataset + " in folder " + inputFolderPath);
+                throw new FileNotFoundException("Valid input file not found for dataset " + dataset + " in directory " + inputDirectoryPath);
             }
 
             try

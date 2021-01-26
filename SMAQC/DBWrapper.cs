@@ -23,15 +23,15 @@ namespace SMAQC
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="dbFolderPath">Path to the directory where SMAQC.s3db should be created/updated</param>
+        /// <param name="databaseDirectoryPath">Path to the directory where SMAQC.s3db should be created/updated</param>
         /// <param name="showQueryText">When true, show the text of every query at the console</param>
-        public DBWrapper(string dbFolderPath, bool showQueryText)
+        public DBWrapper(string databaseDirectoryPath, bool showQueryText)
         {
             // Get path to db [needed for SQLite so we save in correct location]
-            var dbPath = Path.Combine(dbFolderPath, "SMAQC.s3db");
+            var databaseFilePath = Path.Combine(databaseDirectoryPath, "SMAQC.s3db");
 
             // Create db conn
-            dbConn = new DBSQLite(dbPath);
+            dbConn = new DBSQLite(databaseFilePath);
 
             // Verify that the required columns are present
 

@@ -15,19 +15,19 @@ namespace SMAQC
 
         private struct ProcessingOptions
         {
-            public string InputFolderPath;
+            public string InputDirectoryPath;
             public string Instrument_id;
             public string MeasurementsFile;
             public string OutputFilePath;
-            public string DBFolderPath;
+            public string DatabaseDirectoryPath;
 
             public void Clear()
             {
-                InputFolderPath = string.Empty;
+                InputDirectoryPath = string.Empty;
                 Instrument_id = "1";
                 MeasurementsFile = string.Empty;
                 OutputFilePath = string.Empty;
-                DBFolderPath = string.Empty;
+                DatabaseDirectoryPath = string.Empty;
             }
         }
 
@@ -107,7 +107,7 @@ namespace SMAQC
             if (!success ||
                 commandLineParser.NeedToShowHelp ||
                 commandLineParser.ParameterCount + commandLineParser.NonSwitchParameterCount == 0 ||
-                string.IsNullOrEmpty(mOptions.InputFolderPath))
+                string.IsNullOrEmpty(mOptions.InputDirectoryPath))
             {
                 ShowProgramHelp();
                 return -1;
@@ -116,14 +116,14 @@ namespace SMAQC
             // Show the processing options
             Console.WriteLine();
             Console.WriteLine("Instrument ID: ".PadRight(20) + mOptions.Instrument_id);
-            Console.WriteLine("Path to datasets: ".PadRight(20) + mOptions.InputFolderPath);
+            Console.WriteLine("Path to datasets: ".PadRight(20) + mOptions.InputDirectoryPath);
             if (string.IsNullOrEmpty(mOptions.MeasurementsFile))
                 Console.WriteLine("Using default metrics");
             else
                 Console.WriteLine("Measurements file: ".PadRight(20) + mOptions.MeasurementsFile);
             if (!string.IsNullOrEmpty(mOptions.OutputFilePath))
                 Console.WriteLine("Text results file: ".PadRight(20) + mOptions.OutputFilePath);
-            Console.WriteLine("SQLite DB folder: ".PadRight(20) + mOptions.DBFolderPath);
+            Console.WriteLine("SQLite DB directory: ".PadRight(20) + mOptions.DatabaseDirectoryPath);
             Console.WriteLine();
 
             try
@@ -148,13 +148,13 @@ namespace SMAQC
                 try
                 {
                     // Connect to the database
-                    mDBWrapper = new DBWrapper(mOptions.DBFolderPath, false);
+                    mDBWrapper = new DBWrapper(mOptions.DatabaseDirectoryPath, false);
 
                     // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                     if (WIPE_TEMP_DATA_AT_START)
                         mDBWrapper.ClearTempTables();
 
-                    mAggregate = new Aggregate(mOptions.InputFolderPath);
+                    mAggregate = new Aggregate(mOptions.InputDirectoryPath);
                     mMeasurement = new Measurement(randomId, mDBWrapper);
                     mMeasurementEngine = new MeasurementEngine(measurementsToRun, mMeasurement, mSystemLogManager);
                     mFilter = new Filter(mDBWrapper, mOptions.Instrument_id, randomId, mSystemLogManager);
@@ -209,7 +209,7 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// Process the datasets in the specified input folder
+        /// Process the datasets in the specified input directory
         /// </summary>
         /// <param name="randomId"></param>
         /// <param name="measurementsToRun"></param>
@@ -224,7 +224,7 @@ namespace SMAQC
             if (DatasetNames.Count == 0)
             {
                 // No datasets were found
-                mSystemLogManager.AddApplicationLogError("Unable to find any datasets in " + mOptions.InputFolderPath);
+                mSystemLogManager.AddApplicationLogError("Unable to find any datasets in " + mOptions.InputDirectoryPath);
                 mSystemLogManager.AddApplicationLogWarning(
                     "Copy _ScanStats.txt, _ScanStatsEx.txt, _SICStats.txt, plus PHRP _syn* files to the directory then try again");
                 mSystemLogManager.AddApplicationLog("Exiting...");
@@ -298,7 +298,7 @@ namespace SMAQC
                     {
                         // Missing required files
                         mSystemLogManager.AddApplicationLog("Required MASIC data files not found in " +
-                                                             mOptions.InputFolderPath);
+                                                             mOptions.InputDirectoryPath);
                     }
 
                     if (scanStatsMissing)
@@ -335,7 +335,7 @@ namespace SMAQC
                     mSystemLogManager.AddApplicationLog("Parsing and Inserting Data into DB Temp Tables");
 
                     // Load data using PHRP
-                    mFilter.LoadFilesUsingPHRP(mOptions.InputFolderPath, datasetName);
+                    mFilter.LoadFilesUsingPHRP(mOptions.InputDirectoryPath, datasetName);
 
                     // Load the MASIC data
                     mFilter.LoadFilesAndInsertIntoDB(masicFileList, mMasicFileExtensions, datasetName);
@@ -410,7 +410,7 @@ namespace SMAQC
                 // Query commandLineParser to see if various parameters are present
                 if (commandLineParser.NonSwitchParameterCount > 0)
                 {
-                    mOptions.InputFolderPath = commandLineParser.RetrieveNonSwitchParameter(0);
+                    mOptions.InputDirectoryPath = commandLineParser.RetrieveNonSwitchParameter(0);
                 }
 
                 if (commandLineParser.RetrieveValueForParameter("O", out var value))
@@ -425,11 +425,11 @@ namespace SMAQC
                 {
                     if (string.IsNullOrWhiteSpace(value))
                     {
-                        ShowErrorMessage("/DB does not have a value; not overriding the database folder path");
+                        ShowErrorMessage("/DB does not have a value; not overriding the database directory path");
                     }
                     else
                     {
-                        mOptions.DBFolderPath = value;
+                        mOptions.DatabaseDirectoryPath = value;
                     }
                 }
 
@@ -507,16 +507,16 @@ namespace SMAQC
                     "Mol Cell Proteomics. 2010 Feb; 9(2):225-41. doi: 10.1074/mcp.M900223-MCP200."));
                 Console.WriteLine();
                 Console.WriteLine("Program syntax:" + Environment.NewLine + exeName);
-                Console.WriteLine(" DatasetFolderPath [/O:OutputFilePath] [/DB:DatabaseFolder]");
+                Console.WriteLine(" DatasetDirectoryPath [/O:OutputFilePath] [/DB:DatabaseDirectory]");
                 Console.WriteLine(" [/I:InstrumentID] [/M:MeasurementsFile]");
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                                      "DatasetFolderPath specifies path to the folder with the dataset(s) to process; use quotes if spaces"));
+                                      "DatasetDirectoryPath specifies path to the directory with the dataset(s) to process; use quotes if spaces"));
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                                       "Use /O to specify the output file path. If /O is not used, " +
                                       "results will only be stored in the SQLite database"));
-                Console.WriteLine(@"Examples: /O:Metrics.txt or /O:""C:\Results Folder\Metrics.txt""");
+                Console.WriteLine(@"Examples: /O:Metrics.txt or /O:""C:\Results Directory\Metrics.txt""");
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                                       "Use /DB to specify where the SQLite database should be created (default is with the .exe)"));

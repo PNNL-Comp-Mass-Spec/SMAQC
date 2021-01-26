@@ -12,7 +12,7 @@ namespace SMAQC
         /// <summary>
         /// Directory we need to search
         /// </summary>
-        private readonly string m_DataFolder;
+        private readonly string mInputDirectoryPath;
 
         /// <summary>
         /// List of MASIC files to import
@@ -33,10 +33,10 @@ namespace SMAQC
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="folderToSearch"></param>
-        public Aggregate(string folderToSearch)
+        /// <param name="directoryToSearch"></param>
+        public Aggregate(string directoryToSearch)
         {
-            m_DataFolder = folderToSearch;
+            mInputDirectoryPath = directoryToSearch;
 
             // Set valid import files
             // Masic files (ScanStats and SICStats are required, ScanStatsEx and ReporterIons are optional)
@@ -70,7 +70,7 @@ namespace SMAQC
             }
         }
 
-        // This function detects the number of datasets that we must check [useful if folder we are searching has multiple datasets]
+        // This function detects the number of datasets that we must check [useful if directory we are searching has multiple datasets]
         // Performs check by looking for files ending in _scanstats.txt
         public List<string> DetectDatasets()
         {
@@ -81,12 +81,12 @@ namespace SMAQC
             try
             {
                 // Get list of files in specified directory matching file_ext
-                var inputDirectory = new DirectoryInfo(m_DataFolder);
+                var inputDirectory = new DirectoryInfo(mInputDirectoryPath);
                 filePaths = inputDirectory.GetFiles("*" + SCAN_STATS_FILENAME_SUFFIX);
             }
             catch (DirectoryNotFoundException)
             {
-                Console.WriteLine("Input folder not found: {0}!", m_DataFolder);
+                Console.WriteLine("Input directory not found: {0}!", mInputDirectoryPath);
                 Thread.Sleep(1500);
                 Environment.Exit(1);
             }
@@ -102,7 +102,7 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// Find the MASIC related files for dataset m_CurrentDataset in m_DataFolder
+        /// Find the MASIC related files for dataset m_CurrentDataset in mInputDirectoryPath
         /// </summary>
         /// <param name="file_ext">File extension to match, typically *.txt</param>
         /// <returns>Dictionary where Keys are file paths and Values are lists of header column suffixes to ignore</returns>
@@ -112,7 +112,7 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// Get a list of all files matching file_ext for dataset m_CurrentDataset in m_DataFolder
+        /// Get a list of all files matching file_ext for dataset m_CurrentDataset in mInputDirectoryPath
         /// </summary>
         /// <param name="file_ext">File extension to match, typically *.txt</param>
         /// <param name="importFiles">Files to find; keys are filename suffixes, values are True if required or false if optional</param>
@@ -126,11 +126,11 @@ namespace SMAQC
             try
             {
                 // Get list of files in specified directory matching file_ext
-                filePaths = Directory.GetFiles(m_DataFolder, file_ext);
+                filePaths = Directory.GetFiles(mInputDirectoryPath, file_ext);
             }
             catch (DirectoryNotFoundException)
             {
-                Console.WriteLine("getFileImportList():: Could not find directory {0}!", m_DataFolder);
+                Console.WriteLine("getFileImportList():: Could not find directory {0}!", mInputDirectoryPath);
                 Thread.Sleep(1500);
                 Environment.Exit(1);
             }
