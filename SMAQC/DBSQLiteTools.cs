@@ -273,7 +273,7 @@ namespace SMAQC
 
             if (missingColumns.Count > 0)
             {
-                AddColumnsToTable(conn, tableName, missingColumns, "float");
+                AddColumnsToTable(conn, tableName, missingColumns, columnType, isNullable);
             }
         }
 
