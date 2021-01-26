@@ -41,7 +41,7 @@ namespace SMAQC
         }
 
         // Save data handler
-        public void SaveData(string dataset, string filePath, int scan_id)
+        public void SaveData(string dataset, string filePath, int scanId)
         {
             try
             {
@@ -66,15 +66,14 @@ namespace SMAQC
                 if (mFirstUse)
                 {
                     // Create the file and append the first set of metrics
-                    CreateOutputFileForFirstTimeUse(dataset, targetFilePath, scan_id);
+                    CreateOutputFileForFirstTimeUse(dataset, targetFilePath, scanId);
 
-                    // Set first_use to false
                     mFirstUse = false;
                 }
                 else
                 {
                     // Append to the file
-                    AppendAdditionalMeasurementsToOutputFile(dataset, targetFilePath, scan_id);
+                    AppendAdditionalMeasurementsToOutputFile(dataset, targetFilePath, scanId);
                 }
             }
             catch (Exception ex)
@@ -85,13 +84,13 @@ namespace SMAQC
         }
 
         // Create the file + add metrics for first time use
-        private void CreateOutputFileForFirstTimeUse(string dataset, string filename, int scan_id)
+        private void CreateOutputFileForFirstTimeUse(string dataset, string filename, int scanId)
         {
             // Scan results
             var dctValidResults = new SortedDictionary<string, string>();
 
             // Set query to retrieve scan results
-            mDBWrapper.SetQuery("SELECT * FROM scan_results WHERE scan_id ='" + scan_id + "' LIMIT 1;");
+            mDBWrapper.SetQuery("SELECT * FROM scan_results WHERE scan_id ='" + scanId + "' LIMIT 1;");
 
             // Init reader
             mDBWrapper.InitReader();
@@ -115,7 +114,7 @@ namespace SMAQC
                 file.WriteLine("SMAQC SCANNER RESULTS");
                 file.WriteLine("-----------------------------------------------------------");
                 file.WriteLine("SMAQC Version: " + mSMAQCVersion);
-                // file.WriteLine("results from scan id: " + scan_id);
+                // file.WriteLine("results from scan id: " + scanId);
                 file.WriteLine("Instrument ID: " + dctResults["instrument_id"]);
                 file.WriteLine("Scan Date: " + dctResults["scan_date"]);
                 file.WriteLine("[Data]");
@@ -159,13 +158,13 @@ namespace SMAQC
         }
 
         // Append additional measurement data to output file
-        private void AppendAdditionalMeasurementsToOutputFile(string dataset, string filename, int scan_id)
+        private void AppendAdditionalMeasurementsToOutputFile(string dataset, string filename, int scanId)
         {
             // Hash table for scan results
             var dctValidResults = new SortedDictionary<string, string>();
 
             // Set query to retrieve scan results
-            mDBWrapper.SetQuery("SELECT * FROM scan_results WHERE scan_id ='" + scan_id + "' LIMIT 1;");
+            mDBWrapper.SetQuery("SELECT * FROM scan_results WHERE scan_id ='" + scanId + "' LIMIT 1;");
 
             // Init reader
             mDBWrapper.InitReader();

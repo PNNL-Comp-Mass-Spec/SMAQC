@@ -16,7 +16,7 @@ namespace SMAQC
         private struct ProcessingOptions
         {
             public string InputDirectoryPath;
-            public string Instrument_id;
+            public string InstrumentId;
             public string MeasurementsFile;
             public string OutputFilePath;
             public string DatabaseDirectoryPath;
@@ -24,7 +24,7 @@ namespace SMAQC
             public void Clear()
             {
                 InputDirectoryPath = string.Empty;
-                Instrument_id = "1";
+                InstrumentId = "1";
                 MeasurementsFile = string.Empty;
                 OutputFilePath = string.Empty;
                 DatabaseDirectoryPath = string.Empty;
@@ -115,7 +115,7 @@ namespace SMAQC
 
             // Show the processing options
             Console.WriteLine();
-            Console.WriteLine("Instrument ID: ".PadRight(20) + mOptions.Instrument_id);
+            Console.WriteLine("Instrument ID: ".PadRight(20) + mOptions.InstrumentId);
             Console.WriteLine("Path to datasets: ".PadRight(20) + mOptions.InputDirectoryPath);
             if (string.IsNullOrEmpty(mOptions.MeasurementsFile))
                 Console.WriteLine("Using default metrics");
@@ -157,7 +157,7 @@ namespace SMAQC
                     mAggregate = new Aggregate(mOptions.InputDirectoryPath);
                     mMeasurement = new Measurement(randomId, mDBWrapper);
                     mMeasurementEngine = new MeasurementEngine(measurementsToRun, mMeasurement, mSystemLogManager);
-                    mFilter = new Filter(mDBWrapper, mOptions.Instrument_id, randomId, mSystemLogManager);
+                    mFilter = new Filter(mDBWrapper, mOptions.InstrumentId, randomId, mSystemLogManager);
                     mOutputFileManager = new OutputFileManager(mDBWrapper, GetAppVersion(), mMetricNames);
 
                     try
@@ -347,7 +347,7 @@ namespace SMAQC
 
                     // Store the results
                     mSystemLogManager.AddApplicationLog("Saving Scan Results");
-                    AddScanResults(mOptions.Instrument_id, randomId, scanId, measurementsToRun);
+                    AddScanResults(mOptions.InstrumentId, randomId, scanId, measurementsToRun);
 
                     // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                     if (!KEEP_TEMP_DATA_AT_END)
@@ -441,7 +441,7 @@ namespace SMAQC
                     }
                     else
                     {
-                        mOptions.Instrument_id = value;
+                        mOptions.InstrumentId = value;
                     }
                 }
 

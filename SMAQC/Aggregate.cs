@@ -104,20 +104,20 @@ namespace SMAQC
         /// <summary>
         /// Find the MASIC related files for dataset m_CurrentDataset in mInputDirectoryPath
         /// </summary>
-        /// <param name="file_ext">File extension to match, typically *.txt</param>
+        /// <param name="fileExtension">File extension to match, typically *.txt</param>
         /// <returns>Dictionary where Keys are file paths and Values are lists of header column suffixes to ignore</returns>
-        public Dictionary<string, List<string>> GetMasicFileImportList(string file_ext)
+        public Dictionary<string, List<string>> GetMasicFileImportList(string fileExtension)
         {
-            return GetFileImportList(file_ext, MasicImportFiles);
+            return GetFileImportList(fileExtension, MasicImportFiles);
         }
 
         /// <summary>
-        /// Get a list of all files matching file_ext for dataset m_CurrentDataset in mInputDirectoryPath
+        /// Get a list of all files matching fileExtension for dataset m_CurrentDataset in mInputDirectoryPath
         /// </summary>
-        /// <param name="file_ext">File extension to match, typically *.txt</param>
+        /// <param name="fileExtension">File extension to match, typically *.txt</param>
         /// <param name="importFiles">Files to find; keys are filename suffixes, values are True if required or false if optional</param>
         /// <returns>Dictionary where Keys are file paths and Values are lists of header column suffixes to ignore</returns>
-        private Dictionary<string, List<string>> GetFileImportList(string file_ext, IReadOnlyDictionary<string, bool> importFiles)
+        private Dictionary<string, List<string>> GetFileImportList(string fileExtension, IReadOnlyDictionary<string, bool> importFiles)
         {
             // Keys are file paths; values are lists of header column suffixes to ignore
             var fileImportList = new Dictionary<string, List<string>>();
@@ -126,7 +126,7 @@ namespace SMAQC
             try
             {
                 // Get list of files in specified directory matching file_ext
-                filePaths = Directory.GetFiles(mInputDirectoryPath, file_ext);
+                filePaths = Directory.GetFiles(mInputDirectoryPath, fileExtension);
             }
             catch (DirectoryNotFoundException)
             {

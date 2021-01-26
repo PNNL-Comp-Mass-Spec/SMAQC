@@ -25,14 +25,14 @@ namespace SMAQC
         /// Constructor
         /// </summary>
         /// <param name="DBInterface"></param>
-        /// <param name="instrument_id"></param>
-        /// <param name="random_id"></param>
+        /// <param name="instrumentId"></param>
+        /// <param name="randomId"></param>
         /// <param name="systemLogManager"></param>
-        public Filter(DBWrapper DBInterface, string instrument_id, int random_id, SystemLogManager systemLogManager)
+        public Filter(DBWrapper DBInterface, string instrumentId, int randomId, SystemLogManager systemLogManager)
         {
             mDBWrapper = DBInterface;
-            mInstrumentId = instrument_id;
-            mRandomId = random_id;
+            mInstrumentId = instrumentId;
+            mRandomId = randomId;
             mSystemLogManager = systemLogManager;
 
             // Attach the event handler

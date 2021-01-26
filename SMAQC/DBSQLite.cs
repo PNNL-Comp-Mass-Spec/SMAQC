@@ -331,8 +331,8 @@ namespace SMAQC
         /// <summary>
         /// Initialize the command for inserting PHRP data
         /// </summary>
-        /// <param name="dbtrans"></param>
-        public bool InitPHRPInsertCommand(out DbTransaction dbTrans)
+        /// <param name="dbTransaction"></param>
+        public bool InitPHRPInsertCommand(out DbTransaction dbTransaction)
         {
             mPHRPColumnsForInsert = new Dictionary<string, int>();
 
@@ -378,7 +378,7 @@ namespace SMAQC
                 ExecuteCommand(myCommand, -1);
             }
 
-            dbTrans = mConnection.BeginTransaction();
+            dbTransaction = mConnection.BeginTransaction();
 
             return true;
         }
