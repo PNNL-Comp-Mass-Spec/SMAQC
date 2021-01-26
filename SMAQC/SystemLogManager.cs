@@ -6,6 +6,8 @@ namespace SMAQC
 {
     internal class SystemLogManager
     {
+        // Ignore Spelling: yyyy-MM-dd, hh:mm:ss tt
+
         private readonly string mApplicationLogFileName;
 
         private StreamWriter mApplicationLogFile;
