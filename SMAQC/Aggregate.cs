@@ -39,13 +39,15 @@ namespace SMAQC
             m_DataFolder = folderToSearch;
 
             // Set valid import files
-            MasicImportFiles = new Dictionary<string, bool>(StringComparer.CurrentCultureIgnoreCase);
-            // Masic files (scanstats and sicstats are required, ScanStatsEx and ReporterIons are optional)
-            MasicImportFiles.Add("ScanStats", true);
-            MasicImportFiles.Add("ScanStatsEx", false);
-            MasicImportFiles.Add("SICStats", true);
-            MasicImportFiles.Add("ReporterIons", false);
+            // Masic files (ScanStats and SICStats are required, ScanStatsEx and ReporterIons are optional)
 
+            MasicImportFiles = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "ScanStats", true },
+                { "ScanStatsEx", false },
+                { "SICStats", true },
+                { "ReporterIons", false }
+            };
 
             // Ensure temp.txt does not exist ... if program closed file not removed and on restart crashes
             CheckTempFileNotExist();
@@ -190,7 +192,7 @@ namespace SMAQC
             // Get the text after the dataset name and an underscore
             var fileType = filename.Substring(m_CurrentDataset.Length + 1);
 
-            // fileType is now something like "_msgfplus_syn" or "scanstats"
+            // fileType is now something like "_msgfplus_syn" or "ScanStats"
             return importFiles.ContainsKey(fileType);
         }
 
