@@ -85,10 +85,10 @@ namespace SMAQC
         /// </summary>
         /// <param name="targetTable">Target table</param>
         /// <param name="sourceFile">Source file</param>
-        /// <param name="excludedFieldNameSuffixes">Field prefixes to ignore</param>
-        public void BulkInsert(string targetTable, string sourceFile, List<string> excludedFieldNameSuffixes)
+        /// <param name="excludedColumnNameSuffixes">Column name suffixes to ignore</param>
+        public void BulkInsert(string targetTable, string sourceFile, List<string> excludedColumnNameSuffixes)
         {
-            dbConn.BulkInsert(targetTable, sourceFile, excludedFieldNameSuffixes);
+            dbConn.BulkInsert(targetTable, sourceFile, excludedColumnNameSuffixes);
         }
 
         /// <summary>
@@ -122,13 +122,13 @@ namespace SMAQC
         /// <summary>
         /// Read a single database row
         /// </summary>
-        /// <param name="fields"></param>
+        /// <param name="columnNames"></param>
         /// <param name="dctData"></param>
         /// <returns>True if success, false if no further rows to read</returns>
         /// <remarks>This method differs from ReadNextRow since here we close the reader after reading a single row of data</remarks>
-        public bool ReadSingleLine(string[] fields, out Dictionary<string, string> dctData)
+        public bool ReadSingleLine(string[] columnNames, out Dictionary<string, string> dctData)
         {
-            var status = dbConn.ReadSingleLine(fields, out dctData);
+            var status = dbConn.ReadSingleLine(columnNames, out dctData);
 
             return status;
         }
@@ -136,12 +136,12 @@ namespace SMAQC
         /// <summary>
         /// Read data for one database row
         /// </summary>
-        /// <param name="fields"></param>
+        /// <param name="columnNames"></param>
         /// <param name="dctData"></param>
         /// <returns>True if success, false if no further rows to read</returns>
-        public bool ReadNextRow(string[] fields, out Dictionary<string, string> dctData)
+        public bool ReadNextRow(string[] columnNames, out Dictionary<string, string> dctData)
         {
-            dbConn.ReadNextRow(fields, out dctData);
+            dbConn.ReadNextRow(columnNames, out dctData);
 
             return true;
         }

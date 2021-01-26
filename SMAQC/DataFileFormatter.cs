@@ -35,7 +35,7 @@ namespace SMAQC
 
             // ScanStats columns
             mValidFilesToReFormat.Add("ScanStats",
-                FieldCleaner(new List<string> {
+                ColumnNameCleaner(new List<string> {
                     "Dataset",
                     "ScanNumber",
                     "ScanTime",
@@ -50,7 +50,7 @@ namespace SMAQC
 
             // ScanStatsEx columns
             mValidFilesToReFormat.Add("ScanStatsEx",
-                FieldCleaner(new List<string> {
+                ColumnNameCleaner(new List<string> {
                     "Dataset",
                     "ScanNumber",
                     "Ion Injection Time (ms)",
@@ -75,7 +75,7 @@ namespace SMAQC
 
             // SICStats columns
             mValidFilesToReFormat.Add("SICStats",
-               FieldCleaner(new List<string> {
+                ColumnNameCleaner(new List<string> {
                     "Dataset",
                     "ParentIonIndex",
                     "MZ",
@@ -104,7 +104,7 @@ namespace SMAQC
 
             // xt columns (X!Tandem)
             mValidFilesToReFormat.Add("xt",
-                FieldCleaner(new List<string> {
+                ColumnNameCleaner(new List<string> {
                     "Result_ID",
                     "Group_ID",
                     "Scan",
@@ -125,13 +125,13 @@ namespace SMAQC
 
             // xt_ResultToSeqMap columns
             mValidFilesToReFormat.Add("xt_ResultToSeqMap",
-                FieldCleaner(new List<string> {
+                ColumnNameCleaner(new List<string> {
                     "Result_ID",
                     "Unique_Seq_ID"}));
 
             // xt_SeqToProteinMap columns
             mValidFilesToReFormat.Add("xt_SeqToProteinMap",
-               FieldCleaner(new List<string> {
+                ColumnNameCleaner(new List<string> {
                     "Unique_Seq_ID",
                     "Cleavage_State",
                     "Terminus_State",
@@ -177,7 +177,7 @@ namespace SMAQC
             // Maps observed column index to desired column index in db (-1 means do not store the given column in the db)
 
             // Pad hash table with pointer to correct values
-            var columnCount = MapColumnsToKnownFields(filePath, out var columnIndexMap, knownColumns);
+            var columnCount = MapColumnsToKnownColumns(filePath, out var columnIndexMap, knownColumns);
 
             // Obtain a temp file path
             mTempFilePath = Path.GetTempFileName();
@@ -224,7 +224,7 @@ namespace SMAQC
                     {
                         // Header line
                         // Clean column names to ensure database compatibility
-                        parts = FieldCleaner(line.Split(delimiters, StringSplitOptions.None).ToList());
+                        parts = ColumnNameCleaner(line.Split(delimiters, StringSplitOptions.None).ToList());
                         headerParsed = true;
                     }
                     else
@@ -267,7 +267,7 @@ namespace SMAQC
         /// <param name="columnIndexMap">Maps observed column index to desired column index in DB (-1 means do not store the given column in the DB)</param>
         /// <param name="knownColumns"></param>
         /// <returns>Total number of columns in the input file</returns>
-        private int MapColumnsToKnownFields(string filePath, out List<int> columnIndexMap, IReadOnlyList<string> knownColumns)
+        private int MapColumnsToKnownColumns(string filePath, out List<int> columnIndexMap, IReadOnlyList<string> knownColumns)
         {
             int columnCount;
             columnIndexMap = new List<int>();
@@ -283,8 +283,8 @@ namespace SMAQC
                 var delimiters = new[] { '\t' };
 
                 // Do split operation
-                // Clean fields to ensure consistency
-                var parts = FieldCleaner(line.Split(delimiters, StringSplitOptions.None).ToList());
+                // Clean column names to ensure consistency
+                var parts = ColumnNameCleaner(line.Split(delimiters, StringSplitOptions.None).ToList());
 
                 // Set columnCount
                 columnCount = parts.Count;
@@ -383,7 +383,7 @@ namespace SMAQC
         /// <param name="columnNames"></param>
         /// <returns>Updated column names</returns>
         /// <remarks>Remove spaces, parentheses, / and more</remarks>
-        private List<string> FieldCleaner(IEnumerable<string> columnNames)
+        private List<string> ColumnNameCleaner(IEnumerable<string> columnNames)
         {
             var updatedColumnNames = new List<string>();
 

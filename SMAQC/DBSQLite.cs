@@ -38,7 +38,7 @@ namespace SMAQC
 
         private SQLiteCommand mPHRPInsertCommand;
 
-        private Dictionary<string, int> mPHRPFieldsForInsert;
+        private Dictionary<string, int> mPHRPColumnsForInsert;
 
         /// <summary>
         /// Error event
@@ -155,14 +155,14 @@ namespace SMAQC
         /// <param name="excludedColumnNameSuffixes">Columns that end in any of these suffixes will be skipped</param>
         public void BulkInsert(string targetTable, string sourceFile, List<string> excludedColumnNameSuffixes)
         {
-            // Keys in this dictionary are field index values (0, 1, 2, etc.)
-            // Values are True if the field should be used and false if it should not be used
-            var fieldNames = GetColumnsForSQLiteBulkInsert(sourceFile, excludedColumnNameSuffixes, out var fieldEnabledByIndex);
+            // Keys in this dictionary are column index values (0, 1, 2, etc.)
+            // Values are True if the column should be used and false if it should not be used
+            var columnNames = GetColumnsForSQLiteBulkInsert(sourceFile, excludedColumnNameSuffixes, out var columnEnabledByIndex);
 
             if (string.Equals(targetTable, "temp_ReporterIons", StringComparison.OrdinalIgnoreCase))
             {
                 // Auto-add the reporter ion columns
-                var ionColumns = (from item in fieldNames where item.StartsWith("ion_", StringComparison.OrdinalIgnoreCase) select item).ToList();
+                var ionColumns = (from item in columnNames where item.StartsWith("ion_", StringComparison.OrdinalIgnoreCase) select item).ToList();
 
                 if (ionColumns.Count > 0)
                 {
@@ -177,7 +177,7 @@ namespace SMAQC
                 mErrorMessages.Clear();
 
             // Build SQL line
-            var sql = SQLiteBulkInsert_BuildSQL_Line(targetTable, fieldNames);
+            var sql = SQLiteBulkInsert_BuildSQL_Line(targetTable, columnNames);
             var previousLine = string.Empty;
 
             using (var myCommand = mConnection.CreateCommand())
@@ -219,16 +219,16 @@ namespace SMAQC
                             // Fetch values
                             var values = SQLiteBulkInsert_TokenizeLine(line);
 
-                            // Loop through field listing + set parameters
-                            for (var i = 0; i < fieldNames.Count; i++)
+                            // Loop through column listing + set parameters
+                            for (var i = 0; i < columnNames.Count; i++)
                             {
-                                if (fieldEnabledByIndex[i])
+                                if (columnEnabledByIndex[i])
                                 {
                                     myCommand.Parameters.AddWithValue("@" + i, values[i]);
                                 }
                             }
 
-                            // Now that all fields + values are in our system
+                            // Now that all columns + values are in our system
 
                             ExecuteCommand(myCommand, lineNumber);
 
@@ -334,7 +334,7 @@ namespace SMAQC
         /// <param name="dbtrans"></param>
         public bool InitPHRPInsertCommand(out DbTransaction dbTrans)
         {
-            mPHRPFieldsForInsert = new Dictionary<string, int>();
+            mPHRPColumnsForInsert = new Dictionary<string, int>();
 
             mPHRPInsertCommand = mConnection.CreateCommand();
 
@@ -363,7 +363,7 @@ namespace SMAQC
 
             for (var i = 0; i < dbColumns.Count; i++)
             {
-                mPHRPFieldsForInsert.Add(dbColumns[i], i);
+                mPHRPColumnsForInsert.Add(dbColumns[i], i);
             }
 
             mErrorMsgCount = 0;
@@ -396,11 +396,11 @@ namespace SMAQC
             }
 
             if (mPHRPInsertCommand.Parameters == null ||
-                mPHRPInsertCommand.Parameters.Count != mPHRPFieldsForInsert.Count)
+                mPHRPInsertCommand.Parameters.Count != mPHRPColumnsForInsert.Count)
             {
                 // Create the parameters
                 // Names are @0, @1, etc.
-                foreach (var item in mPHRPFieldsForInsert)
+                foreach (var item in mPHRPColumnsForInsert)
                 {
                     mPHRPInsertCommand.Parameters?.AddWithValue("@" + item.Value, string.Empty);
                 }
@@ -412,7 +412,7 @@ namespace SMAQC
             }
 
             // Update the values for the insert command parameters
-            foreach (var item in mPHRPFieldsForInsert)
+            foreach (var item in mPHRPColumnsForInsert)
             {
                 if (!dctData.TryGetValue(item.Key, out var dataValue))
                 {
@@ -429,11 +429,11 @@ namespace SMAQC
         /// <summary>
         /// Read a single database row
         /// </summary>
-        /// <param name="fields"></param>
+        /// <param name="columnNames"></param>
         /// <param name="dctData"></param>
         /// <returns>True if success, false if no further rows to read</returns>
         /// <remarks>This method differs from ReadNextRow since here we close the reader after reading a single row of data</remarks>
-        public bool ReadSingleLine(string[] fields, out Dictionary<string, string> dctData)
+        public bool ReadSingleLine(string[] columnNames, out Dictionary<string, string> dctData)
         {
             dctData = new Dictionary<string, string>();
 
@@ -446,12 +446,12 @@ namespace SMAQC
                 return false;
             }
 
-            foreach (var fieldName in fields)
+            foreach (var columnName in columnNames)
             {
                 try
                 {
-                    var value = mSQLiteReader.GetOrdinal(fieldName);
-                    dctData.Add(fieldName, mSQLiteReader.GetValue(value).ToString());
+                    var value = mSQLiteReader.GetOrdinal(columnName);
+                    dctData.Add(columnName, mSQLiteReader.GetValue(value).ToString());
                 }
                 catch (System.Data.SqlTypes.SqlNullValueException)
                 {
@@ -467,10 +467,10 @@ namespace SMAQC
         /// <summary>
         /// Read data for one database row
         /// </summary>
-        /// <param name="fields"></param>
+        /// <param name="columnNames"></param>
         /// <param name="dctData"></param>
         /// <returns>True if success, false if no further rows to read</returns>
-        public bool ReadNextRow(string[] fields, out Dictionary<string, string> dctData)
+        public bool ReadNextRow(string[] columnNames, out Dictionary<string, string> dctData)
         {
             dctData = new Dictionary<string, string>();
 
@@ -484,12 +484,12 @@ namespace SMAQC
                 return false;
             }
 
-            foreach (var fieldName in fields)
+            foreach (var columnName in columnNames)
             {
                 try
                 {
-                    var value = mSQLiteReader.GetOrdinal(fieldName);
-                    dctData.Add(fieldName, mSQLiteReader.GetValue(value).ToString());
+                    var value = mSQLiteReader.GetOrdinal(columnName);
+                    dctData.Add(columnName, mSQLiteReader.GetValue(value).ToString());
                 }
                 catch (System.Data.SqlTypes.SqlNullValueException)
                 {
@@ -505,16 +505,16 @@ namespace SMAQC
         /// </summary>
         /// <param name="filePath">Source file path</param>
         /// <param name="excludedColumnNameSuffixes">Columns that end in any of these suffixes will be skipped</param>
-        /// <param name="fieldEnabledByIndex"></param>
+        /// <param name="columnEnabledByIndex"></param>
         /// <returns>List of database column names</returns>
         private List<string> GetColumnsForSQLiteBulkInsert(
             string filePath,
             IReadOnlyCollection<string> excludedColumnNameSuffixes,
-            out Dictionary<int, bool> fieldEnabledByIndex)
+            out Dictionary<int, bool> columnEnabledByIndex)
         {
-            // Keys in this dictionary are field index values (0, 1, 2, etc.)
-            // Values are True if the field should be used and false if it should not be used
-            fieldEnabledByIndex = new Dictionary<int, bool>();
+            // Keys in this dictionary are column index values (0, 1, 2, etc.)
+            // Values are True if the column should be used and false if it should not be used
+            columnEnabledByIndex = new Dictionary<int, bool>();
 
             string headerLine;
 
@@ -552,13 +552,13 @@ namespace SMAQC
                     continue;
 
                 filteredList.Add(columnName);
-                fieldEnabledByIndex[columnIndex] = true;
+                columnEnabledByIndex[columnIndex] = true;
             }
 
-            // Make sure the field names do not have spaces or parentheses in them
+            // Make sure the column names do not have spaces or parentheses in them
             for (var i = 0; i < filteredList.Count; i++)
             {
-                filteredList[i] = SQLiteBulkInsert_CleanFields(filteredList[i]);
+                filteredList[i] = SQLiteBulkInsert_CleanColumns(filteredList[i]);
             }
 
             return filteredList;
@@ -569,7 +569,7 @@ namespace SMAQC
             // Split given data files by tab
             var delimiters = new[] { '\t' };
 
-            // If line contains "\t\t", this means an empty field; replace with "\t \t"
+            // If line contains "\t\t", this means an empty item; replace with "\t \t"
             while (line.Contains("\t\t"))
             {
                 line = line.Replace("\t\t", "\t \t");
@@ -614,32 +614,32 @@ namespace SMAQC
         }
 
         /// <summary>
-        /// Replace invalid characters in field names
+        /// Replace invalid characters in column names
         /// </summary>
-        /// <param name="field"></param>
-        private string SQLiteBulkInsert_CleanFields(string field)
+        /// <param name="columnName"></param>
+        private string SQLiteBulkInsert_CleanColumns(string columnName)
         {
-            var cleanedField = field;
+            var cleanedcolumnName = columnName;
 
             // Replace blanks with _
-            if (cleanedField.Contains(" "))
+            if (cleanedcolumnName.Contains(" "))
             {
-                cleanedField = cleanedField.Replace(" ", "_");
+                cleanedcolumnName = cleanedcolumnName.Replace(" ", "_");
             }
 
             // Replace all instances of _(
-            while (cleanedField.Contains("_("))
+            while (cleanedcolumnName.Contains("_("))
             {
-                cleanedField = cleanedField.Remove(cleanedField.IndexOf("_(", StringComparison.Ordinal));
+                cleanedcolumnName = cleanedcolumnName.Remove(cleanedcolumnName.IndexOf("_(", StringComparison.Ordinal));
             }
 
             // Replace all instances of (
-            while (cleanedField.Contains("("))
+            while (cleanedcolumnName.Contains("("))
             {
-                cleanedField = cleanedField.Remove(cleanedField.IndexOf("(", StringComparison.Ordinal));
+                cleanedcolumnName = cleanedcolumnName.Remove(cleanedcolumnName.IndexOf("(", StringComparison.Ordinal));
             }
 
-            return cleanedField;
+            return cleanedcolumnName;
         }
 
         /// <summary>

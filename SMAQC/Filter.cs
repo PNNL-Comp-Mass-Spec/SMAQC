@@ -91,7 +91,7 @@ namespace SMAQC
                         filteredData.Add(mRandomId.ToString());
                     }
 
-                    // Process the fields
+                    // Process the columns
                     foreach (var dataValue in parts)
                     {
                         if (dataValue.Equals("[PAD]"))
@@ -148,7 +148,7 @@ namespace SMAQC
                 // Create a temp file
                 var tempFilePath = Path.GetTempFileName();
 
-                var excludedFieldNameSuffixes = candidateFile.Value;
+                var excludedColumnNameSuffixes = candidateFile.Value;
 
                 // Does this file need to be reformatted [variable column support]
                 if (mDataFileFormatter.HandleFile(filePath, dataset))
@@ -171,7 +171,7 @@ namespace SMAQC
 
                 Console.WriteLine("Populating Table {0}", targetTable);
 
-                mDBWrapper.BulkInsert(targetTable, tempFilePath, excludedFieldNameSuffixes);
+                mDBWrapper.BulkInsert(targetTable, tempFilePath, excludedColumnNameSuffixes);
 
                 // Delete the temporary file
                 File.Delete(tempFilePath);

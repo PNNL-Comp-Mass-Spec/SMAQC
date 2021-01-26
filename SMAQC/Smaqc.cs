@@ -494,7 +494,7 @@ namespace SMAQC
                     "SMAQC reads the data from the _syn.txt file along with the parallel " +
                     "text files created by PHRP.  It uses this information to compute peptide " +
                     "count related metrics (peptides are filtered on MSGFDB_SpecEValue " +
-                    "less than " + Measurement.MSGF_SPECPROB_THRESHOLD.ToString("0E+00") + "; this field was previously named MSGF_SpecProb). " +
+                    "less than " + Measurement.MSGF_SPECPROB_THRESHOLD.ToString("0E+00") + "; this column was previously named MSGF_SpecProb). " +
                     "SMAQC also reads the data from the _ScanStats.txt, " +
                     // ReSharper disable once StringLiteralTypo
                     "_SICstats.txt, and _ScanStatsEx.txt files created by MASIC " +
@@ -612,9 +612,9 @@ namespace SMAQC
 
             mDBWrapper.InitReader();
 
-            string[] field_array = { "result_id" };
+            string[] columnNames = { "result_id" };
 
-            mDBWrapper.ReadSingleLine(field_array, out var dctMostRecentEntry);
+            mDBWrapper.ReadSingleLine(columnNames, out var dctMostRecentEntry);
 
             if (int.TryParse(dctMostRecentEntry["result_id"], out var resultId))
             {

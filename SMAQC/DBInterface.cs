@@ -34,8 +34,8 @@ namespace SMAQC
         /// </summary>
         /// <param name="targetTable">Target table</param>
         /// <param name="sourceFile">Source file</param>
-        /// <param name="excludedFieldNameSuffixes">Field prefixes to ignore</param>
-        void BulkInsert(string targetTable, string sourceFile, List<string> excludedFieldNameSuffixes);
+        /// <param name="excludedColumnNameSuffixes">Column suffixes to ignore</param>
+        void BulkInsert(string targetTable, string sourceFile, List<string> excludedColumnNameSuffixes);
 
         /// <summary>
         /// Run the query defined by SetQuery, thereby initializing a reader for retrieving the results
@@ -46,19 +46,19 @@ namespace SMAQC
         /// <summary>
         /// Read a single database row
         /// </summary>
-        /// <param name="fields"></param>
+        /// <param name="columnNames"></param>
         /// <param name="dctData"></param>
         /// <returns>True if success, false if no further rows to read</returns>
         /// <remarks>This method differs from ReadNextRow since here we close the reader after reading a single row of data</remarks>
-        bool ReadSingleLine(string[] fields, out Dictionary<string, string> dctData);
+        bool ReadSingleLine(string[] columnNames, out Dictionary<string, string> dctData);
 
         /// <summary>
         /// Read data for one database row
         /// </summary>
-        /// <param name="fields"></param>
+        /// <param name="columnNames"></param>
         /// <param name="dctData"></param>
         /// <returns>True if success, false if no further rows to read</returns>
-        bool ReadNextRow(string[] fields, out Dictionary<string, string> dctData);
+        bool ReadNextRow(string[] columnNames, out Dictionary<string, string> dctData);
 
         /// <summary>
         /// Get the database function for obtaining date/time as a string (within a SQL query)

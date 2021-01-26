@@ -148,17 +148,17 @@ namespace SMAQC
                     continue;
 
                 // Valid file
-                var excludedFieldNameSuffixes = new List<string>();
+                var excludedColumnNameSuffixes = new List<string>();
                 if (filePath.EndsWith("_ReporterIons.txt", StringComparison.OrdinalIgnoreCase))
                 {
-                    excludedFieldNameSuffixes.Add("_SignalToNoise");
-                    excludedFieldNameSuffixes.Add("_Resolution");
-                    excludedFieldNameSuffixes.Add("_OriginalIntensity");
-                    excludedFieldNameSuffixes.Add("_ObsMZ");
-                    excludedFieldNameSuffixes.Add("_LabelDataMZ");
+                    excludedColumnNameSuffixes.Add("_SignalToNoise");
+                    excludedColumnNameSuffixes.Add("_Resolution");
+                    excludedColumnNameSuffixes.Add("_OriginalIntensity");
+                    excludedColumnNameSuffixes.Add("_ObsMZ");
+                    excludedColumnNameSuffixes.Add("_LabelDataMZ");
                 }
 
-                fileImportList.Add(filePath, excludedFieldNameSuffixes);
+                fileImportList.Add(filePath, excludedColumnNameSuffixes);
                 // Console.WriteLine("file {0}:: {1} -- ({2})", i, filePaths[i], index);
             }
             return fileImportList;

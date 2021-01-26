@@ -248,11 +248,11 @@ namespace SMAQC
             var psmCountLateOrEarly = 0;
             var psmCountTotal = 0;
 
-            string[] fields = { "Scan", "FragScanNumber", "OptimalPeakApexScanNumber", "ScanTime1", "ScanTimePeakApex" };
+            string[] columnNames = { "Scan", "FragScanNumber", "OptimalPeakApexScanNumber", "ScanTime1", "ScanTimePeakApex" };
 
             m_DBInterface.InitReader();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 // Calculate difference
                 double temp_difference;
@@ -301,11 +301,11 @@ namespace SMAQC
             // This list stores scan numbers and elution times for filter-passing peptides; duplicate scans are not allowed
             var filterPassingPeptides = new SortedList<int, double>();
 
-            string[] fields = { "Scan", "ScanNumber", "ScanTime1" };
+            string[] columnNames = { "Scan", "ScanNumber", "ScanTime1" };
 
             m_DBInterface.InitReader();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 // Filter-passing peptide; Append to the dictionary
                 if (int.TryParse(measurementResults["ScanNumber"], out var scanNumber))
@@ -396,11 +396,11 @@ namespace SMAQC
             var scanStartC2A = GetStoredValueInt(CachedResultTypes.C2A_RegionScanStart, 0);
             var scanEndC2A = GetStoredValueInt(CachedResultTypes.C2A_RegionScanEnd, 0);
 
-            string[] fields = { "Scan", "ScanNumber", "ScanTime1" };
+            string[] columnNames = { "Scan", "ScanNumber", "ScanTime1" };
 
             m_DBInterface.InitReader();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 // Filter-passing peptide; Append to the dictionary
                 if (int.TryParse(measurementResults["ScanNumber"], out var scanNumber))
@@ -496,14 +496,14 @@ namespace SMAQC
                                 + " FROM temp_PSMs "
                                 + " WHERE random_id=" + m_Random_ID);
 
-            string[] fields1 = { "Scan", "Charge", "Peptide_Sequence", "Peptide_Score" };
+            string[] columnNames = { "Scan", "Charge", "Peptide_Sequence", "Peptide_Score" };
 
             m_DBInterface.InitReader();
 
             // Read and cache the data since we need to trim off the prefix and suffix letters from the peptide sequence
 
             Dictionary<string, string> measurementResults;
-            while (m_DBInterface.ReadNextRow(fields1, out measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out measurementResults) && measurementResults.Count > 0)
             {
                 clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(measurementResults["Peptide_Sequence"], out var peptideResidues, out _, out _);
 
@@ -566,13 +566,13 @@ namespace SMAQC
 
             m_DBInterface.SetQuery("SELECT FragScanNumber, FWHMInScans, OptimalPeakApexScanNumber FROM temp_SICStats WHERE temp_SICStats.random_id=" + m_Random_ID);
 
-            string[] fields2 = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
+            string[] sicStatsColumnNames = { "FragScanNumber", "FWHMInScans", "OptimalPeakApexScanNumber" };
 
             m_DBInterface.InitReader();
 
             // Fetch columns d-f
 
-            while (m_DBInterface.ReadNextRow(fields2, out measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(sicStatsColumnNames, out measurementResults) && measurementResults.Count > 0)
             {
                 var fragScanNumber = int.Parse(measurementResults["FragScanNumber"]);
 
@@ -582,12 +582,12 @@ namespace SMAQC
 
             m_DBInterface.SetQuery("SELECT temp_ScanStats.ScanNumber, temp_ScanStats.ScanTime FROM temp_ScanStats WHERE temp_ScanStats.random_id=" + m_Random_ID);
 
-            string[] fields3 = { "ScanNumber", "ScanTime" };
+            string[] scanStatsColumnNames = { "ScanNumber", "ScanTime" };
 
             m_DBInterface.InitReader();
 
             // Fetch columns h-i
-            while (m_DBInterface.ReadNextRow(fields3, out measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(scanStatsColumnNames, out measurementResults) && measurementResults.Count > 0)
             {
                 m_MPWCached_ScanTime.Add(int.Parse(measurementResults["ScanNumber"]), double.Parse(measurementResults["ScanTime"]));
             }
@@ -718,11 +718,11 @@ namespace SMAQC
 
             m_PeptideSamplingStats = new Dictionary<int, int>();
 
-            string[] fields = { "Spectra", "Peptides" };
+            string[] columnNames = { "Spectra", "Peptides" };
 
             m_DBInterface.InitReader();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 var spectra = int.Parse(measurementResults["Spectra"]);
                 var peptides = int.Parse(measurementResults["Peptides"]);
@@ -761,11 +761,11 @@ namespace SMAQC
                 + "   AND ScanNumber >= " + scanStartC2A
                 + "   AND ScanNumber <= " + scanEndC2A);
 
-            string[] fields = { "ScanCount" };
+            string[] columnNames = { "ScanCount" };
 
             m_DBInterface.InitReader();
 
-            m_DBInterface.ReadSingleLine(fields, out var measurementResults);
+            m_DBInterface.ReadSingleLine(columnNames, out var measurementResults);
 
             var scanCount = int.Parse(measurementResults["ScanCount"]);
 
@@ -785,11 +785,11 @@ namespace SMAQC
 
             var mzList = new SortedSet<double>();
 
-            string[] fields = { "Peptide_MH", "Charge" };
+            string[] columnNames = { "Peptide_MH", "Charge" };
 
             m_DBInterface.InitReader();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 var mz = mPeptideMassCalculator.ConvoluteMass(double.Parse(measurementResults["Peptide_MH"]), 1, int.Parse(measurementResults["Charge"]));
 
@@ -878,13 +878,13 @@ namespace SMAQC
                     + "   AND MSGFSpecProb <= " + MSGF_SPECPROB_THRESHOLD
                     + " GROUP BY Charge;");
 
-            string[] fields = { "Charge", "PSMs" };
+            string[] columnNames = { "Charge", "PSMs" };
 
             m_DBInterface.InitReader();
 
             m_Cached_PSM_Stats_by_Charge = new Dictionary<int, int>();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 if (int.TryParse(measurementResults["Charge"], out var charge))
                 {
@@ -912,11 +912,11 @@ namespace SMAQC
 
             var values = new List<double>();
 
-            string[] fields = { "Ion_Injection_Time" };
+            string[] columnNames = { "Ion_Injection_Time" };
 
             m_DBInterface.InitReader();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 // Add to the filter list
                 values.Add(double.Parse(measurementResults["Ion_Injection_Time"]));
@@ -973,14 +973,14 @@ namespace SMAQC
                 + "   AND ScanNumber >= " + scanFirstPeptide
                 + "   AND ScanNumber <= " + scanEndC2A);
 
-            string[] fields = { "BasePeakSignalToNoiseRatio", "TotalIonIntensity" };
+            string[] columnNames = { "BasePeakSignalToNoiseRatio", "TotalIonIntensity" };
 
             m_DBInterface.InitReader();
 
             m_Cached_BasePeakSignalToNoiseRatio = new List<double>();
             m_Cached_TotalIonIntensity = new List<double>();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 m_Cached_BasePeakSignalToNoiseRatio.Add(double.Parse(measurementResults["BasePeakSignalToNoiseRatio"]));
                 m_Cached_TotalIonIntensity.Add(double.Parse(measurementResults["TotalIonIntensity"]));
@@ -1036,7 +1036,7 @@ namespace SMAQC
             // This list stores the max peak intensity for each PSM, using data between the 5th and 95th percentiles
             var maxPeakIntensities = new List<double>();
 
-            string[] fields = { "PeakMaxIntensity" };
+            string[] columnNames = { "PeakMaxIntensity" };
 
             m_DBInterface.InitReader();
 
@@ -1044,7 +1044,7 @@ namespace SMAQC
             m_Cached_PeakMaxIntensity_95thPercentile = 0;
             m_Cached_MS1_3 = new List<double>();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 // Add to the filter list
                 m_Cached_MS1_3.Add(double.Parse(measurementResults["PeakMaxIntensity"]));
@@ -1101,11 +1101,11 @@ namespace SMAQC
             // Ratio of PeakMaxIntensity over ParentIonIntensity
             var values = new List<double>();
 
-            string[] fields = { "ParentIonIntensity", "PeakMaxIntensity" };
+            string[] columnNames = { "ParentIonIntensity", "PeakMaxIntensity" };
 
             m_DBInterface.InitReader();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 // Compute the ratio of the PeakMaxIntensity over ParentIonIntensity
                 var parentIonIntensity = double.Parse(measurementResults["ParentIonIntensity"]);
@@ -1203,11 +1203,11 @@ namespace SMAQC
             if (foldThreshold < 2)
                 foldThreshold = 2;
 
-            string[] fields = { "ScanNumber", "BasePeakIntensity" };
+            string[] columnNames = { "ScanNumber", "BasePeakIntensity" };
 
             m_DBInterface.InitReader();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 var bpiCurrent = double.Parse(measurementResults["BasePeakIntensity"]);
 
@@ -1336,14 +1336,14 @@ namespace SMAQC
 
             const double massC13 = 1.00335483;
 
-            string[] fields = { "Peptide_MH", "Charge", "MZ", "DelM_Da", "DelM_PPM" };
+            string[] columnNames = { "Peptide_MH", "Charge", "MZ", "DelM_Da", "DelM_PPM" };
 
             m_DBInterface.InitReader();
 
             m_Cached_DelM = new List<double>();
             m_Cached_DelM_ppm = new List<double>();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 // Calculate the theoretical monoisotopic mass of the peptide
                 var theoreticalMonoMass = mPeptideMassCalculator.ConvoluteMass(double.Parse(measurementResults["Peptide_MH"]), 1, 0);
@@ -1394,11 +1394,11 @@ namespace SMAQC
 
             var filterList = new List<double>();
 
-            string[] fields = { "Ion_Injection_Time" };
+            string[] columnNames = { "Ion_Injection_Time" };
 
             m_DBInterface.InitReader();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 filterList.Add(double.Parse(measurementResults["Ion_Injection_Time"]));
             }
@@ -1423,11 +1423,11 @@ namespace SMAQC
             var filterList = new List<double>();
             var finishedList = new List<double>();
 
-            string[] fields = { "BasePeakSignalToNoiseRatio" };
+            string[] columnNames = { "BasePeakSignalToNoiseRatio" };
 
             m_DBInterface.InitReader();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 // Add to the filtered list
                 filterList.Add(double.Parse(measurementResults["BasePeakSignalToNoiseRatio"]));
@@ -1461,11 +1461,11 @@ namespace SMAQC
 
             var filterList = new List<double>();
 
-            string[] fields = { "IonCountRaw" };
+            string[] columnNames = { "IonCountRaw" };
 
             m_DBInterface.InitReader();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 filterList.Add(double.Parse(measurementResults["IonCountRaw"]));
             }
@@ -1551,11 +1551,11 @@ namespace SMAQC
                 + "       WHERE temp_PSMs.Scan=temp_SICStats.FragScanNumber AND temp_PSMs.random_id=" + m_Random_ID + " AND temp_SICStats.random_id=" + m_Random_ID
                 + "      ) LookupQ;");
 
-            string[] fields1 = { "MS2ScanCount" };
+            string[] columnNames = { "MS2ScanCount" };
 
             m_DBInterface.InitReader();
 
-            m_DBInterface.ReadSingleLine(fields1, out var measurementResults);
+            m_DBInterface.ReadSingleLine(columnNames, out var measurementResults);
             var scanCountMS2 = int.Parse(measurementResults["MS2ScanCount"]);
 
             // Note that we sort by ascending PeakMaxIntensity
@@ -1581,11 +1581,11 @@ namespace SMAQC
 
             var scansProcessed = 1;
 
-            string[] fields2 = { "Scan", "Peptide_Score", "PeakMaxIntensity" };
+            string[] columnNames2 = { "Scan", "Peptide_Score", "PeakMaxIntensity" };
 
             m_DBInterface.InitReader();
 
-            while (m_DBInterface.ReadNextRow(fields2, out measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames2, out measurementResults) && measurementResults.Count > 0)
             {
                 // Compare the peptide_score vs. the threshold
                 var passedFilter = double.TryParse(measurementResults["Peptide_Score"], out var peptideScore) &&
@@ -1655,11 +1655,11 @@ namespace SMAQC
             // Track X!Tandem hyperscore or -Log10(MSGFSpecProb)
             var peptideScoreList = new List<double>();
 
-            string[] fields = { "Scan", "Peptide_Score" };
+            string[] columnNames = { "Scan", "Peptide_Score" };
 
             m_DBInterface.InitReader();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 if (double.TryParse(measurementResults["Peptide_Score"], out var peptideScore))
                 {
@@ -1687,11 +1687,11 @@ namespace SMAQC
             // Track X!Tandem Peptide_Expectation_Value_Log or Log10(MSGFSpecProb)
             var peptideScoreList = new List<double>();
 
-            string[] fields = { "Scan", "Peptide_Score" };
+            string[] columnNames = { "Scan", "Peptide_Score" };
 
             m_DBInterface.InitReader();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 if (double.TryParse(measurementResults["Peptide_Score"], out var peptideScore))
                 {
@@ -1728,11 +1728,11 @@ namespace SMAQC
 
             var dctPSMStats = new Dictionary<int, int>();
 
-            string[] fields = { "Cleavage_State", "Spectra" };
+            string[] columnNames = { "Cleavage_State", "Spectra" };
 
             m_DBInterface.InitReader();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 dctPSMStats.Add(int.Parse(measurementResults["Cleavage_State"]), int.Parse(measurementResults["Spectra"]));
             }
@@ -1841,11 +1841,11 @@ namespace SMAQC
                                    + "          AND random_id=" + m_Random_ID
                                    + " GROUP BY Unique_Seq_ID ) StatsQ");
 
-            string[] fields = { "Peptides", "TotalMissedCleavages" };
+            string[] columnNames = { "Peptides", "TotalMissedCleavages" };
 
             m_DBInterface.InitReader();
 
-            m_DBInterface.ReadSingleLine(fields, out var measurementResults);
+            m_DBInterface.ReadSingleLine(columnNames, out var measurementResults);
 
             var uniquePeptides = int.Parse(measurementResults["Peptides"]);
             var totalMissedCleavages = int.Parse(measurementResults["TotalMissedCleavages"]);
@@ -1899,11 +1899,11 @@ namespace SMAQC
                                    + "        GROUP BY Scan ) StatsQ "
                                    + " WHERE Cleavage_State >= 0");
 
-            string[] fields = { "Spectra" };
+            string[] columnNames = { "Spectra" };
 
             m_DBInterface.InitReader();
 
-            m_DBInterface.ReadSingleLine(fields, out var measurementResults);
+            m_DBInterface.ReadSingleLine(columnNames, out var measurementResults);
 
             var keratinCount = int.Parse(measurementResults["Spectra"]);
 
@@ -1925,11 +1925,11 @@ namespace SMAQC
                                    + "        GROUP BY Unique_Seq_ID ) StatsQ "
                                    + " WHERE Cleavage_State >= 0");
 
-            string[] fields = { "Peptides" };
+            string[] columnNames = { "Peptides" };
 
             m_DBInterface.InitReader();
 
-            m_DBInterface.ReadSingleLine(fields, out var measurementResults);
+            m_DBInterface.ReadSingleLine(columnNames, out var measurementResults);
 
             var keratinCount = int.Parse(measurementResults["Peptides"]);
 
@@ -1951,11 +1951,11 @@ namespace SMAQC
                                    + "        GROUP BY Scan ) StatsQ "
                                    + " WHERE Cleavage_State >= 0");
 
-            string[] fields = { "Spectra" };
+            string[] columnNames = { "Spectra" };
 
             m_DBInterface.InitReader();
 
-            m_DBInterface.ReadSingleLine(fields, out var measurementResults);
+            m_DBInterface.ReadSingleLine(columnNames, out var measurementResults);
 
             var trypsinCount = int.Parse(measurementResults["Spectra"]);
 
@@ -1977,11 +1977,11 @@ namespace SMAQC
                                    + "        GROUP BY Unique_Seq_ID ) StatsQ "
                                    + " WHERE Cleavage_State >= 0");
 
-            string[] fields = { "Peptides" };
+            string[] columnNames = { "Peptides" };
 
             m_DBInterface.InitReader();
 
-            m_DBInterface.ReadSingleLine(fields, out var measurementResults);
+            m_DBInterface.ReadSingleLine(columnNames, out var measurementResults);
 
             var trypsinCount = int.Parse(measurementResults["Peptides"]);
 
@@ -2075,12 +2075,12 @@ namespace SMAQC
 
             m_DBInterface.SetQuery(sbSql.ToString());
 
-            var fields = (from item in ionColumns select item + "_Sum").ToList();
-            fields.AddRange((from item in ionColumns select item + "_Count").ToList());
+            var columnNames = (from item in ionColumns select item + "_Sum").ToList();
+            columnNames.AddRange((from item in ionColumns select item + "_Count").ToList());
 
             m_DBInterface.InitReader();
 
-            m_DBInterface.ReadSingleLine(fields.ToArray(), out var measurementResults);
+            m_DBInterface.ReadSingleLine(columnNames.ToArray(), out var measurementResults);
 
             var overallSum = 0.0;
             var overallCount = 0;
@@ -2135,11 +2135,11 @@ namespace SMAQC
 
             m_DBInterface.SetQuery(sql);
 
-            string[] fields = { "PSMs" };
+            string[] columnNames = { "PSMs" };
 
             m_DBInterface.InitReader();
 
-            m_DBInterface.ReadSingleLine(fields.ToArray(), out var measurementResults);
+            m_DBInterface.ReadSingleLine(columnNames, out var measurementResults);
 
             var psmCount = int.Parse(measurementResults["PSMs"]);
             return psmCount;
@@ -2180,11 +2180,11 @@ namespace SMAQC
 
             m_DBInterface.SetQuery(sbSql.ToString());
 
-            var fields = ionColumns.ToArray();
+            var columnNames = ionColumns.ToArray();
 
             m_DBInterface.InitReader();
 
-            m_DBInterface.ReadSingleLine(fields, out var measurementResults);
+            m_DBInterface.ReadSingleLine(columnNames, out var measurementResults);
 
             var ionColumnsToUse = new List<string>();
             foreach (var column in ionColumns)
@@ -2248,11 +2248,11 @@ namespace SMAQC
 
             var dctPeptideStats = new Dictionary<int, int>();
 
-            string[] fields = { "Cleavage_State", "Peptides" };
+            string[] columnNames = { "Cleavage_State", "Peptides" };
 
             m_DBInterface.InitReader();
 
-            while (m_DBInterface.ReadNextRow(fields, out var measurementResults) && measurementResults.Count > 0)
+            while (m_DBInterface.ReadNextRow(columnNames, out var measurementResults) && measurementResults.Count > 0)
             {
                 dctPeptideStats.Add(int.Parse(measurementResults["Cleavage_State"]), int.Parse(measurementResults["Peptides"]));
             }
