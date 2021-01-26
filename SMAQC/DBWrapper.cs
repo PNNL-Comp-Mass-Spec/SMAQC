@@ -34,7 +34,7 @@ namespace SMAQC
             // Verify that the required columns are present
 
             // Attach the event handler
-            dbConn.ErrorEvent += dbConn_ErrorEvent;
+            dbConn.ErrorEvent += DatabaseConnection_ErrorEvent;
 
             mShowQueryText = showQueryText;
         }
@@ -183,7 +183,7 @@ namespace SMAQC
             dbConn.ExecutePHRPInsert(dctData, lineNumber);
         }
 
-        private void dbConn_ErrorEvent(string errorMessage)
+        private void DatabaseConnection_ErrorEvent(string errorMessage)
         {
             ErrorEvent?.Invoke(errorMessage);
         }

@@ -18,7 +18,7 @@ namespace SMAQC
     /// </remarks>
     internal class Measurement
     {
-        private struct udtPeptideEntry
+        private struct PeptideEntry
         {
             public int Scan;
             public int Charge;
@@ -35,7 +35,7 @@ namespace SMAQC
             public Dictionary<int, int> PassFilt;
         }
 
-        private enum eCachedResult
+        private enum CachedResultTypes
         {
             ScanFirstFilterPassingPeptide = 0,
             C2A_RegionScanStart = 1,
@@ -55,7 +55,7 @@ namespace SMAQC
         private readonly int m_Random_ID;
 
         // Some measurements have data required by others ... will be stored here
-        private readonly Dictionary<eCachedResult, double> m_ResultsStorage = new Dictionary<eCachedResult, double>();
+        private readonly Dictionary<CachedResultTypes, double> m_ResultsStorage = new Dictionary<CachedResultTypes, double>();
 
         // Cached data for computing median peak widths
         private bool m_MedianPeakWidthDataCached;
@@ -118,7 +118,7 @@ namespace SMAQC
         /// </summary>
         /// <param name="entryType"></param>
         /// <param name="value"></param>
-        private void AddUpdateResultsStorage(eCachedResult entryType, double value)
+        private void AddUpdateResultsStorage(CachedResultTypes entryType, double value)
         {
             // Add/update the dictionary
             m_ResultsStorage[entryType] = value;
@@ -189,7 +189,7 @@ namespace SMAQC
             }
         }
 
-        private double GetStoredValue(eCachedResult entryType, double valueIfMissing)
+        private double GetStoredValue(CachedResultTypes entryType, double valueIfMissing)
         {
             if (m_ResultsStorage.TryGetValue(entryType, out var value))
                 return value;
@@ -197,7 +197,7 @@ namespace SMAQC
             return valueIfMissing;
         }
 
-        private int GetStoredValueInt(eCachedResult entryType, int valueIfMissing)
+        private int GetStoredValueInt(CachedResultTypes entryType, int valueIfMissing)
         {
             var value = GetStoredValue(entryType, valueIfMissing);
             return (int)value;
@@ -361,16 +361,16 @@ namespace SMAQC
             {
                 // Add to global list for use with MS_2A/B
                 // ScanFirstFilterPassingPeptide is the scan number of the first filter-passing peptide
-                AddUpdateResultsStorage(eCachedResult.ScanFirstFilterPassingPeptide, filterPassingPeptides.Keys.Min());
+                AddUpdateResultsStorage(CachedResultTypes.ScanFirstFilterPassingPeptide, filterPassingPeptides.Keys.Min());
             }
 
             // Cache the scan numbers at the start and end of the interquartile region
-            AddUpdateResultsStorage(eCachedResult.C2A_RegionScanStart, C2AScanStart);
-            AddUpdateResultsStorage(eCachedResult.C2A_RegionScanEnd, C2AScanEnd);
+            AddUpdateResultsStorage(CachedResultTypes.C2A_RegionScanStart, C2AScanStart);
+            AddUpdateResultsStorage(CachedResultTypes.C2A_RegionScanEnd, C2AScanEnd);
 
             var timeMinutes = C2AScanTimeEnd - C2AScanTimeStart;
 
-            AddUpdateResultsStorage(eCachedResult.C2A_TimeMinutes, timeMinutes);
+            AddUpdateResultsStorage(CachedResultTypes.C2A_TimeMinutes, timeMinutes);
 
             return PRISM.StringUtilities.DblToString(timeMinutes, 4, 0.00001);
         }
@@ -396,9 +396,9 @@ namespace SMAQC
             // This list keeps track of the scan numbers already processed so that we can avoid double-counting a scan number
             var scansWithFilterPassingIDs = new SortedSet<int>();
 
-            var timeMinutesC2A = GetStoredValue(eCachedResult.C2A_TimeMinutes, 0);
-            var scanStartC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanStart, 0);
-            var scanEndC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanEnd, 0);
+            var timeMinutesC2A = GetStoredValue(CachedResultTypes.C2A_TimeMinutes, 0);
+            var scanStartC2A = GetStoredValueInt(CachedResultTypes.C2A_RegionScanStart, 0);
+            var scanEndC2A = GetStoredValueInt(CachedResultTypes.C2A_RegionScanEnd, 0);
 
             string[] fields = { "Scan", "ScanNumber", "ScanTime1" };
 
@@ -494,7 +494,7 @@ namespace SMAQC
 
         private void Cache_MedianPeakWidth_Data()
         {
-            var psms = new List<udtPeptideEntry>();					            		// Cached, filter-passing peptide-spectrum matches
+            var psms = new List<PeptideEntry>();					            		// Cached, filter-passing peptide-spectrum matches
 
             m_MPWCached_BestScan = new List<int>();										// Best Scan Number for each peptide
             m_MPWCached_FWHMinScans = new Dictionary<int, double>();					// Full width at half max, in scans; keys are FragScanNumbers
@@ -516,7 +516,7 @@ namespace SMAQC
             {
                 clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(measurementResults["Peptide_Sequence"], out var peptideResidues, out _, out _);
 
-                var currentPeptide = new udtPeptideEntry();
+                var currentPeptide = new PeptideEntry();
 
                 if (int.TryParse(measurementResults["Scan"], out currentPeptide.Scan))
                 {
@@ -536,7 +536,7 @@ namespace SMAQC
                                 orderby item.Peptide_Sequence, item.Charge, item.Scan
                                 select item;
 
-            var previousPeptide = new udtPeptideEntry
+            var previousPeptide = new PeptideEntry()
             {
                 Peptide_Sequence = string.Empty
             };
@@ -770,8 +770,8 @@ namespace SMAQC
 
         private int DS_2_Shared(int msLevel)
         {
-            var scanStartC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanStart, 0);
-            var scanEndC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanEnd, 0);
+            var scanStartC2A = GetStoredValueInt(CachedResultTypes.C2A_RegionScanStart, 0);
+            var scanEndC2A = GetStoredValueInt(CachedResultTypes.C2A_RegionScanEnd, 0);
 
             m_DBInterface.SetQuery("SELECT COUNT(*) AS ScanCount "
                 + " FROM temp_ScanStats "
@@ -989,8 +989,8 @@ namespace SMAQC
 
         private void Cache_MS1_2_Data()
         {
-            var scanFirstPeptide = GetStoredValueInt(eCachedResult.ScanFirstFilterPassingPeptide, 0);
-            var scanEndC2A = GetStoredValueInt(eCachedResult.C2A_RegionScanEnd, 0);
+            var scanFirstPeptide = GetStoredValueInt(CachedResultTypes.ScanFirstFilterPassingPeptide, 0);
+            var scanEndC2A = GetStoredValueInt(CachedResultTypes.C2A_RegionScanEnd, 0);
 
             m_DBInterface.SetQuery("SELECT BasePeakSignalToNoiseRatio, TotalIonIntensity "
                 + " FROM temp_ScanStats"
@@ -2112,7 +2112,7 @@ namespace SMAQC
 
         private double ComputeReporterIonNoiseThreshold(IReadOnlyCollection<string> ionColumns)
         {
-            var cachedThreshold = GetStoredValue(eCachedResult.ReporterIonNoiseThreshold, -1);
+            var cachedThreshold = GetStoredValue(CachedResultTypes.ReporterIonNoiseThreshold, -1);
             if (cachedThreshold > -1)
                 return cachedThreshold;
 
@@ -2158,11 +2158,11 @@ namespace SMAQC
                 var nonZeroAverage = overallSum / overallCount;
                 var noiseThreshold = nonZeroAverage / 1000.0;
 
-                AddUpdateResultsStorage(eCachedResult.ReporterIonNoiseThreshold, noiseThreshold);
+                AddUpdateResultsStorage(CachedResultTypes.ReporterIonNoiseThreshold, noiseThreshold);
                 return noiseThreshold;
             }
 
-            AddUpdateResultsStorage(eCachedResult.ReporterIonNoiseThreshold, 0);
+            AddUpdateResultsStorage(CachedResultTypes.ReporterIonNoiseThreshold, 0);
             return 0;
         }
 

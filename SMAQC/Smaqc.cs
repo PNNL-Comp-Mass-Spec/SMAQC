@@ -11,7 +11,7 @@ namespace SMAQC
 {
     internal static class Smaqc
     {
-        private struct udtOptions
+        private struct ProcessingOptions
         {
             public string InputFolderPath;
             public string Instrument_id;
@@ -61,7 +61,7 @@ namespace SMAQC
         /// <summary>
         /// Options
         /// </summary>
-        private static udtOptions mOptions;
+        private static ProcessingOptions mOptions;
 
         private static readonly StringBuilder mQueryBuilder = new StringBuilder();
 
@@ -93,6 +93,7 @@ namespace SMAQC
             var commandLineParser = new clsParseCommandLine();
             var success = false;
 
+            mOptions = new ProcessingOptions();
             mOptions.Clear();
 
             if (commandLineParser.ParseCommandLine())

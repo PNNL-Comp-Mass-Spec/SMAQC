@@ -202,9 +202,9 @@ namespace SMAQC
                 };
 
                 // Attach the error handlers
-                reader.StatusEvent += mPHRPReader_MessageEvent;
-                reader.ErrorEvent += mPHRPReader_ErrorEvent;
-                reader.WarningEvent += mPHRPReader_WarningEvent;
+                reader.StatusEvent += PHRPReader_MessageEvent;
+                reader.ErrorEvent += PHRPReader_ErrorEvent;
+                reader.WarningEvent += PHRPReader_WarningEvent;
 
                 // Report any errors cached during instantiation of mPHRPReader
                 foreach (var message in reader.ErrorMessages.Distinct())
@@ -471,17 +471,17 @@ namespace SMAQC
             mSystemLogManager.AddApplicationLogError(message);
         }
 
-        private void mPHRPReader_ErrorEvent(string message, Exception ex)
+        private void PHRPReader_ErrorEvent(string message, Exception ex)
         {
             mSystemLogManager.AddApplicationLogError("PHRPReader error: " + message);
         }
 
-        private void mPHRPReader_MessageEvent(string message)
+        private void PHRPReader_MessageEvent(string message)
         {
             mSystemLogManager.AddApplicationLog(message);
         }
 
-        private void mPHRPReader_WarningEvent(string message)
+        private void PHRPReader_WarningEvent(string message)
         {
             mSystemLogManager.AddApplicationLogWarning("PHRPReader warning: " + message);
         }
