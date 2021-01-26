@@ -298,14 +298,12 @@ namespace SMAQC
                     // If found [not -1]
                     if (index > -1)
                     {
-                        // Console.WriteLine("store i={0} && index={1}", i, index);
                         // Store index of our part_id as index value as per function requirements [see details above each function name]
                         columnIndexMap.Add(index);
                     }
                     else
                     {
                         // Not found ... add -1 to indicate we will skip this column
-                        // Console.WriteLine("store i={0} && index={1}", i, index);
                         columnIndexMap.Add(-1);
                     }
                 }

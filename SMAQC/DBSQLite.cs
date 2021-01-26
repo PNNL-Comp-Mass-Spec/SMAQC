@@ -215,7 +215,6 @@ namespace SMAQC
                                 continue;
                             }
 
-                            // Console.WriteLine("line [{0}]", line);
                             // Fetch values
                             var values = SQLiteBulkInsert_TokenizeLine(line);
 

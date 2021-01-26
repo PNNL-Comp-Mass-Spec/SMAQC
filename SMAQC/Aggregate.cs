@@ -159,7 +159,6 @@ namespace SMAQC
                 }
 
                 fileImportList.Add(filePath, excludedColumnNameSuffixes);
-                // Console.WriteLine("file {0}:: {1} -- ({2})", i, filePaths[i], index);
             }
             return fileImportList;
         }
