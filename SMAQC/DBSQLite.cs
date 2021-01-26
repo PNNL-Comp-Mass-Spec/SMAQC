@@ -64,7 +64,7 @@ namespace SMAQC
             Open();
 
             // Create any missing tables and add any missing columns
-            mSQLiteTools.create_missing_tables(mConnection);
+            mSQLiteTools.CreateMissingTables(mConnection);
 
         }
 

@@ -63,7 +63,7 @@ namespace SMAQC
             XTandemImportFiles.Add("xt_SeqToProteinMap", true);
 
             // Ensure temp.txt does not exist ... if program closed file not removed and on restart crashes
-            checkTempFileNotExist();
+            CheckTempFileNotExist();
 
         }
 
@@ -76,7 +76,7 @@ namespace SMAQC
         }
 
         // This ensures that our temp file has been deleted in some cases if it is not due to program crashing we can have problems
-        private void checkTempFileNotExist()
+        private void CheckTempFileNotExist()
         {
             const string file = "temp.txt";
             if (File.Exists(file))

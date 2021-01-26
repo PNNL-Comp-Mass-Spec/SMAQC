@@ -153,7 +153,7 @@ namespace SMAQC
             RunSql(cmd, "CREATE INDEX IX_" + tableNameClean + "_" + columnNameClean + " on [" + tableName + "] ([" + columnName + "])");
         }
 
-        public void create_missing_tables(SQLiteConnection connection)
+        public void CreateMissingTables(SQLiteConnection connection)
         {
             using (var cmd = connection.CreateCommand())
             {

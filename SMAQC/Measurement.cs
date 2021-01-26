@@ -26,7 +26,7 @@ namespace SMAQC
             public double Score;
         }
 
-        struct udtMS2_4Counts
+        private struct MsMsQuartileCounts
         {
             // Keys are quartile (1,2,3,4); values are the number of MS/MS scans in the quartile
             public Dictionary<int, int> ScanCount;
@@ -92,8 +92,8 @@ namespace SMAQC
         private List<double> m_Cached_DelM_ppm;                                         // Delta mass, in ppm
 
         // Cached data for MS4
-        bool m_MS2_4_Counts_Cached;
-        udtMS2_4Counts m_Cached_MS2_4_Counts;
+        private bool m_MS2_QuartileCounts_Cached;
+        private MsMsQuartileCounts m_Cached_MS2_QuartileCounts;
 
         // Cached data for the ReporterIon metrics
         private List<string> mReporterIonColumns;
@@ -154,9 +154,9 @@ namespace SMAQC
             m_Cached_DelM?.Clear();
             m_Cached_DelM_ppm?.Clear();
 
-            m_MS2_4_Counts_Cached = false;
-            m_Cached_MS2_4_Counts.ScanCount?.Clear();
-            m_Cached_MS2_4_Counts.PassFilt?.Clear();
+            m_MS2_QuartileCounts_Cached = false;
+            m_Cached_MS2_QuartileCounts.ScanCount?.Clear();
+            m_Cached_MS2_QuartileCounts.PassFilt?.Clear();
 
             mReporterIonColumns?.Clear();
             mIgnoreReporterIons = false;
@@ -1577,7 +1577,7 @@ namespace SMAQC
         public string MS2_4A()
         {
 
-            if (!m_MS2_4_Counts_Cached)
+            if (!m_MS2_QuartileCounts_Cached)
                 Cache_MS2_4_Data();
 
             var result = Compute_MS2_4_Ratio(1);
@@ -1591,7 +1591,7 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_4B()
         {
-            if (!m_MS2_4_Counts_Cached)
+            if (!m_MS2_QuartileCounts_Cached)
                 Cache_MS2_4_Data();
 
             var result = Compute_MS2_4_Ratio(2);
@@ -1606,7 +1606,7 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_4C()
         {
-            if (!m_MS2_4_Counts_Cached)
+            if (!m_MS2_QuartileCounts_Cached)
                 Cache_MS2_4_Data();
 
             var result = Compute_MS2_4_Ratio(3);
@@ -1621,7 +1621,7 @@ namespace SMAQC
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         public string MS2_4D()
         {
-            if (!m_MS2_4_Counts_Cached)
+            if (!m_MS2_QuartileCounts_Cached)
                 Cache_MS2_4_Data();
 
             var result = Compute_MS2_4_Ratio(4);
@@ -1632,11 +1632,11 @@ namespace SMAQC
         {
             double result = 0;
 
-            if (m_Cached_MS2_4_Counts.ScanCount.TryGetValue(quartile, out var scanCountTotal))
+            if (m_Cached_MS2_QuartileCounts.ScanCount.TryGetValue(quartile, out var scanCountTotal))
             {
                 if (scanCountTotal > 0)
                 {
-                    result = m_Cached_MS2_4_Counts.PassFilt[quartile] / (double)scanCountTotal;
+                    result = m_Cached_MS2_QuartileCounts.PassFilt[quartile] / (double)scanCountTotal;
                 }
             }
 
@@ -1660,7 +1660,7 @@ namespace SMAQC
             var scanCountMS2 = int.Parse(measurementResults["MS2ScanCount"]);
 
             // Note that we sort by ascending PeakMaxIntensity
-            // Thus, quartile 1 in m_Cached_MS2_4_Counts will have the lowest abundance peptides
+            // Thus, quartile 1 in m_Cached_MS2_QuartileCounts will have the lowest abundance peptides
 
             m_DBInterface.SetQuery("SELECT temp_PSMs.Scan, temp_SICStats.PeakMaxIntensity, Min(temp_PSMs.MSGFSpecProb) AS Peptide_Score "
                 + " FROM temp_PSMs, temp_SICStats"
@@ -1669,15 +1669,15 @@ namespace SMAQC
                 + " ORDER BY temp_SICStats.PeakMaxIntensity;");
 
             // Keys are quartile (1,2,3,4); values are the number of MS/MS scans in the quartile
-            m_Cached_MS2_4_Counts.ScanCount = new Dictionary<int, int>();
+            m_Cached_MS2_QuartileCounts.ScanCount = new Dictionary<int, int>();
 
             // Keys are quartile (1,2,3,4); values are the number of confidently identified MS/MS scans in the quartile
-            m_Cached_MS2_4_Counts.PassFilt = new Dictionary<int, int>();
+            m_Cached_MS2_QuartileCounts.PassFilt = new Dictionary<int, int>();
 
             for (var i = 1; i <= 4; i++)
             {
-                m_Cached_MS2_4_Counts.ScanCount.Add(i, 0);
-                m_Cached_MS2_4_Counts.PassFilt.Add(i, 0);
+                m_Cached_MS2_QuartileCounts.ScanCount.Add(i, 0);
+                m_Cached_MS2_QuartileCounts.PassFilt.Add(i, 0);
             }
 
             var scansProcessed = 1;
@@ -1726,7 +1726,7 @@ namespace SMAQC
             if (scansProcessed > scanCountMS2 + 1 && scansProcessed > scanCountMS2 * 1.01)
                 Console.WriteLine("Possible bug in Cache_MS2_4_Data, running_scan_count >> scanCountMS2: " + scansProcessed + " vs. " + scanCountMS2);
 
-            m_MS2_4_Counts_Cached = true;
+            m_MS2_QuartileCounts_Cached = true;
 
         }
 
@@ -1735,14 +1735,14 @@ namespace SMAQC
 
             /*
               int newValue;
-              newValue = m_Cached_MS2_4_Counts.ScanCount[quartile];
-              m_Cached_MS2_4_Counts.ScanCount[quartile] = newValue;
+              newValue = m_Cached_MS2_QuartileCounts.ScanCount[quartile];
+              m_Cached_MS2_QuartileCounts.ScanCount[quartile] = newValue;
             */
 
-            m_Cached_MS2_4_Counts.ScanCount[quartile]++;
+            m_Cached_MS2_QuartileCounts.ScanCount[quartile]++;
 
             if (passedFilter)
-                m_Cached_MS2_4_Counts.PassFilt[quartile]++;
+                m_Cached_MS2_QuartileCounts.PassFilt[quartile]++;
         }
 
         /// <summary>
