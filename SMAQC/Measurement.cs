@@ -18,6 +18,8 @@ namespace SMAQC
     /// </remarks>
     internal class Measurement
     {
+        // Ignore Spelling: frag, da, hyperscore, phos
+
         private struct PeptideEntry
         {
             public int Scan;
@@ -1656,7 +1658,7 @@ namespace SMAQC
                 + " GROUP BY Scan "
                 + " ORDER BY Scan;");
 
-            // Track X!Tandem Hyperscore or -Log10(MSGFSpecProb)
+            // Track X!Tandem hyperscore or -Log10(MSGFSpecProb)
             var peptideScoreList = new List<double>();
 
             string[] fields = { "Scan", "Peptide_Score" };

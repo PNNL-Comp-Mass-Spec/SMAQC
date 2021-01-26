@@ -8,6 +8,8 @@ namespace SMAQC
 {
     internal class DBSQLiteTools
     {
+        // Ignore Spelling: xt, frag, phos, plex, hyperscore, da, sqlite
+
         private readonly Regex mNonAlphanumericMatcher;
 
         /// <summary>

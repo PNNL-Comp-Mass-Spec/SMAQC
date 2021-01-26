@@ -11,6 +11,8 @@ namespace SMAQC
 {
     internal static class Smaqc
     {
+        // Ignore Spelling: Phos, Rudnick, mol, doi
+
         private struct ProcessingOptions
         {
             public string InputFolderPath;

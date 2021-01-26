@@ -6,6 +6,8 @@ namespace SMAQC
 {
     internal class DBWrapper
     {
+        // Ignore Spelling: xt
+
         // Delegate function for error events
         public delegate void DBErrorEventHandler(string errorMessage);
         public event DBErrorEventHandler ErrorEvent;

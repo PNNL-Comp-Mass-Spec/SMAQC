@@ -7,6 +7,8 @@ namespace SMAQC
 {
     internal class DataFileFormatter
     {
+        // Ignore Spelling: frag, xt, hyperscore
+
         /// <summary>
         /// List of files that need to be reformatted
         /// e.g. ScanStats, ScanStatsEx, SICStats

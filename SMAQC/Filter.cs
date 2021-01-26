@@ -9,6 +9,8 @@ namespace SMAQC
 {
     internal class Filter
     {
+        // Ignore Spelling: prepend, phosph, trypsinogen, Da
+
         public readonly DBWrapper mDBWrapper;
 
         public readonly string mInstrumentId;
@@ -258,7 +260,7 @@ namespace SMAQC
 
                 Console.WriteLine("Populating database using PHRP");
 
-                // Regex to match keratin proteins
+                // RegEx to match keratin proteins
                 var reKeratinProtein = clsMSGFResultsSummarizer.GetKeratinRegEx();
 
                 // RegEx to match trypsin proteins

@@ -10,6 +10,8 @@ namespace SMAQC
 {
     internal class DBSQLite : IDBInterface
     {
+        // Ignore Spelling: Da, strftime, localtime
+
         /// <summary>
         /// SQLite connection
         /// </summary>
