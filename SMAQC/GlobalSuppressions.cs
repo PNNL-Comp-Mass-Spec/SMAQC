@@ -5,4 +5,5 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "<Pending>", Scope = "member", Target = "~M:SMAQC.Measurement.ComputeMedian(System.Collections.Generic.List{System.Double})~System.Double")]
+[assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not needed", Scope = "member", Target = "~M:SMAQC.Measurement.ComputeMedian(System.Collections.Generic.List{System.Double})~System.Double")]
+[assembly: SuppressMessage("Style", "IDE0028:Simplify collection initialization", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:SMAQC.DataFileFormatter.#ctor")]
