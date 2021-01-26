@@ -29,7 +29,7 @@ namespace SMAQC
         public DataFileFormatter()
         {
             // ReSharper disable once UseObjectOrCollectionInitializer
-            mValidFilesToReFormat = new Dictionary<string, List<string>>(StringComparer.InvariantCultureIgnoreCase);
+            mValidFilesToReFormat = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
             // ScanStats columns
             mValidFilesToReFormat.Add("ScanStats",
@@ -332,7 +332,7 @@ namespace SMAQC
         {
             for (var i = 0; i < knownColumns.Count; i++)
             {
-                if (string.Equals(knownColumns[i], columnName, StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals(knownColumns[i], columnName, StringComparison.OrdinalIgnoreCase))
                 {
                     return i;
                 }

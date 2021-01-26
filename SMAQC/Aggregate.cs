@@ -176,7 +176,7 @@ namespace SMAQC
 
                 // Valid file
                 var excludedFieldNameSuffixes = new List<string>();
-                if (filePath.ToLower().EndsWith("_reporterions.txt"))
+                if (filePath.EndsWith("_ReporterIons.txt", StringComparison.OrdinalIgnoreCase))
                 {
                     excludedFieldNameSuffixes.Add("_SignalToNoise");
                     excludedFieldNameSuffixes.Add("_Resolution");
@@ -200,7 +200,7 @@ namespace SMAQC
 
             // Now check for dataset name in filename
             // If found a valid file in a certain dataset
-            if (filename != null && filename.ToLower().StartsWith(m_CurrentDataset.ToLower()))
+            if (filename != null && filename.StartsWith(m_CurrentDataset, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
@@ -214,7 +214,7 @@ namespace SMAQC
             // Get filename without extension
             filename = Path.GetFileNameWithoutExtension(filename);
 
-            if (filename == null || !filename.ToLower().StartsWith(m_CurrentDataset.ToLower()))
+            if (filename == null || !filename.StartsWith(m_CurrentDataset, StringComparison.OrdinalIgnoreCase))
                 return false;
 
             if (filename.Length < m_CurrentDataset.Length + 1)

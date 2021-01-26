@@ -363,7 +363,7 @@ namespace SMAQC
                     byte phosphoFlag = 0;
                     foreach (var modification in currentPSM.ModifiedResidues)
                     {
-                        if (string.Equals(modification.ModDefinition.MassCorrectionTag, "Phosph", StringComparison.InvariantCultureIgnoreCase))
+                        if (string.Equals(modification.ModDefinition.MassCorrectionTag, "Phosph", StringComparison.OrdinalIgnoreCase))
                         {
                             phosphoFlag = 1;
                             break;
@@ -468,11 +468,9 @@ namespace SMAQC
                 return false;
             }
 
-            var baseFilenameLCase = baseName.ToLower();
-
             foreach (var fileExtension in validFileExtensions)
             {
-                if (baseFilenameLCase.EndsWith(fileExtension.ToLower()))
+                if (baseName.EndsWith(fileExtension, StringComparison.OrdinalIgnoreCase))
                 {
                     // Match found
                     targetTableName = fileExtension;

@@ -275,22 +275,22 @@ namespace SMAQC
                         if (matchFound)
                             continue;
 
-                        if (string.Equals(sSuffix, "_ScanStats", StringComparison.InvariantCultureIgnoreCase))
+                        if (string.Equals(fileSuffix, "_ScanStats", StringComparison.OrdinalIgnoreCase))
                         {
                             scanStatsMissing = true;
                         }
                         else
-                        if (string.Equals(sSuffix, "_ScanStatsEx", StringComparison.InvariantCultureIgnoreCase))
+                        if (string.Equals(fileSuffix, "_ScanStatsEx", StringComparison.OrdinalIgnoreCase))
                         {
                             scanStatsExMissing = true;
                         }
                         else
-                        if (string.Equals(sSuffix, "_SICStats", StringComparison.InvariantCultureIgnoreCase))
+                        if (string.Equals(fileSuffix, "_SICStats", StringComparison.OrdinalIgnoreCase))
                         {
                             sicStatsMissing = true;
                         }
                         else
-                        if (string.Equals(sSuffix, "_ReporterIons", StringComparison.InvariantCultureIgnoreCase))
+                        if (string.Equals(fileSuffix, "_ReporterIons", StringComparison.OrdinalIgnoreCase))
                         {
                             reporterIonsMissing = true;
                         }

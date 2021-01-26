@@ -557,7 +557,7 @@ namespace SMAQC
             {
                 columnIndex++;
 
-                var addColumn = excludedColumnNameSuffixes.All(suffix => !columnName.EndsWith(suffix, StringComparison.InvariantCultureIgnoreCase));
+                var addColumn = excludedColumnNameSuffixes.All(suffix => !columnName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase));
 
                 if (!addColumn)
                     continue;
