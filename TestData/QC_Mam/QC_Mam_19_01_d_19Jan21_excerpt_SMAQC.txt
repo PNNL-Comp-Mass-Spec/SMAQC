@@ -1,0 +1,63 @@
+SMAQC SCANNER RESULTS
+-----------------------------------------------------------
+SMAQC Version: 1.3.7695.31021 (January 25, 2021)
+Instrument ID: 160
+Scan Date: 2021-01-25 17:14:13
+[Data]
+Dataset, Measurement Name, Measurement Value
+QC_Mam_19_01_d_19Jan21_excerpt, C_1A, 0.000723
+QC_Mam_19_01_d_19Jan21_excerpt, C_1B, 0.000784
+QC_Mam_19_01_d_19Jan21_excerpt, C_2A, 36.6875
+QC_Mam_19_01_d_19Jan21_excerpt, C_2B, 226.1261
+QC_Mam_19_01_d_19Jan21_excerpt, C_3A, 8.68
+QC_Mam_19_01_d_19Jan21_excerpt, C_3B, 8.95
+QC_Mam_19_01_d_19Jan21_excerpt, C_4A, 6.31
+QC_Mam_19_01_d_19Jan21_excerpt, C_4B, 6.74
+QC_Mam_19_01_d_19Jan21_excerpt, C_4C, 10.08
+QC_Mam_19_01_d_19Jan21_excerpt, DS_1A, 22.262
+QC_Mam_19_01_d_19Jan21_excerpt, DS_1B, 8.867
+QC_Mam_19_01_d_19Jan21_excerpt, DS_2A, 1179
+QC_Mam_19_01_d_19Jan21_excerpt, DS_2B, 15670
+QC_Mam_19_01_d_19Jan21_excerpt, DS_3A, 1.381
+QC_Mam_19_01_d_19Jan21_excerpt, DS_3B, 1.081
+QC_Mam_19_01_d_19Jan21_excerpt, IS_1A, 16
+QC_Mam_19_01_d_19Jan21_excerpt, IS_1B, 15
+QC_Mam_19_01_d_19Jan21_excerpt, IS_2, 637.191
+QC_Mam_19_01_d_19Jan21_excerpt, IS_3A, 0
+QC_Mam_19_01_d_19Jan21_excerpt, IS_3B, 1.34488
+QC_Mam_19_01_d_19Jan21_excerpt, IS_3C, 0.389224
+QC_Mam_19_01_d_19Jan21_excerpt, Keratin_2A, 0
+QC_Mam_19_01_d_19Jan21_excerpt, Keratin_2C, 0
+QC_Mam_19_01_d_19Jan21_excerpt, MS1_1, 16.051
+QC_Mam_19_01_d_19Jan21_excerpt, MS1_2A, 348.7
+QC_Mam_19_01_d_19Jan21_excerpt, MS1_2B, 463790
+QC_Mam_19_01_d_19Jan21_excerpt, MS1_3A, 61.295
+QC_Mam_19_01_d_19Jan21_excerpt, MS1_3B, 2702700
+QC_Mam_19_01_d_19Jan21_excerpt, MS1_5A, 0.006504
+QC_Mam_19_01_d_19Jan21_excerpt, MS1_5B, 0.007619
+QC_Mam_19_01_d_19Jan21_excerpt, MS1_5C, 3.985
+QC_Mam_19_01_d_19Jan21_excerpt, MS1_5D, 3.985
+QC_Mam_19_01_d_19Jan21_excerpt, MS2_1, 105
+QC_Mam_19_01_d_19Jan21_excerpt, MS2_2, 55.115
+QC_Mam_19_01_d_19Jan21_excerpt, MS2_3, 226
+QC_Mam_19_01_d_19Jan21_excerpt, MS2_4A, 0.9887
+QC_Mam_19_01_d_19Jan21_excerpt, MS2_4B, 0.9935
+QC_Mam_19_01_d_19Jan21_excerpt, MS2_4C, 0.9943
+QC_Mam_19_01_d_19Jan21_excerpt, MS2_4D, 0.9952
+QC_Mam_19_01_d_19Jan21_excerpt, MS2_RepIon_1Missing, 0
+QC_Mam_19_01_d_19Jan21_excerpt, MS2_RepIon_2Missing, 0
+QC_Mam_19_01_d_19Jan21_excerpt, MS2_RepIon_3Missing, 0
+QC_Mam_19_01_d_19Jan21_excerpt, MS2_RepIon_All, 0
+QC_Mam_19_01_d_19Jan21_excerpt, P_1A, 16.03
+QC_Mam_19_01_d_19Jan21_excerpt, P_1B, -16.03
+QC_Mam_19_01_d_19Jan21_excerpt, P_2A, 16496
+QC_Mam_19_01_d_19Jan21_excerpt, P_2B, 15656
+QC_Mam_19_01_d_19Jan21_excerpt, P_2C, 15511
+QC_Mam_19_01_d_19Jan21_excerpt, P_3, 0.004964
+QC_Mam_19_01_d_19Jan21_excerpt, P_4A, 0.99506
+QC_Mam_19_01_d_19Jan21_excerpt, P_4B, 0.447395
+QC_Mam_19_01_d_19Jan21_excerpt, Phos_2A, 0
+QC_Mam_19_01_d_19Jan21_excerpt, Phos_2C, 0
+QC_Mam_19_01_d_19Jan21_excerpt, Trypsin_2A, 21
+QC_Mam_19_01_d_19Jan21_excerpt, Trypsin_2C, 7
+
