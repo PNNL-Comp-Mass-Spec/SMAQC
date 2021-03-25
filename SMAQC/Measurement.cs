@@ -155,7 +155,7 @@ namespace SMAQC
 
         private bool mIgnoreReporterIons;
 
-        private readonly clsPeptideMassCalculator mPeptideMassCalculator;
+        private readonly PeptideMassCalculator mPeptideMassCalculator;
 
         /// <summary>
         /// Constructor
@@ -166,7 +166,7 @@ namespace SMAQC
         {
             mRandomId = randomId;
             mDBInterface = DBInterface;
-            mPeptideMassCalculator = new clsPeptideMassCalculator();
+            mPeptideMassCalculator = new PeptideMassCalculator();
         }
 
         /// <summary>
@@ -555,7 +555,7 @@ namespace SMAQC
             Dictionary<string, string> measurementResults;
             while (mDBInterface.ReadNextRow(columnNames, out measurementResults) && measurementResults.Count > 0)
             {
-                clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(measurementResults["Peptide_Sequence"], out var peptideResidues, out _, out _);
+                PeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(measurementResults["Peptide_Sequence"], out var peptideResidues, out _, out _);
 
                 var currentPeptide = new PeptideEntry();
 

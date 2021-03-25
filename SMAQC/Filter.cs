@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using MSGFResultsSummarizer;
+using Summarizer = MSGFResultsSummarizer;
 using PHRPReader;
+using PHRPReader.Data;
 
 namespace SMAQC
 {
@@ -181,7 +182,7 @@ namespace SMAQC
         public bool LoadFilesUsingPHRP(string inputDirectoryPath, string dataset)
         {
             // Look for a valid input file
-            var inputFilePath = clsPHRPReader.AutoDetermineBestInputFile(inputDirectoryPath, dataset);
+            var inputFilePath = ReaderFactory.AutoDetermineBestInputFile(inputDirectoryPath, dataset);
 
             if (string.IsNullOrEmpty(inputFilePath))
             {
@@ -194,9 +195,9 @@ namespace SMAQC
                 const bool loadMSGFResults = true;
                 const bool loadScanStats = false;
 
-                var peptideMassCalculator = new clsPeptideMassCalculator();
+                var peptideMassCalculator = new PeptideMassCalculator();
 
-                var reader = new clsPHRPReader(inputFilePath, clsPHRPReader.PeptideHitResultTypes.Unknown, loadModsAndSeqInfo, loadMSGFResults, loadScanStats)
+                var reader = new ReaderFactory(inputFilePath, Enums.PeptideHitResultTypes.Unknown, loadModsAndSeqInfo, loadMSGFResults, loadScanStats)
                 {
                     EchoMessagesToConsole = false,
                     SkipDuplicatePSMs = true
@@ -247,7 +248,7 @@ namespace SMAQC
                 // The SeqID value tracked by clsNormalizedPeptideInfo is the SeqID of the first sequence to get normalized to the given entry
                 // If sequenceInfoAvailable is False, values are the ResultID value of the first peptide to get normalized to the given entry
                 //
-                var normalizedPeptides = new Dictionary<string, List<clsNormalizedPeptideInfo>>();
+                var normalizedPeptides = new Dictionary<string, List<Summarizer.NormalizedPeptideInfo>>();
 
                 var bestPeptideScan = -1;
                 var bestPeptideCharge = -1;
@@ -261,10 +262,10 @@ namespace SMAQC
                 Console.WriteLine("Populating database using PHRP");
 
                 // RegEx to match keratin proteins
-                var reKeratinProtein = clsMSGFResultsSummarizer.GetKeratinRegEx();
+                var reKeratinProtein = Summarizer.MSGFResultsSummarizer.GetKeratinRegEx();
 
                 // RegEx to match trypsin proteins
-                var reTrypsinProtein = clsMSGFResultsSummarizer.GetTrypsinRegEx();
+                var reTrypsinProtein = Summarizer.MSGFResultsSummarizer.GetTrypsinRegEx();
 
                 // Read the data using PHRP Reader
                 // Only store the best scoring peptide for each scan/charge combo
@@ -275,7 +276,7 @@ namespace SMAQC
                     var currentPSM = reader.CurrentPSM;
                     lineNumber++;
 
-                    clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(currentPSM.Peptide, out var currentPeptide, out _, out _);
+                    PeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(currentPSM.Peptide, out var currentPeptide, out _, out _);
 
                     if (prevScan == currentPSM.ScanNumberStart && prevCharge == currentPSM.Charge && prevPeptide == currentPeptide)
                     {
@@ -314,16 +315,16 @@ namespace SMAQC
 
                     var normalizedPeptide = NormalizeSequence(currentPSM.PeptideCleanSequence, currentPSM.ModifiedResidues, currentPSM.SeqID);
 
-                    var normalizedSeqID = clsMSGFResultsSummarizer.FindNormalizedSequence(normalizedPeptides, normalizedPeptide);
+                    var normalizedSeqID = Summarizer.MSGFResultsSummarizer.FindNormalizedSequence(normalizedPeptides, normalizedPeptide);
 
-                    if (normalizedSeqID == clsPSMInfo.UNKNOWN_SEQID)
+                    if (normalizedSeqID == Summarizer.PSMInfo.UNKNOWN_SEQUENCE_ID)
                     {
                         // New normalized peptide
 
                         if (!normalizedPeptides.TryGetValue(normalizedPeptide.CleanSequence, out var observedNormalizedPeptides))
                         {
                             // This clean sequence is not yet tracked; add it
-                            observedNormalizedPeptides = new List<clsNormalizedPeptideInfo>();
+                            observedNormalizedPeptides = new List<Summarizer.NormalizedPeptideInfo>();
                             normalizedPeptides.Add(normalizedPeptide.CleanSequence, observedNormalizedPeptides);
                         }
 
@@ -335,7 +336,7 @@ namespace SMAQC
 
                         // Make a new normalized peptide entry that does not have clean sequence
                         // (to conserve memory, since keys in dictionary normalizedPeptides are clean sequence)
-                        var normalizedPeptideToStore = new clsNormalizedPeptideInfo(string.Empty);
+                        var normalizedPeptideToStore = new Summarizer.NormalizedPeptideInfo(string.Empty);
                         normalizedPeptideToStore.StoreModifications(normalizedPeptide.Modifications);
                         normalizedPeptideToStore.SeqID = normalizedSeqID;
 
@@ -415,7 +416,7 @@ namespace SMAQC
             return false;
         }
 
-        private clsNormalizedPeptideInfo NormalizeSequence(string peptideCleanSequence, IEnumerable<clsAminoAcidModInfo> modifiedResidues, int seqId)
+        private Summarizer.NormalizedPeptideInfo NormalizeSequence(string peptideCleanSequence, IEnumerable<AminoAcidModInfo> modifiedResidues, int seqId)
         {
             var modifications = new List<KeyValuePair<string, int>>();
 
@@ -432,7 +433,7 @@ namespace SMAQC
                 modifications.Add(new KeyValuePair<string, int>(modSymbolOrName, residueIndex));
             }
 
-            var normalizedPeptide = clsMSGFResultsSummarizer.GetNormalizedPeptideInfo(peptideCleanSequence, modifications, seqId);
+            var normalizedPeptide = Summarizer.MSGFResultsSummarizer.GetNormalizedPeptideInfo(peptideCleanSequence, modifications, seqId);
             return normalizedPeptide;
         }
 
