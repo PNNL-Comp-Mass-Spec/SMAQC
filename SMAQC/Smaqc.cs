@@ -70,7 +70,7 @@ namespace SMAQC
         // Measurement results
         private static Dictionary<string, string> mResults = new();
 
-        private const string SMAQC_BUILD_DATE = "January 26, 2021";
+        private const string SMAQC_BUILD_DATE = "March 24, 2021";
 
         // Define the filename suffixes
         private static readonly string[] mMasicFileExtensions = { "_ScanStats", "_ScanStatsEx", "_SICStats", "_ReporterIons" };
