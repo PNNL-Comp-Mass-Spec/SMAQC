@@ -52,7 +52,7 @@ namespace SMAQC
         /// <summary>
         /// Some measurements have data required by others ... will be stored here
         /// </summary>
-        private readonly Dictionary<CachedResultTypes, double> mResultsStorage = new Dictionary<CachedResultTypes, double>();
+        private readonly Dictionary<CachedResultTypes, double> mResultsStorage = new();
 
         private bool mMedianPeakWidthDataCached;
 
@@ -60,53 +60,53 @@ namespace SMAQC
         /// Best Scan Number for each peptide
         /// </summary>
         /// <remarks>Used when computing median peak widths</remarks>
-        private readonly List<int> PsmBestScan = new List<int>();
+        private readonly List<int> PsmBestScan = new();
 
         /// <summary>
         /// Full width at half max, in scans; keys are FragScanNumbers
         /// </summary>
         /// <remarks>Used when computing median peak widths</remarks>
-        private readonly Dictionary<int, double> PsmFWHMinScans = new Dictionary<int, double>();
+        private readonly Dictionary<int, double> PsmFWHMinScans = new();
 
         /// <summary>
         /// Optimal peak apex scan number; keys are FragScanNumbers
         /// </summary>
         /// <remarks>Used when computing median peak widths</remarks>
-        private readonly Dictionary<int, int> PsmOptimalPeakApexScanNumber = new Dictionary<int, int>();
+        private readonly Dictionary<int, int> PsmOptimalPeakApexScanNumber = new();
 
         /// <summary>
         /// Scan time for given scan number; keys are scan numbers
         /// </summary>
         /// <remarks>Used when computing median peak widths</remarks>
-        private readonly Dictionary<int, double> PsmScanTime = new Dictionary<int, double>();
+        private readonly Dictionary<int, double> PsmScanTime = new();
 
         /// <summary>
         /// Cached data for PSM stats by charge
         /// </summary>
         /// <remarks>Number of filter-passing PSMs for each charge state</remarks>
-        private readonly Dictionary<int, int> mCachedPSMStatsByCharge = new Dictionary<int, int>();
+        private readonly Dictionary<int, int> mCachedPSMStatsByCharge = new();
 
         /// <summary>
         /// Cached data for DS_1
         /// </summary>
         /// <remarks>Keys are the number of spectra that a peptide was observed in (passing filters) and values are the number of peptides identified by Key spectra</remarks>
-        private readonly Dictionary<int, int> mPeptideSamplingStats = new Dictionary<int, int>();
+        private readonly Dictionary<int, int> mPeptideSamplingStats = new();
 
         /// <summary>
         /// Cached data for DS_3: Stores MS1 max / MS1 sampled abundance
         /// </summary>
-        private readonly List<double> mCachedDS3 = new List<double>();
+        private readonly List<double> mCachedDS3 = new();
 
         /// <summary>
         /// Cached data for DS_3: Stores MS1 max / MS1 sampled abundance for ratios in the bottom 50%
         /// </summary>
-        private readonly List<double> mCachedDS3_Bottom50pct = new List<double>();
+        private readonly List<double> mCachedDS3_Bottom50pct = new();
 
         /// <summary>
         /// Cached data for MS1_2
         /// </summary>
-        private readonly List<double> mCachedBasePeakSignalToNoiseRatio = new List<double>();
-        private readonly List<double> mCachedTotalIonIntensity = new List<double>();
+        private readonly List<double> mCachedBasePeakSignalToNoiseRatio = new();
+        private readonly List<double> mCachedTotalIonIntensity = new();
 
         /// <summary>
         /// Cached data for MS1_3
@@ -117,18 +117,18 @@ namespace SMAQC
         /// <summary>
         /// PeakMaxIntensity for each filter-passing PSM
         /// </summary>
-        private readonly List<double> mCachedMS1_3 = new List<double>();
+        private readonly List<double> mCachedMS1_3 = new();
 
         /// <summary>
         /// Cached data for MS1_5: Delta mass
         /// </summary>
-        private readonly List<double> mCachedDelM = new List<double>();
+        private readonly List<double> mCachedDelM = new();
 
         /// <summary>
         /// Cached data for MS1_5: Delta mass, in ppm
         /// </summary>
         // ReSharper disable once IdentifierTypo
-        private readonly List<double> mCachedDelMppm = new List<double>();
+        private readonly List<double> mCachedDelMppm = new();
 
         private bool mMS2QuartileCountsCached;
 
@@ -138,7 +138,7 @@ namespace SMAQC
         /// <remarks>
         /// Keys are quartile (1,2,3,4); values are the number of MS/MS scans in the quartile
         /// </remarks>
-        private readonly Dictionary<int, int> mMS2QuartileScanCounts = new Dictionary<int, int>();
+        private readonly Dictionary<int, int> mMS2QuartileScanCounts = new();
 
         /// <summary>
         /// Cached data for MS4: confident PSMs
@@ -146,12 +146,12 @@ namespace SMAQC
         /// <remarks>
         /// Keys are quartile (1,2,3,4); values are the number of confidently identified MS/MS scans in the quartile (MSGFSpecProb less than 1E-12)
         /// </remarks>
-        private readonly Dictionary<int, int> mMS2QuartileConfidentPSMs = new Dictionary<int, int>();
+        private readonly Dictionary<int, int> mMS2QuartileConfidentPSMs = new();
 
         /// <summary>
         /// Cached data for the ReporterIon metrics
         /// </summary>
-        private readonly List<string> mReporterIonColumns = new List<string>();
+        private readonly List<string> mReporterIonColumns = new();
 
         private bool mIgnoreReporterIons;
 

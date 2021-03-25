@@ -23,7 +23,7 @@ namespace SMAQC
         /// <summary>
         /// List of valid datasets
         /// </summary>
-        private readonly List<string> ValidDataSets = new List<string>();
+        private readonly List<string> ValidDataSets = new();
 
         /// <summary>
         /// Current running dataset

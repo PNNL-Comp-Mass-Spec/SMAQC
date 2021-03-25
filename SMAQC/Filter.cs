@@ -18,7 +18,7 @@ namespace SMAQC
 
         public readonly int mRandomId;
 
-        public readonly DataFileFormatter mDataFileFormatter = new DataFileFormatter();
+        public readonly DataFileFormatter mDataFileFormatter = new();
 
         private readonly SystemLogManager mSystemLogManager;
 

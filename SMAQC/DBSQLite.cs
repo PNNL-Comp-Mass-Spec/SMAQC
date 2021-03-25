@@ -30,7 +30,7 @@ namespace SMAQC
         /// <summary>
         /// DBSQLite tools object
         /// </summary>
-        private readonly DBSQLiteTools mSQLiteTools = new DBSQLiteTools();
+        private readonly DBSQLiteTools mSQLiteTools = new();
 
         private int mErrorMsgCount;
 

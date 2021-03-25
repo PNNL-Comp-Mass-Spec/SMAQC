@@ -53,7 +53,7 @@ namespace SMAQC
         // Measurement engine
         private static MeasurementEngine mMeasurementEngine;
 
-        private static readonly SystemLogManager mSystemLogManager = new SystemLogManager();
+        private static readonly SystemLogManager mSystemLogManager = new();
 
         /// <summary>
         /// Output engine
@@ -65,10 +65,10 @@ namespace SMAQC
         /// </summary>
         private static ProcessingOptions mOptions;
 
-        private static readonly StringBuilder mQueryBuilder = new StringBuilder();
+        private static readonly StringBuilder mQueryBuilder = new();
 
         // Measurement results
-        private static Dictionary<string, string> mResults = new Dictionary<string, string>();
+        private static Dictionary<string, string> mResults = new();
 
         private const string SMAQC_BUILD_DATE = "January 26, 2021";
 
@@ -77,7 +77,8 @@ namespace SMAQC
 
         // Metrics to track in the database
         // Note that LoadMeasurementInfoFile uses this list to define the default metrics to run (skipping "instrument_id", "random_id", and "scan_date")
-        private static readonly List<string> mMetricNames = new List<string> {
+        private static readonly List<string> mMetricNames = new()
+        {
             "instrument_id", "random_id", "scan_date", "C_1A", "C_1B",
             "C_2A", "C_2B", "C_3A", "C_3B", "C_4A", "C_4B", "C_4C", "DS_1A", "DS_1B", "DS_2A", "DS_2B",
             "DS_3A", "DS_3B", "IS_1A", "IS_1B", "IS_2", "IS_3A", "IS_3B", "IS_3C", "MS1_1",
