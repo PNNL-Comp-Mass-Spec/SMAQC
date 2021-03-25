@@ -65,55 +65,54 @@ namespace SMAQC
             // Split on tab characters
             var delimiters = new[] { '\t' };
 
-            using (var srInFile = new StreamReader(new FileStream(filePathToLoad, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-            using (var swOutFile = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            using var reader = new StreamReader(new FileStream(filePathToLoad, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+            using var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+            while (!reader.EndOfStream)
             {
-                while (!srInFile.EndOfStream)
+                var line = reader.ReadLine();
+
+                if (string.IsNullOrEmpty(line))
+                    continue;
+
+                var filteredData = new List<string>();
+
+                var parts = line.Split(delimiters, StringSplitOptions.None);
+
+                if (lineNumber == 0)
                 {
-                    var line = srInFile.ReadLine();
+                    // Prepend the additional headers
+                    filteredData.Add("instrument_id");
+                    filteredData.Add("random_id");
+                }
+                else
+                {
+                    // Prepend Instrument_ID and Random_ID
+                    filteredData.Add(mInstrumentId);
+                    filteredData.Add(mRandomId.ToString());
+                }
 
-                    if (string.IsNullOrEmpty(line))
-                        continue;
-
-                    var filteredData = new List<string>();
-
-                    var parts = line.Split(delimiters, StringSplitOptions.None);
-
-                    if (lineNumber == 0)
+                // Process the columns
+                foreach (var dataValue in parts)
+                {
+                    if (dataValue.Equals("[PAD]"))
                     {
-                        // Prepend the additional headers
-                        filteredData.Add("instrument_id");
-                        filteredData.Add("random_id");
+                        filteredData.Add(string.Empty);
                     }
                     else
                     {
-                        // Prepend Instrument_ID and Random_ID
-                        filteredData.Add(mInstrumentId);
-                        filteredData.Add(mRandomId.ToString());
+                        // Replace any tab characters with semicolons
+                        filteredData.Add(dataValue.Replace(tabChar, ";"));
                     }
-
-                    // Process the columns
-                    foreach (var dataValue in parts)
-                    {
-                        if (dataValue.Equals("[PAD]"))
-                        {
-                            filteredData.Add(string.Empty);
-                        }
-                        else
-                        {
-                            // Replace any tab characters with semicolons
-                            filteredData.Add(dataValue.Replace(tabChar, ";"));
-                        }
-                    }
-
-                    if (filteredData.Count > 0)
-                    {
-                        // Write out the data line
-                        swOutFile.WriteLine(string.Join(tabChar, filteredData));
-                    }
-
-                    lineNumber++;
                 }
+
+                if (filteredData.Count > 0)
+                {
+                    // Write out the data line
+                    writer.WriteLine(string.Join(tabChar, filteredData));
+                }
+
+                lineNumber++;
             }
         }
 

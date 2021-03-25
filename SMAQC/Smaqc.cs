@@ -651,20 +651,19 @@ namespace SMAQC
                 {
                     try
                     {
-                        using (var fsMeasurementsFile = new FileStream(fiMeasurementsToRunFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        using var fsMeasurementsFile = new FileStream(fiMeasurementsToRunFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+                        var parser = new XmlTextReader(fsMeasurementsFile);
+
+                        while (parser.ReadToFollowing("measurement"))
                         {
-                            var parser = new XmlTextReader(fsMeasurementsFile);
+                            parser.MoveToAttribute("name");
+                            measurementsToRun.Add(parser.Value);
 
-                            while (parser.ReadToFollowing("measurement"))
+                            if (parser.Value.Equals("*", StringComparison.OrdinalIgnoreCase))
                             {
-                                parser.MoveToAttribute("name");
-                                measurementsToRun.Add(parser.Value);
-
-                                if (parser.Value.Equals("*", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    useDefaultMetrics = true;
-                                    break;
-                                }
+                                useDefaultMetrics = true;
+                                break;
                             }
                         }
                     }

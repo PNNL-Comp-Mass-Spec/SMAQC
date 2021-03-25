@@ -205,58 +205,57 @@ namespace SMAQC
             var knownColumnCount = (from item in columnIndexMap where item > -1 select item).Count();
 
             // Open files used for r/w
-            using (var sourceFileReader = new StreamReader(new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-            using (var updatedFileWriter = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            using var sourceFileReader = new StreamReader(new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+            using var updatedFileWriter = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+            // Loop through each line
+            while (!sourceFileReader.EndOfStream)
             {
-                // Loop through each line
-                while (!sourceFileReader.EndOfStream)
+                var line = sourceFileReader.ReadLine();
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
+
+                var dataToWrite = new List<string>();
+
+                // Do split operation
+                List<string> parts;
+
+                if (!headerParsed)
                 {
-                    var line = sourceFileReader.ReadLine();
-                    if (string.IsNullOrWhiteSpace(line))
-                        continue;
-
-                    var dataToWrite = new List<string>();
-
-                    // Do split operation
-                    List<string> parts;
-
-                    if (!headerParsed)
-                    {
-                        // Header line
-                        // Clean column names to ensure database compatibility
-                        parts = ColumnNameCleaner(line.Split(delimiters, StringSplitOptions.None).ToList());
-                        headerParsed = true;
-                    }
-                    else
-                    {
-                        parts = line.Split(delimiters, StringSplitOptions.None).ToList();
-                    }
-
-                    // Loop through each part
-                    for (var i = 0; i < parts.Count; i++)
-                    {
-                        if (i == columnCount)
-                        {
-                            // Too many columns for this line; ignore them
-                            break;
-                        }
-
-                        if (columnIndexMap[i] > -1)
-                        {
-                            // Known column; add it
-                            dataToWrite.Add(parts[i]);
-                        }
-                    }
-
-                    while (dataToWrite.Count < knownColumnCount)
-                    {
-                        // Missing columns for this line; add them
-                        dataToWrite.Add(string.Empty);
-                    }
-
-                    // Write line
-                    updatedFileWriter.WriteLine(string.Join("\t", dataToWrite));
+                    // Header line
+                    // Clean column names to ensure database compatibility
+                    parts = ColumnNameCleaner(line.Split(delimiters, StringSplitOptions.None).ToList());
+                    headerParsed = true;
                 }
+                else
+                {
+                    parts = line.Split(delimiters, StringSplitOptions.None).ToList();
+                }
+
+                // Loop through each part
+                for (var i = 0; i < parts.Count; i++)
+                {
+                    if (i == columnCount)
+                    {
+                        // Too many columns for this line; ignore them
+                        break;
+                    }
+
+                    if (columnIndexMap[i] > -1)
+                    {
+                        // Known column; add it
+                        dataToWrite.Add(parts[i]);
+                    }
+                }
+
+                while (dataToWrite.Count < knownColumnCount)
+                {
+                    // Missing columns for this line; add them
+                    dataToWrite.Add(string.Empty);
+                }
+
+                // Write line
+                updatedFileWriter.WriteLine(string.Join("\t", dataToWrite));
             }
         }
 
@@ -269,43 +268,41 @@ namespace SMAQC
         /// <returns>Total number of columns in the input file</returns>
         private int MapColumnsToKnownColumns(string filePath, out List<int> columnIndexMap, IReadOnlyList<string> knownColumns)
         {
-            int columnCount;
             columnIndexMap = new List<int>();
 
-            using (var file = new StreamReader(filePath))
+            using var file = new StreamReader(filePath);
+
+            var line = file.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(line))
+                return 0;
+
+            // Split given data files by tab
+            var delimiters = new[] { '\t' };
+
+            // Do split operation
+            // Clean column names to ensure consistency
+            var parts = ColumnNameCleaner(line.Split(delimiters, StringSplitOptions.None).ToList());
+
+            // Set columnCount
+            var columnCount = parts.Count;
+
+            // Loop through each column
+            foreach (var column in parts)
             {
-                var line = file.ReadLine();
+                // Search for column name that is found in our file line
+                var index = FindIndexOfColumnName(knownColumns, column);
 
-                if (string.IsNullOrWhiteSpace(line))
-                    return 0;
-
-                // Split given data files by tab
-                var delimiters = new[] { '\t' };
-
-                // Do split operation
-                // Clean column names to ensure consistency
-                var parts = ColumnNameCleaner(line.Split(delimiters, StringSplitOptions.None).ToList());
-
-                // Set columnCount
-                columnCount = parts.Count;
-
-                // Loop through each column
-                foreach (var column in parts)
+                // If found [not -1]
+                if (index > -1)
                 {
-                    // Search for column name that is found in our file line
-                    var index = FindIndexOfColumnName(knownColumns, column);
-
-                    // If found [not -1]
-                    if (index > -1)
-                    {
-                        // Store index of our part_id as index value as per function requirements [see details above each function name]
-                        columnIndexMap.Add(index);
-                    }
-                    else
-                    {
-                        // Not found ... add -1 to indicate we will skip this column
-                        columnIndexMap.Add(-1);
-                    }
+                    // Store index of our part_id as index value as per function requirements [see details above each function name]
+                    columnIndexMap.Add(index);
+                }
+                else
+                {
+                    // Not found ... add -1 to indicate we will skip this column
+                    columnIndexMap.Add(-1);
                 }
             }
 

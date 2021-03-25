@@ -186,76 +186,73 @@ namespace SMAQC
                 ExecuteCommand(cmd, -1);
             }
 
-            using (DbTransaction dbTrans = mConnection.BeginTransaction())
+            using DbTransaction dbTrans = mConnection.BeginTransaction();
+            using (var cmd = mConnection.CreateCommand())
             {
-                using (var cmd = mConnection.CreateCommand())
+                cmd.CommandText = sql;
+
+                using var reader = new StreamReader(sourceFile);
+
+                var lineNumber = 0;
+                while (!reader.EndOfStream)
                 {
-                    cmd.CommandText = sql;
+                    var line = reader.ReadLine();
+                    if (string.IsNullOrEmpty(line))
+                        continue;
 
-                    using (var file = new StreamReader(sourceFile))
+                    lineNumber++;
+
+                    if (lineNumber == 1)
                     {
-                        var lineNumber = 0;
-                        while (!file.EndOfStream)
+                        // Header line, skip it
+                        continue;
+                    }
+
+                    if (string.CompareOrdinal(line, previousLine) == 0)
+                    {
+                        // Duplicate line; skip it
+                        continue;
+                    }
+
+                    // Fetch values
+                    var values = SQLiteBulkInsert_TokenizeLine(line);
+
+                    // Loop through column listing + set parameters
+                    for (var i = 0; i < columnNames.Count; i++)
+                    {
+                        if (columnEnabledByIndex[i])
                         {
-                            var line = file.ReadLine();
-                            if (string.IsNullOrEmpty(line))
-                                continue;
-
-                            lineNumber++;
-
-                            if (lineNumber == 1)
-                            {
-                                // Header line, skip it
-                                continue;
-                            }
-
-                            if (string.CompareOrdinal(line, previousLine) == 0)
-                            {
-                                // Duplicate line; skip it
-                                continue;
-                            }
-
-                            // Fetch values
-                            var values = SQLiteBulkInsert_TokenizeLine(line);
-
-                            // Loop through column listing + set parameters
-                            for (var i = 0; i < columnNames.Count; i++)
-                            {
-                                if (columnEnabledByIndex[i])
-                                {
-                                    cmd.Parameters.AddWithValue("@" + i, values[i]);
-                                }
-                            }
-
-                            ExecuteCommand(cmd, lineNumber);
-
-                            previousLine = string.Copy(line);
+                            cmd.Parameters.AddWithValue("@" + i, values[i]);
                         }
                     }
-                }
-                dbTrans.Commit();
 
-                if (mErrorMessages.Count > 0)
+                    ExecuteCommand(cmd, lineNumber);
+
+                    previousLine = string.Copy(line);
+                }
+            }
+            dbTrans.Commit();
+
+            if (mErrorMessages.Count > 0)
+            {
+                var firstErrorMsg = string.Empty;
+                var totalErrorRows = 0;
+
+                foreach (var kvEntry in mErrorMessages)
                 {
-                    var firstErrorMsg = string.Empty;
-                    var totalErrorRows = 0;
-
-                    foreach (var kvEntry in mErrorMessages)
-                    {
-                        totalErrorRows += kvEntry.Value;
-                        OnErrorEvent("Error message count = " + kvEntry.Value + " for '" + kvEntry.Key + "'");
-                        if (string.IsNullOrEmpty(firstErrorMsg))
-                            firstErrorMsg = string.Copy(kvEntry.Key);
-                    }
-
-                    var msg = "Errors during BulkInsert from file " + Path.GetFileName(sourceFile) + "; problem with " + totalErrorRows + " row";
-                    if (totalErrorRows != 1)
-                        msg += "s";
-
-                    msg += "; " + firstErrorMsg;
-
-                    throw new Exception(msg);
+                    totalErrorRows += kvEntry.Value;
+                    OnErrorEvent("Error message count = " + kvEntry.Value + " for '" + kvEntry.Key + "'");
+                    if (string.IsNullOrEmpty(firstErrorMsg))
+                        firstErrorMsg = string.Copy(kvEntry.Key);
                 }
+
+                var msg = "Errors during BulkInsert from file " + Path.GetFileName(sourceFile) + "; problem with " + totalErrorRows + " row";
+                if (totalErrorRows != 1)
+                    msg += "s";
+
+                msg += "; " + firstErrorMsg;
+
+                throw new Exception(msg);
             }
         }
 
@@ -288,17 +285,15 @@ namespace SMAQC
         {
             var columns = new List<string>();
 
-            using (var cmd = mConnection.CreateCommand())
-            {
-                cmd.CommandText = "SELECT * FROM [" + tableName + "] LIMIT 1";
+            using var cmd = mConnection.CreateCommand();
 
-                using (var sqlReader = cmd.ExecuteReader())
-                {
-                    for (var i = 0; i < sqlReader.FieldCount; i++)
-                    {
-                        columns.Add(sqlReader.GetName(i));
-                    }
-                }
+            cmd.CommandText = "SELECT * FROM [" + tableName + "] LIMIT 1";
+
+            using var sqlReader = cmd.ExecuteReader();
+
+            for (var i = 0; i < sqlReader.FieldCount; i++)
+            {
+                columns.Add(sqlReader.GetName(i));
             }
 
             return columns;
@@ -515,15 +510,15 @@ namespace SMAQC
 
             string headerLine;
 
-            using (var file = new StreamReader(filePath))
+            using (var reader = new StreamReader(filePath))
             {
-                if (file.EndOfStream)
+                if (reader.EndOfStream)
                 {
                     Console.WriteLine("Warning: file is empty; cannot bulk insert from " + filePath);
                     return new List<string>();
                 }
 
-                headerLine = file.ReadLine();
+                headerLine = reader.ReadLine();
             }
 
             if (string.IsNullOrWhiteSpace(headerLine))

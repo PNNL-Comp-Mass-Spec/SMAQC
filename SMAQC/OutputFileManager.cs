@@ -109,52 +109,51 @@ namespace SMAQC
             }
 
             // Create the result file
-            using (var file = new StreamWriter(filename))
+            using var writer = new StreamWriter(filename);
+
+            writer.WriteLine("SMAQC SCANNER RESULTS");
+            writer.WriteLine("-----------------------------------------------------------");
+            writer.WriteLine("SMAQC Version: " + mSMAQCVersion);
+            // file.WriteLine("results from scan id: " + scanId);
+            writer.WriteLine("Instrument ID: " + dctResults["instrument_id"]);
+            writer.WriteLine("Scan Date: " + dctResults["scan_date"]);
+            writer.WriteLine("[Data]");
+            writer.WriteLine("Dataset, Measurement Name, Measurement Value");
+
+            // Remove from hash table
+            dctResults.Remove("instrument_id");
+            dctResults.Remove("scan_date");
+            dctResults.Remove("scan_id");
+            dctResults.Remove("random_id");
+
+            // Loop through all that should be left [our measurements]
+            foreach (var key in dctResults.Keys)
             {
-                file.WriteLine("SMAQC SCANNER RESULTS");
-                file.WriteLine("-----------------------------------------------------------");
-                file.WriteLine("SMAQC Version: " + mSMAQCVersion);
-                // file.WriteLine("results from scan id: " + scanId);
-                file.WriteLine("Instrument ID: " + dctResults["instrument_id"]);
-                file.WriteLine("Scan Date: " + dctResults["scan_date"]);
-                file.WriteLine("[Data]");
-                file.WriteLine("Dataset, Measurement Name, Measurement Value");
-
-                // Remove from hash table
-                dctResults.Remove("instrument_id");
-                dctResults.Remove("scan_date");
-                dctResults.Remove("scan_id");
-                dctResults.Remove("random_id");
-
-                // Loop through all that should be left [our measurements]
-                foreach (var key in dctResults.Keys)
+                // Ensure that all keys have data [this is really a fix for SQLite due to not supporting nulls properly]
+                if (!string.IsNullOrEmpty(dctResults[key]))
                 {
-                    // Ensure that all keys have data [this is really a fix for SQLite due to not supporting nulls properly]
-                    if (!string.IsNullOrEmpty(dctResults[key]))
-                    {
-                        // Add to sorted dictionary
-                        dctValidResults.Add(key, dctResults[key]);
-                    }
+                    // Add to sorted dictionary
+                    dctValidResults.Add(key, dctResults[key]);
                 }
-
-                // Loop through each sorted dictionary
-                foreach (var pair in dctValidResults)
-                {
-                    // Add: dataset, measurement name,
-
-                    var outLine = string.Format(dataset + ", " + pair.Key + ",");
-
-                    // If there is a non-null value
-                    if (!pair.Value.Equals("Null"))
-                    {
-                        outLine += " " + pair.Value;
-                    }
-
-                    file.WriteLine(outLine);
-                }
-
-                file.WriteLine();
             }
+
+            // Loop through each sorted dictionary
+            foreach (var pair in dctValidResults)
+            {
+                // Add: dataset, measurement name,
+
+                var outLine = string.Format(dataset + ", " + pair.Key + ",");
+
+                // If there is a non-null value
+                if (!pair.Value.Equals("Null"))
+                {
+                    outLine += " " + pair.Value;
+                }
+
+                writer.WriteLine(outLine);
+            }
+
+            writer.WriteLine();
         }
 
         // Append additional measurement data to output file

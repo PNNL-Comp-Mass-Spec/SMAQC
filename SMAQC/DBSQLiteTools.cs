@@ -26,54 +26,51 @@ namespace SMAQC
         /// <param name="dbPath">Path to the SQLite database</param>
         public void CreateTables(string dbPath)
         {
-            using (var conn = new SQLiteConnection("Data Source=" + dbPath, true))
-            {
-                using (var cmd = conn.CreateCommand())
-                {
-                    conn.Open();
+            using var conn = new SQLiteConnection("Data Source=" + dbPath, true);
 
-                    // SMAQC results
-                    cmd.CommandText = GetTableCreateSql("scan_results");
-                    cmd.ExecuteNonQuery();
+            using var cmd = conn.CreateCommand();
+            conn.Open();
 
-                    // MASIC ScanStats
-                    cmd.CommandText = GetTableCreateSql("temp_ScanStats");
-                    cmd.ExecuteNonQuery();
+            // SMAQC results
+            cmd.CommandText = GetTableCreateSql("scan_results");
+            cmd.ExecuteNonQuery();
 
-                    // MASIC ScanStatsEx
-                    cmd.CommandText = GetTableCreateSql("temp_ScanStatsEx");
-                    cmd.ExecuteNonQuery();
+            // MASIC ScanStats
+            cmd.CommandText = GetTableCreateSql("temp_ScanStats");
+            cmd.ExecuteNonQuery();
 
-                    // MASIC SICStats
-                    cmd.CommandText = GetTableCreateSql("temp_SICStats");
-                    cmd.ExecuteNonQuery();
+            // MASIC ScanStatsEx
+            cmd.CommandText = GetTableCreateSql("temp_ScanStatsEx");
+            cmd.ExecuteNonQuery();
 
-                    // MASIC ReporterIons
-                    cmd.CommandText = GetTableCreateSql("temp_ReporterIons");
-                    cmd.ExecuteNonQuery();
+            // MASIC SICStats
+            cmd.CommandText = GetTableCreateSql("temp_SICStats");
+            cmd.ExecuteNonQuery();
 
-                    // X!Tandem results
-                    cmd.CommandText = GetTableCreateSql("temp_xt");
-                    cmd.ExecuteNonQuery();
+            // MASIC ReporterIons
+            cmd.CommandText = GetTableCreateSql("temp_ReporterIons");
+            cmd.ExecuteNonQuery();
 
-                    // ResultToSeqMap
-                    cmd.CommandText = GetTableCreateSql("temp_xt_ResultToSeqMap");
-                    cmd.ExecuteNonQuery();
+            // X!Tandem results
+            cmd.CommandText = GetTableCreateSql("temp_xt");
+            cmd.ExecuteNonQuery();
 
-                    // SeqToProteinMap
-                    cmd.CommandText = GetTableCreateSql("temp_xt_SeqToProteinMap");
-                    cmd.ExecuteNonQuery();
+            // ResultToSeqMap
+            cmd.CommandText = GetTableCreateSql("temp_xt_ResultToSeqMap");
+            cmd.ExecuteNonQuery();
 
-                    // PSMs returned by PHRPReader
-                    cmd.CommandText = GetTableCreateSql("temp_PSMs");
-                    cmd.ExecuteNonQuery();
+            // SeqToProteinMap
+            cmd.CommandText = GetTableCreateSql("temp_xt_SeqToProteinMap");
+            cmd.ExecuteNonQuery();
 
-                    // Create the indices on the tables
-                    CreateIndices(cmd);
+            // PSMs returned by PHRPReader
+            cmd.CommandText = GetTableCreateSql("temp_PSMs");
+            cmd.ExecuteNonQuery();
 
-                    conn.Close();
-                }
-            }
+            // Create the indices on the tables
+            CreateIndices(cmd);
+
+            conn.Close();
         }
 
         private void CreateIndices(SQLiteCommand cmd)
@@ -153,95 +150,94 @@ namespace SMAQC
 
         public void CreateMissingTables(SQLiteConnection connection)
         {
-            using (var cmd = connection.CreateCommand())
+            using var cmd = connection.CreateCommand();
+
+            if (!TableExists(connection, "temp_PSMs"))
             {
-                if (!TableExists(connection, "temp_PSMs"))
+                // PSMs returned by PHRPReader
+                cmd.CommandText = GetTableCreateSql("temp_PSMs");
+                cmd.ExecuteNonQuery();
+
+                CreateIndicesPHRP(cmd);
+            }
+
+            if (!TableHasColumn(connection, "temp_PSMs", "KeratinPeptide"))
+            {
+                var columnsToAdd = new List<string>
                 {
-                    // PSMs returned by PHRPReader
-                    cmd.CommandText = GetTableCreateSql("temp_PSMs");
-                    cmd.ExecuteNonQuery();
+                    "KeratinPeptide",
+                    "MissedCleavages"
+                };
 
-                    CreateIndicesPHRP(cmd);
-                }
+                AddColumnsToTable(connection, "temp_PSMs", columnsToAdd);
+            }
 
-                if (!TableHasColumn(connection, "temp_PSMs", "KeratinPeptide"))
+            if (!TableHasColumn(connection, "temp_PSMs", "TrypsinPeptide"))
+            {
+                var columnsToAdd = new List<string>
                 {
-                    var columnsToAdd = new List<string>
-                    {
-                        "KeratinPeptide",
-                        "MissedCleavages"
-                    };
+                    "TrypsinPeptide"
+                };
 
-                    AddColumnsToTable(connection, "temp_PSMs", columnsToAdd);
-                }
+                AddColumnsToTable(connection, "temp_PSMs", columnsToAdd);
+            }
 
-                if (!TableHasColumn(connection, "temp_PSMs", "TrypsinPeptide"))
+            if (!TableExists(connection, "temp_ReporterIons"))
+            {
+                // ReporterIons from MASIC
+                cmd.CommandText = GetTableCreateSql("temp_ReporterIons");
+                cmd.ExecuteNonQuery();
+
+                CreateIndicesReporterIons(cmd);
+            }
+
+            if (!TableHasColumn(connection, "scan_results", "Phos_2A"))
+            {
+                var columnsToAdd = new List<string>
                 {
-                    var columnsToAdd = new List<string>
-                    {
-                        "TrypsinPeptide"
-                    };
+                    "Phos_2A",
+                    "Phos_2C"
+                };
 
-                    AddColumnsToTable(connection, "temp_PSMs", columnsToAdd);
-                }
+                AddColumnsToTable(connection, "scan_results", columnsToAdd);
+            }
 
-                if (!TableExists(connection, "temp_ReporterIons"))
+            if (!TableHasColumn(connection, "scan_results", "Keratin_2A"))
+            {
+                var columnsToAdd = new List<string>
                 {
-                    // ReporterIons from MASIC
-                    cmd.CommandText = GetTableCreateSql("temp_ReporterIons");
-                    cmd.ExecuteNonQuery();
+                    "Keratin_2A",
+                    "Keratin_2C",
+                    "P_4A",
+                    "P_4B"
+                };
 
-                    CreateIndicesReporterIons(cmd);
-                }
+                AddColumnsToTable(connection, "scan_results", columnsToAdd);
+            }
 
-                if (!TableHasColumn(connection, "scan_results", "Phos_2A"))
+            if (!TableHasColumn(connection, "scan_results", "Trypsin_2A"))
+            {
+                var columnsToAdd = new List<string>
                 {
-                    var columnsToAdd = new List<string>
-                    {
-                        "Phos_2A",
-                        "Phos_2C"
-                    };
+                    "Trypsin_2A",
+                    "Trypsin_2C"
+                };
 
-                    AddColumnsToTable(connection, "scan_results", columnsToAdd);
-                }
+                AddColumnsToTable(connection, "scan_results", columnsToAdd);
+            }
 
-                if (!TableHasColumn(connection, "scan_results", "Keratin_2A"))
+            if (!TableHasColumn(connection, "scan_results", "MS2_RepIon_All"))
+            {
+                var columnsToAdd = new List<string>
                 {
-                    var columnsToAdd = new List<string>
-                    {
-                        "Keratin_2A",
-                        "Keratin_2C",
-                        "P_4A",
-                        "P_4B"
-                    };
+                    "MS2_RepIon_All",
+                    "MS2_RepIon_1Missing",
+                    "MS2_RepIon_2Missing",
+                    "MS2_RepIon_3Missing",
+                };
 
-                    AddColumnsToTable(connection, "scan_results", columnsToAdd);
-                }
-
-                if (!TableHasColumn(connection, "scan_results", "Trypsin_2A"))
-                {
-                    var columnsToAdd = new List<string>
-                    {
-                        "Trypsin_2A",
-                        "Trypsin_2C"
-                    };
-
-                    AddColumnsToTable(connection, "scan_results", columnsToAdd);
-                }
-
-                if (!TableHasColumn(connection, "scan_results", "MS2_RepIon_All"))
-                {
-                    var columnsToAdd = new List<string>
-                    {
-                        "MS2_RepIon_All",
-                        "MS2_RepIon_1Missing",
-                        "MS2_RepIon_2Missing",
-                        "MS2_RepIon_3Missing",
-                    };
-
-                    AddColumnsToTable(connection, "scan_results", columnsToAdd);
-                }
-            } // End Using
+                AddColumnsToTable(connection, "scan_results", columnsToAdd);
+            }
         }
 
         /// <summary>
@@ -295,14 +291,12 @@ namespace SMAQC
                 else
                     sqlCommand += " NOT NULL;";
 
-                using (
-                    var cmd = new SQLiteCommand(dbConnection)
-                    {
-                        CommandText = sqlCommand
-                    })
+                using var cmd = new SQLiteCommand(dbConnection)
                 {
-                    cmd.ExecuteNonQuery();
-                }
+                    CommandText = sqlCommand
+                };
+
+                cmd.ExecuteNonQuery();
             }
         }
 
@@ -554,39 +548,25 @@ namespace SMAQC
 
         public static bool TableExists(SQLiteConnection conn, string tableName)
         {
-            using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = "SELECT COUNT(*) AS Tables FROM sqlite_master where type = 'table' and name = '" + tableName + "'";
+            using var cmd = conn.CreateCommand();
 
-                using (var reader = cmd.ExecuteReader())
-                {
-                    if (reader.Read() && reader.GetInt32(0) > 0)
-                    {
-                        return true;
-                    }
-                }
-            }
+            cmd.CommandText = "SELECT COUNT(*) AS Tables FROM sqlite_master where type = 'table' and name = '" + tableName + "'";
 
-            return false;
+            using var reader = cmd.ExecuteReader();
+
+            return reader.Read() && reader.GetInt32(0) > 0;
         }
 
         public static bool TableHasColumn(SQLiteConnection conn, string tableName, string columnName)
         {
-            bool hasColumn;
-
-            using (
-                var cmd = new SQLiteCommand(conn)
-                {
-                    CommandText = "Select * From '" + tableName + "' Limit 1;"
-                })
+            using var cmd = new SQLiteCommand(conn)
             {
-                using (var reader = cmd.ExecuteReader())
-                {
-                    hasColumn = reader.GetOrdinal(columnName) >= 0;
-                }
-            }
+                CommandText = "Select * From '" + tableName + "' Limit 1;"
+            };
 
-            return hasColumn;
+            using var reader = cmd.ExecuteReader();
+
+            return reader.GetOrdinal(columnName) >= 0;
         }
 
         // ReSharper disable once SuggestBaseTypeForParameter
