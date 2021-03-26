@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Summarizer = MSGFResultsSummarizer;
+using MSGFResultsSummarizer;
 using PHRPReader;
 using PHRPReader.Data;
 
@@ -196,7 +196,7 @@ namespace SMAQC
 
                 var peptideMassCalculator = new PeptideMassCalculator();
 
-                var reader = new ReaderFactory(inputFilePath, Enums.PeptideHitResultTypes.Unknown, loadModsAndSeqInfo, loadMSGFResults, loadScanStats)
+                var reader = new ReaderFactory(inputFilePath, PeptideHitResultTypes.Unknown, loadModsAndSeqInfo, loadMSGFResults, loadScanStats)
                 {
                     EchoMessagesToConsole = false,
                     SkipDuplicatePSMs = true
@@ -247,7 +247,7 @@ namespace SMAQC
                 // The SeqID value tracked by clsNormalizedPeptideInfo is the SeqID of the first sequence to get normalized to the given entry
                 // If sequenceInfoAvailable is False, values are the ResultID value of the first peptide to get normalized to the given entry
                 //
-                var normalizedPeptides = new Dictionary<string, List<Summarizer.NormalizedPeptideInfo>>();
+                var normalizedPeptides = new Dictionary<string, List<NormalizedPeptideInfo>>();
 
                 var bestPeptideScan = -1;
                 var bestPeptideCharge = -1;
@@ -261,10 +261,10 @@ namespace SMAQC
                 Console.WriteLine("Populating database using PHRP");
 
                 // RegEx to match keratin proteins
-                var reKeratinProtein = Summarizer.MSGFResultsSummarizer.GetKeratinRegEx();
+                var reKeratinProtein = ResultsSummarizer.GetKeratinRegEx();
 
                 // RegEx to match trypsin proteins
-                var reTrypsinProtein = Summarizer.MSGFResultsSummarizer.GetTrypsinRegEx();
+                var reTrypsinProtein = ResultsSummarizer.GetTrypsinRegEx();
 
                 // Read the data using PHRP Reader
                 // Only store the best scoring peptide for each scan/charge combo
@@ -314,16 +314,16 @@ namespace SMAQC
 
                     var normalizedPeptide = NormalizeSequence(currentPSM.PeptideCleanSequence, currentPSM.ModifiedResidues, currentPSM.SeqID);
 
-                    var normalizedSeqID = Summarizer.MSGFResultsSummarizer.FindNormalizedSequence(normalizedPeptides, normalizedPeptide);
+                    var normalizedSeqID = ResultsSummarizer.FindNormalizedSequence(normalizedPeptides, normalizedPeptide);
 
-                    if (normalizedSeqID == Summarizer.PSMInfo.UNKNOWN_SEQUENCE_ID)
+                    if (normalizedSeqID == PSMInfo.UNKNOWN_SEQUENCE_ID)
                     {
                         // New normalized peptide
 
                         if (!normalizedPeptides.TryGetValue(normalizedPeptide.CleanSequence, out var observedNormalizedPeptides))
                         {
                             // This clean sequence is not yet tracked; add it
-                            observedNormalizedPeptides = new List<Summarizer.NormalizedPeptideInfo>();
+                            observedNormalizedPeptides = new List<NormalizedPeptideInfo>();
                             normalizedPeptides.Add(normalizedPeptide.CleanSequence, observedNormalizedPeptides);
                         }
 
@@ -335,7 +335,7 @@ namespace SMAQC
 
                         // Make a new normalized peptide entry that does not have clean sequence
                         // (to conserve memory, since keys in dictionary normalizedPeptides are clean sequence)
-                        var normalizedPeptideToStore = new Summarizer.NormalizedPeptideInfo(string.Empty);
+                        var normalizedPeptideToStore = new NormalizedPeptideInfo(string.Empty);
                         normalizedPeptideToStore.StoreModifications(normalizedPeptide.Modifications);
                         normalizedPeptideToStore.SeqID = normalizedSeqID;
 
@@ -415,7 +415,7 @@ namespace SMAQC
             return false;
         }
 
-        private Summarizer.NormalizedPeptideInfo NormalizeSequence(string peptideCleanSequence, IEnumerable<AminoAcidModInfo> modifiedResidues, int seqId)
+        private NormalizedPeptideInfo NormalizeSequence(string peptideCleanSequence, IEnumerable<AminoAcidModInfo> modifiedResidues, int seqId)
         {
             var modifications = new List<KeyValuePair<string, int>>();
 
@@ -432,7 +432,7 @@ namespace SMAQC
                 modifications.Add(new KeyValuePair<string, int>(modSymbolOrName, residueIndex));
             }
 
-            var normalizedPeptide = Summarizer.MSGFResultsSummarizer.GetNormalizedPeptideInfo(peptideCleanSequence, modifications, seqId);
+            var normalizedPeptide = ResultsSummarizer.GetNormalizedPeptideInfo(peptideCleanSequence, modifications, seqId);
             return normalizedPeptide;
         }
 
