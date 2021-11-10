@@ -6,7 +6,7 @@ for an LC-MS/MS dataset. The quality metrics are based on the metrics proposed
 by Rudnick and Stein, as described in "Performance metrics for liquid 
 chromatography-tandem mass spectrometry systems in proteomics analyses.", \
 Mol Cell Proteomics. 2010 Feb; 9(2):225-41. doi: 10.1074/mcp.M900223-MCP200.
-([PMID: 19837981](https://www.ncbi.nlm.nih.gov/pubmed/?term=19837981) and [PMC2830836](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2830836/))
+([PMID: 19837981](https://pubmed.ncbi.nlm.nih.gov/19837981/) and [PMC2830836](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2830836/))
 
 SMAQC requires that the dataset first be processed with [MASIC](https://github.com/PNNL-Comp-Mass-Spec/MASIC/releases), then processed with 
 [MSGF+](https://github.com/MSGFPlus/msgfplus/releases) or [X!Tandem](https://www.thegpm.org/tandem/).
@@ -45,7 +45,7 @@ If /M is not used, all of the metrics will be computed
 Written by Matthew Monroe, in collaboration with computer science students
 at Washington State University for the Department of Energy (PNNL, Richland, WA) in 2012 \
 E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov \
-Website: https://panomics.pnl.gov/ or https://omics.pnl.gov
+Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics
 
 ## License
 
