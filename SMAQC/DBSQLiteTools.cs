@@ -418,6 +418,7 @@ namespace SMAQC
                         + "[ParentIonMZ] FLOAT NOT NULL,"
                         + "[BasePeakIntensity] FLOAT NOT NULL,"
                         + "[BasePeakMZ] FLOAT NOT NULL,"
+                        // + "[ParentScan] INTEGER NOT NULL,"
                         + "[ReporterIonIntensityMax] FLOAT NOT NULL,"
                         // + "[Ion_101] FLOAT NULL,"       // ETD iTRAQ Ion
                         // + "[Ion_102] FLOAT NULL,"       // ETD iTRAQ Ion
