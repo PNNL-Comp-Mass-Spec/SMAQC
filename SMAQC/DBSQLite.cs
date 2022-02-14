@@ -217,13 +217,16 @@ namespace SMAQC
                     // Fetch values
                     var values = SQLiteBulkInsert_TokenizeLine(line);
 
+                    var parameterIndex = 0;
+
                     // Loop through column listing + set parameters
-                    for (var i = 0; i < columnNames.Count; i++)
+                    for (var i = 0; i < values.Count; i++)
                     {
-                        if (columnEnabledByIndex[i])
-                        {
-                            cmd.Parameters.AddWithValue("@" + i, values[i]);
-                        }
+                        if (!columnEnabledByIndex[i])
+                            continue;
+
+                        cmd.Parameters.AddWithValue("@" + parameterIndex, values[i]);
+                        parameterIndex++;
                     }
 
                     ExecuteCommand(cmd, lineNumber);
