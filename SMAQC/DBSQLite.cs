@@ -541,7 +541,10 @@ namespace SMAQC
                 var addColumn = excludedColumnNameSuffixes.All(suffix => !columnName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase));
 
                 if (!addColumn)
+                {
+                    columnEnabledByIndex[columnIndex] = false;
                     continue;
+                }
 
                 filteredList.Add(columnName);
                 columnEnabledByIndex[columnIndex] = true;
