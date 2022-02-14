@@ -151,6 +151,7 @@ namespace SMAQC
                 var excludedColumnNameSuffixes = new List<string>();
                 if (filePath.EndsWith("_ReporterIons.txt", StringComparison.OrdinalIgnoreCase))
                 {
+                    excludedColumnNameSuffixes.Add("ParentScan");
                     excludedColumnNameSuffixes.Add("_SignalToNoise");
                     excludedColumnNameSuffixes.Add("_Resolution");
                     excludedColumnNameSuffixes.Add("_OriginalIntensity");
