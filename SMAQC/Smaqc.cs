@@ -70,7 +70,7 @@ namespace SMAQC
         // Measurement results
         private static Dictionary<string, string> mResults = new();
 
-        private const string SMAQC_BUILD_DATE = "September 13, 2021";
+        private const string SMAQC_BUILD_DATE = "February 14, 2022";
 
         // Define the filename suffixes
         private static readonly string[] mMasicFileExtensions = { "_ScanStats", "_ScanStatsEx", "_SICStats", "_ReporterIons" };
@@ -529,7 +529,7 @@ namespace SMAQC
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                                       "Program written by Matthew Monroe, in collaboration with computer science students " +
-                                      "at Washington State University for the Department of Energy (PNNL, Richland, WA) in 2012"));
+                                      "at Washington State University for the Department of Energy (PNNL, Richland, WA)"));
                 Console.WriteLine();
                 Console.WriteLine("Version: " + GetAppVersion());
                 Console.WriteLine();
