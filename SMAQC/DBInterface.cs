@@ -46,10 +46,10 @@ namespace SMAQC
         /// <summary>
         /// Read a single database row
         /// </summary>
+        /// <remarks>This method differs from ReadNextRow since here we close the reader after reading a single row of data</remarks>
         /// <param name="columnNames"></param>
         /// <param name="dctData"></param>
         /// <returns>True if success, false if no further rows to read</returns>
-        /// <remarks>This method differs from ReadNextRow since here we close the reader after reading a single row of data</remarks>
         bool ReadSingleLine(string[] columnNames, out Dictionary<string, string> dctData);
 
         /// <summary>

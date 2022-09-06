@@ -118,8 +118,8 @@ namespace SMAQC
         /// <summary>
         /// Run a query that does not return results (insert/delete/update)
         /// </summary>
-        /// <returns>Always returns true</returns>
         /// <remarks>Call SetQuery prior to calling this method</remarks>
+        /// <returns>Always returns true</returns>
         public bool ExecuteNonQuery()
         {
             if (string.IsNullOrWhiteSpace(mQuery))
@@ -424,10 +424,10 @@ namespace SMAQC
         /// <summary>
         /// Read a single database row
         /// </summary>
+        /// <remarks>This method differs from ReadNextRow since here we close the reader after reading a single row of data</remarks>
         /// <param name="columnNames"></param>
         /// <param name="dctData"></param>
         /// <returns>True if success, false if no further rows to read</returns>
-        /// <remarks>This method differs from ReadNextRow since here we close the reader after reading a single row of data</remarks>
         public bool ReadSingleLine(string[] columnNames, out Dictionary<string, string> dctData)
         {
             dctData = new Dictionary<string, string>();

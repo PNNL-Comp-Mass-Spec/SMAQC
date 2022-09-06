@@ -375,9 +375,9 @@ namespace SMAQC
         /// <summary>
         /// Examine column names to ensure database compatibility
         /// </summary>
+        /// <remarks>Remove spaces, parentheses, / and more</remarks>
         /// <param name="columnNames"></param>
         /// <returns>Updated column names</returns>
-        /// <remarks>Remove spaces, parentheses, / and more</remarks>
         private List<string> ColumnNameCleaner(IEnumerable<string> columnNames)
         {
             var updatedColumnNames = new List<string>();

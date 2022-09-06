@@ -119,15 +119,15 @@ namespace SMAQC
         /// <summary>
         /// Loop through the file list, processing each file
         /// </summary>
-        /// <param name="fileList">Files to load. Keys are file paths and Values are lists of header column suffixes to ignore, e.g. _SignalToNoise</param>
-        /// <param name="validFileExtensions"></param>
-        /// <param name="dataset"></param>
         /// <remarks>
         /// For each file:
         ///   1. Calls another function that loads that file and rewrites the \tab as ',' separated.
         ///   2. From the filename, determines the correct table to insert into, appends temp
         ///   3. Calls our bulk insert function
         /// </remarks>
+        /// <param name="fileList">Files to load. Keys are file paths and Values are lists of header column suffixes to ignore, e.g. _SignalToNoise</param>
+        /// <param name="validFileExtensions"></param>
+        /// <param name="dataset"></param>
         public void LoadFilesAndInsertIntoDB(Dictionary<string, List<string>> fileList, string[] validFileExtensions, string dataset)
         {
             foreach (var candidateFile in fileList)

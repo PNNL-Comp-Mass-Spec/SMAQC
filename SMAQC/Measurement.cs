@@ -283,8 +283,8 @@ namespace SMAQC
         /// <summary>
         /// Counts the number of peptides identified more than 4 minutes earlier or more than 4 minutes later than the chromatographic peak apex
         /// </summary>
-        /// <param name="countTailingPeptides">False means to count early eluting peptides; True means to count late-eluting peptides</param>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
+        /// <param name="countTailingPeptides">False means to count early eluting peptides; True means to count late-eluting peptides</param>
         private string C_1_Shared(bool countTailingPeptides)
         {
             mDBInterface.SetQuery("SELECT temp_PSMs.Scan, t1.FragScanNumber, t1.OptimalPeakApexScanNumber,"
@@ -1787,8 +1787,8 @@ namespace SMAQC
         /// <summary>
         /// P_2A: Number of fully, partially, and non-tryptic peptides; total spectra count
         /// </summary>
-        /// <returns>Total PSMs (spectra with a filter-passing match)</returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
+        /// <returns>Total PSMs (spectra with a filter-passing match)</returns>
         public string P_2A()
         {
             return P_2A_Shared(phosphoPeptides: false);
@@ -1826,8 +1826,8 @@ namespace SMAQC
         /// <summary>
         /// P_2B:Number of unique fully, partially, and non-tryptic peptides; unique peptide & charge count
         /// </summary>
-        /// <returns>Unique peptide count, counting charge states separately</returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
+        /// <returns>Unique peptide count, counting charge states separately</returns>
         public string P_2B()
         {
             const bool groupByCharge = true;
@@ -1843,8 +1843,8 @@ namespace SMAQC
         /// <summary>
         /// P_2C: Number of unique fully, partially, and non-tryptic peptides; unique count regardless of charge
         /// </summary>
-        /// <returns>Unique peptide count</returns>
         /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
+        /// <returns>Unique peptide count</returns>
         public string P_2C()
         {
             const bool groupByCharge = false;
@@ -2293,10 +2293,10 @@ namespace SMAQC
         /// <summary>
         /// Counts the number of unique fully, partially, and non-tryptic peptides
         /// </summary>
+        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         /// <param name="groupByCharge">If true, counts charges separately</param>
         /// <param name="phosphoPeptides">If true, only uses phosphopeptides</param>
         /// <returns>Unique peptide count</returns>
-        /// <remarks>Filters on MSGFSpecProb less than 1E-12</remarks>
         private Dictionary<int, int> SummarizePSMs(bool groupByCharge, bool phosphoPeptides = false)
         {
             var chargeSql = string.Empty;
