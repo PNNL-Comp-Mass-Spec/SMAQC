@@ -10,7 +10,7 @@ namespace SMAQC
 {
     internal class Filter
     {
-        // Ignore Spelling: prepend, phosph, trypsinogen, Da
+        // Ignore Spelling: prepend, phosph, phosphopeptide, trypsinogen, Da
 
         public readonly DBWrapper mDBWrapper;
 
